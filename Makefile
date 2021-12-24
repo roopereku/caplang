@@ -12,7 +12,7 @@ release:	obj/ $(OBJECT_RELEASE)
 
 obj/debug/%.cc.o:	%.cc $(HEADER)
 	@echo "Building $< in debug mode"
-	@g++ -c -o $@ $< -std=c++17 -pedantic -Wall -Wextra -g
+	@g++ -c -o $@ $< -std=c++17 -pedantic -Wall -Wextra -g -D DEBUG
 
 obj/release/%.cc.o:	%.cc $(HEADER)
 	@echo "Building $< in release mode"
