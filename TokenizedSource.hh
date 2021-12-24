@@ -20,6 +20,11 @@ private:
 	bool parseIdentifier(size_t& i);
 	bool parseOperator(size_t& i);
 
+	bool parseHexadecimal(size_t& i);
+	bool parseNumeric(size_t& i);
+	bool parseDecimal(size_t& i);
+	bool parseBinary(size_t& i);
+
 	std::string data;
 	std::vector <Token> tokens;
 };
