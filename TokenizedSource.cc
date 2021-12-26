@@ -85,7 +85,7 @@ void Cap::TokenizedSource::tokenize()
 	for(size_t i = 0; i < data.length(); i++)
 	{
 		if(	!parseIdentifier(i) && !parseOperator(i) &&
-			!parseNumeric(i) && !parseString(i))
+			!parseNumeric(i) && !parseString(i) && !parseBreak(i))
 		{
 			//	Move onto the next line
 			if(data[i] == '\n')
@@ -140,6 +140,16 @@ bool Cap::TokenizedSource::parseString(size_t& i)
 	}
 
 	addToken(match == '"' ? TokenType::String : TokenType::Character, begin, i++);
+	return true;
+}
+
+bool Cap::TokenizedSource::parseBreak(size_t& i)
+{
+	if(!isBreak(data[i]))
+		return false;
+
+	addToken(TokenType::Break, i, i + 1);
+	i++;
 	return true;
 }
 

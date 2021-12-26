@@ -19,7 +19,9 @@ private:
 
 	bool parseIdentifier(size_t& i);
 	bool parseOperator(size_t& i);
+	bool parseBracket(size_t& i);
 	bool parseString(size_t& i);
+	bool parseBreak(size_t& i);
 
 	bool parseHexadecimal(size_t& i);
 	bool parseNumeric(size_t& i);

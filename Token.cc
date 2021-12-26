@@ -8,6 +8,7 @@ const char* Cap::Token::getTypeString(TokenType t)
 		case TokenType::Character: return "Character";
 		case TokenType::Operator: return "Operator";
 		case TokenType::String: return "String";
+		case TokenType::Break: return "Break";
 
 		case TokenType::Hexadecimal: return "Hexadecimal";
 		case TokenType::Integer: return "Integer";

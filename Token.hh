@@ -11,6 +11,7 @@ enum class TokenType
 	Character,
 	Operator,
 	String,
+	Break,
 
 	Hexadecimal,
 	Integer,
