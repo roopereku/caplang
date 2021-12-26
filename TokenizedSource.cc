@@ -139,7 +139,7 @@ bool Cap::TokenizedSource::parseString(size_t& i)
 		escaped = data[i] == '\\' ? !escaped : false;
 	}
 
-	addToken(TokenType::String, begin, i++);
+	addToken(match == '"' ? TokenType::String : TokenType::Character, begin, i++);
 	return true;
 }
 
