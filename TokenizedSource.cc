@@ -7,8 +7,8 @@
 static bool isOperator(char c)
 {
 	return	c == '+' || c == '-' || c == '.' || c == '/' || c == '*' ||
-			c == '!' || c >= '!' && c <= '&' || c == '^' ||
-			c >= '<' && c <= '@' || c == '~' || c == '|';
+			c == '!' || (c >= '!' && c <= '&') || c == '^' ||
+			(c >= '<' && c <= '@') || c == '~' || c == '|';
 }
 
 static bool isBracket(char c)
@@ -98,15 +98,15 @@ void Cap::TokenizedSource::tokenize()
 			break;
 		}
 
+		else if(error)
+		{
+			data.clear();
+			data.shrink_to_fit();
+
+			return;
+		}
+
 		i--;
-	}
-
-	if(error)
-	{
-		data.clear();
-		data.shrink_to_fit();
-
-		return;
 	}
 }
 
@@ -148,26 +148,27 @@ bool Cap::TokenizedSource::parseNumeric(size_t& i)
 	//	'0' at the beginning could indicate non-decimal
 	if(data[begin] == '0')
 	{
-		//	Check if the following chaaracter specifies non-decimal
-		char determinant = tolower(data[++i]);
+		//	Check if the following character specifies something non-decimal
+		char determinant = tolower(data[i + 1]);
 
-		if(	determinant == 'x' && parseHexadecimal(i) ||
-			determinant == 'b' && parseBinary(i))
+		if(	(determinant == 'x' && parseHexadecimal(i)) ||
+			(determinant == 'b' && parseBinary(i)))
 		{
 			return true;
 		}
 	}
 
+	//	If the index hasn't moved, check if there's a decimal value
 	if(i == begin && parseDecimal(i))
 		return true;
 
-	//	If no true was returned but the index moved, we have junk data
+	/*	If any of the numeric parsers return false report the user
+	 *	that there's junk after a valid numeric value */
 	if(i > begin)
 	{
 		DBG_LOG("Parsing junk for '%s'", tokens.back().getTypeString());
 		for(begin = i; i < data.length() && !isspace(data[i]) && !isBreak(data[i]) &&
-					   !isOperator(data[i]) && !isString(data[i]) &&
-		 			   !isdigit(data[i]); i++, column++);
+					   !isOperator(data[i]) && !isString(data[i]) ; i++, column++);
 
 		std::string junk(data.begin() + begin, data.begin() + i);
 		printf("Error: Junk after %s value '%s' ('%s')\n", tokens.back().getTypeString(), tokens.back().getString().c_str(), junk.c_str());
@@ -216,16 +217,10 @@ bool Cap::TokenizedSource::parseDecimal(size_t& i)
 
 bool Cap::TokenizedSource::parseHexadecimal(size_t& i)
 {
-	size_t begin = ++i;
-	for(; i < data.length(); i++)
-	{
-		if(!isdigit(data[i]))
-		{
-			char value = tolower(data[i]);
-			if(value < 'a' || value > 'f')
-				break;
-		}
-	}
+	size_t begin = i += 2;
+
+	//	Loop while there are valid hexadecimal characters
+	for(; i < data.length() && (isdigit(data[i]) || toupper(data[i]) <= 'F'); i++);
 
 	addToken(TokenType::Hexadecimal, begin, i);
 	return isspace(data[i]) || isOperator(data[i]) || isBracket(data[i]) || isString(data[i]);
@@ -233,12 +228,10 @@ bool Cap::TokenizedSource::parseHexadecimal(size_t& i)
 
 bool Cap::TokenizedSource::parseBinary(size_t& i)
 {
-	size_t begin = ++i;
-	for(; i < data.length(); i++)
-	{
-		if(data[i] != '0' && data[i] != '1')
-			break;
-	}
+	size_t begin = i += 2;
+
+	//	Loop while there are valid binary characters
+	for(; i < data.length() && (data[i] == '1' || data[i] == '0'); i++);
 
 	addToken(TokenType::Binary, begin, i);
 	return isspace(data[i]) || isOperator(data[i]) || isBracket(data[i]) || isString(data[i]);
