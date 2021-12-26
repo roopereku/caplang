@@ -6,8 +6,8 @@
 
 static bool isOperator(char c)
 {
-	return	c == '+' || c == '-' || c == '.' || c == '/' || c == '*' ||
-			c == '!' || (c >= '!' && c <= '&') || c == '^' ||
+	return	c == '+' || c == '*' || c == '!' || c == '&' ||
+			(c >= '-' && c <= '/') || c == '%' || c == '^' ||
 			(c >= '<' && c <= '@') || c == '~' || c == '|';
 }
 
@@ -29,6 +29,8 @@ static bool isBreak(char c)
 
 static decltype(Cap::Token::line) line;
 static decltype(Cap::Token::column) column;
+static decltype(Cap::Token::line) startLine;
+static decltype(Cap::Token::column) startColumn;
 static bool error;
 
 static bool errorOut()
@@ -62,31 +64,34 @@ void Cap::TokenizedSource::addToken(TokenType type, size_t begin, size_t end)
 {
 	Token t;
 	t.type = type;
-	t.line = line;
-	t.column = column;
+	t.line = startLine;
+	t.column = startColumn;
 	t.begin = &data[begin];
 	t.length = end - begin;
 
-	DBG_LOG("Added token of type '%s' on line %u at column %u with value '%s'", t.getTypeString(), line, column, t.getString().c_str());
+	DBG_LOG("Added token of type '%s' on line %u at column %u with value '%s'", t.getTypeString(), startLine, startColumn, t.getString().c_str());
 	tokens.push_back(t);
+
+	startLine = line;
+	startColumn = column;
 }
 
 void Cap::TokenizedSource::tokenize()
 {
+	startColumn = column = 1;
+	startLine = line = 1;
 	error = false;
-	column = 1;
-	line = 1;
 
 	for(size_t i = 0; i < data.length(); i++)
 	{
 		if(	!parseIdentifier(i) && !parseOperator(i) &&
-			!parseNumeric(i))
+			!parseNumeric(i) && !parseString(i))
 		{
 			//	Move onto the next line
 			if(data[i] == '\n')
 			{
-				line++;
-				column = 1;
+				startLine = line++;
+				startColumn = column = 1;
 				continue;
 			}
 
@@ -108,6 +113,34 @@ void Cap::TokenizedSource::tokenize()
 
 		i--;
 	}
+}
+
+bool Cap::TokenizedSource::parseString(size_t& i)
+{
+	if(!isString(data[i]))
+		return false;
+
+	char match = data[i];
+	size_t begin = ++i;
+
+	for(bool escaped = false; i <= data.length(); i++, column++)
+	{
+		//	The string is unterminated if a newline or a null is encountered
+		if(data[i] == '\n' || data[i] == 0)
+		{
+			printf("Error: Unterminated string on line %u at column %u\n", startLine, startColumn);
+			return errorOut();
+		}
+
+		//	If there's a match that isn't escaped, stop the loop
+		if(data[i] == match && !escaped)
+			break;
+
+		escaped = data[i] == '\\' ? !escaped : false;
+	}
+
+	addToken(TokenType::String, begin, i++);
+	return true;
 }
 
 bool Cap::TokenizedSource::parseIdentifier(size_t& i)
@@ -185,7 +218,7 @@ bool Cap::TokenizedSource::parseDecimal(size_t& i)
 	size_t begin = i;
 	size_t dots = 0;
 
-	for(; i < data.length(); i++)
+	for(; i < data.length(); i++, column++)
 	{
 		DBG_LOG("integer '%c'", data[i]);
 
@@ -232,7 +265,7 @@ bool Cap::TokenizedSource::parseHexadecimal(size_t& i)
 	size_t begin = i += 2;
 
 	//	Loop while there are valid hexadecimal characters
-	for(; i < data.length(); i++)
+	for(; i < data.length(); i++, column++)
 	{
 		if(!isdigit(data[i]))
 		{
@@ -251,7 +284,7 @@ bool Cap::TokenizedSource::parseBinary(size_t& i)
 	size_t begin = i += 2;
 
 	//	Loop while there are valid binary characters
-	for(; i < data.length() && (data[i] == '1' || data[i] == '0'); i++);
+	for(; i < data.length() && (data[i] == '1' || data[i] == '0'); i++, column++);
 
 	addToken(TokenType::Binary, begin, i);
 	return isspace(data[i]) || isOperator(data[i]) || isBracket(data[i]) || isString(data[i]);
