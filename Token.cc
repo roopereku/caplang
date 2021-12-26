@@ -23,3 +23,8 @@ const char* Cap::Token::getTypeString()
 {
 	return getTypeString(type);
 }
+
+std::string Cap::Token::getString()
+{
+	return std::string(begin, begin + length);
+}

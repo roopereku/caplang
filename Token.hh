@@ -1,6 +1,8 @@
 #ifndef TOKEN_HEADER
 #define TOKEN_HEADER
 
+#include <string>
+
 namespace Cap {
 
 enum class TokenType
@@ -23,6 +25,7 @@ struct Token
 {
 	static const char* getTypeString(TokenType t);
 	const char* getTypeString();
+	std::string getString();
 
 	char* begin;
 	unsigned length;
