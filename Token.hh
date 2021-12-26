@@ -15,10 +15,15 @@ enum class TokenType
 	Binary,
 	Double,
 	Float,
+
+	None,
 };
 
 struct Token
 {
+	static const char* getTypeString(TokenType t);
+	const char* getTypeString();
+
 	char* begin;
 	unsigned length;
 	TokenType type;
