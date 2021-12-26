@@ -11,6 +11,22 @@ static bool isOperator(char c)
 			c >= '<' && c <= '@' || c == '~' || c == '|';
 }
 
+static bool isBracket(char c)
+{
+	return	c == '{' || c == '(' || c == '[' ||
+			c == '}' || c == ')' || c == ']';
+}
+
+static bool isString(char c)
+{
+	return c == '\'' || c == '"';
+}
+
+static bool isBreak(char c)
+{
+	return c == ',' || c == ';';
+}
+
 static decltype(Cap::Token::line) line;
 static decltype(Cap::Token::column) column;
 static bool error;
@@ -51,6 +67,7 @@ void Cap::TokenizedSource::addToken(TokenType type, size_t begin, size_t end)
 	t.begin = &data[begin];
 	t.length = end - begin;
 
+	DBG_LOG("Added token of type '%s'", t.getTypeString());
 	tokens.push_back(t);
 }
 
@@ -62,17 +79,15 @@ void Cap::TokenizedSource::tokenize()
 
 	for(size_t i = 0; i < data.length(); i++)
 	{
-		if(	parseIdentifier(i) ||
-			parseOperator(i))
+		if(	!parseIdentifier(i) || !parseOperator(i) ||
+			!parseNumeric(i))
 		{
-			if(error)
-			{
-				data.clear();
-				data.shrink_to_fit();
-
-				return;
-			}
+			continue;
 		}
+
+		//	Stop tokenization if an error or an invalid character occurs
+		if(error || data[i] < 32 || data[i] == 92 || data[i] == 96 || data[i] == 127)
+			break;
 
 		//	Move onto the next line
 		if(data[i] == '\n')
@@ -80,19 +95,33 @@ void Cap::TokenizedSource::tokenize()
 			line++;
 			column = 0;
 		}
+
+		i--;
+	}
+
+	if(error)
+	{
+		data.clear();
+		data.shrink_to_fit();
+
+		return;
 	}
 }
 
 bool Cap::TokenizedSource::parseIdentifier(size_t& i)
 {
 	size_t begin = i;
-	for(; i < data.length() && !isspace(data[i]) && !isOperator(data[i]) &&
-		 (!isdigit(data[i]) || i > begin); i++, column++)
+	for(; i < data.length() && !isspace(data[i]) && !isBreak(data[i]) &&
+		  !isOperator(data[i]) && !isString(data[i]) &&
+		 (!isdigit(data[i]) || i > begin); i++, column++);
+
+	if(i > begin)
 	{
-		DBG_LOG("identifier char '%c'", data[i]);
+		addToken(TokenType::Identifier, begin, i);
+		return true;
 	}
 
-	return begin > i;
+	return false;
 }
 
 bool Cap::TokenizedSource::parseOperator(size_t& i)
@@ -115,10 +144,10 @@ bool Cap::TokenizedSource::parseNumeric(size_t& i)
 	size_t begin = i;
 
 	//	'0' at the beginning could indicate non-decimal
-	if(data[begin] == '0' && ++begin < data.length())
+	if(data[begin] == '0' && begin + 1 < data.length())
 	{
 		//	Check if the following chaaracter specifies non-decimal
-		char determinant = tolower(data[begin]);
+		char determinant = tolower(data[++begin]);
 
 		if((determinant == 'x' && parseHexadecimal(i)) ||
 			(determinant == 'b' && parseBinary(i)))
@@ -129,7 +158,16 @@ bool Cap::TokenizedSource::parseNumeric(size_t& i)
 		begin--;
 	}
 
-	return false;
+	else if(parseDecimal(i))
+		return true;
+
+	//	If no true was returned but the index moved, we have junk data
+	if(i > begin)
+	{
+		for(begin = i; i < data.length() && !isspace(data[i]) && !isBreak(data[i]) &&
+					   !isOperator(data[i]) && !isString(data[i]) &&
+		 (!isdigit(data[i]) || i > begin); i++, column++);
+	}
 }
 
 bool Cap::TokenizedSource::parseHexadecimal(size_t& i)
