@@ -10,6 +10,9 @@ const char* Cap::Token::getTypeString(TokenType t)
 		case TokenType::String: return "String";
 		case TokenType::Break: return "Break";
 
+		case TokenType::SingleLineComment: return "SingleLineComment";
+		case TokenType::MultiLineComment: return "MultiLineComment";
+
 		case TokenType::Hexadecimal: return "Hexadecimal";
 		case TokenType::Integer: return "Integer";
 		case TokenType::Binary: return "Binary";

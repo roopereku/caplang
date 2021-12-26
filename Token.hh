@@ -13,6 +13,9 @@ enum class TokenType
 	String,
 	Break,
 
+	SingleLineComment,
+	MultiLineComment,
+
 	Hexadecimal,
 	Integer,
 	Binary,

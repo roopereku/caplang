@@ -23,6 +23,10 @@ private:
 	bool parseString(size_t& i);
 	bool parseBreak(size_t& i);
 
+	bool parseSingleLineComment(size_t& i);
+	bool parseMultiLineComment(size_t& i);
+	bool parseComment(size_t& i);
+
 	bool parseHexadecimal(size_t& i);
 	bool parseNumeric(size_t& i);
 	bool parseDecimal(size_t& i);

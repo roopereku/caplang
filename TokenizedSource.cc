@@ -153,6 +153,63 @@ bool Cap::TokenizedSource::parseBreak(size_t& i)
 	return true;
 }
 
+bool Cap::TokenizedSource::parseSingleLineComment(size_t& i)
+{
+	//	Loop until the next line
+	size_t begin = i += 2;
+	for(; i < data.length() && data[i] != '\n'; i++, column++);
+
+	addToken(TokenType::SingleLineComment, begin, i);
+	return true;
+}
+
+bool Cap::TokenizedSource::parseMultiLineComment(size_t& i)
+{
+	const char* match = "*/";
+	size_t begin = i += 2;
+	size_t matched = 0;
+
+	for(; i < data.length() && matched < 2; i++, column++)
+	{
+		if(data[i] == '\n')
+		{
+			line++;
+			column = 1;
+		}
+
+		if(data[i] == match[matched])
+			matched++;
+
+		else matched = 0;
+
+		DBG_LOG("matched %lu at '%c'", matched, data[i]);
+	}
+
+	if(i >= data.length())
+	{
+		printf("Unterminated multiline comment on line %u at column %u\n", startLine, startColumn);
+		return errorOut();
+	}
+
+	addToken(TokenType::MultiLineComment, begin, i - 2);
+	return true;
+}
+
+bool Cap::TokenizedSource::parseComment(size_t& i)
+{
+	DBG_LOG("checking for comment", 1);
+	if(data[i] != '/')
+		return false;
+
+	switch(data[i + 1])
+	{
+		case '/': return parseSingleLineComment(i);
+		case '*': return parseMultiLineComment(i);
+	}
+
+	return false;
+}
+
 bool Cap::TokenizedSource::parseIdentifier(size_t& i)
 {
 	size_t begin = i;
@@ -175,7 +232,10 @@ bool Cap::TokenizedSource::parseOperator(size_t& i)
 	for(; i < data.length() && isOperator(data[i]); i++, column++)
 	{
 		DBG_LOG("operator char '%c'", data[i]);
-		addToken(TokenType::Operator, i, i + 1);
+		if(parseComment(i))
+			return true;
+
+		else addToken(TokenType::Operator, i, i + 1);
 	}
 
 	return i > begin;
@@ -272,9 +332,8 @@ bool Cap::TokenizedSource::parseDecimal(size_t& i)
 
 bool Cap::TokenizedSource::parseHexadecimal(size_t& i)
 {
-	size_t begin = i += 2;
-
 	//	Loop while there are valid hexadecimal characters
+	size_t begin = i += 2;
 	for(; i < data.length(); i++, column++)
 	{
 		if(!isdigit(data[i]))
@@ -291,9 +350,8 @@ bool Cap::TokenizedSource::parseHexadecimal(size_t& i)
 
 bool Cap::TokenizedSource::parseBinary(size_t& i)
 {
-	size_t begin = i += 2;
-
 	//	Loop while there are valid binary characters
+	size_t begin = i += 2;
 	for(; i < data.length() && (data[i] == '1' || data[i] == '0'); i++, column++);
 
 	addToken(TokenType::Binary, begin, i);
