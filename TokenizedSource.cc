@@ -166,7 +166,7 @@ bool Cap::TokenizedSource::parseNumeric(size_t& i)
 	 *	that there's junk after a valid numeric value */
 	if(i > begin)
 	{
-		DBG_LOG("Parsing junk for '%s'", tokens.back().getTypeString());
+		DBG_LOG("Parsing junk for '%s' '%c'", tokens.back().getTypeString(), data[i]);
 		for(begin = i; i < data.length() && !isspace(data[i]) && !isBreak(data[i]) &&
 					   !isOperator(data[i]) && !isString(data[i]) ; i++, column++);
 
@@ -181,6 +181,7 @@ bool Cap::TokenizedSource::parseNumeric(size_t& i)
 
 bool Cap::TokenizedSource::parseDecimal(size_t& i)
 {
+	bool isFloat = false;
 	size_t begin = i;
 	size_t dots = 0;
 
@@ -207,11 +208,22 @@ bool Cap::TokenizedSource::parseDecimal(size_t& i)
 			}
 		}
 
+		//	If there's a prefix that specifies float, 
+		else if(data[i] == 'f' || data[i] == 'F')
+		{
+			isFloat = true;
+			break;
+		}
+
 		else if(!isdigit(data[i]))
 			break;
 	}
 
-	addToken(TokenType::Integer, begin, i);
+	/*	For floats the index needs to be incremented after adding so that
+	 *	the return check doesn't consider the 'f' to be junk data */
+	if(isFloat) addToken(TokenType::Float, begin, i++);
+	else addToken(dots == 0 ? TokenType::Integer : TokenType::Double, begin, i);
+
 	return isspace(data[i]) || isOperator(data[i]) || isBracket(data[i]) || isString(data[i]);
 }
 
@@ -220,7 +232,15 @@ bool Cap::TokenizedSource::parseHexadecimal(size_t& i)
 	size_t begin = i += 2;
 
 	//	Loop while there are valid hexadecimal characters
-	for(; i < data.length() && (isdigit(data[i]) || toupper(data[i]) <= 'F'); i++);
+	for(; i < data.length(); i++)
+	{
+		if(!isdigit(data[i]))
+		{
+			char value = tolower(data[i]);
+			if(value < 'a' || value > 'f')
+				break;
+		}
+	}
 
 	addToken(TokenType::Hexadecimal, begin, i);
 	return isspace(data[i]) || isOperator(data[i]) || isBracket(data[i]) || isString(data[i]);
