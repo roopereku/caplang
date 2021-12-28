@@ -11,7 +11,7 @@ namespace Cap {
 class TokenizedSource
 {
 public:
-	TokenizedSource(const char* path);
+	TokenizedSource(const std::string& path);
 
 private:
 	void addToken(TokenType type, size_t begin, size_t end);

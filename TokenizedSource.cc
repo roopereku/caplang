@@ -39,14 +39,14 @@ static bool errorOut()
 	return true;
 }
 
-Cap::TokenizedSource::TokenizedSource(const char* path)
+Cap::TokenizedSource::TokenizedSource(const std::string& path)
 {
 	DBG_LOG("Reading file '%s'", path);
 	std::ifstream file(path);
 
 	if(!file.is_open())
 	{
-		printf("Error: Couldn't open file '%s'\n", path);
+		printf("Error: Couldn't open file '%s'\n", path.c_str());
 		return;
 	}
 
