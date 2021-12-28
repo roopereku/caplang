@@ -27,12 +27,12 @@ const char* Cap::Token::getTypeString(TokenType t)
 	}
 }
 
-const char* Cap::Token::getTypeString()
+const char* Cap::Token::getTypeString() const
 {
 	return getTypeString(type);
 }
 
-std::string Cap::Token::getString()
+std::string Cap::Token::getString() const
 {
 	return std::string(begin, begin + length);
 }

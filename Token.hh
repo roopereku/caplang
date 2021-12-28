@@ -32,8 +32,8 @@ enum class TokenType
 struct Token
 {
 	static const char* getTypeString(TokenType t);
-	const char* getTypeString();
-	std::string getString();
+	const char* getTypeString() const;
+	std::string getString() const;
 
 	char* begin;
 	unsigned length;
