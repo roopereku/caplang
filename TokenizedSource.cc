@@ -96,7 +96,10 @@ void Cap::TokenizedSource::tokenize()
 			}
 
 			else if(isspace(data[i]))
+			{
+				startColumn = ++column;
 				continue;
+			}
 
 			printf("Error: Invalid character '%c'\n", data[i]);
 			error = true;
@@ -194,12 +197,12 @@ bool Cap::TokenizedSource::parseMultiLineComment(size_t& i)
 			column = 1;
 		}
 
+		//	Move on to the next character to match if one matched
 		if(data[i] == match[matched])
 			matched++;
 
+		//	Reset the match character if this one didn't match
 		else matched = 0;
-
-		DBG_LOG("matched %lu at '%c'", matched, data[i]);
 	}
 
 	if(i >= data.length())
@@ -283,7 +286,6 @@ bool Cap::TokenizedSource::parseNumeric(size_t& i)
 	 *	that there's junk after a valid numeric value */
 	if(i > begin)
 	{
-		DBG_LOG("Parsing junk for '%s' '%c'", tokens.back().getTypeString(), data[i]);
 		for(begin = i; i < data.length() && !isspace(data[i]) && !isBreak(data[i]) &&
 					   !isOperator(data[i]) && !isString(data[i]) ; i++, column++);
 
@@ -304,18 +306,13 @@ bool Cap::TokenizedSource::parseDecimal(size_t& i)
 
 	for(; i < data.length(); i++, column++)
 	{
-		DBG_LOG("integer '%c'", data[i]);
-
 		if(data[i] == '.')
 		{
 			dots++;
 
 			//	If there's 2 consecutive dots, consider it range syntax
 			if(data[i + 1] == '.')
-			{
-				DBG_LOG("Range at line %u column %u", line, column);
 				break;
-			}
 
 			//	If the dots aren't consecutive, error out
 			else if(dots > 1)
