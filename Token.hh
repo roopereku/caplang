@@ -16,6 +16,10 @@ enum class TokenType
 	SingleLineComment,
 	MultiLineComment,
 
+	CurlyBrace,
+	Parenthesis,
+	SquareBracket,
+
 	Hexadecimal,
 	Integer,
 	Binary,

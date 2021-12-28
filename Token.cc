@@ -13,6 +13,10 @@ const char* Cap::Token::getTypeString(TokenType t)
 		case TokenType::SingleLineComment: return "SingleLineComment";
 		case TokenType::MultiLineComment: return "MultiLineComment";
 
+		case TokenType::CurlyBrace: return  "CurlyBrace";
+		case TokenType::Parenthesis: return  "Parenthesis";
+		case TokenType::SquareBracket: return  "SquareBracket";
+
 		case TokenType::Hexadecimal: return "Hexadecimal";
 		case TokenType::Integer: return "Integer";
 		case TokenType::Binary: return "Binary";

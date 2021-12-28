@@ -84,13 +84,13 @@ void Cap::TokenizedSource::tokenize()
 
 	for(size_t i = 0; i < data.length(); i++)
 	{
-		if(	!parseIdentifier(i) && !parseOperator(i) &&
+		if(	!parseIdentifier(i) && !parseOperator(i) && !parseBracket(i) &&
 			!parseNumeric(i) && !parseString(i) && !parseBreak(i))
 		{
 			//	Move onto the next line
 			if(data[i] == '\n')
 			{
-				startLine = line++;
+				startLine = ++line;
 				startColumn = column = 1;
 				continue;
 			}
@@ -140,6 +140,23 @@ bool Cap::TokenizedSource::parseString(size_t& i)
 	}
 
 	addToken(match == '"' ? TokenType::String : TokenType::Character, begin, i++);
+	return true;
+}
+
+bool Cap::TokenizedSource::parseBracket(size_t& i)
+{
+	TokenType type;
+	switch(data[i])
+	{
+		case '{': case '}': type = TokenType::CurlyBrace; break;
+		case '(': case ')': type = TokenType::Parenthesis; break;
+		case '[': case ']': type = TokenType::SquareBracket; break;
+
+		default: return false;
+	}
+
+	addToken(type, i, i + 1);
+	i++;
 	return true;
 }
 
@@ -197,7 +214,6 @@ bool Cap::TokenizedSource::parseMultiLineComment(size_t& i)
 
 bool Cap::TokenizedSource::parseComment(size_t& i)
 {
-	DBG_LOG("checking for comment", 1);
 	if(data[i] != '/')
 		return false;
 
@@ -214,7 +230,7 @@ bool Cap::TokenizedSource::parseIdentifier(size_t& i)
 {
 	size_t begin = i;
 	for(; i < data.length() && !isspace(data[i]) && !isBreak(data[i]) &&
-		  !isOperator(data[i]) && !isString(data[i]) &&
+		  !isOperator(data[i]) && !isBracket(data[i]) && !isString(data[i]) &&
 		 (!isdigit(data[i]) || i > begin); i++, column++);
 
 	if(i > begin)
@@ -231,10 +247,8 @@ bool Cap::TokenizedSource::parseOperator(size_t& i)
 	size_t begin = i;
 	for(; i < data.length() && isOperator(data[i]); i++, column++)
 	{
-		DBG_LOG("operator char '%c'", data[i]);
-		if(parseComment(i))
-			return true;
-
+		//	Since all comments use operators, check	for comments here
+		if(parseComment(i)) return true;
 		else addToken(TokenType::Operator, i, i + 1);
 	}
 
