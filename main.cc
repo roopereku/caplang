@@ -1,6 +1,6 @@
-#include "TokenizedSource.hh"
+#include "Program.hh"
 
 int main(int argc, char** argv)
 {
-	Cap::TokenizedSource t(argv[1]);
+	Cap::Program p(argv[1]);
 }

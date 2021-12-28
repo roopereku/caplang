@@ -41,7 +41,7 @@ static bool errorOut()
 
 Cap::TokenizedSource::TokenizedSource(const std::string& path)
 {
-	DBG_LOG("Reading file '%s'", path);
+	DBG_LOG("Reading file '%s'", path.c_str());
 	std::ifstream file(path);
 
 	if(!file.is_open())
