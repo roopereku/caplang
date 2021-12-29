@@ -35,9 +35,12 @@ struct Token
 	const char* getTypeString() const;
 	std::string getString() const;
 
+	bool stringEquals(const char* str) const;
+	bool tokenEquals(Token* token) const;
+
 	char* begin;
-	unsigned length;
 	TokenType type;
+	unsigned length;
 
 	unsigned line;
 	unsigned column;
