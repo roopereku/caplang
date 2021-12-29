@@ -12,9 +12,11 @@ class TokenizedSource
 {
 public:
 	TokenizedSource(const std::string& path);
+	bool matchBraces();
 
 private:
 	void addToken(TokenType type, size_t begin, size_t end);
+	bool matchBrace(size_t i, char match);
 	void tokenize();
 
 	bool parseIdentifier(size_t& i);

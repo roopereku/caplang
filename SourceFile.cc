@@ -3,6 +3,8 @@
 Cap::SourceFile::SourceFile(const std::string& path)
 	: tokens(path), root(nullptr, ScopeContext::Block)
 {
+	if(!tokens.matchBraces())
+		return;
 }
 
 bool Cap::SourceFile::validate()

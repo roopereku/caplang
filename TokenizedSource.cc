@@ -60,6 +60,71 @@ Cap::TokenizedSource::TokenizedSource(const std::string& path)
 	tokenize();
 }
 
+bool Cap::TokenizedSource::matchBraces()
+{
+	for(size_t i = 0; i < tokens.size(); i++)
+	{
+		char match;
+		switch(tokens[i].type)
+		{
+			case TokenType::CurlyBrace: match = '}'; break;
+			case TokenType::Parenthesis: match = ')'; break;
+			case TokenType::SquareBracket: match = ']'; break;
+
+			default: continue;
+		}
+
+		//	Is the current token a closing brace?
+		if(*tokens[i].begin == match)
+		{
+			//	Does the closing brace have a match?
+			if(tokens[i].length > 0)
+			{
+				printf("Error: Unnecessary '%c' on line %u at column %u\n", match, tokens[i].line, tokens[i].column);
+				return false;
+			}
+		}
+
+		//	The current token is an opening brace but does it have a match?
+		else if(!matchBrace(i, match))
+			return false;
+	}
+
+	return true;
+}
+
+bool Cap::TokenizedSource::matchBrace(size_t i, char match)
+{
+	int depth = 1;
+	size_t begin = i;
+
+	for(i++; i < tokens.size() && depth > 0; i++)
+	{
+		//	Is the current token a brace?
+		if(tokens[i].type == tokens[begin].type)
+		{
+			//	Does the current brace match the opening brace
+			if(*tokens[i].begin == *tokens[begin].begin)
+				depth++;
+
+			//	Does the current brace match the closing brace
+			else if(*tokens[i].begin == match)
+				depth--;
+		}
+	}
+
+	if(depth > 0)
+	{
+		printf("Error: Unterminated '%c' on line %u at column %u\n", *tokens[begin].begin, tokens[begin].line, tokens[begin].column);
+		return false;
+	}
+
+	//	Tell the opening brace the range
+	tokens[begin].length = --i - begin - 1;
+	tokens[i].length = 0;
+	return true;
+}
+
 void Cap::TokenizedSource::addToken(TokenType type, size_t begin, size_t end)
 {
 	Token t;
