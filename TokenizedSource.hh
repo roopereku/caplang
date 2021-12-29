@@ -14,6 +14,16 @@ public:
 	TokenizedSource(const std::string& path);
 	bool matchBraces();
 
+	inline Token& operator[](size_t index)
+	{
+		return tokens[index];
+	}
+
+	inline size_t count()
+	{
+		return tokens.size();
+	}
+
 private:
 	void addToken(TokenType type, size_t begin, size_t end);
 	bool matchBrace(size_t i, char match);
