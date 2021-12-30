@@ -29,7 +29,7 @@ const std::vector <Cap::Filename> Cap::SourceFile::getImports() const
 	return imports;
 }
 
-bool Cap::SourceFile::isType(TokenType t, size_t& i)
+bool Cap::SourceFile::isToken(TokenType t, size_t& i)
 {
 	return i < tokens.count() && tokens[i].type == t;
 }

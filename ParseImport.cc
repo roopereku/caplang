@@ -3,16 +3,16 @@
 
 bool Cap::SourceFile::parseImport(size_t& i)
 {
-	if(!isType(TokenType::Identifier, i) || !tokens[i].stringEquals("import"))
+	if(!isToken(TokenType::Identifier, i) || !tokens[i].stringEquals("import"))
 		return false;
 
 	i++;
 
 	//	When there's a curly brace, there could be multiple filenames
-	if(isType(TokenType::CurlyBrace, i))
+	if(isToken(TokenType::CurlyBrace, i))
 	{
 		//	Loop until the matching curly brace is found
-		for(i++; !isType(TokenType::CurlyBrace, i); i++)
+		for(i++; !isToken(TokenType::CurlyBrace, i); i++)
 		{
 			//	The return value is validity so stop if there were errors
 			if(!parseImportFilename(i))
@@ -44,21 +44,21 @@ bool Cap::SourceFile::parseImport(size_t& i)
 
 bool Cap::SourceFile::parseImportFilename(size_t& i)
 {
-	if(isType(TokenType::String, i))
+	if(isToken(TokenType::String, i))
 	{
 		//	Add a filename that is not in the path
 		imports.emplace_back(false);
 		imports.back().name += tokens[i].getString();
 	}
 
-	else if(isType(TokenType::Identifier, i))
+	else if(isToken(TokenType::Identifier, i))
 	{
 		//	Add a filename that is in the path
 		imports.emplace_back(true);
 
 		for(; i < tokens.count(); i++)
 		{
-			if(isType(TokenType::Operator, i))
+			if(isToken(TokenType::Operator, i))
 			{
 				//	Dots are the only operators allowed in filenames found in the path
 				if(*tokens[i].begin != '.')
@@ -68,17 +68,17 @@ bool Cap::SourceFile::parseImportFilename(size_t& i)
 				size_t next = i + 1;
 
 				//	Make sure that the dot isn't the end of the filename
-				if(!isType(TokenType::Identifier, next))
+				if(!isToken(TokenType::Identifier, next))
 					return showExpected("a filename or directory after '.'", next);
 			}
 
-			else if(isType(TokenType::Identifier, i))
+			else if(isToken(TokenType::Identifier, i))
 			{
 				imports.back().name += tokens[i].getString();
 				size_t next = i + 1;
 
 				//	If there isn't an operator after a filename/directory, stop parsing
-				if(!isType(TokenType::Operator, next))
+				if(!isToken(TokenType::Operator, next))
 					break;
 			}
 

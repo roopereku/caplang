@@ -20,7 +20,7 @@ private:
 	bool parseImport(size_t& i);
 	bool parseImportFilename(size_t& i);
 
-	bool isType(TokenType t, size_t& i);
+	bool isToken(TokenType t, size_t& i);
 	bool showExpected(const char* msg, size_t& i);
 
 	bool valid = true;
