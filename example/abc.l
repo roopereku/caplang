@@ -1,3 +1,1 @@
-func main(args = list of string)
-{
-}
+import { SDL2, Net.TCP, "file", "../file2" }
