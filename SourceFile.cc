@@ -2,7 +2,7 @@
 #include "Debug.hh"
 
 Cap::SourceFile::SourceFile(const std::string& path)
-	: tokens(path), root(nullptr, ScopeContext::Block)
+	: tokens(path), root(nullptr, nullptr, ScopeContext::Block)
 {
 	if(!tokens.matchBraces())
 		return;
@@ -11,7 +11,7 @@ Cap::SourceFile::SourceFile(const std::string& path)
 	{
 		DBG_LOG("token %lu is '%s'", i, tokens[i].getString().c_str());
 
-		if(parseImport(i))
+		if(parseImport(i, root))
 		{
 			if(!valid)
 				return;

@@ -17,8 +17,10 @@ public:
 	const std::vector <Filename> getImports() const;
 
 private:
-	bool parseImport(size_t& i);
+	bool parseImport(size_t& i, Scope& current);
 	bool parseImportFilename(size_t& i);
+
+	bool parseType(size_t& i, Scope& current);
 
 	bool isToken(TokenType t, size_t& i);
 	bool showExpected(const char* msg, size_t& i);
