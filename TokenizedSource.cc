@@ -98,6 +98,8 @@ bool Cap::TokenizedSource::matchBrace(size_t i, char match)
 	int depth = 1;
 	size_t begin = i;
 
+	//	TODO Handle input like '{(})'
+
 	for(i++; i < tokens.size() && depth > 0; i++)
 	{
 		//	Is the current token a brace?
