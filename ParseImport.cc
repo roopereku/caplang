@@ -1,10 +1,19 @@
 #include "SourceFile.hh"
 #include "Debug.hh"
 
-bool Cap::SourceFile::parseImport(size_t& i)
+bool Cap::SourceFile::parseImport(size_t& i, Scope& current)
 {
 	if(!isToken(TokenType::Identifier, i) || !tokens[i].stringEquals("import"))
 		return false;
+
+	/*	Though having an import not in the global scope is totally
+	 *	functional, it looks bad and doesn't make much sense */
+	if(current.parent)
+	{
+		printf("Error: Imports should only appear in the global scope\n");
+		valid = false;
+		return true;
+	}
 
 	i++;
 
