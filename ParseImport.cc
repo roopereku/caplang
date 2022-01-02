@@ -3,8 +3,11 @@
 
 bool Cap::SourceFile::parseImport(size_t& i, Scope& current)
 {
-	if(!isToken(TokenType::Identifier, i) || !tokens[i].stringEquals("import"))
+	if(!tokens[i].stringEquals("import"))
 		return false;
+
+	else if(inExpression)
+		return true;
 
 	/*	Though having an import not in the global scope is totally
 	 *	functional, it looks bad and doesn't make much sense */

@@ -1,1 +1,3 @@
-import SDL2
+type list
+{
+}

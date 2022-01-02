@@ -20,14 +20,17 @@ enum class ScopeContext
 
 struct Scope
 {
-	Scope(Token* name, Scope* parent, ScopeContext ctx)
-		: name(name), parent(parent), ctx(ctx)
+	Scope(Token* name, Scope* parent, ScopeContext ctx, size_t begin, size_t end)
+		: name(name), parent(parent), ctx(ctx), begin(begin), end(end)
 	{
 	}
 
 	Token* name;
 	Scope* parent;
 	ScopeContext ctx;
+
+	size_t begin;
+	size_t end;
 	
 	std::vector <Scope> types;
 	std::vector <Variable> variables;

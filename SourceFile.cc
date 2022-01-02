@@ -2,16 +2,16 @@
 #include "Debug.hh"
 
 Cap::SourceFile::SourceFile(const std::string& path)
-	: tokens(path), root(nullptr, nullptr, ScopeContext::Block)
+	: tokens(path), root(nullptr, nullptr, ScopeContext::Block, 0, tokens.count())
 {
+	//	TODO exclude comments from tokens
+
 	if(!tokens.matchBraces())
 		return;
 
-	for(size_t i = 0; i < tokens.count(); i++)
+	for(size_t i = 0; i < root.end; i++)
 	{
-		DBG_LOG("token %lu is '%s'", i, tokens[i].getString().c_str());
-
-		if(parseImport(i, root))
+		if(parseExpression(i, root))
 		{
 			if(!valid)
 				return;
@@ -34,9 +34,9 @@ bool Cap::SourceFile::isToken(TokenType t, size_t& i)
 	return i < tokens.count() && tokens[i].type == t;
 }
 
-bool Cap::SourceFile::showExpected(const char* msg, size_t& i)
+bool Cap::SourceFile::showExpected(const std::string& msg, size_t& i)
 {
-	printf("Error: Expected %s\nInstead got ", msg);
+	printf("Error: Expected %s\nInstead got ", msg.c_str());
 	if(i < tokens.count())
 	{
 		printf("'%s' '%s'\n",

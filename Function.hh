@@ -12,6 +12,10 @@ namespace Cap
 struct Scope;
 struct Function
 {
+	Function(Token* name) : name(name)
+	{
+	}
+
 	Token* name;
 	Token* returnType;
 

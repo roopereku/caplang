@@ -20,12 +20,19 @@ private:
 	bool parseImport(size_t& i, Scope& current);
 	bool parseImportFilename(size_t& i);
 
+	bool parseExpression(size_t& i, Scope& current);
+	bool parseExpressionOrder(size_t begin, size_t end, Scope& current);
+
+	bool parseVariable(size_t& i, Scope& current);
+	bool parseFunction(size_t& i, Scope& current);
 	bool parseType(size_t& i, Scope& current);
 
+	bool showExpected(const std::string& msg, size_t& i);
 	bool isToken(TokenType t, size_t& i);
-	bool showExpected(const char* msg, size_t& i);
 
+	bool inExpression = false;
 	bool valid = true;
+
 	std::vector <Filename> imports;
 	TokenizedSource tokens;
 	Scope root;
