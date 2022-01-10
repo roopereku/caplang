@@ -13,8 +13,7 @@ bool Cap::SourceFile::parseImport(size_t& i, Scope& current)
 	 *	functional, it looks bad and doesn't make much sense */
 	if(current.parent)
 	{
-		printf("Error: Imports should only appear in the global scope\n");
-		valid = false;
+		ERROR_LOG(tokens[i], "Imports should only appear in the global scope\n");
 		return true;
 	}
 

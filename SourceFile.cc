@@ -36,7 +36,7 @@ bool Cap::SourceFile::isToken(TokenType t, size_t& i)
 
 bool Cap::SourceFile::showExpected(const std::string& msg, size_t& i)
 {
-	printf("Error: Expected %s\nInstead got ", msg.c_str());
+	ERROR_LOG(tokens[i], "Expected %s\nInstead got ", msg.c_str());
 	if(i < tokens.count())
 	{
 		printf("'%s' '%s'\n",
@@ -45,7 +45,5 @@ bool Cap::SourceFile::showExpected(const std::string& msg, size_t& i)
 	}
 
 	else printf("end of file\n");
-
-	valid = false;
 	return true;
 }
