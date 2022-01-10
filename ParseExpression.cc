@@ -9,6 +9,9 @@ bool Cap::SourceFile::parseExpression(size_t& i, Scope& current)
 	inExpression = !isToken(TokenType::Identifier, i);
 	size_t start = i;
 
+	//	Was the last token a double operator such as '++ä
+	bool lastWasIncDec = false;
+
 	for(; i < current.end; i++)
 	{
 		size_t currentLine = tokens[i].line;
@@ -52,11 +55,21 @@ bool Cap::SourceFile::parseExpression(size_t& i, Scope& current)
 		//	Check for operators
 		else
 		{
+			size_t next = i + 1;
+
 			DBG_LOG("Expression: Operator '%s'", tokens[i].getString().c_str());
-			bool possiblyUnary = i == start || tokens[i - 1].type == TokenType::Operator;
+
+			/*	An operator can be an unary operator if there's an operator before it,
+			 *	and no operator after it */
+			bool possiblyUnary =	!lastWasIncDec &&
+									(i == start ||
+									tokens[i - 1].type == TokenType::Operator) &&
+									!isToken(TokenType::Operator, next);
+
+			lastWasIncDec = false;
+			DBG_LOG("Unary possibly %d", possiblyUnary);
 
 			//	Is the next token the same operator as this one
-			size_t next = i + 1;
 			if(isToken(TokenType::Operator, next) && *tokens[next].begin == *tokens[i].begin)
 			{
 				//	FIXME When not in parenthesis, check if the line changes
@@ -82,7 +95,6 @@ bool Cap::SourceFile::parseExpression(size_t& i, Scope& current)
 						case '=': break;
 						case '*': break;
 
-						//	TODO make sure that there are identifiers on both sides
 						case '.': break;
 
 						default:
@@ -90,18 +102,62 @@ bool Cap::SourceFile::parseExpression(size_t& i, Scope& current)
 							return true;
 					}
 
+					lastWasIncDec = true;
 					i = next;
 					continue;
 				}
 			}
 
+			/*	If there were no repeating operators and there was the possibility
+			 *	of an unary operator, it is an unary operator */
 			else if(possiblyUnary)
 			{
 				DBG_LOG("Unary '%c'", *tokens[i].begin);
+
+				switch(*tokens[i].begin)
+				{
+					case '+': break;
+					case '-': break;
+					case '@': break;
+					case '!': break;
+					case '~': break;
+
+					default:
+						ERROR_LOG(tokens[i], "Invalid unary operator '%c'\n", *tokens[i].begin);
+						return true;
+				}
+
 				continue;
 			}
 
 			DBG_LOG("Normal operator '%c'", *tokens[i].begin);
+
+			switch(*tokens[i].begin)
+			{
+				case '+': break;
+				case '-': break;
+				case '*': break;
+				case '/': break;
+
+				case '?': break;
+				case '<': break;
+				case '>': break;
+				case '!': break;
+
+				case '%': break;
+				case '=': break;
+
+				case '^': break;
+				case '&': break;
+				case '|': break;
+
+				//	TODO make sure that there are identifiers on both sides
+				case '.': break;
+
+				default:
+					ERROR_LOG(tokens[i], "Invalid operator '%c'\n", *tokens[i].begin);
+					return true;
+			}
 		}
 	}
 
