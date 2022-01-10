@@ -14,20 +14,10 @@ public:
 	TokenizedSource(const std::string& path);
 	bool matchBraces();
 
-	inline Token& operator[](size_t index)
-	{
-		return tokens[index];
-	}
-
-	inline size_t count()
-	{
-		return tokens.size();
-	}
-
-	inline size_t getIndex(size_t tokenIndex)
-	{
-		return tokens[tokenIndex].begin - &data[0];
-	}
+	inline size_t count() { return tokens.size(); }
+	inline const char* getPath() { return path.c_str(); }
+	inline Token& operator[](size_t index) { return tokens[index]; }
+	inline size_t getIndex(size_t tokenIndex) { return tokens[tokenIndex].begin - &data[0]; }
 
 private:
 	void addToken(TokenType type, size_t begin, size_t end);
@@ -49,7 +39,9 @@ private:
 	bool parseDecimal(size_t& i);
 	bool parseBinary(size_t& i);
 
+	std::string path;
 	std::string data;
+
 	std::vector <Token> tokens;
 };
 
