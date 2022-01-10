@@ -24,6 +24,11 @@ public:
 		return tokens.size();
 	}
 
+	inline size_t getIndex(size_t tokenIndex)
+	{
+		return tokens[tokenIndex].begin - &data[0];
+	}
+
 private:
 	void addToken(TokenType type, size_t begin, size_t end);
 	bool matchBrace(size_t i, char match);
