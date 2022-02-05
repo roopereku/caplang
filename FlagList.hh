@@ -29,6 +29,11 @@ public:
 		return (value & result) == result;
 	}
 
+	constexpr bool empty() const
+	{
+		return value == 0;
+	}
+
 private:
 	unsigned value = 0;
 };
