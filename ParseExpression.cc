@@ -1,6 +1,50 @@
 #include "SourceFile.hh"
 #include "Debug.hh"
 
+#include <functional>
+#include <sstream>
+
+const char* nodeTypeString(Cap::SyntaxTreeNode::Type t)
+{
+	switch(t)
+	{
+		case Cap::SyntaxTreeNode::Type::Assign: return "Assign";
+
+		case Cap::SyntaxTreeNode::Type::Or: return "Or";
+		case Cap::SyntaxTreeNode::Type::And: return "And";
+
+		case Cap::SyntaxTreeNode::Type::BitwiseOR: return "BitwiseOR";
+		case Cap::SyntaxTreeNode::Type::BitwiseAND: return "BitwiseAND";
+		case Cap::SyntaxTreeNode::Type::BitwiseNOT: return "BitwiseNOT";
+		case Cap::SyntaxTreeNode::Type::BitwiseXOR: return "BitwiseXOR";
+		case Cap::SyntaxTreeNode::Type::BitwiseShiftLeft: return "BitwiseShiftLeft";
+		case Cap::SyntaxTreeNode::Type::BitwiseShiftRight: return "BitwiseShiftRight";
+
+		case Cap::SyntaxTreeNode::Type::Equal: return "Equal";
+		case Cap::SyntaxTreeNode::Type::Inequal: return "Inequal";
+
+		case Cap::SyntaxTreeNode::Type::Not: return "Not";
+		case Cap::SyntaxTreeNode::Type::Less: return "Less";
+		case Cap::SyntaxTreeNode::Type::Greater: return "Greater";
+		case Cap::SyntaxTreeNode::Type::LessEqual: return "LessEqual";
+		case Cap::SyntaxTreeNode::Type::GreaterEqual: return "GreaterEqual";
+
+		case Cap::SyntaxTreeNode::Type::Addition: return "Addition";
+		case Cap::SyntaxTreeNode::Type::Subtraction: return "Subtraction";
+		case Cap::SyntaxTreeNode::Type::Multiplication: return "Multiplication";
+		case Cap::SyntaxTreeNode::Type::Division: return "Division";
+		case Cap::SyntaxTreeNode::Type::Modulus: return "Modulus";
+
+		case Cap::SyntaxTreeNode::Type::Access: return "Access";
+		case Cap::SyntaxTreeNode::Type::Reference: return "Reference";
+		case Cap::SyntaxTreeNode::Type::UnaryPositive: return "UnaryPositive";
+		case Cap::SyntaxTreeNode::Type::UnaryNegative: return "UnaryNegative";
+		case Cap::SyntaxTreeNode::Type::Ternary: return "Ternary";
+		case Cap::SyntaxTreeNode::Type::Condition: return "Condition";
+		case Cap::SyntaxTreeNode::Type::Value: return "Value";
+	}
+}
+
 bool Cap::SourceFile::parseExpression(size_t& i, Scope& current)
 {
 	/*	If the first token is an identifier, we could have a
@@ -12,6 +56,8 @@ bool Cap::SourceFile::parseExpression(size_t& i, Scope& current)
 	//	Was the last token a double operator such as '++ä
 	bool lastWasIncDec = false;
 	bool lastWasOperator = false;
+
+	std::vector <ExpressionPart> parts;
 
 	for(; i < current.end; i++)
 	{
@@ -28,6 +74,9 @@ bool Cap::SourceFile::parseExpression(size_t& i, Scope& current)
 
 		else if(tokens[i].type == TokenType::Identifier)
 		{
+			if(i != start && !lastWasOperator)
+				return showExpected("an operator before identifier", i);
+
 			size_t old = i;
 
 			//	Are there any declarations or imports
@@ -47,21 +96,28 @@ bool Cap::SourceFile::parseExpression(size_t& i, Scope& current)
 			inExpression = true;
 			lastWasOperator = false;
 
-			//	TODO add the identifier
 			DBG_LOG("Expression: Identifier '%s'", tokens[i].getString().c_str());
+			parts.push_back({ SyntaxTreeNode::Type::Value, &tokens[i] });
 		}
 
 		//	Check for other values
 		else if(tokens[i].type != TokenType::Operator)
 		{
-			//	TODO add the value
+			if(i != start && !lastWasOperator)
+				return showExpected("an operator before value", i);
+
 			DBG_LOG("Expression: %s '%s'", tokens[i].getTypeString(), tokens[i].getString().c_str());
 			lastWasOperator = false;
+			parts.push_back({ SyntaxTreeNode::Type::Value, &tokens[i] });
 		}
 
 		//	Check for operators
 		else
 		{
+			if(lastWasOperator)
+				return showExpected("a value after an operator", i);
+
+			SyntaxTreeNode::Type type;
 			lastWasOperator = true;
 
 			size_t next = i + 1;
@@ -138,17 +194,18 @@ bool Cap::SourceFile::parseExpression(size_t& i, Scope& current)
 
 				switch(*tokens[i].begin)
 				{
-					case '+': break;
-					case '-': break;
-					case '@': break;
-					case '!': break;
-					case '~': break;
+					case '+': type = SyntaxTreeNode::Type::UnaryPositive; break;
+					case '-' :type = SyntaxTreeNode::Type::UnaryNegative; break;
+					case '@': type = SyntaxTreeNode::Type::Reference; break;
+					case '!': type = SyntaxTreeNode::Type::Not; break;
+					case '~': type = SyntaxTreeNode::Type::BitwiseNOT; break;
 
 					default:
 						ERROR_LOG(tokens[i], "Invalid unary operator '%c'\n", *tokens[i].begin);
 						return true;
 				}
 
+				parts.push_back({ type, &tokens[i] });
 				continue;
 			}
 
@@ -160,10 +217,10 @@ bool Cap::SourceFile::parseExpression(size_t& i, Scope& current)
 
 			switch(*tokens[i].begin)
 			{
-				case '+': break;
-				case '-': break;
-				case '*': break;
-				case '/': break;
+				case '+': type = SyntaxTreeNode::Type::Addition; break;
+				case '-': type = SyntaxTreeNode::Type::Subtraction; break;
+				case '*': type = SyntaxTreeNode::Type::Multiplication; break;
+				case '/': type = SyntaxTreeNode::Type::Division; break;
 
 				case '<': isComparison = true; break;
 				case '>': isComparison = true; break;
@@ -186,9 +243,9 @@ bool Cap::SourceFile::parseExpression(size_t& i, Scope& current)
 				 *	that the next token is '=' */
 				case '=': nextEqual = true; break;
 
-				case '^': break;
-				case '&': break;
-				case '|': break;
+				case '^': type = SyntaxTreeNode::Type::BitwiseXOR; break;
+				case '&': type = SyntaxTreeNode::Type::BitwiseAND; break;
+				case '|': type = SyntaxTreeNode::Type::BitwiseOR; break;
 
 				case '.':
 				{
@@ -199,6 +256,7 @@ bool Cap::SourceFile::parseExpression(size_t& i, Scope& current)
 					else if(!isToken(TokenType::Identifier, next))
 						return showExpected("an identifier after '.'", next);
 
+					type = SyntaxTreeNode::Type::Access;
 					break;
 				}
 
@@ -207,6 +265,7 @@ bool Cap::SourceFile::parseExpression(size_t& i, Scope& current)
 					return true;
 			}
 
+			size_t old = i;
 			if(nextEqual)
 			{
 				if(isComparison)
@@ -226,14 +285,144 @@ bool Cap::SourceFile::parseExpression(size_t& i, Scope& current)
 				if(*tokens[i].begin != '=')
 					i = next;
 			}
+
+			parts.push_back({ type, &tokens[old] });
 		}
 	}
 
 	inExpression = false;
+	SyntaxTreeNode n(nullptr);
+
+	DBG_LOG("Expression parts %s", "");
+	for(auto& part : parts)
+		DBG_LOG("Part '%s' '%s'", nodeTypeString(part.type), part.value->getString().c_str());
+
+	parseExpressionOrder(parts, parts.size() - 1, 0, 0, &n);
+
+	std::function <void(SyntaxTreeNode*, unsigned)> recursiveListing;
+	recursiveListing = [&recursiveListing](SyntaxTreeNode* node, unsigned indent)
+	{
+		DBG_LOG("%*s %s '%s'", indent, "", nodeTypeString(node->type), node->value->getString().c_str());
+
+		if(node->left)
+		{
+			DBG_LOG("%*s Left:", indent, "");
+			recursiveListing(node->left.get(), indent + 2);
+		}
+
+		if(node->right)
+		{
+			DBG_LOG("%*s right:", indent, "");
+			recursiveListing(node->right.get(), indent + 2);
+		}
+	};
+
+	DBG_LOG("----------- LISTING NODES -------------%s", "");
+	recursiveListing(&n, 0);
+
+	std::function <double(SyntaxTreeNode* n)> eval;
+	eval = [&eval](SyntaxTreeNode* n) -> double
+	{
+		DBG_LOG("Eval node %s '%s'", nodeTypeString(n->type), n->value->getString().c_str());
+		if(n->type == SyntaxTreeNode::Type::Value)
+		{
+			double v;
+			std::stringstream(n->value->getString()) >> v;
+			return v;
+		}
+
+		switch(n->type)
+		{
+			case SyntaxTreeNode::Type::Multiplication:
+				return eval(n->left.get()) * eval(n->right.get());
+
+			case SyntaxTreeNode::Type::Subtraction:
+				return eval(n->left.get()) - eval(n->right.get());
+
+			case SyntaxTreeNode::Type::Addition:
+				return eval(n->left.get()) + eval(n->right.get());
+
+			case SyntaxTreeNode::Type::Division:
+				return eval(n->left.get()) / eval(n->right.get());
+
+			default: return 0.0;
+		}
+	};
+
+	printf("%lf\n", eval(&n));
+
 	return true;
 }
 
-bool Cap::SourceFile::parseExpressionOrder(size_t begin, size_t end, Scope& current)
+void Cap::SourceFile::parseExpressionOrder(std::vector <ExpressionPart>& parts, size_t offset,
+										   size_t end, size_t priority, SyntaxTreeNode* current)
 {
-	return true;
+	//	Uncomment if something goes horribly wrong :-)
+	//priority = 0;
+
+	//	Go through each priority
+	for(OperatorPrioty ops; !(ops = operatorsAtPriority(priority)).empty(); priority++)
+	{
+		//	Go through the parts from right to left
+		for(size_t i = offset; end == 0 ? (i < parts.size()) : (i >= end); i--)
+		{
+			//	If the operator/value is irrelevant, skip it
+			if(!ops.contains(parts[i].type) || parts[i].used)
+				continue;
+
+			current->type = parts[i].type;
+			current->value = parts[i].value;
+			parts[i].used = true;
+
+			//	The value on the left side is used if no unused operator is before it
+			if(i - 2 >= parts.size() || parts[i - 2].used)
+			{
+				current->left = std::make_shared <SyntaxTreeNode> (current, parts[i - 1].value, SyntaxTreeNode::Type::Value);
+				parts[i - 1].used = true;
+			}
+
+			else
+			{
+				//	Initialize the left branch and recursively fill it
+				current->left = std::make_shared <SyntaxTreeNode> (current);
+				parseExpressionOrder(parts, i - 1, 0, priority, current->left.get());
+			}
+
+			//	The value on the right side is used if no unused operator is after it
+			if(i + 2 >= parts.size() || parts[i + 2].used)
+			{
+				current->right = std::make_shared <SyntaxTreeNode> (current, parts[i + 1].value, SyntaxTreeNode::Type::Value);
+				parts[i - 1].used = true;
+			}
+
+			else
+			{
+				//	Initialize the right branch and recursively fill it
+				current->right = std::make_shared <SyntaxTreeNode> (current);
+				parseExpressionOrder(parts, offset - 1, i, priority, current->right.get());
+			}
+		}
+	}
+}
+
+Cap::OperatorPrioty Cap::operatorsAtPriority(size_t priority)
+{
+	using T = SyntaxTreeNode::Type;
+
+	switch(priority)
+	{
+		case 0: return OperatorPrioty(T::Assign);
+		case 1: return OperatorPrioty(T::BitwiseOR);
+		case 2: return OperatorPrioty(T::BitwiseAND);
+		case 3: return OperatorPrioty(T::BitwiseXOR);
+		case 4: return OperatorPrioty(T::Equal, T::Inequal);
+		case 5: return OperatorPrioty(T::Less, T::Greater, T::LessEqual, T::GreaterEqual);
+		case 6: return OperatorPrioty(T::BitwiseShiftLeft, T::BitwiseShiftRight);
+		case 7: return OperatorPrioty(T::Addition, T::Subtraction);
+		case 8: return OperatorPrioty(T::Multiplication, T::Division, T::Modulus);
+		case 9: return OperatorPrioty(T::Access);
+		case 10: return OperatorPrioty(T::UnaryPositive, T::UnaryNegative, T::Not, T::BitwiseNOT, T::Reference);
+	}
+
+	return OperatorPrioty();
 }

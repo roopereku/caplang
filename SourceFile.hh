@@ -2,6 +2,7 @@
 #define SOURCE_FILE_HEADER
 
 #include "TokenizedSource.hh"
+#include "Expression.hh"
 #include "Filename.hh"
 #include "Scope.hh"
 
@@ -26,7 +27,8 @@ private:
 	bool parseImportFilename(size_t& i);
 
 	bool parseExpression(size_t& i, Scope& current);
-	bool parseExpressionOrder(size_t begin, size_t end, Scope& current);
+	void parseExpressionOrder(std::vector <ExpressionPart>& parts, size_t offset,
+							  size_t end, size_t priority, SyntaxTreeNode* current);
 
 	bool parseVariable(size_t& i, Scope& current);
 	bool parseFunction(size_t& i, Scope& current);
