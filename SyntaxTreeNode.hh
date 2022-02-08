@@ -38,12 +38,14 @@ struct SyntaxTreeNode
 		Multiplication,
 		Division,
 		Modulus,
+		Power,
 
 		Access,
 		Reference,
 		UnaryPositive,
 		UnaryNegative,
 
+		Range,
 		Ternary,
 		Condition,
 		Value,

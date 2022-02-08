@@ -34,6 +34,7 @@ const char* nodeTypeString(Cap::SyntaxTreeNode::Type t)
 		case Cap::SyntaxTreeNode::Type::Multiplication: return "Multiplication";
 		case Cap::SyntaxTreeNode::Type::Division: return "Division";
 		case Cap::SyntaxTreeNode::Type::Modulus: return "Modulus";
+		case Cap::SyntaxTreeNode::Type::Power: return "Power";
 
 		case Cap::SyntaxTreeNode::Type::Access: return "Access";
 		case Cap::SyntaxTreeNode::Type::Reference: return "Reference";
@@ -53,10 +54,11 @@ bool Cap::SourceFile::parseExpression(size_t& i, Scope& current)
 	inExpression = !isToken(TokenType::Identifier, i);
 	size_t start = i;
 
-	//	Was the last token a double operator such as '++ä
+	//	Was the last token a double operator such as '++'
 	bool lastWasIncDec = false;
 	bool lastWasOperator = false;
 
+	//	TODO use parts.back() instead of tokens[i - 1]
 	std::vector <ExpressionPart> parts;
 
 	for(; i < current.end; i++)
@@ -103,23 +105,23 @@ bool Cap::SourceFile::parseExpression(size_t& i, Scope& current)
 		//	Check for other values
 		else if(tokens[i].type != TokenType::Operator)
 		{
-			if(i != start && !lastWasOperator)
+			if(i > start && !lastWasOperator)
 				return showExpected("an operator before value", i);
 
 			DBG_LOG("Expression: %s '%s'", tokens[i].getTypeString(), tokens[i].getString().c_str());
 			lastWasOperator = false;
 			parts.push_back({ SyntaxTreeNode::Type::Value, &tokens[i] });
+
+			if(tokens[i].type == TokenType::Parenthesis)
+			{
+				DBG_LOG("Parenthesis at %lu - %lu", i, i + tokens[i].length);
+				i += tokens[i].length + 1;
+			}
 		}
 
 		//	Check for operators
 		else
 		{
-			if(lastWasOperator)
-				return showExpected("a value after an operator", i);
-
-			SyntaxTreeNode::Type type;
-			lastWasOperator = true;
-
 			size_t next = i + 1;
 			DBG_LOG("Expression: Operator '%s'", tokens[i].getString().c_str());
 
@@ -130,6 +132,11 @@ bool Cap::SourceFile::parseExpression(size_t& i, Scope& current)
 									(i == start ||
 									tokens[i - 1].type == TokenType::Operator) &&
 									!isToken(TokenType::Operator, next);
+			if(!possiblyUnary && lastWasOperator)
+				return showExpected("a value after an operator", i);
+
+			SyntaxTreeNode::Type type;
+			lastWasOperator = true;
 
 			//	Is the operator '<<', '>>' or '**'
 			bool extendableDouble = false;
@@ -140,7 +147,7 @@ bool Cap::SourceFile::parseExpression(size_t& i, Scope& current)
 			if(isToken(TokenType::Operator, next) && *tokens[next].begin == *tokens[i].begin)
 			{
 				//	FIXME When not in parenthesis, check if the line changes
-				size_t gap = tokens.getIndex(next) - tokens.getIndex(i) - 1;
+				size_t gap = tokens.getBeginIndex(next) - tokens.getBeginIndex(i) - 1;
 				//DBG_LOG("Gap is %lu", gap);
 
 				if(gap == 0)
@@ -149,22 +156,25 @@ bool Cap::SourceFile::parseExpression(size_t& i, Scope& current)
 
 					switch(*tokens[next].begin)
 					{
-						//	Make sure that there's an identifiers on the appropriate side
+						//	TODO Make sure that there's an identifiers on the appropriate side
 						case '+': case '-':
 						{
+							ERROR_LOG(tokens[next], "Unimplemented '%c%c'", *tokens[next].begin, *tokens[next].begin);
+							return true;
+
 							lastWasIncDec = true;
 							lastWasOperator = false;
 							break;
 						}
 
-						case '*': extendableDouble = true; break;
-						case '<': extendableDouble = true; break;
-						case '>': extendableDouble = true; break;
-						case '&': break;
-						case '|': break;
-						case '=': break;
+						case '<': type = SyntaxTreeNode::Type::BitwiseShiftLeft; extendableDouble = true; break;
+						case '>': type = SyntaxTreeNode::Type::BitwiseShiftRight; extendableDouble = true; break;
+						case '*': type = SyntaxTreeNode::Type::Power; extendableDouble = true; break;
+						case '=': type = SyntaxTreeNode::Type::Equal; break;
+						case '&': type = SyntaxTreeNode::Type::And; break;
+						case '|': type = SyntaxTreeNode::Type::Or; break;
 
-						case '.': break;
+						case '.': type = SyntaxTreeNode::Type::Range; break;
 
 						default:
 							ERROR_LOG(tokens[i], "Invalid operator '%c%c'\n", *tokens[i].begin, *tokens[i].begin);
@@ -215,54 +225,61 @@ bool Cap::SourceFile::parseExpression(size_t& i, Scope& current)
 
 			bool isComparison = false;
 
-			switch(*tokens[i].begin)
+			//	If a double operator is already detected, this switch case is irrelevant
+			if(!extendableDouble)
 			{
-				case '+': type = SyntaxTreeNode::Type::Addition; break;
-				case '-': type = SyntaxTreeNode::Type::Subtraction; break;
-				case '*': type = SyntaxTreeNode::Type::Multiplication; break;
-				case '/': type = SyntaxTreeNode::Type::Division; break;
-
-				case '<': isComparison = true; break;
-				case '>': isComparison = true; break;
-				case '!': isComparison = true; break;
-
-				case '?':
+				switch(*tokens[i].begin)
 				{
-					if(nextEqual)
+					case '+': type = SyntaxTreeNode::Type::Addition; break;
+					case '-': type = SyntaxTreeNode::Type::Subtraction; break;
+					case '*': type = SyntaxTreeNode::Type::Multiplication; break;
+					case '/': type = SyntaxTreeNode::Type::Division; break;
+
+					case '<': isComparison = true; break;
+					case '>': isComparison = true; break;
+					case '!': isComparison = true; break;
+
+					case '?':
 					{
-						ERROR_LOG(tokens[i], "Invalid operator '?='");
+						if(nextEqual)
+						{
+							ERROR_LOG(tokens[i], "Invalid operator '?='");
+							return true;
+						}
+
+						//	TODO implement ternary operators
+						ERROR_LOG(tokens[next], "Unimplemented '%c%c'", *tokens[next].begin, *tokens[next].begin);
 						return true;
+						break;
 					}
 
-					break;
+					case '%': break;
+
+					/*	Since == is handled elsewhere, we have to pretend
+					 *	that the next token is '=' to use the same error checking */
+					case '=': type = SyntaxTreeNode::Type::Assign; nextEqual = true; break;
+
+					case '^': type = SyntaxTreeNode::Type::BitwiseXOR; break;
+					case '&': type = SyntaxTreeNode::Type::BitwiseAND; break;
+					case '|': type = SyntaxTreeNode::Type::BitwiseOR; break;
+
+					case '.':
+					{
+						//	FIXME show the earlier token
+						if(i == start || tokens[i - 1].type != TokenType::Identifier)
+							return showExpected("an identifier before '.'", i);
+
+						else if(!isToken(TokenType::Identifier, next))
+							return showExpected("an identifier after '.'", next);
+
+						type = SyntaxTreeNode::Type::Access;
+						break;
+					}
+
+					default:
+						ERROR_LOG(tokens[i], "Invalid operator '%c'\n", *tokens[i].begin);
+						return true;
 				}
-
-				case '%': break;
-
-				/*	Since == is handled elsewhere, we have to pretend
-				 *	that the next token is '=' */
-				case '=': nextEqual = true; break;
-
-				case '^': type = SyntaxTreeNode::Type::BitwiseXOR; break;
-				case '&': type = SyntaxTreeNode::Type::BitwiseAND; break;
-				case '|': type = SyntaxTreeNode::Type::BitwiseOR; break;
-
-				case '.':
-				{
-					//	FIXME show the earlier token
-					if(i == start || tokens[i - 1].type != TokenType::Identifier)
-						return showExpected("an identifier before '.'", i);
-
-					else if(!isToken(TokenType::Identifier, next))
-						return showExpected("an identifier after '.'", next);
-
-					type = SyntaxTreeNode::Type::Access;
-					break;
-				}
-
-				default:
-					ERROR_LOG(tokens[i], "Invalid operator '%c'\n", *tokens[i].begin);
-					return true;
 			}
 
 			size_t old = i;
@@ -270,39 +287,65 @@ bool Cap::SourceFile::parseExpression(size_t& i, Scope& current)
 			{
 				if(isComparison)
 				{
+					i = next;
 				}
 
 				else
 				{
 					//	Make sure that whatever is on the left is an identifier
 					//	FIXME show the earlier token
-					if(i == start || tokens[i - 1].type != TokenType::Identifier)
+					if(i == start || parts.back().value->type != TokenType::Identifier)
 						return showExpected("an identifier before assignment", i);
 
-					//	TODO Turn 'x +=' to 'x = x +'
-				}
+					//	Do nothing if the part is assignment
+					if(*tokens[i].begin != '=')
+					{
+						DBG_LOG("Extend '%s' with assignment", nodeTypeString(type)); 
+						//	For an example, turn "x += 2" to "x = x + 2" or "x <<= 2" to "x = x << 2"
+						parts.push_back({ SyntaxTreeNode::Type::Assign, &tokens[old] });
+						parts.push_back(parts[parts.size() - 2]);
 
-				if(*tokens[i].begin != '=')
-					i = next;
+						i = next;
+					}
+				}
 			}
 
 			parts.push_back({ type, &tokens[old] });
 		}
 	}
 
+	//	Forbid the expression ending with an operator
+	if(lastWasOperator)
+		return showExpected("a value after an operator", i);
+
 	inExpression = false;
 	SyntaxTreeNode n(nullptr);
 
+	if(parts.empty())
+	{
+		DBG_LOG("No parts%s", "");
+		return false;
+	}
+
 	DBG_LOG("Expression parts %s", "");
 	for(auto& part : parts)
-		DBG_LOG("Part '%s' '%s'", nodeTypeString(part.type), part.value->getString().c_str());
+		DBG_LOG("Part '%s' '%s' of type '%s'", nodeTypeString(part.type), part.value->getString().c_str(), part.value->getTypeString());
+
+	if(parts.size() == 1)
+	{
+		DBG_LOG("Single value%s", "");
+		n.type = SyntaxTreeNode::Type::Value;
+		n.value = parts[0].value;
+
+		return false;
+	}
 
 	parseExpressionOrder(parts, parts.size() - 1, 0, 0, &n);
 
 	std::function <void(SyntaxTreeNode*, unsigned)> recursiveListing;
 	recursiveListing = [&recursiveListing](SyntaxTreeNode* node, unsigned indent)
 	{
-		DBG_LOG("%*s %s '%s'", indent, "", nodeTypeString(node->type), node->value->getString().c_str());
+		DBG_LOG("%*s %s %s", indent, "", nodeTypeString(node->type), node->type == SyntaxTreeNode::Type::Value ? node->value->getString().c_str() : "");
 
 		if(node->left)
 		{
@@ -319,7 +362,6 @@ bool Cap::SourceFile::parseExpression(size_t& i, Scope& current)
 
 	DBG_LOG("----------- LISTING NODES -------------%s", "");
 	recursiveListing(&n, 0);
-
 	std::function <double(SyntaxTreeNode* n)> eval;
 	eval = [&eval](SyntaxTreeNode* n) -> double
 	{
@@ -351,6 +393,7 @@ bool Cap::SourceFile::parseExpression(size_t& i, Scope& current)
 
 	printf("%lf\n", eval(&n));
 
+
 	return true;
 }
 
@@ -359,6 +402,24 @@ void Cap::SourceFile::parseExpressionOrder(std::vector <ExpressionPart>& parts, 
 {
 	//	Uncomment if something goes horribly wrong :-)
 	//priority = 0;
+
+	std::function <void(SyntaxTreeNode*, unsigned)> recursiveListing;
+	recursiveListing = [&recursiveListing](SyntaxTreeNode* node, unsigned indent)
+	{
+		DBG_LOG("%*s %s %s", indent, "", nodeTypeString(node->type), node->type == SyntaxTreeNode::Type::Value ? node->value->getString().c_str() : "");
+
+		if(node->left)
+		{
+			DBG_LOG("%*s Left:", indent, "");
+			recursiveListing(node->left.get(), indent + 2);
+		}
+
+		if(node->right)
+		{
+			DBG_LOG("%*s right:", indent, "");
+			recursiveListing(node->right.get(), indent + 2);
+		}
+	};
 
 	//	Go through each priority
 	for(OperatorPrioty ops; !(ops = operatorsAtPriority(priority)).empty(); priority++)
@@ -374,10 +435,16 @@ void Cap::SourceFile::parseExpressionOrder(std::vector <ExpressionPart>& parts, 
 			current->value = parts[i].value;
 			parts[i].used = true;
 
+			DBG_LOG("Primary operator is '%s'.", nodeTypeString(current->type));
+
+			if(current->parent != nullptr)
+				DBG_LOG("Branches from '%s'", nodeTypeString(current->parent->type));
+
 			//	The value on the left side is used if no unused operator is before it
 			if(i - 2 >= parts.size() || parts[i - 2].used)
 			{
 				current->left = std::make_shared <SyntaxTreeNode> (current, parts[i - 1].value, SyntaxTreeNode::Type::Value);
+				DBG_LOG("Value on the left is '%s'", current->left->value->getString().c_str());
 				parts[i - 1].used = true;
 			}
 
@@ -385,6 +452,7 @@ void Cap::SourceFile::parseExpressionOrder(std::vector <ExpressionPart>& parts, 
 			{
 				//	Initialize the left branch and recursively fill it
 				current->left = std::make_shared <SyntaxTreeNode> (current);
+				DBG_LOG("Parsing operator on the left of '%s", nodeTypeString(current->type));
 				parseExpressionOrder(parts, i - 1, 0, priority, current->left.get());
 			}
 
@@ -392,14 +460,19 @@ void Cap::SourceFile::parseExpressionOrder(std::vector <ExpressionPart>& parts, 
 			if(i + 2 >= parts.size() || parts[i + 2].used)
 			{
 				current->right = std::make_shared <SyntaxTreeNode> (current, parts[i + 1].value, SyntaxTreeNode::Type::Value);
-				parts[i - 1].used = true;
+				DBG_LOG("Value on the right is '%s'", current->right->value->getString().c_str());
+				parts[i + 1].used = true;
 			}
 
 			else
 			{
 				//	Initialize the right branch and recursively fill it
 				current->right = std::make_shared <SyntaxTreeNode> (current);
-				parseExpressionOrder(parts, offset - 1, i, priority, current->right.get());
+				DBG_LOG("Parsing operator on the right of '%s'", nodeTypeString(current->type));
+				parseExpressionOrder(parts, offset, i, priority, current->right.get());
+
+				DBG_LOG("Listing right of '%s'", nodeTypeString(current->type));
+				recursiveListing(current->right.get(), 0);
 			}
 		}
 	}
@@ -420,8 +493,9 @@ Cap::OperatorPrioty Cap::operatorsAtPriority(size_t priority)
 		case 6: return OperatorPrioty(T::BitwiseShiftLeft, T::BitwiseShiftRight);
 		case 7: return OperatorPrioty(T::Addition, T::Subtraction);
 		case 8: return OperatorPrioty(T::Multiplication, T::Division, T::Modulus);
-		case 9: return OperatorPrioty(T::Access);
-		case 10: return OperatorPrioty(T::UnaryPositive, T::UnaryNegative, T::Not, T::BitwiseNOT, T::Reference);
+		case 9: return OperatorPrioty(T::Power);
+		case 10: return OperatorPrioty(T::Access);
+		case 11: return OperatorPrioty(T::UnaryPositive, T::UnaryNegative, T::Not, T::BitwiseNOT, T::Reference);
 	}
 
 	return OperatorPrioty();
