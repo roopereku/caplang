@@ -403,24 +403,6 @@ void Cap::SourceFile::parseExpressionOrder(std::vector <ExpressionPart>& parts, 
 	//	Uncomment if something goes horribly wrong :-)
 	//priority = 0;
 
-	std::function <void(SyntaxTreeNode*, unsigned)> recursiveListing;
-	recursiveListing = [&recursiveListing](SyntaxTreeNode* node, unsigned indent)
-	{
-		DBG_LOG("%*s %s %s", indent, "", nodeTypeString(node->type), node->type == SyntaxTreeNode::Type::Value ? node->value->getString().c_str() : "");
-
-		if(node->left)
-		{
-			DBG_LOG("%*s Left:", indent, "");
-			recursiveListing(node->left.get(), indent + 2);
-		}
-
-		if(node->right)
-		{
-			DBG_LOG("%*s right:", indent, "");
-			recursiveListing(node->right.get(), indent + 2);
-		}
-	};
-
 	//	Go through each priority
 	for(OperatorPrioty ops; !(ops = operatorsAtPriority(priority)).empty(); priority++)
 	{
@@ -434,6 +416,14 @@ void Cap::SourceFile::parseExpressionOrder(std::vector <ExpressionPart>& parts, 
 			current->type = parts[i].type;
 			current->value = parts[i].value;
 			parts[i].used = true;
+
+			//	Unary operators only use the right hand side value
+			if(	current->type >= SyntaxTreeNode::Type::Not &&
+				current->type <= SyntaxTreeNode::Type::UnaryNegative)
+			{
+				current->right = std::make_shared <SyntaxTreeNode> (current, parts[i + 1].value, SyntaxTreeNode::Type::Value);
+				continue;
+			}
 
 			DBG_LOG("Primary operator is '%s'.", nodeTypeString(current->type));
 
@@ -470,9 +460,6 @@ void Cap::SourceFile::parseExpressionOrder(std::vector <ExpressionPart>& parts, 
 				current->right = std::make_shared <SyntaxTreeNode> (current);
 				DBG_LOG("Parsing operator on the right of '%s'", nodeTypeString(current->type));
 				parseExpressionOrder(parts, offset, i, priority, current->right.get());
-
-				DBG_LOG("Listing right of '%s'", nodeTypeString(current->type));
-				recursiveListing(current->right.get(), 0);
 			}
 		}
 	}

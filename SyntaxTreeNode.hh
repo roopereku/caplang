@@ -19,7 +19,6 @@ struct SyntaxTreeNode
 
 		BitwiseOR,
 		BitwiseAND,
-		BitwiseNOT,
 		BitwiseXOR,
 		BitwiseShiftLeft,
 		BitwiseShiftRight,
@@ -27,7 +26,6 @@ struct SyntaxTreeNode
 		Equal,
 		Inequal,
 
-		Not,
 		Less,
 		Greater,
 		LessEqual,
@@ -40,12 +38,14 @@ struct SyntaxTreeNode
 		Modulus,
 		Power,
 
-		Access,
+		Not,
 		Reference,
+		BitwiseNOT,
 		UnaryPositive,
 		UnaryNegative,
 
 		Range,
+		Access,
 		Ternary,
 		Condition,
 		Value,
