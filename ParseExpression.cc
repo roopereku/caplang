@@ -4,48 +4,6 @@
 #include <functional>
 #include <sstream>
 
-const char* nodeTypeString(Cap::SyntaxTreeNode::Type t)
-{
-	switch(t)
-	{
-		case Cap::SyntaxTreeNode::Type::Assign: return "Assign";
-
-		case Cap::SyntaxTreeNode::Type::Or: return "Or";
-		case Cap::SyntaxTreeNode::Type::And: return "And";
-
-		case Cap::SyntaxTreeNode::Type::BitwiseOR: return "BitwiseOR";
-		case Cap::SyntaxTreeNode::Type::BitwiseAND: return "BitwiseAND";
-		case Cap::SyntaxTreeNode::Type::BitwiseNOT: return "BitwiseNOT";
-		case Cap::SyntaxTreeNode::Type::BitwiseXOR: return "BitwiseXOR";
-		case Cap::SyntaxTreeNode::Type::BitwiseShiftLeft: return "BitwiseShiftLeft";
-		case Cap::SyntaxTreeNode::Type::BitwiseShiftRight: return "BitwiseShiftRight";
-
-		case Cap::SyntaxTreeNode::Type::Equal: return "Equal";
-		case Cap::SyntaxTreeNode::Type::Inequal: return "Inequal";
-
-		case Cap::SyntaxTreeNode::Type::Not: return "Not";
-		case Cap::SyntaxTreeNode::Type::Less: return "Less";
-		case Cap::SyntaxTreeNode::Type::Greater: return "Greater";
-		case Cap::SyntaxTreeNode::Type::LessEqual: return "LessEqual";
-		case Cap::SyntaxTreeNode::Type::GreaterEqual: return "GreaterEqual";
-
-		case Cap::SyntaxTreeNode::Type::Addition: return "Addition";
-		case Cap::SyntaxTreeNode::Type::Subtraction: return "Subtraction";
-		case Cap::SyntaxTreeNode::Type::Multiplication: return "Multiplication";
-		case Cap::SyntaxTreeNode::Type::Division: return "Division";
-		case Cap::SyntaxTreeNode::Type::Modulus: return "Modulus";
-		case Cap::SyntaxTreeNode::Type::Power: return "Power";
-
-		case Cap::SyntaxTreeNode::Type::Access: return "Access";
-		case Cap::SyntaxTreeNode::Type::Reference: return "Reference";
-		case Cap::SyntaxTreeNode::Type::UnaryPositive: return "UnaryPositive";
-		case Cap::SyntaxTreeNode::Type::UnaryNegative: return "UnaryNegative";
-		case Cap::SyntaxTreeNode::Type::Ternary: return "Ternary";
-		case Cap::SyntaxTreeNode::Type::Condition: return "Condition";
-		case Cap::SyntaxTreeNode::Type::Value: return "Value";
-	}
-}
-
 bool Cap::SourceFile::parseExpression(size_t& i, Scope& current)
 {
 	/*	If the first token is an identifier, we could have a
@@ -300,7 +258,7 @@ bool Cap::SourceFile::parseExpression(size_t& i, Scope& current)
 					//	Do nothing if the part is assignment
 					if(*tokens[i].begin != '=')
 					{
-						DBG_LOG("Extend '%s' with assignment", nodeTypeString(type)); 
+						DBG_LOG("Extend '%s' with assignment", SyntaxTreeNode::getTypeString(type)); 
 						//	For an example, turn "x += 2" to "x = x + 2" or "x <<= 2" to "x = x << 2"
 						parts.push_back({ SyntaxTreeNode::Type::Assign, &tokens[old] });
 						parts.push_back(parts[parts.size() - 2]);
@@ -329,7 +287,7 @@ bool Cap::SourceFile::parseExpression(size_t& i, Scope& current)
 
 	DBG_LOG("Expression parts %s", "");
 	for(auto& part : parts)
-		DBG_LOG("Part '%s' '%s' of type '%s'", nodeTypeString(part.type), part.value->getString().c_str(), part.value->getTypeString());
+		DBG_LOG("Part '%s' '%s' of type '%s'", SyntaxTreeNode::getTypeString(part.type), part.value->getString().c_str(), part.value->getTypeString());
 
 	if(parts.size() == 1)
 	{
@@ -345,7 +303,7 @@ bool Cap::SourceFile::parseExpression(size_t& i, Scope& current)
 	std::function <void(SyntaxTreeNode*, unsigned)> recursiveListing;
 	recursiveListing = [&recursiveListing](SyntaxTreeNode* node, unsigned indent)
 	{
-		DBG_LOG("%*s %s %s", indent, "", nodeTypeString(node->type), node->type == SyntaxTreeNode::Type::Value ? node->value->getString().c_str() : "");
+		DBG_LOG("%*s %s %s", indent, "", node->getTypeString(), node->type == SyntaxTreeNode::Type::Value ? node->value->getString().c_str() : "");
 
 		if(node->left)
 		{
@@ -365,7 +323,7 @@ bool Cap::SourceFile::parseExpression(size_t& i, Scope& current)
 	std::function <double(SyntaxTreeNode* n)> eval;
 	eval = [&eval](SyntaxTreeNode* n) -> double
 	{
-		DBG_LOG("Eval node %s '%s'", nodeTypeString(n->type), n->value->getString().c_str());
+		DBG_LOG("Eval node %s '%s'", n->getTypeString(), n->value->getString().c_str());
 		if(n->type == SyntaxTreeNode::Type::Value)
 		{
 			double v;
@@ -425,10 +383,10 @@ void Cap::SourceFile::parseExpressionOrder(std::vector <ExpressionPart>& parts, 
 				continue;
 			}
 
-			DBG_LOG("Primary operator is '%s'.", nodeTypeString(current->type));
+			DBG_LOG("Primary operator is '%s'.", current->getTypeString());
 
 			if(current->parent != nullptr)
-				DBG_LOG("Branches from '%s'", nodeTypeString(current->parent->type));
+				DBG_LOG("Branches from '%s'", current->parent->getTypeString());
 
 			//	The value on the left side is used if no unused operator is before it
 			if(i - 2 >= parts.size() || parts[i - 2].used)
@@ -442,7 +400,7 @@ void Cap::SourceFile::parseExpressionOrder(std::vector <ExpressionPart>& parts, 
 			{
 				//	Initialize the left branch and recursively fill it
 				current->left = std::make_shared <SyntaxTreeNode> (current);
-				DBG_LOG("Parsing operator on the left of '%s", nodeTypeString(current->type));
+				DBG_LOG("Parsing operator on the left of '%s", current->getTypeString());
 				parseExpressionOrder(parts, i - 1, 0, priority, current->left.get());
 			}
 
@@ -458,7 +416,7 @@ void Cap::SourceFile::parseExpressionOrder(std::vector <ExpressionPart>& parts, 
 			{
 				//	Initialize the right branch and recursively fill it
 				current->right = std::make_shared <SyntaxTreeNode> (current);
-				DBG_LOG("Parsing operator on the right of '%s'", nodeTypeString(current->type));
+				DBG_LOG("Parsing operator on the right of '%s'", current->getTypeString());
 				parseExpressionOrder(parts, offset, i, priority, current->right.get());
 			}
 		}

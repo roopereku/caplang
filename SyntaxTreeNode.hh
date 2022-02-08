@@ -73,6 +73,9 @@ struct SyntaxTreeNode
 
 	std::shared_ptr <SyntaxTreeNode> right;
 	std::shared_ptr <SyntaxTreeNode> left;
+
+	static const char* getTypeString(Type t);
+	const char* getTypeString() { return getTypeString(type); }
 };
 
 }
