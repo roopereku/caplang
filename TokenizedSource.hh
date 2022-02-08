@@ -17,7 +17,8 @@ public:
 	inline size_t count() { return tokens.size(); }
 	inline const char* getPath() { return path.c_str(); }
 	inline Token& operator[](size_t index) { return tokens[index]; }
-	inline size_t getIndex(size_t tokenIndex) { return tokens[tokenIndex].begin - &data[0]; }
+	inline size_t getIndex(Token* token) { return token - &tokens[0]; }
+	inline size_t getBeginIndex(size_t tokenIndex) { return tokens[tokenIndex].begin - &data[0]; }
 
 private:
 	void addToken(TokenType type, size_t begin, size_t end);
