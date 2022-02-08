@@ -154,6 +154,8 @@ bool Cap::SourceFile::parseExpression(size_t& i, Scope& current)
 				}
 			}
 
+			//	FIXME support multiple unary operators in a row. For an example "!!x"
+
 			/*	If there were no repeating operators and there was the possibility
 			 *	of an unary operator, it is an unary operator */
 			else if(possiblyUnary)
@@ -380,6 +382,7 @@ void Cap::SourceFile::parseExpressionOrder(std::vector <ExpressionPart>& parts, 
 				current->type <= SyntaxTreeNode::Type::UnaryNegative)
 			{
 				current->right = std::make_shared <SyntaxTreeNode> (current, parts[i + 1].value, SyntaxTreeNode::Type::Value);
+				parts[i + 1].used = true;
 				continue;
 			}
 
