@@ -9,8 +9,19 @@ bool Cap::SourceFile::parseVariable(size_t& i, Scope& current)
 	else if(inExpression)
 		return true;
 
+	if(current.node->parent == nullptr)
+	{
+		DBG_LOG("Parent at %lu is null", i);
+	}
+
+	i++;
+
 	current.variables.emplace_back(&tokens[i]);
 	Variable& variable = current.variables.back();
+
+	current.node->left = std::make_shared <SyntaxTreeNode> (current.node, &tokens[i], SyntaxTreeNode::Type::Value);
+	current.node->right = std::make_shared <SyntaxTreeNode> (current.node);
+	current.node = current.node->right.get();
 
 	DBG_LOG("Added variable '%s'", variable.name->getString().c_str());
 

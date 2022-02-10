@@ -16,8 +16,15 @@ bool Cap::SourceFile::parseExpression(size_t& i, Scope& current)
 	bool lastWasIncDec = false;
 	bool lastWasOperator = false;
 
+	DBG_LOG("Current node is of type '%s'", current.node->getTypeString());
+
 	//	TODO use parts.back() instead of tokens[i - 1]
 	std::vector <ExpressionPart> parts;
+	SyntaxTreeNode* lastNode = current.node;
+
+	//	Create a node for a new expression
+	current.node->left = std::make_shared <SyntaxTreeNode> (current.node, &tokens[i], SyntaxTreeNode::Type::Variable);
+	current.node = current.node->left.get();
 
 	for(; i < current.end; i++)
 	{
@@ -49,6 +56,13 @@ bool Cap::SourceFile::parseExpression(size_t& i, Scope& current)
 
 				/*	There was a valid declaration or import.
 				 *	Let's exit the function to get a clean state */
+
+				//	Variable declarations shouldn't cause a return
+				if(i == start + 1)
+				{
+					DBG_LOG("Variable '%s' was declared", tokens[i].getString().c_str());
+				}
+
 				else return true;
 			}
 
@@ -279,7 +293,6 @@ bool Cap::SourceFile::parseExpression(size_t& i, Scope& current)
 		return showExpected("a value after an operator", i);
 
 	inExpression = false;
-	SyntaxTreeNode n(nullptr);
 
 	if(parts.empty())
 	{
@@ -291,68 +304,25 @@ bool Cap::SourceFile::parseExpression(size_t& i, Scope& current)
 	for(auto& part : parts)
 		DBG_LOG("Part '%s' '%s' of type '%s'", SyntaxTreeNode::getTypeString(part.type), part.value->getString().c_str(), part.value->getTypeString());
 
+	//	Single values don't need ordering
 	if(parts.size() == 1)
 	{
 		DBG_LOG("Single value%s", "");
-		n.type = SyntaxTreeNode::Type::Value;
-		n.value = parts[0].value;
+		current.node->type = SyntaxTreeNode::Type::Value;
+		current.node->value = parts[0].value;
 
 		return false;
 	}
 
-	parseExpressionOrder(parts, parts.size() - 1, 0, 0, &n);
+	//	Add the expression as nodes with the correct precedence
+	parseExpressionOrder(parts, parts.size() - 1, 0, 0, current.node);
 
-	std::function <void(SyntaxTreeNode*, unsigned)> recursiveListing;
-	recursiveListing = [&recursiveListing](SyntaxTreeNode* node, unsigned indent)
-	{
-		DBG_LOG("%*s %s %s", indent, "", node->getTypeString(), node->type == SyntaxTreeNode::Type::Value ? node->value->getString().c_str() : "");
+	//	Create a node for the next expression
+	lastNode->right = std::make_shared <SyntaxTreeNode> (lastNode);
+	lastNode->right->type = SyntaxTreeNode::Type::Line;
+	current.node = lastNode->right.get();
 
-		if(node->left)
-		{
-			DBG_LOG("%*s Left:", indent, "");
-			recursiveListing(node->left.get(), indent + 2);
-		}
-
-		if(node->right)
-		{
-			DBG_LOG("%*s right:", indent, "");
-			recursiveListing(node->right.get(), indent + 2);
-		}
-	};
-
-	DBG_LOG("----------- LISTING NODES -------------%s", "");
-	recursiveListing(&n, 0);
-	std::function <double(SyntaxTreeNode* n)> eval;
-	eval = [&eval](SyntaxTreeNode* n) -> double
-	{
-		DBG_LOG("Eval node %s '%s'", n->getTypeString(), n->value->getString().c_str());
-		if(n->type == SyntaxTreeNode::Type::Value)
-		{
-			double v;
-			std::stringstream(n->value->getString()) >> v;
-			return v;
-		}
-
-		switch(n->type)
-		{
-			case SyntaxTreeNode::Type::Multiplication:
-				return eval(n->left.get()) * eval(n->right.get());
-
-			case SyntaxTreeNode::Type::Subtraction:
-				return eval(n->left.get()) - eval(n->right.get());
-
-			case SyntaxTreeNode::Type::Addition:
-				return eval(n->left.get()) + eval(n->right.get());
-
-			case SyntaxTreeNode::Type::Division:
-				return eval(n->left.get()) / eval(n->right.get());
-
-			default: return 0.0;
-		}
-	};
-
-	printf("%lf\n", eval(&n));
-
+	DBG_LOG("End of expression. Current type '%s', branches from '%s'", current.node->getTypeString(), current.node->parent->getTypeString());
 
 	return true;
 }
@@ -391,9 +361,16 @@ void Cap::SourceFile::parseExpressionOrder(std::vector <ExpressionPart>& parts, 
 			if(current->parent != nullptr)
 				DBG_LOG("Branches from '%s'", current->parent->getTypeString());
 
+			//	FIXME Make the code below a single function and call it twice
+
 			//	The value on the left side is used if no unused operator is before it
 			if(i - 2 >= parts.size() || parts[i - 2].used)
 			{
+				if(parts[i - 1].value->type == TokenType::Parenthesis)
+				{
+					current->left = std::make_shared <SyntaxTreeNode> (current);
+				}
+
 				current->left = std::make_shared <SyntaxTreeNode> (current, parts[i - 1].value, SyntaxTreeNode::Type::Value);
 				DBG_LOG("Value on the left is '%s'", current->left->value->getString().c_str());
 				parts[i - 1].used = true;

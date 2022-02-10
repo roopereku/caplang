@@ -17,6 +17,9 @@ Cap::SourceFile::SourceFile(const std::string& path)
 				return;
 		}
 	}
+
+	DBG_LOG("----------- LISTING NODES -------------%s", "");
+	root.root.list();
 }
 
 bool Cap::SourceFile::validate()
