@@ -1,4 +1,5 @@
 #include "SyntaxTreeNode.hh"
+#include "Debug.hh"
 
 const char* Cap::SyntaxTreeNode::getTypeString(Type t)
 {
@@ -38,8 +39,28 @@ const char* Cap::SyntaxTreeNode::getTypeString(Type t)
 		case Type::UnaryNegative: return "UnaryNegative";
 		case Type::Ternary: return "Ternary";
 		case Type::Condition: return "Condition";
+
+		case Type::Variable: return "Variable";
 		case Type::Value: return "Value";
+		case Type::Line: return "Line";
 	}
 
 	return "";
+}
+
+void Cap::SyntaxTreeNode::list(unsigned indent)
+{
+	DBG_LOG("%*s %s %s", indent, "", getTypeString(), type < SyntaxTreeNode::Type::Value ? "" : value->getString().c_str());
+
+	if(left)
+	{
+		DBG_LOG("%*s Left:", indent, "");
+		left->list(indent + 2);
+	}
+
+	if(right)
+	{
+		DBG_LOG("%*s right:", indent, "");
+		right->list(indent + 2);
+	}
 }

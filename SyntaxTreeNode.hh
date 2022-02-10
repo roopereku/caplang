@@ -47,7 +47,10 @@ struct SyntaxTreeNode
 		Range,
 		Access,
 		Ternary,
+
+		Variable,
 		Condition,
+		Line,
 		Value,
 	};
 
@@ -76,6 +79,7 @@ struct SyntaxTreeNode
 
 	static const char* getTypeString(Type t);
 	const char* getTypeString() { return getTypeString(type); }
+	void list(unsigned indent = 0);
 };
 
 }
