@@ -25,7 +25,7 @@ struct Scope
 		:	name(name), parent(parent), ctx(ctx), begin(begin), end(end),
 			root(nullptr), node(&root)
 	{
-		root.type = SyntaxTreeNode::Type::Line;
+		root.type = SyntaxTreeNode::Type::Expression;
 	}
 
 	Token* name;

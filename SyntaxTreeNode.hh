@@ -50,7 +50,7 @@ struct SyntaxTreeNode
 
 		Variable,
 		Condition,
-		Line,
+		Expression,
 		Value,
 	};
 

@@ -319,7 +319,7 @@ bool Cap::SourceFile::parseExpression(size_t& i, Scope& current)
 
 	//	Create a node for the next expression
 	lastNode->right = std::make_shared <SyntaxTreeNode> (lastNode);
-	lastNode->right->type = SyntaxTreeNode::Type::Line;
+	lastNode->right->type = SyntaxTreeNode::Type::Expression;
 	current.node = lastNode->right.get();
 
 	DBG_LOG("End of expression. Current type '%s', branches from '%s'", current.node->getTypeString(), current.node->parent->getTypeString());
