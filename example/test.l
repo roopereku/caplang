@@ -1,2 +1,9 @@
-var i = 1 + 1
-var x = i ** 2
+func main()
+{
+	1 + 1
+}
+
+func test()
+{
+	2 * 3
+}

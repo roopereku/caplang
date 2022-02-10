@@ -6,6 +6,8 @@
 
 bool Cap::SourceFile::parseExpression(size_t& i, Scope& current)
 {
+	DBG_LOG("Parsing expression in scope %lu - %lu", current.begin, current.end);
+
 	/*	If the first token is an identifier, we could have a
 	 *	declaration or an import. In that case we might
 	 *	not yet be inside an expression */

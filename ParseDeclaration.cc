@@ -15,16 +15,14 @@ bool Cap::SourceFile::parseVariable(size_t& i, Scope& current)
 	}
 
 	i++;
+	Variable& variable = current.addVariable(&tokens[i]);
 
-	current.variables.emplace_back(&tokens[i]);
-	Variable& variable = current.variables.back();
-
+	//	Initialize a node for the variable name and the following expression
 	current.node->left = std::make_shared <SyntaxTreeNode> (current.node, &tokens[i], SyntaxTreeNode::Type::Value);
 	current.node->right = std::make_shared <SyntaxTreeNode> (current.node);
 	current.node = current.node->right.get();
 
 	DBG_LOG("Added variable '%s'", variable.name->getString().c_str());
-
 	return true;
 }
 
@@ -40,15 +38,27 @@ bool Cap::SourceFile::parseFunction(size_t& i, Scope& current)
 	if(!isToken(TokenType::Identifier, i))
 		return showExpected("a name for function", i);
 
-	current.functions.emplace_back(&tokens[i]);
-	Function& function = current.functions.back();
+	Token* name = &tokens[i];
 
 	i++;
+	//	TODO parse the parameters
 	if(!isToken(TokenType::Parenthesis, i))
 		return showExpected("parentheses after function name", i);
 
-	DBG_LOG("Added function '%s'", function.name->getString().c_str());
+	//	Skip the parentheses
+	i += tokens[i].length + 2;
+	if(!isToken(TokenType::CurlyBrace, i))
+		return showExpected("a body for function '" + name->getString() + '\'', i);
 
+	DBG_LOG("Spans across %lu", tokens[i].length);
+
+	DBG_LOG("Added function '%s'", name->getString().c_str());
+	Function& function = current.addFunction(name, i + 1, i + 1 + tokens[i].length);
+	i++;
+
+	parseExpression(i, *function.scope);
+	DBG_LOG("---- Listing function '%s' ----", name->getString().c_str());
+	function.scope->root.list();
 	return true;
 }
 
@@ -64,16 +74,14 @@ bool Cap::SourceFile::parseType(size_t& i, Scope& current)
 	if(!isToken(TokenType::Identifier, i))
 		return showExpected("a name for type", i);
 
-	Token* typeName = &tokens[i];
+	Token* name = &tokens[i];
 	i++;
 
 	if(!isToken(TokenType::CurlyBrace, i))
-		return showExpected("a body for type '" + typeName->getString() + '\'', i);
+		return showExpected("a body for type '" + name->getString() + '\'', i);
 
-	current.types.emplace_back(typeName, &current, ScopeContext::Type, i + 1, i + tokens[i].length);
-	Scope& typeScope = current.types.back();
-
-	DBG_LOG("Added type '%s'", typeScope.name->getString().c_str());
+	Type& type = current.addType(name, i + 1, i + 1 + tokens[i].length);
+	DBG_LOG("Added type '%s'", name->getString().c_str());
 
 	return true;
 }

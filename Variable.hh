@@ -8,9 +8,7 @@ namespace Cap
 
 struct Variable
 {
-	Variable(Token* name) : name(name)
-	{
-	}
+	Variable(Token* name) : name(name) {}
 
 	Token* name;
 	Token* typeName;

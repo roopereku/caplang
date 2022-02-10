@@ -1,5 +1,5 @@
-#ifndef FUNCTION_HEADER
-#define FUNCTION_HEADER
+#ifndef TYPE_HEADER
+#define TYPE_HEADER
 
 #include "Token.hh"
 #include "Variable.hh"
@@ -11,14 +11,11 @@ namespace Cap
 {
 
 struct Scope;
-struct Function
+struct Type
 {
-	Function(Token* name) : name(name) {}
+	Type(Token* name) : name(name) {}
 
 	Token* name;
-	Token* returnType;
-
-	std::vector <Variable> parameters;
 	std::shared_ptr <Scope> scope;
 };
 

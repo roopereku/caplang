@@ -2,7 +2,7 @@
 #include "Debug.hh"
 
 Cap::SourceFile::SourceFile(const std::string& path)
-	: tokens(path), root(nullptr, nullptr, ScopeContext::Block, 0, tokens.count())
+	: tokens(path), root(nullptr, ScopeContext::Block, 0, tokens.count())
 {
 	//	TODO exclude comments from tokens
 
@@ -17,9 +17,6 @@ Cap::SourceFile::SourceFile(const std::string& path)
 				return;
 		}
 	}
-
-	DBG_LOG("----------- LISTING NODES -------------%s", "");
-	root.root.list();
 }
 
 bool Cap::SourceFile::validate()
