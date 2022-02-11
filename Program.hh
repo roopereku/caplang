@@ -12,6 +12,7 @@ public:
 	Program(const std::string& entryPath);
 
 private:
+	bool parseSource(const std::string& path);
 	std::vector <SourceFile> sources;
 };
 
