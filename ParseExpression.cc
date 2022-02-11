@@ -1,9 +1,6 @@
 #include "SourceFile.hh"
 #include "Debug.hh"
 
-#include <functional>
-#include <sstream>
-
 bool Cap::SourceFile::parseExpression(size_t& i, Scope& current)
 {
 	DBG_LOG("Parsing expression in scope %lu - %lu", current.begin, current.end);
@@ -318,6 +315,13 @@ bool Cap::SourceFile::parseExpression(size_t& i, Scope& current)
 		current.node->value = parts[0].value;
 
 		return false;
+	}
+
+	//	If in the scope of a type, forbid anything else but variable declarations
+	if(current.ctx == ScopeContext::Type && current.node->parent->type != SyntaxTreeNode::Type::Variable)
+	{
+		size_t index = tokens.getIndex(current.node->value);
+		return showExpected("a declaration", index);
 	}
 
 	//	Add the expression as nodes with the correct precedence

@@ -45,7 +45,7 @@ bool Cap::SourceFile::parseFunction(size_t& i, Scope& current)
 
 	//	Skip the parentheses
 	i += tokens[i].length + 2;
-	if(!isToken(TokenType::CurlyBrace, i))
+	if(!isToken(TokenType::CurlyBrace, i) || tokens[i].length == 0)
 		return showExpected("a body for function '" + name->getString() + '\'', i);
 
 	DBG_LOG("Spans across %lu", tokens[i].length);
@@ -76,12 +76,17 @@ bool Cap::SourceFile::parseType(size_t& i, Scope& current)
 	Token* name = &tokens[i];
 	i++;
 
-	if(!isToken(TokenType::CurlyBrace, i))
+	if(!isToken(TokenType::CurlyBrace, i) || tokens[i].length == 0)
 		return showExpected("a body for type '" + name->getString() + '\'', i);
 
 	Type& type = current.addType(name, i + 1, i + 1 + tokens[i].length);
 	DBG_LOG("Added type '%s'", name->getString().c_str());
 
-	i++;
+	i = type.scope->end;
+	parseScope(*type.scope);
+
+	DBG_LOG("---- Listing type '%s' ----", name->getString().c_str());
+	type.scope->root.list();
+
 	return true;
 }
