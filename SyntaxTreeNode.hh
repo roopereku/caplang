@@ -74,6 +74,7 @@ struct SyntaxTreeNode
 	Token* value = nullptr;
 	Type type;
 
+	//	FIXME Instead of allocating each node separately, pool them in the current scop
 	std::shared_ptr <SyntaxTreeNode> right;
 	std::shared_ptr <SyntaxTreeNode> left;
 
