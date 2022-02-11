@@ -356,10 +356,14 @@ bool Cap::TokenizedSource::parseNumeric(size_t& i)
 		for(begin = i; i < data.length() && !isspace(data[i]) && !isBreak(data[i]) &&
 					   !isOperator(data[i]) && !isString(data[i]) ; i++, column++);
 
-		std::string junk(data.begin() + begin, data.begin() + i);
-		printf("Error: Junk after %s value '%s' ('%s')\n", tokens.back().getTypeString(), tokens.back().getString().c_str(), junk.c_str());
+		//	Without this validation there might be empty junk
+		if(i != begin)
+		{
+			std::string junk(data.begin() + begin, data.begin() + i);
+			printf("Error: Junk after %s value '%s' ('%s')\n", tokens.back().getTypeString(), tokens.back().getString().c_str(), junk.c_str());
 
-		return errorOut();
+			return errorOut();
+		}
 	}
 
 	return false;
