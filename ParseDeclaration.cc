@@ -45,7 +45,7 @@ bool Cap::SourceFile::parseFunction(size_t& i, Scope& current)
 
 	//	Skip the parentheses
 	i += tokens[i].length + 2;
-	if(!isToken(TokenType::CurlyBrace, i) || tokens[i].length == 0)
+	if(!isToken(TokenType::CurlyBrace, i) || *tokens[i].begin == '}')
 		return showExpected("a body for function '" + name->getString() + '\'', i);
 
 	DBG_LOG("Spans across %lu", tokens[i].length);
@@ -76,7 +76,7 @@ bool Cap::SourceFile::parseType(size_t& i, Scope& current)
 	Token* name = &tokens[i];
 	i++;
 
-	if(!isToken(TokenType::CurlyBrace, i) || tokens[i].length == 0)
+	if(!isToken(TokenType::CurlyBrace, i) || *tokens[i].begin == '}')
 		return showExpected("a body for type '" + name->getString() + '\'', i);
 
 	Type& type = current.addType(name, i + 1, i + 1 + tokens[i].length);
