@@ -9,14 +9,18 @@ Cap::SourceFile::SourceFile(const std::string& path)
 	if(!tokens.matchBraces())
 		return;
 
-	for(size_t i = 0; i < root.end; i++)
+	parseScope(root);	
+}
+
+bool Cap::SourceFile::parseScope(Scope& current)
+{
+	for(size_t i = current.begin; i < current.end; i++)
 	{
-		if(parseExpression(i, root))
-		{
-			if(!valid)
-				return;
-		}
+		if(parseExpression(i, current) && !valid)
+			return true;
 	}
+
+	return true;
 }
 
 bool Cap::SourceFile::validate()

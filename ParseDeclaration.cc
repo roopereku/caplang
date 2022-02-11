@@ -9,12 +9,10 @@ bool Cap::SourceFile::parseVariable(size_t& i, Scope& current)
 	else if(inExpression)
 		return true;
 
-	if(current.node->parent == nullptr)
-	{
-		DBG_LOG("Parent at %lu is null", i);
-	}
-
 	i++;
+	if(!isToken(TokenType::Identifier, i))
+		return showExpected("a name for variable", i);
+
 	Variable& variable = current.addVariable(&tokens[i]);
 
 	//	Initialize a node for the variable name and the following expression
@@ -54,9 +52,10 @@ bool Cap::SourceFile::parseFunction(size_t& i, Scope& current)
 
 	DBG_LOG("Added function '%s'", name->getString().c_str());
 	Function& function = current.addFunction(name, i + 1, i + 1 + tokens[i].length);
-	i++;
 
-	parseExpression(i, *function.scope);
+	i = function.scope->end;
+	parseScope(*function.scope);
+
 	DBG_LOG("---- Listing function '%s' ----", name->getString().c_str());
 	function.scope->root.list();
 	return true;
@@ -83,5 +82,6 @@ bool Cap::SourceFile::parseType(size_t& i, Scope& current)
 	Type& type = current.addType(name, i + 1, i + 1 + tokens[i].length);
 	DBG_LOG("Added type '%s'", name->getString().c_str());
 
+	i++;
 	return true;
 }

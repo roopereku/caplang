@@ -63,6 +63,9 @@ bool Cap::SourceFile::parseExpression(size_t& i, Scope& current)
 				if(i == start + 1)
 				{
 					DBG_LOG("Variable '%s' was declared", tokens[i].getString().c_str());
+
+					//	Variable declaration can still go wrong
+					if(!valid) return true;
 				}
 
 				else return true;
@@ -276,7 +279,8 @@ bool Cap::SourceFile::parseExpression(size_t& i, Scope& current)
 					//	Do nothing if the part is assignment
 					if(*tokens[i].begin != '=')
 					{
-						DBG_LOG("Extend '%s' with assignment", SyntaxTreeNode::getTypeString(type)); 
+						//	FIXME stuff like "x = i += 1" might be parsed incorrectly
+
 						//	For an example, turn "x += 2" to "x = x + 2" or "x <<= 2" to "x = x << 2"
 						parts.push_back({ SyntaxTreeNode::Type::Assign, &tokens[old] });
 						parts.push_back(parts[parts.size() - 2]);
