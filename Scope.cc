@@ -11,7 +11,7 @@ Cap::Function& Cap::Scope::addFunction(Token* name, size_t begin, size_t end)
 Cap::Type& Cap::Scope::addType(Token* name, size_t begin, size_t end)
 {
 	types.emplace_back(name);
-	types.back().scope = std::make_shared <Scope> (this, ScopeContext::Function, begin, end);
+	types.back().scope = std::make_shared <Scope> (this, ScopeContext::Type, begin, end);
 
 	return types.back();
 }
