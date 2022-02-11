@@ -9,6 +9,10 @@ bool Cap::SourceFile::parseVariable(size_t& i, Scope& current)
 	else if(inExpression)
 		return true;
 
+	//	At this point the node is an expression. Change it to variable
+	current.node->type = SyntaxTreeNode::Type::Variable;
+	current.node->value = &tokens[i];
+
 	i++;
 	if(!isToken(TokenType::Identifier, i))
 		return showExpected("a name for variable", i);
