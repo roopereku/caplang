@@ -28,7 +28,7 @@ bool Cap::SourceFile::validate()
 	return true;
 }
 
-const std::vector <Cap::Filename> Cap::SourceFile::getImports() const
+const std::vector <Cap::Filename>& Cap::SourceFile::getImports() const
 {
 	return imports;
 }

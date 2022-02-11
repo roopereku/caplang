@@ -20,7 +20,7 @@ public:
 	SourceFile(const std::string& path);
 	bool validate();
 
-	const std::vector <Filename> getImports() const;
+	const std::vector <Filename>& getImports() const;
 
 private:
 	bool parseImport(size_t& i, Scope& current);
