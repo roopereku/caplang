@@ -22,7 +22,7 @@ bool Cap::SourceFile::parseExpression(size_t& i, Scope& current)
 	SyntaxTreeNode* lastNode = current.node;
 
 	//	Create a node for a new expression
-	current.node->left = std::make_shared <SyntaxTreeNode> (current.node, &tokens[i], SyntaxTreeNode::Type::Variable);
+	current.node->left = std::make_shared <SyntaxTreeNode> (current.node, &tokens[i], SyntaxTreeNode::Type::Expression);
 	current.node = current.node->left.get();
 
 	for(; i < current.end; i++)
@@ -307,6 +307,23 @@ bool Cap::SourceFile::parseExpression(size_t& i, Scope& current)
 	for(auto& part : parts)
 		DBG_LOG("Part '%s' '%s' of type '%s'", SyntaxTreeNode::getTypeString(part.type), part.value->getString().c_str(), part.value->getTypeString());
 
+	//	If in the scope of a type, forbid anything else but variable declarations
+	if(current.ctx == ScopeContext::Type && current.node->parent->type != SyntaxTreeNode::Type::Variable)
+	{
+		size_t index = tokens.getIndex(current.node->value);
+		return showExpected("a declaration inside type", index);
+	}
+
+	if(current.node->parent->type == SyntaxTreeNode::Type::Variable)
+	{
+		size_t index = parts.size() < 2 ? 0 : 1;
+		if(parts[index].type != SyntaxTreeNode::Type::Assign)
+		{
+			index = tokens.getIndex(parts[index].value);
+			return showExpected("a type or value for variable", index);
+		}
+	}
+
 	//	Single values don't need ordering
 	if(parts.size() == 1)
 	{
@@ -315,13 +332,6 @@ bool Cap::SourceFile::parseExpression(size_t& i, Scope& current)
 		current.node->value = parts[0].value;
 
 		return false;
-	}
-
-	//	If in the scope of a type, forbid anything else but variable declarations
-	if(current.ctx == ScopeContext::Type && current.node->parent->type != SyntaxTreeNode::Type::Variable)
-	{
-		size_t index = tokens.getIndex(current.node->value);
-		return showExpected("a declaration", index);
 	}
 
 	//	Add the expression as nodes with the correct precedence
@@ -376,11 +386,6 @@ void Cap::SourceFile::parseExpressionOrder(std::vector <ExpressionPart>& parts, 
 			//	The value on the left side is used if no unused operator is before it
 			if(i - 2 >= parts.size() || parts[i - 2].used)
 			{
-				if(parts[i - 1].value->type == TokenType::Parenthesis)
-				{
-					current->left = std::make_shared <SyntaxTreeNode> (current);
-				}
-
 				current->left = std::make_shared <SyntaxTreeNode> (current, parts[i - 1].value, SyntaxTreeNode::Type::Value);
 				DBG_LOG("Value on the left is '%s'", current->left->value->getString().c_str());
 				parts[i - 1].used = true;
