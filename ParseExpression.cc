@@ -305,20 +305,22 @@ bool Cap::SourceFile::parseExpression(size_t& i, Scope& current)
 	for(auto& part : parts)
 		DBG_LOG("Part '%s' '%s' of type '%s'", SyntaxTreeNode::getTypeString(part.type), part.value->getString().c_str(), part.value->getTypeString());
 
-	//	If in the scope of a type, forbid anything else but variable declarations
-	if(current.ctx == ScopeContext::Type && current.node->parent->type != SyntaxTreeNode::Type::Variable)
+	//	If inside a type oe the global scope, forbid anything else but variable declarations
+	if((current.ctx == ScopeContext::Type || current.parent == nullptr) &&
+		current.node->parent->type != SyntaxTreeNode::Type::Variable)
 	{
 		size_t index = tokens.getIndex(current.node->value);
-		return showExpected("a declaration inside type", index);
+		return showExpected(std::string("a declaration ") + (current.parent ? "inside a type" : "in the global scope"), index);
 	}
 
+	//	Variables always require a type or an initial value
 	if(current.node->parent->type == SyntaxTreeNode::Type::Variable)
 	{
 		size_t index = parts.size() < 2 ? 0 : 1;
 		if(parts[index].type != SyntaxTreeNode::Type::Assign)
 		{
 			index = tokens.getIndex(parts[index].value);
-			return showExpected("a type or value for variable", index);
+			return showExpected("a type or an initial value for variable", index);
 		}
 	}
 
