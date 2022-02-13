@@ -276,8 +276,6 @@ bool Cap::SourceFile::parseExpression(size_t& i, Scope& current)
 					//	Do nothing if the part is assignment
 					if(*tokens[i].begin != '=')
 					{
-						//	FIXME stuff like "x = i += 1" might be parsed incorrectly
-
 						//	For an example, turn "x += 2" to "x = x + 2" or "x <<= 2" to "x = x << 2"
 						parts.push_back({ SyntaxTreeNode::Type::Assign, &tokens[old] });
 						parts.push_back(parts[parts.size() - 2]);
@@ -363,9 +361,21 @@ void Cap::SourceFile::parseExpressionOrder(std::vector <ExpressionPart>& parts, 
 			if(!ops.contains(parts[i].type) || parts[i].used)
 				continue;
 
+			/*	Because of the way we order the expression, stuff like "x = i = 3" is
+			 *	parsed as (x = i) = 3 which is wrong. If there are 2 consecutive assignments,
+			 *	ignore the first one so that the expression is parsed as x = (i = 3) */
+			if(	priority == 0 && end == 0 ? (i - 2 < parts.size()) : (i - 2 >= end) &&
+				!parts[i - 2].used &&  ops.contains(parts[i - 2].type))
+			{
+				i--;
+				continue;
+			}
+
 			current->type = parts[i].type;
 			current->value = parts[i].value;
 			parts[i].used = true;
+
+			DBG_LOG("Primary operator is '%s'.", current->getTypeString());
 
 			//	Unary operators only use the right hand side value
 			if(	current->type >= SyntaxTreeNode::Type::Not &&
@@ -375,8 +385,6 @@ void Cap::SourceFile::parseExpressionOrder(std::vector <ExpressionPart>& parts, 
 				parts[i + 1].used = true;
 				continue;
 			}
-
-			DBG_LOG("Primary operator is '%s'.", current->getTypeString());
 
 			if(current->parent != nullptr)
 				DBG_LOG("Branches from '%s'", current->parent->getTypeString());
