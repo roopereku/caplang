@@ -22,7 +22,7 @@ bool Cap::SourceFile::parseExpression(size_t& i, Scope& current)
 	SyntaxTreeNode* lastNode = current.node;
 
 	//	Create a node for a new expression
-	current.node->left = std::make_shared <SyntaxTreeNode> (current.node, &tokens[i], SyntaxTreeNode::Type::Expression);
+	current.node->left = std::make_shared <SyntaxTreeNode> (current.node, &tokens[i], SyntaxTreeNode::Type::None);
 	current.node = current.node->left.get();
 
 	for(; i < current.end; i++)
