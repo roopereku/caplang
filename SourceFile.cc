@@ -25,7 +25,24 @@ bool Cap::SourceFile::parseScope(Scope& current)
 
 bool Cap::SourceFile::validate()
 {
-	return true;
+	ValidationResult result = ValidationResult::Success;
+	SyntaxTreeNode* errorAt = root.validate(result);
+
+	DBG_LOG("Final result is %d", static_cast <int> (result));
+
+	if(result != ValidationResult::Success)
+	{
+		switch(result)
+		{
+			case ValidationResult::IdentifierNotFound:
+				ERROR_LOG((*errorAt->value), "Unknown identifier '%s'\n", errorAt->value->getString().c_str());
+				break;
+
+			default: break;
+		}
+	}
+
+	return false;
 }
 
 const std::vector <Cap::Filename>& Cap::SourceFile::getImports() const

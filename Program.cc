@@ -5,6 +5,7 @@ Cap::Program::Program(const std::string& entryPath)
 {
 	DBG_LOG("Entry file is '%s'", entryPath.c_str());
 	parseSource(entryPath);
+	sources.front().validate();
 }
 
 bool Cap::Program::parseSource(const std::string& path)

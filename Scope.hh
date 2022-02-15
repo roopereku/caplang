@@ -8,7 +8,7 @@
 #include "Type.hh"
 
 #include <vector>
-#include <memory>
+#include <utility>
 
 namespace Cap
 {
@@ -21,6 +21,12 @@ enum class ScopeContext
 	Type,
 };
 
+enum class ValidationResult
+{
+	Success,
+	IdentifierNotFound
+};
+
 class Scope
 {
 public:
@@ -28,6 +34,10 @@ public:
 		:	parent(parent), ctx(ctx), begin(begin), end(end),
 			root(nullptr), node(&root)
 	{
+		static size_t dd = 0;
+		dd++;
+
+		d = dd;
 		root.type = SyntaxTreeNode::Type::Expression;
 	}
 
@@ -35,16 +45,26 @@ public:
 	Type& addType(Token* name, size_t begin, size_t end);
 	Variable& addVariable(Token* name);
 
+	Function* findFunction(Token* name);
+	Variable* findVariable(Token* name);
+	Type* findType(Token* name);
+
+	SyntaxTreeNode* validate(ValidationResult& result);
+
 	Scope* parent;
 	ScopeContext ctx;
 
 	size_t begin;
 	size_t end;
+
+	size_t d;
 	
 	SyntaxTreeNode root;
 	SyntaxTreeNode* node;
 
 private:
+	SyntaxTreeNode* validateNode(SyntaxTreeNode* n, ValidationResult& result);
+
 	std::vector <Type> types;
 	std::vector <Variable> variables;
 	std::vector <Function> functions;

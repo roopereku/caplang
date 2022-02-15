@@ -1,5 +1,4 @@
-import "example/test2"
-
 func main()
 {
+	var x = Int
 }
