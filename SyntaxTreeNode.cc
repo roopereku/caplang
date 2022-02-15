@@ -33,6 +33,7 @@ const char* Cap::SyntaxTreeNode::getTypeString(Type t)
 		case Type::Modulus: return "Modulus";
 		case Type::Power: return "Power";
 
+		case Type::Call: return "Call";
 		case Type::Access: return "Access";
 		case Type::Reference: return "Reference";
 		case Type::UnaryPositive: return "UnaryPositive";

@@ -72,8 +72,22 @@ bool Cap::SourceFile::parseExpression(size_t& i, Scope& current)
 			inExpression = true;
 			lastWasOperator = false;
 
-			DBG_LOG("Expression: Identifier '%s'", tokens[i].getString().c_str());
-			parts.push_back({ SyntaxTreeNode::Type::Value, &tokens[i] });
+			SyntaxTreeNode::Type t = SyntaxTreeNode::Type::Value;
+			size_t next = i + 1;
+
+			//	Stuff like id() is treated as a call
+			if(isToken(TokenType::Parenthesis, next))
+			{
+				DBG_LOG("Expression: Call '%s'", tokens[i].getString().c_str());
+				parts.push_back({ SyntaxTreeNode::Type::Call, &tokens[i] });
+				i += tokens[i].length + 1;
+			}
+
+			else
+			{
+				DBG_LOG("Expression: Identifier '%s'", tokens[i].getString().c_str());
+				parts.push_back({ SyntaxTreeNode::Type::Value, &tokens[i] });
+			}
 		}
 
 		//	Check for other values
@@ -396,7 +410,7 @@ void Cap::SourceFile::parseExpressionOrder(std::vector <ExpressionPart>& parts, 
 			//	The value on the left side is used if no unused operator is before it
 			if(i - 2 >= parts.size() || parts[i - 2].used)
 			{
-				current->left = std::make_shared <SyntaxTreeNode> (current, parts[i - 1].value, SyntaxTreeNode::Type::Value);
+				current->left = std::make_shared <SyntaxTreeNode> (current, parts[i - 1].value, parts[i - 1].type);
 				DBG_LOG("Value on the left is '%s'", current->left->value->getString().c_str());
 				parts[i - 1].used = true;
 			}
@@ -412,7 +426,7 @@ void Cap::SourceFile::parseExpressionOrder(std::vector <ExpressionPart>& parts, 
 			//	The value on the right side is used if no unused operator is after it
 			if(i + 2 >= parts.size() || parts[i + 2].used)
 			{
-				current->right = std::make_shared <SyntaxTreeNode> (current, parts[i + 1].value, SyntaxTreeNode::Type::Value);
+				current->right = std::make_shared <SyntaxTreeNode> (current, parts[i + 1].value, parts[i + 1].type);
 				DBG_LOG("Value on the right is '%s'", current->right->value->getString().c_str());
 				parts[i + 1].used = true;
 			}
@@ -444,8 +458,9 @@ Cap::OperatorPrioty Cap::operatorsAtPriority(size_t priority)
 		case 7: return OperatorPrioty(T::Addition, T::Subtraction);
 		case 8: return OperatorPrioty(T::Multiplication, T::Division, T::Modulus);
 		case 9: return OperatorPrioty(T::Power);
-		case 10: return OperatorPrioty(T::Access);
 		case 11: return OperatorPrioty(T::UnaryPositive, T::UnaryNegative, T::Not, T::BitwiseNOT, T::Reference);
+
+		case 12: return OperatorPrioty(T::Call, T::Access);
 	}
 
 	return OperatorPrioty();
