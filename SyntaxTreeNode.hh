@@ -12,6 +12,7 @@ struct SyntaxTreeNode
 {
 	enum class Type
 	{
+		None,
 		Assign,
 
 		Or,
@@ -74,7 +75,7 @@ struct SyntaxTreeNode
 	Token* value = nullptr;
 	Type type;
 
-	//	FIXME Instead of allocating each node separately, pool them in the current scop
+	//	FIXME Instead of allocating each node separately, pool them in the current scope
 	std::shared_ptr <SyntaxTreeNode> right;
 	std::shared_ptr <SyntaxTreeNode> left;
 
