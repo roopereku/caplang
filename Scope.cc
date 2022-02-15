@@ -34,7 +34,7 @@ Cap::Function* Cap::Scope::findFunction(Token* name)
 			return &it;
 	}
 
-	return nullptr;
+	return parent == nullptr ? nullptr : parent->findFunction(name);
 }
 
 Cap::Variable* Cap::Scope::findVariable(Token* name)
@@ -47,7 +47,7 @@ Cap::Variable* Cap::Scope::findVariable(Token* name)
 			return &it;
 	}
 
-	return nullptr;
+	return parent == nullptr ? nullptr : parent->findVariable(name);
 }
 
 Cap::Type* Cap::Scope::findType(Token* name)
@@ -58,7 +58,7 @@ Cap::Type* Cap::Scope::findType(Token* name)
 			return &it;
 	}
 
-	return nullptr;
+	return parent == nullptr ? nullptr : parent->findType(name);
 }
 
 Cap::SyntaxTreeNode* Cap::Scope::validate(Cap::ValidationResult& result)
@@ -85,6 +85,8 @@ Cap::SyntaxTreeNode* Cap::Scope::validateNode(SyntaxTreeNode* n, ValidationResul
 {
 	/*	TODO when we get the pooling of nodes done, the validation
 	 *	could be done by just looping through the pool instead of recursion */
+
+	DBG_LOG("Validating node '%s' in scope %lu", n->getTypeString(), d);
 
 	if(n->type == SyntaxTreeNode::Type::Value && n->value->type == TokenType::Identifier)
 	{
