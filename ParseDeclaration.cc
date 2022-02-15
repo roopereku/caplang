@@ -24,7 +24,6 @@ bool Cap::SourceFile::parseVariable(size_t& i, Scope& current)
 	current.node->right = std::make_shared <SyntaxTreeNode> (current.node);
 	current.node = current.node->right.get();
 
-	DBG_LOG("Added variable '%s'", variable.name->getString().c_str());
 	return true;
 }
 
@@ -54,7 +53,6 @@ bool Cap::SourceFile::parseFunction(size_t& i, Scope& current)
 
 	DBG_LOG("Spans across %lu", tokens[i].length);
 
-	DBG_LOG("Added function '%s'", name->getString().c_str());
 	Function& function = current.addFunction(name, i + 1, i + 1 + tokens[i].length);
 
 	i = function.scope->end;
@@ -84,7 +82,6 @@ bool Cap::SourceFile::parseType(size_t& i, Scope& current)
 		return showExpected("a body for type '" + name->getString() + '\'', i);
 
 	Type& type = current.addType(name, i + 1, i + 1 + tokens[i].length);
-	DBG_LOG("Added type '%s'", name->getString().c_str());
 
 	i = type.scope->end;
 	parseScope(*type.scope);
