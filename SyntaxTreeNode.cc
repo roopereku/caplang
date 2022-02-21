@@ -40,6 +40,7 @@ const char* Cap::SyntaxTreeNode::getTypeString(Type t)
 		case Type::UnaryNegative: return "UnaryNegative";
 		case Type::Ternary: return "Ternary";
 		case Type::Condition: return "Condition";
+		case Type::Comma: return "Comma";
 
 		case Type::Variable: return "Variable";
 		case Type::Value: return "Value";

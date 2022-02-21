@@ -49,6 +49,7 @@ struct SyntaxTreeNode
 		Range,
 		Access,
 		Ternary,
+		Comma,
 
 		Variable,
 		Condition,
