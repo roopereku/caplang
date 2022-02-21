@@ -6,9 +6,9 @@
 
 static bool isOperator(char c)
 {
-	return	c == '+' || c == '*' || c == '!' || c == '&' ||
-			(c >= '-' && c <= '/') || c == '%' || c == '^' ||
-			(c >= '<' && c <= '@') || c == '~' || c == '|';
+	return	c == '!' || c == '&' || (c >= '*' && c <= '/') ||
+			c == '%' || c == '^' || (c >= '<' && c <= '@') ||
+			c == '~' || c == '|';
 }
 
 static bool isBracket(char c)
@@ -24,7 +24,7 @@ static bool isString(char c)
 
 static bool isBreak(char c)
 {
-	return c == ',' || c == ';';
+	return c == ';';
 }
 
 static decltype(Cap::Token::line) line;

@@ -229,6 +229,18 @@ bool Cap::SourceFile::parseExpression(size_t& i, Scope& current)
 					case '>': isComparison = true; break;
 					case '!': isComparison = true; break;
 
+					case ',':
+					{
+						if(nextEqual)
+						{
+							ERROR_LOG(tokens[i], "Invalid operator ',='");
+							return true;
+						}
+
+						type = SyntaxTreeNode::Type::Comma;
+						break;
+					}
+
 					case '?':
 					{
 						if(nextEqual)
@@ -380,7 +392,7 @@ void Cap::SourceFile::parseExpressionOrder(std::vector <ExpressionPart>& parts, 
 			/*	Because of the way we order the expression, stuff like "x = i = 3" is
 			 *	parsed as (x = i) = 3 which is wrong. If there are 2 consecutive assignments,
 			 *	ignore the first one so that the expression is parsed as x = (i = 3) */
-			if(	priority == 0 && end == 0 ? (i - 2 < parts.size()) : (i - 2 >= end) &&
+			if(	priority == 1 && end == 0 ? (i - 2 < parts.size()) : (i - 2 >= end) &&
 				!parts[i - 2].used &&  ops.contains(parts[i - 2].type))
 			{
 				i--;
@@ -448,16 +460,17 @@ Cap::OperatorPrioty Cap::operatorsAtPriority(size_t priority)
 
 	switch(priority)
 	{
-		case 0: return OperatorPrioty(T::Assign);
-		case 1: return OperatorPrioty(T::BitwiseOR);
-		case 2: return OperatorPrioty(T::BitwiseAND);
-		case 3: return OperatorPrioty(T::BitwiseXOR);
-		case 4: return OperatorPrioty(T::Equal, T::Inequal);
-		case 5: return OperatorPrioty(T::Less, T::Greater, T::LessEqual, T::GreaterEqual);
-		case 6: return OperatorPrioty(T::BitwiseShiftLeft, T::BitwiseShiftRight);
-		case 7: return OperatorPrioty(T::Addition, T::Subtraction);
-		case 8: return OperatorPrioty(T::Multiplication, T::Division, T::Modulus);
-		case 9: return OperatorPrioty(T::Power);
+		case 0: return OperatorPrioty(T::Comma);
+		case 1: return OperatorPrioty(T::Assign);
+		case 2: return OperatorPrioty(T::BitwiseOR);
+		case 3: return OperatorPrioty(T::BitwiseAND);
+		case 4: return OperatorPrioty(T::BitwiseXOR);
+		case 5: return OperatorPrioty(T::Equal, T::Inequal);
+		case 6: return OperatorPrioty(T::Less, T::Greater, T::LessEqual, T::GreaterEqual);
+		case 7: return OperatorPrioty(T::BitwiseShiftLeft, T::BitwiseShiftRight);
+		case 8: return OperatorPrioty(T::Addition, T::Subtraction);
+		case 9: return OperatorPrioty(T::Multiplication, T::Division, T::Modulus);
+		case 10: return OperatorPrioty(T::Power);
 		case 11: return OperatorPrioty(T::UnaryPositive, T::UnaryNegative, T::Not, T::BitwiseNOT, T::Reference);
 
 		case 12: return OperatorPrioty(T::Call, T::Access);
