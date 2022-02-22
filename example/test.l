@@ -1,4 +1,11 @@
+func x()
+{
+}
+
+func x()
+{
+}
+
 func main()
 {
-	var x = Int
 }

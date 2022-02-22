@@ -31,6 +31,7 @@ private:
 	void parseExpressionOrder(std::vector <ExpressionPart>& parts, size_t offset,
 							  size_t end, size_t priority, SyntaxTreeNode* current);
 
+	bool isDuplicateDeclaration(Token* name, Scope& current);
 	bool parseVariable(size_t& i, Scope& current);
 	bool parseFunction(size_t& i, Scope& current);
 	bool parseType(size_t& i, Scope& current);

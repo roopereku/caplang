@@ -17,6 +17,10 @@ bool Cap::SourceFile::parseVariable(size_t& i, Scope& current)
 	if(!isToken(TokenType::Identifier, i))
 		return showExpected("a name for variable", i);
 
+	//	Prevent duplicates
+	if(isDuplicateDeclaration(&tokens[i], current))
+		return true;
+
 	Variable& variable = current.addVariable(&tokens[i]);
 
 	//	Initialize a node for the variable name and the following expression
@@ -40,6 +44,11 @@ bool Cap::SourceFile::parseFunction(size_t& i, Scope& current)
 		return showExpected("a name for function", i);
 
 	Token* name = &tokens[i];
+
+	//	TODO allow overloads
+	//	Prevent duplicates
+	if(isDuplicateDeclaration(name, current))
+		return true;
 
 	i++;
 	//	TODO parse the parameters
@@ -76,8 +85,12 @@ bool Cap::SourceFile::parseType(size_t& i, Scope& current)
 		return showExpected("a name for type", i);
 
 	Token* name = &tokens[i];
-	i++;
 
+	//	Prevent duplicates
+	if(isDuplicateDeclaration(name, current))
+		return true;
+
+	i++;
 	if(!isToken(TokenType::CurlyBrace, i) || *tokens[i].begin == '}')
 		return showExpected("a body for type '" + name->getString() + '\'', i);
 

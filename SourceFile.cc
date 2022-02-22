@@ -45,6 +45,19 @@ bool Cap::SourceFile::validate()
 	return false;
 }
 
+bool Cap::SourceFile::isDuplicateDeclaration(Token* name, Scope& current)
+{
+	if( current.findType(name) ||
+		current.findFunction(name) ||
+		current.findVariable(name))
+	{
+		ERROR_LOG((*name), "Duplicate identifier '%s'\n", name->getString().c_str());
+		return true;
+	}
+
+	return false;
+}
+
 const std::vector <Cap::Filename>& Cap::SourceFile::getImports() const
 {
 	return imports;
