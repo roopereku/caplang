@@ -88,12 +88,14 @@ Cap::SyntaxTreeNode* Cap::Scope::validateNode(SyntaxTreeNode* n, ValidationResul
 
 	DBG_LOG("Validating node '%s' in scope %lu", n->getTypeString(), d);
 
-	if(n->type == SyntaxTreeNode::Type::Value && n->value->type == TokenType::Identifier)
+	//	Identifiers be it values or calls require validation
+	if(n->value->type == TokenType::Identifier)
 	{
 		Function* f = findFunction(n->value);
 		Variable* v = findVariable(n->value);
 		Type* t = findType(n->value);
 
+		//	Does the identifier exist at all
 		if(!v && !f && !t)
 		{
 			result = ValidationResult::IdentifierNotFound;
