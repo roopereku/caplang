@@ -17,6 +17,8 @@ struct Type
 
 	Token* name;
 	std::shared_ptr <Scope> scope;
+
+	static bool isPrimitiveName(Token* name);
 };
 
 }
