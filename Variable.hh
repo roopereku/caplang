@@ -6,13 +6,13 @@
 namespace Cap
 {
 
+struct Type;
 struct Variable
 {
 	Variable(Token* name) : name(name) {}
 
 	Token* name;
-	Token* typeName;
-	Token* initialValue;
+	Type* type = nullptr;
 };
 
 }
