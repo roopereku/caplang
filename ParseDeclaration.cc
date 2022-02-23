@@ -14,7 +14,7 @@ bool Cap::SourceFile::parseVariable(size_t& i, Scope& current)
 	current.node->value = &tokens[i];
 
 	i++;
-	if(!isToken(TokenType::Identifier, i))
+	if(!isToken(TokenType::Identifier, i) || isKeyword(tokens[i]))
 		return showExpected("a name for variable", i);
 
 	//	Prevent duplicates
@@ -40,7 +40,7 @@ bool Cap::SourceFile::parseFunction(size_t& i, Scope& current)
 		return true;
 
 	i++;
-	if(!isToken(TokenType::Identifier, i))
+	if(!isToken(TokenType::Identifier, i) || isKeyword(tokens[i]))
 		return showExpected("a name for function", i);
 
 	Token* name = &tokens[i];
@@ -81,7 +81,7 @@ bool Cap::SourceFile::parseType(size_t& i, Scope& current)
 		return true;
 
 	i++;
-	if(!isToken(TokenType::Identifier, i))
+	if(!isToken(TokenType::Identifier, i) || isKeyword(tokens[i]))
 		return showExpected("a name for type", i);
 
 	Token* name = &tokens[i];

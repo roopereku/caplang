@@ -68,6 +68,13 @@ bool Cap::SourceFile::isToken(TokenType t, size_t& i)
 	return i < tokens.count() && tokens[i].type == t;
 }
 
+bool Cap::SourceFile::isKeyword(Token& token)
+{
+	return	token.stringEquals("var") ||
+			token.stringEquals("func") ||
+			token.stringEquals("type");
+}
+
 bool Cap::SourceFile::showExpected(const std::string& msg, size_t& i)
 {
 	ERROR_LOG(tokens[i], "Expected %s\nInstead got ", msg.c_str());
