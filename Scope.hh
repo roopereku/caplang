@@ -24,7 +24,8 @@ enum class ScopeContext
 enum class ValidationResult
 {
 	Success,
-	IdentifierNotFound
+	IdentifierNotFound,
+	InvalidOperand,
 };
 
 class Scope

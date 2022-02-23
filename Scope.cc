@@ -78,7 +78,7 @@ Cap::SyntaxTreeNode* Cap::Scope::validate(Cap::ValidationResult& result)
 			return errorAt;
 	}
 
-	return errorAt;
+	return nullptr;
 }
 
 Cap::SyntaxTreeNode* Cap::Scope::validateNode(SyntaxTreeNode* n, ValidationResult& result)
@@ -86,30 +86,43 @@ Cap::SyntaxTreeNode* Cap::Scope::validateNode(SyntaxTreeNode* n, ValidationResul
 	/*	TODO when we get the pooling of nodes done, the validation
 	 *	could be done by just looping through the pool instead of recursion */
 
+	//	TODO maybe move the code generation here
+
 	DBG_LOG("Validating node '%s' in scope %lu", n->getTypeString(), d);
 
-	//	Identifiers be it values or calls require validation
-	if(	(n->type == SyntaxTreeNode::Type::Value ||
-		 n->type == SyntaxTreeNode::Type::Call) &&
-		n->value->type == TokenType::Identifier)
+	//	Validate values which are identifiers
+	if(n->type == SyntaxTreeNode::Type::Value && n->value->type == TokenType::Identifier)
 	{
-		Function* f = findFunction(n->value);
 		Variable* v = findVariable(n->value);
+		Function* f = findFunction(n->value);
 		Type* t = findType(n->value);
 
-		//	Does the identifier exist at all
-		if(!v && !f && !t)
+		//	Is the given value anything we know of
+		if(!v && !t && !f)
 		{
 			result = ValidationResult::IdentifierNotFound;
 			return n;
+		}
+
+		//	Binary operators come before None
+		if(n->parent->type < SyntaxTreeNode::Type::None)
+		{
+			//	An operand is invalid if it's not a variable
+			if(!v)
+			{
+				result = ValidationResult::InvalidOperand;
+				return n;
+			}
 		}
 	}
 
 	SyntaxTreeNode* resultNode;
 
+	//	Validate the left node
 	if(n->left && (resultNode = validateNode(n->left.get(), result)))
 		return resultNode;
 
+	//	Validate the right node
 	if(n->right && (resultNode = validateNode(n->right.get(), result)))
 		return resultNode;
 
