@@ -255,7 +255,7 @@ bool Cap::SourceFile::parseExpression(size_t& i, Scope& current)
 						break;
 					}
 
-					case '%': break;
+					case '%': type = SyntaxTreeNode::Type::Modulus; break;
 
 					/*	Since == is handled elsewhere, we have to pretend
 					 *	that the next token is '=' to use the same error checking */
@@ -392,8 +392,8 @@ void Cap::SourceFile::parseExpressionOrder(std::vector <ExpressionPart>& parts, 
 			/*	Because of the way we order the expression, stuff like "x = i = 3" is
 			 *	parsed as (x = i) = 3 which is wrong. If there are 2 consecutive assignments,
 			 *	ignore the first one so that the expression is parsed as x = (i = 3) */
-			if(	priority == 1 && end == 0 ? (i - 2 < parts.size()) : (i - 2 >= end) &&
-				!parts[i - 2].used &&  ops.contains(parts[i - 2].type))
+			if(	priority == 1 && (end == 0 ? (i - 2 < parts.size()) : (i - 2 >= end)) &&
+				!parts[i - 2].used && ops.contains(parts[i - 2].type))
 			{
 				i--;
 				continue;
