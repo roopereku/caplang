@@ -25,6 +25,9 @@ bool Cap::SourceFile::parseScope(Scope& current)
 
 bool Cap::SourceFile::validate()
 {
+	if(!valid)
+		return false;
+
 	ValidationResult result = ValidationResult::Success;
 	SyntaxTreeNode* errorAt = root.validate(result);
 
@@ -36,6 +39,10 @@ bool Cap::SourceFile::validate()
 		{
 			case ValidationResult::IdentifierNotFound:
 				ERROR_LOG((*errorAt->value), "Unknown identifier '%s'\n", errorAt->value->getString().c_str());
+				break;
+
+			case ValidationResult::InvalidOperand:
+				ERROR_LOG((*errorAt->value), "Invalid operand '%s'\n", errorAt->value->getString().c_str());
 				break;
 
 			default: break;
