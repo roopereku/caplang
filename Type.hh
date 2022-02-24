@@ -13,11 +13,15 @@ namespace Cap
 struct Scope;
 struct Type
 {
-	Type(Token* name) : name(name) {}
+	Type(Token* name, bool isPrimitive = false)
+		: name(name), isPrimitive(isPrimitive)
+	{}
 
 	Token* name;
 	std::shared_ptr <Scope> scope;
+	bool isPrimitive = false;
 
+	static Type* findPrimitiveType(Token* name);
 	static bool isPrimitiveName(Token* name);
 };
 
