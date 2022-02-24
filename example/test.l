@@ -3,5 +3,5 @@ type y {}
 
 func main()
 {
-	var a = main
+	var a = u8
 }
