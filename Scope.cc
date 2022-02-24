@@ -58,7 +58,7 @@ Cap::Type* Cap::Scope::findType(Token* name)
 			return &it;
 	}
 
-	return parent == nullptr ? nullptr : parent->findType(name);
+	return parent == nullptr ? Type::findPrimitiveType(name) : parent->findType(name);
 }
 
 Cap::SyntaxTreeNode* Cap::Scope::validate(Cap::ValidationResult& result)
