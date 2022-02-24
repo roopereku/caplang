@@ -38,7 +38,7 @@ struct Token
 	bool stringEquals(const char* str) const;
 	bool tokenEquals(Token* token) const;
 
-	char* begin;
+	const char* begin;
 	TokenType type;
 	unsigned length;
 
