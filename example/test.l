@@ -1,7 +1,7 @@
 type x {}
+type y {}
 
 func main()
 {
-	var i = 1
-	var y = 2 * i + 5
+	var a = main
 }

@@ -45,6 +45,10 @@ bool Cap::SourceFile::validate()
 				ERROR_LOG((*errorAt->value), "Invalid operand '%s'\n", errorAt->value->getString().c_str());
 				break;
 
+			case ValidationResult::TypingOutsideInit:
+				ERROR_LOG((*errorAt->value), "Assigning type '%s' only allowed in initialization of a variable\n", errorAt->value->getString().c_str());
+				break;
+
 			default: break;
 		}
 	}

@@ -26,6 +26,7 @@ enum class ValidationResult
 	Success,
 	IdentifierNotFound,
 	InvalidOperand,
+	TypingOutsideInit
 };
 
 class Scope

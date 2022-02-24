@@ -107,8 +107,24 @@ Cap::SyntaxTreeNode* Cap::Scope::validateNode(SyntaxTreeNode* n, ValidationResul
 		//	Binary operators come before None
 		if(n->parent->type < SyntaxTreeNode::Type::None)
 		{
+			/*	If this node is on the right-hand-side, parent is '=' and this node
+			 *	has a valid type, try assigning a type to some variable */
+			if(n == n->parent->right.get() && n->parent->type == SyntaxTreeNode::Type::Assign && t)
+			{
+				//	Only allow assigning types at variable initialization
+				if(n->parent->parent->type != SyntaxTreeNode::Type::Variable)
+				{
+					result = ValidationResult::TypingOutsideInit;
+					return n;
+				}
+
+				Variable* left = findVariable(n->parent->left.get()->value);
+				left->type = t;
+				DBG_LOG("Setting type '%s' for variable '%s'", t->name->getString().c_str(), left->name->getString().c_str());
+			}
+
 			//	An operand is invalid if it's not a variable
-			if(!v)
+			else if(!v)
 			{
 				result = ValidationResult::InvalidOperand;
 				return n;
