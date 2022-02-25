@@ -409,7 +409,7 @@ void Cap::SourceFile::parseExpressionOrder(std::vector <ExpressionPart>& parts, 
 			if(	current->type >= SyntaxTreeNode::Type::Not &&
 				current->type <= SyntaxTreeNode::Type::UnaryNegative)
 			{
-				current->right = std::make_shared <SyntaxTreeNode> (current, parts[i + 1].value, SyntaxTreeNode::Type::Value);
+				current->left = std::make_shared <SyntaxTreeNode> (current, parts[i + 1].value, SyntaxTreeNode::Type::Value);
 				parts[i + 1].used = true;
 				continue;
 			}
