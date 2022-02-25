@@ -25,6 +25,7 @@ enum class ValidationResult
 {
 	Success,
 	IdentifierNotFound,
+	InvalidAssign,
 	InvalidOperand,
 	TypingOutsideInit
 };
@@ -66,6 +67,7 @@ public:
 
 private:
 	SyntaxTreeNode* validateNode(SyntaxTreeNode* n, ValidationResult& result);
+	SyntaxTreeNode* findLeftmostNode(SyntaxTreeNode* n);
 
 	std::vector <Type> types;
 	std::vector <Variable> variables;

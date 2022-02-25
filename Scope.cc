@@ -83,51 +83,75 @@ Cap::SyntaxTreeNode* Cap::Scope::validate(Cap::ValidationResult& result)
 
 Cap::SyntaxTreeNode* Cap::Scope::validateNode(SyntaxTreeNode* n, ValidationResult& result)
 {
-	/*	TODO when we get the pooling of nodes done, the validation
-	 *	could be done by just looping through the pool instead of recursion */
-
-	//	TODO maybe move the code generation here
-
-	DBG_LOG("Validating node '%s' in scope %lu", n->getTypeString(), d);
-
-	//	Validate values which are identifiers
 	if(n->type == SyntaxTreeNode::Type::Value && n->value->type == TokenType::Identifier)
 	{
 		Variable* v = findVariable(n->value);
 		Function* f = findFunction(n->value);
 		Type* t = findType(n->value);
-
-		//	Is the given value anything we know of
-		if(!v && !t && !f)
+		
+		//	Make sure that the given identifier actually exists
+		if(!v && !f && !t)
 		{
 			result = ValidationResult::IdentifierNotFound;
 			return n;
 		}
 
-		//	Binary operators come before None
-		if(n->parent->type < SyntaxTreeNode::Type::None)
+		//	Only allow types in expressions when it's a variable type initialization
+		if(t && n->parent->type != SyntaxTreeNode::Type::Assign)
 		{
-			/*	If this node is on the right-hand-side, parent is '=' and this node
-			 *	has a valid type, try assigning a type to some variable */
-			if(n == n->parent->right.get() && n->parent->type == SyntaxTreeNode::Type::Assign && t)
+			result = ValidationResult::InvalidOperand;
+			return n;
+		}
+
+		//	Check for assignments and initialize a type for a variable if necessary
+		if(n == n->parent->left.get() && n->parent->type == SyntaxTreeNode::Type::Assign)
+		{
+			//	Forbid re-assigning a type or a function
+			if(t || f)
 			{
-				//	Only allow assigning types at variable initialization
-				if(n->parent->parent->type != SyntaxTreeNode::Type::Variable)
+				result = ValidationResult::InvalidAssign;
+				return n;
+			}
+			
+			if(!v->type)
+			{
+				//	Find whatever value is right after the assignment
+				SyntaxTreeNode* afterAssign = findLeftmostNode(n->parent->right.get());
+
+				//	Look for variables or types
+				if(afterAssign->value->type == TokenType::Identifier)
 				{
-					result = ValidationResult::TypingOutsideInit;
-					return n;
+					//	Was a type given by name?
+					v->type = findType(afterAssign->value);
+					if(!v->type)
+					{
+						Variable* v2 = findVariable(afterAssign->value);
+
+						//	Was a variable assigned
+						if(v2) v->type = v2->type;
+
+						//	TODO look for functions as well
+					}
 				}
 
-				Variable* left = findVariable(n->parent->left.get()->value);
-				left->type = t;
-				DBG_LOG("Setting type '%s' for variable '%s'", t->name->getString().c_str(), left->name->getString().c_str());
+				//	Look for literal values
+				else
+				{
+					v->type = Type::findPrimitiveType(afterAssign->value->type);
+
+					if(!v->type)
+					{
+						DBG_LOG("UNIMPLEMENTED literal '%s'", afterAssign->value->getTypeString());
+						result = ValidationResult::InvalidOperand;
+						return afterAssign;
+					}
+				}
+
+				DBG_LOG("Variable '%s' now has type '%s'", v->name->getString().c_str(), v->type->name->getString().c_str());
 			}
 
-			//	An operand is invalid if it's not a variable
-			else if(!v)
+			else
 			{
-				result = ValidationResult::InvalidOperand;
-				return n;
 			}
 		}
 	}
@@ -143,4 +167,13 @@ Cap::SyntaxTreeNode* Cap::Scope::validateNode(SyntaxTreeNode* n, ValidationResul
 		return resultNode;
 
 	return nullptr;
+}
+
+Cap::SyntaxTreeNode* Cap::Scope::findLeftmostNode(SyntaxTreeNode* n)
+{
+	if(!n->left)
+		return n;
+
+	//	TODO handle calls
+	return findLeftmostNode(n->left.get());
 }

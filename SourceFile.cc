@@ -49,6 +49,10 @@ bool Cap::SourceFile::validate()
 				ERROR_LOG((*errorAt->value), "Assigning type '%s' only allowed in initialization of a variable\n", errorAt->value->getString().c_str());
 				break;
 
+			case ValidationResult::InvalidAssign:
+				ERROR_LOG((*errorAt->value), "Unable to assign to '%s'\n", errorAt->value->getString().c_str());
+				break;
+
 			default: break;
 		}
 	}
