@@ -21,6 +21,7 @@ struct Type
 	std::shared_ptr <Scope> scope;
 	bool isPrimitive = false;
 
+	static Type* findPrimitiveType(TokenType t);
 	static Type* findPrimitiveType(Token* name);
 	static bool isPrimitiveName(Token* name);
 };

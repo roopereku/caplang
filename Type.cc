@@ -18,15 +18,26 @@ static Cap::Token primitiveTokens[]
 
 static Cap::Type primitives[]
 {
-	Cap::Type(&primitiveTokens[0], true),
-	Cap::Type(&primitiveTokens[1], true),
-	Cap::Type(&primitiveTokens[2], true),
-	Cap::Type(&primitiveTokens[3], true),
-	Cap::Type(&primitiveTokens[4], true),
-	Cap::Type(&primitiveTokens[5], true),
-	Cap::Type(&primitiveTokens[6], true),
-	Cap::Type(&primitiveTokens[7], true),
+	Cap::Type(&primitiveTokens[0], true),	//	i8
+	Cap::Type(&primitiveTokens[1], true),	//	u8
+	Cap::Type(&primitiveTokens[2], true),	//	i16
+	Cap::Type(&primitiveTokens[3], true),	//	u16
+	Cap::Type(&primitiveTokens[4], true),	//	i32
+	Cap::Type(&primitiveTokens[5], true),	//	u32
+	Cap::Type(&primitiveTokens[6], true),	//	i64
+	Cap::Type(&primitiveTokens[7], true),	//	u64
 };
+
+Cap::Type* Cap::Type::findPrimitiveType(TokenType t)
+{
+	switch(t)
+	{
+		case TokenType::Integer: return &primitives[6];
+		case TokenType::Character: return &primitives[0];
+
+		default: return nullptr;
+	}
+}
 
 Cap::Type* Cap::Type::findPrimitiveType(Token* name)
 {
