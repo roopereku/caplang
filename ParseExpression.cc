@@ -383,9 +383,6 @@ void Cap::SourceFile::parseExpressionOrder(std::vector <ExpressionPart>& parts,
 										   size_t offset, size_t end, size_t priority,
 										   SyntaxTreeNode* node, Scope& current)
 {
-	//	Uncomment if something goes horribly wrong :-)
-	//priority = 0;
-
 	//	Go through each priority
 	for(OperatorPrioty ops; !(ops = operatorsAtPriority(priority)).empty(); priority++)
 	{
@@ -426,60 +423,47 @@ void Cap::SourceFile::parseExpressionOrder(std::vector <ExpressionPart>& parts,
 
 			//	FIXME Make the code below a single function and call it twice
 
-			//	The value on the left side is used if no unused operator is before it
-			if(i - 2 >= parts.size() || parts[i - 2].used)
+			for(int m = -1; m <= 1; m+=2)
 			{
-				if(	parts[i - 1].value->type == TokenType::Parenthesis ||
-					parts[i - 1].value->type == TokenType::SquareBracket)
+				//	Which side are we checking
+				std::shared_ptr <SyntaxTreeNode>& side = m < 0 ? node->left : node->right;
+
+				//	If the operator after the value this operator is next to is used, we can use said value
+				if(i + (m * 2) >= parts.size() || parts[i + (m * 2)].used)
 				{
-					DBG_LOG("Parsing bracket %s on the left", parts[i - 1].value->getTypeString());
-					node->left = std::make_shared <SyntaxTreeNode> (node, parts[i - 1].value, SyntaxTreeNode::Type::Expression);
-					parseExpressionInBracket(node->left.get(), parts[i - 1].value, current);
+					//	Is the value contained in brackets
+					if(	parts[i + m].value->type == TokenType::Parenthesis ||
+						parts[i + m].value->type == TokenType::SquareBracket)
+					{
+						//	Parse the contents of the brackets
+						DBG_LOG("Parsing bracket %s on the left", parts[i + m].value->getTypeString());
+						side = std::make_shared <SyntaxTreeNode> (node, parts[i + m].value, SyntaxTreeNode::Type::Expression);
+						parseExpressionInBracket(side.get(), parts[i + m].value, current);
+					}
+
+					//	The value isn't inside brackets so just use it as it is
+					else
+					{
+						side = std::make_shared <SyntaxTreeNode> (node, parts[i + m].value, parts[i + m].type);
+						DBG_LOG("Value on the left is '%s'", side->value->getString().c_str());
+					}
+
+					//	Mark the value used
+					parts[i + m].used = true;
 				}
 
+				//	The operator after the value takes precedence so we need to parse it first
 				else
 				{
-					node->left = std::make_shared <SyntaxTreeNode> (node, parts[i - 1].value, parts[i - 1].type);
-					DBG_LOG("Value on the left is '%s'", node->left->value->getString().c_str());
+					//	Which side are we parsing on?
+					size_t newOffset = m < 0 ? i - 1 : offset;
+					size_t newEnd = m < 0 ? 0 : i;
+
+					//	Initialize the left/right branch and recursively fill it
+					side = std::make_shared <SyntaxTreeNode> (node);
+					DBG_LOG("Parsing operator on the left of '%s", node->getTypeString());
+					parseExpressionOrder(parts, newOffset, newEnd, priority, side.get(), current);
 				}
-
-				parts[i - 1].used = true;
-			}
-
-			else
-			{
-				//	Initialize the left branch and recursively fill it
-				node->left = std::make_shared <SyntaxTreeNode> (node);
-				DBG_LOG("Parsing operator on the left of '%s", node->getTypeString());
-				parseExpressionOrder(parts, i - 1, 0, priority, node->left.get(), current);
-			}
-
-			//	The value on the right side is used if no unused operator is after it
-			if(i + 2 >= parts.size() || parts[i + 2].used)
-			{
-				if(	parts[i + 1].value->type == TokenType::Parenthesis ||
-					parts[i + 1].value->type == TokenType::SquareBracket)
-				{
-					DBG_LOG("Parsing bracket %s on the right", parts[i + 1].value->getTypeString());
-					node->right = std::make_shared <SyntaxTreeNode> (node, parts[i + 1].value, SyntaxTreeNode::Type::Expression);
-					parseExpressionInBracket(node->right.get(), parts[i + 1].value, current);
-				}
-
-				else
-				{
-					node->right = std::make_shared <SyntaxTreeNode> (node, parts[i + 1].value, parts[i + 1].type);
-					DBG_LOG("Value on the right is '%s'", node->right->value->getString().c_str());
-				}
-
-				parts[i + 1].used = true;
-			}
-
-			else
-			{
-				//	Initialize the right branch and recursively fill it
-				node->right = std::make_shared <SyntaxTreeNode> (node);
-				DBG_LOG("Parsing operator on the right of '%s'", node->getTypeString());
-				parseExpressionOrder(parts, offset, i, priority, node->right.get(), current);
 			}
 		}
 	}
