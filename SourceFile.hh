@@ -27,9 +27,12 @@ private:
 	bool parseImportFilename(size_t& i);
 
 	bool parseScope(Scope& current);
-	bool parseExpression(size_t& i, Scope& current);
-	void parseExpressionOrder(std::vector <ExpressionPart>& parts, size_t offset,
-							  size_t end, size_t priority, SyntaxTreeNode* current);
+	bool parseExpression(size_t& i, Scope& current, bool addNextExpr = true);
+	void parseExpressionOrder(std::vector <ExpressionPart>& parts,
+							  size_t offset, size_t end, size_t priority,
+							  SyntaxTreeNode* node, Scope& current);
+
+	bool parseExpressionInBracket(SyntaxTreeNode* node, Token* at, Scope& current);
 
 	bool isDuplicateDeclaration(Token* name, Scope& current);
 	bool parseVariable(size_t& i, Scope& current);
