@@ -17,7 +17,6 @@ bool Cap::SourceFile::parseExpression(size_t& i, Scope& current, bool addNextExp
 
 	DBG_LOG("Current node is of type '%s'", current.node->getTypeString());
 
-	//	TODO use parts.back() instead of tokens[i - 1]
 	std::vector <ExpressionPart> parts;
 	SyntaxTreeNode* lastNode = current.node;
 
@@ -27,16 +26,23 @@ bool Cap::SourceFile::parseExpression(size_t& i, Scope& current, bool addNextExp
 
 	for(; i < current.end; i++)
 	{
-		//	Line change breaks the loop if the last tokens wasn't an operator
-		if(tokens[i].line > tokens[start].line && !lastWasOperator)
+		//	Did a line change happen?
+		if(tokens[i].line > tokens[start].line)
 		{
-			DBG_LOG("Line change", "");
-			i--;
-			break;
+			//	If neither the last or current token is an operator, the expression ends here
+			if(!lastWasOperator && !isToken(TokenType::Operator, i))
+			{
+				DBG_LOG("Line change", "");
+				i--;
+				break;
+			}
+
+			//	Update the starting position
+			start = i;
 		}
 
 		//	Stop if ';' or a closing bracket is encountered
-		else if(isToken(TokenType::Break, i) || tokens[i].length == 0)
+		if(isToken(TokenType::Break, i) || tokens[i].length == 0)
 			break;
 
 		else if(isToken(TokenType::Identifier, i))
@@ -115,11 +121,11 @@ bool Cap::SourceFile::parseExpression(size_t& i, Scope& current, bool addNextExp
 			size_t next = i + 1;
 			DBG_LOG("Expression: Operator '%s'", tokens[i].getString().c_str());
 
-			/*	An operator can be an unary operator if there's an operator before it,
+			/*	An operator can be unary if there's an operator or nothing before it,
 			 *	and no operator after it. An unary also cannot happen if the preceding
 			 *	operator was '++' or '--' */
 			bool possiblyUnary =	!lastWasIncDec &&
-									(i == start ||
+									(parts.empty() ||
 									parts.back().value->type == TokenType::Operator) &&
 									!isToken(TokenType::Operator, next);
 
@@ -137,7 +143,6 @@ bool Cap::SourceFile::parseExpression(size_t& i, Scope& current, bool addNextExp
 			//	Is the next token the same operator as this one
 			if(isToken(TokenType::Operator, next) && *tokens[next].begin == *tokens[i].begin)
 			{
-				//	FIXME When not in parenthesis, check if the line changes
 				size_t gap = tokens.getBeginIndex(next) - tokens.getBeginIndex(i) - 1;
 				//DBG_LOG("Gap is %lu", gap);
 
