@@ -1,4 +1,4 @@
-#include "Program.hh"
+#include "cap/Program.hh"
 
 int main(int argc, char** argv)
 {
