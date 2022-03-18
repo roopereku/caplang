@@ -36,10 +36,10 @@ bool Cap::SourceFile::parseExpression(size_t& i, Scope& current, bool addNextExp
 		}
 
 		//	Stop if ';' or a closing bracket is encountered
-		else if(tokens[i].type == TokenType::Break || tokens[i].length == 0)
+		else if(isToken(TokenType::Break, i) || tokens[i].length == 0)
 			break;
 
-		else if(tokens[i].type == TokenType::Identifier)
+		else if(isToken(TokenType::Identifier, i))
 		{
 			if(i != start && !lastWasOperator)
 				return showExpected("an operator before identifier", i);
@@ -92,7 +92,7 @@ bool Cap::SourceFile::parseExpression(size_t& i, Scope& current, bool addNextExp
 		}
 
 		//	Check for other values
-		else if(tokens[i].type != TokenType::Operator)
+		else if(!isToken(TokenType::Operator, i))
 		{
 			if(i > start && !lastWasOperator)
 				return showExpected("an operator before value", i);
@@ -120,8 +120,9 @@ bool Cap::SourceFile::parseExpression(size_t& i, Scope& current, bool addNextExp
 			 *	operator was '++' or '--' */
 			bool possiblyUnary =	!lastWasIncDec &&
 									(i == start ||
-									tokens[i - 1].type == TokenType::Operator) &&
+									parts.back().value->type == TokenType::Operator) &&
 									!isToken(TokenType::Operator, next);
+
 			if(!possiblyUnary && lastWasOperator)
 				return showExpected("a value after an operator", i);
 
@@ -270,7 +271,7 @@ bool Cap::SourceFile::parseExpression(size_t& i, Scope& current, bool addNextExp
 					case '.':
 					{
 						//	FIXME show the earlier token
-						if(i == start || tokens[i - 1].type != TokenType::Identifier)
+						if(i == start || parts.back().value->type != TokenType::Identifier)
 							return showExpected("an identifier before '.'", i);
 
 						else if(!isToken(TokenType::Identifier, next))

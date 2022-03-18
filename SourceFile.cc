@@ -80,7 +80,17 @@ const std::vector <Cap::Filename>& Cap::SourceFile::getImports() const
 
 bool Cap::SourceFile::isToken(TokenType t, size_t& i)
 {
+	skipComments(i);
 	return i < tokens.count() && tokens[i].type == t;
+}
+
+void Cap::SourceFile::skipComments(size_t& i)
+{
+	while(	tokens[i].type == TokenType::SingleLineComment ||
+			tokens[i].type == TokenType::MultiLineComment)
+	{
+		i++;
+	}
 }
 
 bool Cap::SourceFile::isKeyword(Token& token)

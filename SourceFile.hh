@@ -41,6 +41,7 @@ private:
 
 	bool showExpected(const std::string& msg, size_t& i);
 	bool isToken(TokenType t, size_t& i);
+	void skipComments(size_t& i);
 	bool isKeyword(Token& token);
 
 	bool inExpression = false;
