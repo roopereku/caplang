@@ -82,12 +82,17 @@ bool Cap::SourceFile::parseExpression(size_t& i, Scope& current, bool addNextExp
 			SyntaxTreeNode::Type t = SyntaxTreeNode::Type::Value;
 			size_t next = i + 1;
 
-			//	Stuff like id() is treated as a call
-			if(isToken(TokenType::Parenthesis, next))
+			//	TODO handle curly braces
+			//	Are there brackets after the identifier
+			if(isToken(TokenType::Parenthesis, next) || isToken(TokenType::SquareBracket, next))
 			{
-				DBG_LOG("Expression: Call '%s'", tokens[i].getString().c_str());
-				parts.push_back({ SyntaxTreeNode::Type::Call, &tokens[i] });
-				i += tokens[i].length + 1;
+				//	Which brackets do we have?
+				SyntaxTreeNode::Type t = tokens[next].type == TokenType::Parenthesis ?
+					SyntaxTreeNode::Type::Call : SyntaxTreeNode::Type::Subscript;
+
+				//	Add the identifier with a special type and skip over the brackets
+				parts.push_back({ t, &tokens[i] });
+				i = next + tokens[next].length + 1;
 			}
 
 			else
@@ -307,7 +312,8 @@ bool Cap::SourceFile::parseExpression(size_t& i, Scope& current, bool addNextExp
 					if(i == start || parts.back().value->type != TokenType::Identifier)
 						return showExpected("an identifier before assignment", i);
 
-					//	Do nothing if the part is assignment
+					/*	Because we don't want "x = 2" to turn into "x = x = 2",
+					 *	do the expansion only when the operator isn't a single '=' */
 					if(*tokens[i].begin != '=')
 					{
 						//	For an example, turn "x += 2" to "x = x + 2" or "x <<= 2" to "x = x << 2"
@@ -358,6 +364,7 @@ bool Cap::SourceFile::parseExpression(size_t& i, Scope& current, bool addNextExp
 		}
 	}
 
+	//	TODO handle brackets
 	//	Single values don't need ordering
 	if(parts.size() == 1)
 	{
@@ -421,11 +428,10 @@ void Cap::SourceFile::parseExpressionOrder(std::vector <ExpressionPart>& parts,
 			{
 				node->left = std::make_shared <SyntaxTreeNode> (node, parts[i + 1].value, SyntaxTreeNode::Type::Value);
 				parts[i + 1].used = true;
+
+				//	FIXME instead of "continue", set the following "m" to 1 and let set the value in the for loop
 				continue;
 			}
-
-			if(node->parent != nullptr)
-				DBG_LOG("Branches from '%s'", node->parent->getTypeString());
 
 			//	FIXME Make the code below a single function and call it twice
 
@@ -434,11 +440,12 @@ void Cap::SourceFile::parseExpressionOrder(std::vector <ExpressionPart>& parts,
 				//	Which side are we checking
 				std::shared_ptr <SyntaxTreeNode>& side = m < 0 ? node->left : node->right;
 
-				//	If the operator after the value this operator is next to is used, we can use said value
+				/*	If there's no operator after the next/previous token, or it is used,
+				 *	we can safely use the next/previous token as a value */
 				if(i + (m * 2) >= parts.size() || parts[i + (m * 2)].used)
 				{
 					//	Is the value contained in brackets
-					if(	parts[i + m].value->type == TokenType::Parenthesis ||
+					if( parts[i + m].value->type == TokenType::Parenthesis ||
 						parts[i + m].value->type == TokenType::SquareBracket)
 					{
 						//	Parse the contents of the brackets
@@ -450,8 +457,21 @@ void Cap::SourceFile::parseExpressionOrder(std::vector <ExpressionPart>& parts,
 					//	The value isn't inside brackets so just use it as it is
 					else
 					{
+						//	Create a new node for the value
 						side = std::make_shared <SyntaxTreeNode> (node, parts[i + m].value, parts[i + m].type);
-						DBG_LOG("Value on the left is '%s'", side->value->getString().c_str());
+
+						//	Is the value actually a call or a subscript
+						if(	parts[i + m].type == SyntaxTreeNode::Type::Call ||
+							parts[i + m].type == SyntaxTreeNode::Type::Subscript)
+						{
+							//	Because the brackets are in the next token, find the next usable token
+							size_t tokenIndex = tokens.getIndex(parts[i + m].value) + 1;
+							skipComments(tokenIndex);
+
+							//	Create a new expression node for what's inside the brackets and parse the contents
+							side->left = std::make_shared <SyntaxTreeNode> (node, &tokens[tokenIndex], SyntaxTreeNode::Type::Expression);
+							parseExpressionInBracket(side->left.get(), side->left->value, current);
+						}
 					}
 
 					//	Mark the value used
@@ -461,13 +481,13 @@ void Cap::SourceFile::parseExpressionOrder(std::vector <ExpressionPart>& parts,
 				//	The operator after the value takes precedence so we need to parse it first
 				else
 				{
-					//	Which side are we parsing on?
+					//	Determine appropriate offsets and ends depending on which side we are on
 					size_t newOffset = m < 0 ? i - 1 : offset;
 					size_t newEnd = m < 0 ? 0 : i;
 
 					//	Initialize the left/right branch and recursively fill it
 					side = std::make_shared <SyntaxTreeNode> (node);
-					DBG_LOG("Parsing operator on the left of '%s", node->getTypeString());
+					DBG_LOG("Parsing operator on the %s of '%s", m < 0 ? "left" : "right", node->getTypeString());
 					parseExpressionOrder(parts, newOffset, newEnd, priority, side.get(), current);
 				}
 			}
