@@ -45,6 +45,7 @@ struct SyntaxTreeNode
 		UnaryNegative,
 
 		None,
+		Subscript,
 		Call,
 		Range,
 		Access,
