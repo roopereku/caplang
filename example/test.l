@@ -1,4 +1,4 @@
 func main()
 {
-	var i = -(1 + 1)
+	var i = -a[1 + 1]
 }

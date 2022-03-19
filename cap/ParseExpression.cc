@@ -456,6 +456,7 @@ void Cap::SourceFile::parseExpressionOrder(std::vector <ExpressionPart>& parts,
 						side = std::make_shared <SyntaxTreeNode> (node, parts[i + m].value, parts[i + m].type);
 
 						//	Is the value actually a call or a subscript
+						//	FIXME maybe we could have the target identifier stored in the left node
 						if(	parts[i + m].type == SyntaxTreeNode::Type::Call ||
 							parts[i + m].type == SyntaxTreeNode::Type::Subscript)
 						{
