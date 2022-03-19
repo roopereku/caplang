@@ -1,6 +1,8 @@
 #ifndef FLAG_LIST_HEADER
 #define FLAG_LIST_HEADER
 
+#include <cstdint>
+
 namespace Cap {
 
 template <typename T>
@@ -20,22 +22,22 @@ public:
 
 	constexpr void add(T type)
 	{
-		value |= (1 << static_cast <unsigned> (type));
+		value |= (1UL << static_cast <uint64_t> (type));
 	}
 
 	constexpr bool contains(T type) const
 	{
-		const unsigned result = 1 << static_cast <unsigned> (type);
+		const uint64_t result = 1UL << static_cast <uint64_t> (type);
 		return (value & result) == result;
 	}
 
 	constexpr bool empty() const
 	{
-		return value == 0;
+		return value == 0UL;
 	}
 
 private:
-	unsigned value = 0;
+	uint64_t value = 0UL;
 };
 
 }
