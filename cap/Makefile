@@ -19,3 +19,6 @@ obj/release/%.cc.o:	%.cc $(HEADER)
 obj/:
 	@mkdir -p obj/debug
 	@mkdir -p obj/release
+
+clean:
+	@rm -r obj/
