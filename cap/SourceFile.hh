@@ -27,7 +27,7 @@ private:
 	bool parseImportFilename(size_t& i);
 
 	bool parseScope(Scope& current);
-	bool parseExpression(size_t& i, Scope& current, bool addNextExpr = true);
+	bool parseExpression(size_t& i, Scope& current, bool inBrackets = false);
 	bool parseExpressionOrder(std::vector <ExpressionPart>& parts,
 							  size_t offset, size_t end, size_t priority,
 							  SyntaxTreeNode* node, Scope& current);
