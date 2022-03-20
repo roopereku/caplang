@@ -105,7 +105,7 @@ bool Cap::TokenizedSource::matchBraces()
 		for(size_t j = i + 1; j < end; j++)
 		{
 			//	Non-braces are irrelevant
-			if(tokens[i].type < TokenType::CurlyBrace || tokens[i].type > TokenType::SquareBracket)
+			if(tokens[j].type < TokenType::CurlyBrace || tokens[j].type > TokenType::SquareBracket)
 				continue;
 
 			//	Where does the inner brace end
