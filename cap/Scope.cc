@@ -22,7 +22,6 @@ Cap::Type& Cap::Scope::addType(Token* name, size_t begin, size_t end)
 Cap::Variable& Cap::Scope::addVariable(Token* name)
 {
 	variables.emplace_back(name);
-	DBG_LOG("Added variable '%s' in scope %lu", name->getString().c_str(), d);
 	return variables.back();
 }
 
@@ -39,7 +38,6 @@ Cap::Function* Cap::Scope::findFunction(Token* name)
 
 Cap::Variable* Cap::Scope::findVariable(Token* name)
 {
-	DBG_LOG("Listing variables of scope %lu", d);
 	for(auto& it : variables)
 	{
 		DBG_LOG("var '%s'", it.name->getString().c_str());
@@ -63,7 +61,6 @@ Cap::Type* Cap::Scope::findType(Token* name)
 
 Cap::SyntaxTreeNode* Cap::Scope::validate(Cap::ValidationResult& result)
 {
-	DBG_LOG("Validating scope %lu", d);
 	SyntaxTreeNode* errorAt = validateNode(&root, result);
 
 	if(result != ValidationResult::Success)

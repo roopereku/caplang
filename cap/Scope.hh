@@ -37,10 +37,6 @@ public:
 		:	parent(parent), ctx(ctx), begin(begin), end(end),
 			root(nullptr), node(&root)
 	{
-		static size_t dd = 0;
-		dd++;
-
-		d = dd;
 		root.type = SyntaxTreeNode::Type::Expression;
 	}
 
@@ -60,8 +56,6 @@ public:
 	size_t begin;
 	size_t end;
 
-	size_t d;
-	
 	SyntaxTreeNode root;
 	SyntaxTreeNode* node;
 
@@ -70,6 +64,7 @@ private:
 	SyntaxTreeNode* findLeftmostNode(SyntaxTreeNode* n);
 
 	std::vector <Type> types;
+	std::vector <Scope> blocks;
 	std::vector <Variable> variables;
 	std::vector <Function> functions;
 };
