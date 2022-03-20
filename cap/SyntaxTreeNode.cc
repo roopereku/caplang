@@ -43,6 +43,9 @@ const char* Cap::SyntaxTreeNode::getTypeString(Type t)
 		case Type::Condition: return "Condition";
 		case Type::Comma: return "Comma";
 
+		case Type::Parentheses: return "Parentheses";
+		case Type::Array: return "Array";
+
 		case Type::Variable: return "Variable";
 		case Type::Value: return "Value";
 		case Type::Expression: return "Expression";

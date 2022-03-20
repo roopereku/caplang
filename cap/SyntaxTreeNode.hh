@@ -52,6 +52,9 @@ struct SyntaxTreeNode
 		Ternary,
 		Comma,
 
+		Array,
+		Parentheses,
+
 		Variable,
 		Condition,
 		Expression,
