@@ -46,6 +46,7 @@ Cap::TokenizedSource::TokenizedSource(const std::string& path) : path(path)
 
 	if(!file.is_open())
 	{
+		//	FIXME use a more generic error reporting function
 		printf("Error: Couldn't open file '%s'\n", path.c_str());
 		return;
 	}
@@ -80,6 +81,7 @@ bool Cap::TokenizedSource::matchBraces()
 			//	Does the closing brace have a match?
 			if(tokens[i].length > 0)
 			{
+				//	FIXME use a more generic error reporting function
 				printf("Error: Unnecessary '%c' on line %u at column %u\n", match, tokens[i].line, tokens[i].column);
 				return false;
 			}
@@ -90,6 +92,35 @@ bool Cap::TokenizedSource::matchBraces()
 			return false;
 	}
 
+	//	Let's make sure that there's nothing like "( { ) }"
+	for(size_t i = 0; i < tokens.size(); i++)
+	{
+		//	Non-braces are irrelevant
+		if(tokens[i].type < TokenType::CurlyBrace || tokens[i].type > TokenType::SquareBracket)
+			continue;
+
+		//	Where does this brace end
+		size_t end = i + tokens[i].length;
+
+		for(size_t j = i + 1; j < end; j++)
+		{
+			//	Non-braces are irrelevant
+			if(tokens[i].type < TokenType::CurlyBrace || tokens[i].type > TokenType::SquareBracket)
+				continue;
+
+			//	Where does the inner brace end
+			size_t innerEnd = j + tokens[j].length;
+
+			//	If the inner brace is outside the outer brace, the braces are out of sequence
+			if(innerEnd > end)
+			{
+				//	FIXME use a more generic error reporting function
+				printf("Error: Braces out of sequence\n");
+				return false;
+			}
+		}
+	}
+
 	return true;
 }
 
@@ -97,8 +128,6 @@ bool Cap::TokenizedSource::matchBrace(size_t i, char match)
 {
 	int depth = 1;
 	size_t begin = i;
-
-	//	TODO Handle input like '{(})'
 
 	for(i++; i < tokens.size() && depth > 0; i++)
 	{
@@ -117,13 +146,15 @@ bool Cap::TokenizedSource::matchBrace(size_t i, char match)
 
 	if(depth > 0)
 	{
+		//	FIXME use a more generic error reporting function
 		printf("Error: Unterminated '%c' on line %u at column %u\n", *tokens[begin].begin, tokens[begin].line, tokens[begin].column);
 		return false;
 	}
 
 	//	Tell the opening brace the range
-	tokens[begin].length = --i - begin - 1;
+	tokens[begin].length = --i - begin;
 	tokens[i].length = 0;
+
 	return true;
 }
 
@@ -168,6 +199,7 @@ void Cap::TokenizedSource::tokenize()
 				continue;
 			}
 
+			//	FIXME use a more generic error reporting function
 			printf("Error: Invalid character '%c'\n", data[i]);
 			error = true;
 			break;
@@ -198,6 +230,7 @@ bool Cap::TokenizedSource::parseString(size_t& i)
 		//	The string is unterminated if a newline or a null is encountered
 		if(data[i] == '\n' || data[i] == 0)
 		{
+			//	FIXME use a more generic error reporting function
 			printf("Error: Unterminated string on line %u at column %u\n", startLine, startColumn);
 			return errorOut();
 		}
@@ -274,6 +307,7 @@ bool Cap::TokenizedSource::parseMultiLineComment(size_t& i)
 
 	if(i >= data.length())
 	{
+		//	FIXME use a more generic error reporting function
 		printf("Unterminated multiline comment on line %u at column %u\n", startLine, startColumn);
 		return errorOut();
 	}
@@ -360,6 +394,7 @@ bool Cap::TokenizedSource::parseNumeric(size_t& i)
 		if(i != begin)
 		{
 			std::string junk(data.begin() + begin, data.begin() + i);
+			//	FIXME use a more generic error reporting function
 			printf("Error: Junk after %s value '%s' ('%s')\n", tokens.back().getTypeString(), tokens.back().getString().c_str(), junk.c_str());
 
 			return errorOut();
@@ -388,6 +423,7 @@ bool Cap::TokenizedSource::parseDecimal(size_t& i)
 			//	If the dots aren't consecutive, error out
 			else if(dots > 1)
 			{
+				//	FIXME use a more generic error reporting function
 				printf("Error: Too many dots in a numeric literal\n");
 				return errorOut();
 			}
