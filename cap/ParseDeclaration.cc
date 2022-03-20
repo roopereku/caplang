@@ -56,7 +56,8 @@ bool Cap::SourceFile::parseFunction(size_t& i, Scope& current)
 		return showExpected("parentheses after function name", i);
 
 	//	Skip the parentheses
-	i += tokens[i].length + 2;
+	i += tokens[i].length + 1;
+
 	if(!isToken(TokenType::CurlyBrace, i) || *tokens[i].begin == '}')
 		return showExpected("a body for function '" + name->getString() + '\'', i);
 
