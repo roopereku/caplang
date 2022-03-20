@@ -1,7 +1,7 @@
 #include "SourceFile.hh"
 #include "Debug.hh"
 
-bool Cap::SourceFile::parseExpression(size_t& i, Scope& current, bool addNextExpr)
+bool Cap::SourceFile::parseExpression(size_t& i, Scope& current, bool inBrackets)
 {
 	DBG_LOG("Parsing expression in scope %lu - %lu", current.begin, current.end);
 
@@ -42,8 +42,21 @@ bool Cap::SourceFile::parseExpression(size_t& i, Scope& current, bool addNextExp
 		}
 
 		//	Stop if ';' or a closing bracket is encountered
-		if(isToken(TokenType::Break, i) || tokens[i].length == 0)
+		if(isToken(TokenType::Break, i))
+		{
+			//	The expression can't be broken inside braces excluding curly braces
+			if(inBrackets)
+			{
+				ERROR_LOG(tokens[i], "Cannot end an expression inside brackets\n");
+				return true;
+			}
+
 			break;
+		}
+
+		//	Stop the expression if a closing bracket is encountered
+		else if(tokens[i].length == 0)
+		 	break;
 
 		else if(isToken(TokenType::Identifier, i))
 		{
@@ -92,7 +105,7 @@ bool Cap::SourceFile::parseExpression(size_t& i, Scope& current, bool addNextExp
 
 				//	Add the identifier with a special type and skip over the brackets
 				parts.push_back({ t, &tokens[i] });
-				i = next + tokens[next].length + 1;
+				i = next + tokens[next].length;
 			}
 
 			else
@@ -105,10 +118,11 @@ bool Cap::SourceFile::parseExpression(size_t& i, Scope& current, bool addNextExp
 		//	Check for other values
 		else if(!isToken(TokenType::Operator, i))
 		{
+			DBG_LOG("Expression: %s '%s'", tokens[i].getTypeString(), tokens[i].getString().c_str());
+
 			if(i > start && !lastWasOperator)
 				return showExpected("an operator before value", i);
 
-			DBG_LOG("Expression: %s '%s'", tokens[i].getTypeString(), tokens[i].getString().c_str());
 			lastWasOperator = false;
 			parts.push_back({ SyntaxTreeNode::Type::Value, &tokens[i] });
 
@@ -116,7 +130,7 @@ bool Cap::SourceFile::parseExpression(size_t& i, Scope& current, bool addNextExp
 				tokens[i].type == TokenType::SquareBracket)
 			{
 				DBG_LOG("bracket at %lu - %lu", i, i + tokens[i].length);
-				i += tokens[i].length + 1;
+				i += tokens[i].length;
 			}
 		}
 
@@ -379,7 +393,7 @@ bool Cap::SourceFile::parseExpression(size_t& i, Scope& current, bool addNextExp
 	parseExpressionOrder(parts, parts.size() - 1, 0, 0, current.node, current);
 
 	//	Should a node be added for the next expression
-	if(addNextExpr)
+	if(!inBrackets)
 	{
 		//	Create a node for the next expression
 		lastNode->right = std::make_shared <SyntaxTreeNode> (lastNode);
@@ -507,7 +521,7 @@ bool Cap::SourceFile::parseExpressionInBracket(SyntaxTreeNode* node, Token* at, 
 	//	Temporarily modify the scope to fit the brackets and parse the contents
 	current.node = node;
 	current.end = index + at->length;
-	bool result = parseExpression(index, current, false);
+	bool result = parseExpression(index, current, true);
 
 	//	Restore the earlier state
 	current.node = oldCurrentNode;
