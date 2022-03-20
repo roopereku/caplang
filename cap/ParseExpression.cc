@@ -390,7 +390,7 @@ bool Cap::SourceFile::parseExpression(size_t& i, Scope& current, bool addNextExp
 	return true;
 }
 
-void Cap::SourceFile::parseExpressionOrder(std::vector <ExpressionPart>& parts,
+bool Cap::SourceFile::parseExpressionOrder(std::vector <ExpressionPart>& parts,
 										   size_t offset, size_t end, size_t priority,
 										   SyntaxTreeNode* node, Scope& current)
 {
@@ -446,7 +446,8 @@ void Cap::SourceFile::parseExpressionOrder(std::vector <ExpressionPart>& parts,
 					{
 						//	Parse the contents of the brackets
 						side = std::make_shared <SyntaxTreeNode> (node, parts[i + m].value, SyntaxTreeNode::Type::Expression);
-						parseExpressionInBracket(side.get(), parts[i + m].value, current);
+						if(!parseExpressionInBracket(side.get(), parts[i + m].value, current))
+							return false;
 					}
 
 					//	The value isn't inside brackets so just use it as it is
@@ -466,7 +467,8 @@ void Cap::SourceFile::parseExpressionOrder(std::vector <ExpressionPart>& parts,
 
 							//	Create a new expression node for what's inside the brackets and parse the contents
 							side->left = std::make_shared <SyntaxTreeNode> (node, &tokens[tokenIndex], SyntaxTreeNode::Type::Expression);
-							parseExpressionInBracket(side->left.get(), side->left->value, current);
+							if(!parseExpressionInBracket(side->left.get(), side->left->value, current))
+								return false;
 						}
 					}
 
@@ -483,11 +485,14 @@ void Cap::SourceFile::parseExpressionOrder(std::vector <ExpressionPart>& parts,
 
 					//	Initialize the left/right branch and recursively fill it
 					side = std::make_shared <SyntaxTreeNode> (node);
-					parseExpressionOrder(parts, newOffset, newEnd, priority, side.get(), current);
+					if(!parseExpressionOrder(parts, newOffset, newEnd, priority, side.get(), current))
+						return false;
 				}
 			}
 		}
 	}
+
+	return true;
 }
 
 bool Cap::SourceFile::parseExpressionInBracket(SyntaxTreeNode* node, Token* at, Scope& current)
