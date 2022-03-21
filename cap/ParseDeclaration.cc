@@ -21,7 +21,7 @@ bool Cap::SourceFile::parseVariable(size_t& i, Scope& current)
 	if(isDuplicateDeclaration(&tokens[i], current))
 		return true;
 
-	Variable& variable = current.addVariable(&tokens[i]);
+	current.addVariable(&tokens[i]);
 
 	//	Initialize a node for the variable name and the following expression
 	current.node->left = std::make_shared <SyntaxTreeNode> (current.node, &tokens[i], SyntaxTreeNode::Type::Value);
@@ -61,7 +61,7 @@ bool Cap::SourceFile::parseFunction(size_t& i, Scope& current)
 	if(!isToken(TokenType::CurlyBrace, i) || *tokens[i].begin == '}')
 		return showExpected("a body for function '" + name->getString() + '\'', i);
 
-	DBG_LOG("Spans across %lu", tokens[i].length);
+	DBG_LOG("Spans across %u", tokens[i].length);
 
 	Function& function = current.addFunction(name, i + 1, i + 1 + tokens[i].length);
 

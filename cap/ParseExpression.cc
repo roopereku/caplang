@@ -32,7 +32,7 @@ bool Cap::SourceFile::parseExpression(size_t& i, Scope& current, bool inBrackets
 			//	If neither the last or current token is an operator, the expression ends here
 			if(!lastWasOperator && !isToken(TokenType::Operator, i))
 			{
-				DBG_LOG("Line change", "");
+				DBG_LOG("Line change at %lu", i);
 				i--;
 				break;
 			}
@@ -92,7 +92,6 @@ bool Cap::SourceFile::parseExpression(size_t& i, Scope& current, bool inBrackets
 			inExpression = true;
 			lastWasOperator = false;
 
-			SyntaxTreeNode::Type t = SyntaxTreeNode::Type::Value;
 			size_t next = i + 1;
 
 			//	TODO handle curly braces

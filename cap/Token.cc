@@ -25,6 +25,8 @@ const char* Cap::Token::getTypeString(TokenType t)
 
 		case TokenType::None: return "None";
 	}
+
+	return "???";
 }
 
 const char* Cap::Token::getTypeString() const
