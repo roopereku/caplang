@@ -36,25 +36,28 @@ bool Cap::SourceFile::parseFunction(size_t& i, Scope& current)
 	if(!tokens[i].stringEquals("func"))
 		return false;
 
-	else if(inExpression)
-		return true;
-
 	i++;
-	if(!isToken(TokenType::Identifier, i) || isKeyword(tokens[i]))
-		return showExpected("a name for function", i);
+	Token* name = nullptr;
 
-	Token* name = &tokens[i];
+	if(!inExpression)
+	{
+		if(!isToken(TokenType::Identifier, i) || isKeyword(tokens[i]))
+			return showExpected("a name for function", i);
 
-	//	TODO allow overloads
-	//	Prevent duplicates
-	if(isDuplicateDeclaration(name, current))
-		return true;
+		name = &tokens[i];
 
-	i++;
-	//	TODO parse the parameters
+		//	TODO allow overloads
+		//	Prevent duplicates
+		if(isDuplicateDeclaration(name, current))
+			return true;
+
+		i++;
+	}
+
 	if(!isToken(TokenType::Parenthesis, i))
-		return showExpected("parentheses after function name", i);
+		return showExpected("parentheses after function", i);
 
+	//	TODO parse the parameters
 	//	Skip the parentheses
 	i += tokens[i].length + 1;
 
@@ -63,12 +66,13 @@ bool Cap::SourceFile::parseFunction(size_t& i, Scope& current)
 
 	DBG_LOG("Spans across %u", tokens[i].length);
 
-	Function& function = current.addFunction(name, i + 1, i + 1 + tokens[i].length);
+	Function& function = current.addFunction(name, i + 1, i + tokens[i].length);
 
 	i = function.scope->end;
 	parseScope(*function.scope);
 
-	DBG_LOG("---- Listing function '%s' ----", name->getString().c_str());
+	DBG_LOG("---- Listing function '%s' ----", !name ? "anonymous" : name->getString().c_str());
+
 	function.scope->root.list();
 	return true;
 }

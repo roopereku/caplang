@@ -65,9 +65,28 @@ bool Cap::SourceFile::parseExpression(size_t& i, Scope& current, bool inBrackets
 
 			size_t old = i;
 
+			bool oldInExpression = inExpression;
+			if(parseFunction(i, current))
+			{
+				//	If we originally weren't in an expression, this is a full function
+				if(!oldInExpression) return true;
+
+				//	If parseFunction() failed, stop here
+				if(!valid) return true;
+
+				/*	Though this is a little cryptic, store the function index to
+				 *	the token's length. This terminates the need for a non-generic
+				 *	number in SyntaxTreeNode */
+				tokens[old].length = current.getFunctionCount() - 1;
+				parts.push_back({ SyntaxTreeNode::Type::AnonFunction, &tokens[old] });
+				inExpression = oldInExpression;
+
+				lastWasOperator = false;
+				continue;
+			}
+
 			//	Are there any declarations or imports
-			if(parseImport(i, current) || parseType(i, current) ||
-				parseVariable(i, current) || parseFunction(i, current))
+			else if(parseImport(i, current) || parseType(i, current) || parseVariable(i, current))
 			{
 				//	If something interrupts an expression, error out
 				if(old > start)

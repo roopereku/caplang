@@ -43,6 +43,7 @@ const char* Cap::SyntaxTreeNode::getTypeString(Type t)
 		case Type::Condition: return "Condition";
 		case Type::Comma: return "Comma";
 
+		case Type::AnonFunction: return "Anonymous function";
 		case Type::Parentheses: return "Parentheses";
 		case Type::Array: return "Array";
 
