@@ -48,6 +48,7 @@ public:
 	Variable* findVariable(Token* name);
 	Type* findType(Token* name);
 
+	size_t getFunctionCount() { return functions.size(); }
 	SyntaxTreeNode* validate(ValidationResult& result);
 
 	Scope* parent;

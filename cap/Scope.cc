@@ -5,7 +5,7 @@ Cap::Function& Cap::Scope::addFunction(Token* name, size_t begin, size_t end)
 {
 	functions.emplace_back(name);
 	functions.back().scope = std::make_shared <Scope> (this, ScopeContext::Function, begin, end);
-	DBG_LOG("Added function '%s'", name->getString().c_str());
+	DBG_LOG("Added function '%s'", name ? name->getString().c_str() : "anonymous");
 
 	return functions.back();
 }
@@ -29,7 +29,7 @@ Cap::Function* Cap::Scope::findFunction(Token* name)
 {
 	for(auto& it : functions)
 	{
-		if(it.name->tokenEquals(name))
+		if(it.name && it.name->tokenEquals(name))
 			return &it;
 	}
 
