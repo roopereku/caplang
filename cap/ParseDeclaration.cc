@@ -62,7 +62,7 @@ bool Cap::SourceFile::parseFunction(size_t& i, Scope& current)
 	i += tokens[i].length + 1;
 
 	if(!isToken(TokenType::CurlyBrace, i) || *tokens[i].begin == '}')
-		return showExpected("a body for function '" + name->getString() + '\'', i);
+		return showExpected(name ? ("a body for function '" + name->getString() + '\'') : "a body for anonymous function", i);
 
 	DBG_LOG("Spans across %u", tokens[i].length);
 
