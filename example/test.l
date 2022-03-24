@@ -1,4 +1,4 @@
-func main()
+func main(var x = 2, y = u8)
 {
-	var i = 5 * 4 + ((( 4 % 6 ) * 4) ^ 4) / 34 - 4 * 6 + (689 *420)
+	var xyz = 12
 }
