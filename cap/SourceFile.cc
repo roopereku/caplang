@@ -25,6 +25,8 @@ bool Cap::SourceFile::parseScope(Scope& current)
 
 bool Cap::SourceFile::validate()
 {
+	return true;
+
 	if(!valid)
 		return false;
 
