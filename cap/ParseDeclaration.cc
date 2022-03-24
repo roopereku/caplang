@@ -54,21 +54,32 @@ bool Cap::SourceFile::parseFunction(size_t& i, Scope& current)
 		i++;
 	}
 
+	Function& function = current.addFunction(name);
+
 	if(!isToken(TokenType::Parenthesis, i))
 		return showExpected("parentheses after function", i);
 
-	//	TODO parse the parameters
-	//	Skip the parentheses
-	i += tokens[i].length + 1;
+	//	Initially we want to to have the scope cover the parentheses to parse the parameters
+	function.scope = std::make_shared <Scope> (&current, ScopeContext::Function, i, i + tokens[i].length);
+	i++;
 
+	//	Parse the parameters
+	if(!parseExpression(i, *function.scope, true))
+		return true;
+
+	//	TODO support function declarations
+	//	Does the function have a body?
+	i++;
 	if(!isToken(TokenType::CurlyBrace, i) || *tokens[i].begin == '}')
 		return showExpected(name ? ("a body for function '" + name->getString() + '\'') : "a body for anonymous function", i);
 
-	DBG_LOG("Spans across %u", tokens[i].length);
-
-	Function& function = current.addFunction(name, i + 1, i + tokens[i].length);
-
+	//	Tell the scope to cover the body
+	function.scope->begin = i + 1;
+	function.scope->end = i + tokens[i].length;
 	i = function.scope->end;
+
+	//	Parse the function
+	function.scope->node = function.scope->root.right.get();
 	parseScope(*function.scope);
 
 	DBG_LOG("---- Listing function '%s' ----", !name ? "anonymous" : name->getString().c_str());

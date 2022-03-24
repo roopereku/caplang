@@ -3,6 +3,7 @@
 
 #include "Token.hh"
 #include "Variable.hh"
+#include "SyntaxTreeNode.hh"
 
 #include <vector>
 #include <memory>
@@ -18,7 +19,6 @@ struct Function
 	Token* name;
 	Token* returnType;
 
-	std::vector <Variable> parameters;
 	std::shared_ptr <Scope> scope;
 };
 

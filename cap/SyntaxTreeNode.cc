@@ -45,6 +45,7 @@ const char* Cap::SyntaxTreeNode::getTypeString(Type t)
 
 		case Type::AnonFunction: return "Anonymous function";
 		case Type::Parentheses: return "Parentheses";
+		case Type::Parameters: return "Parameters";
 		case Type::Array: return "Array";
 
 		case Type::Range: return "Range";

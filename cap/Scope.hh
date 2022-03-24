@@ -33,14 +33,9 @@ enum class ValidationResult
 class Scope
 {
 public:
-	Scope(Scope* parent, ScopeContext ctx, size_t begin, size_t end)
-		:	parent(parent), ctx(ctx), begin(begin), end(end),
-			root(nullptr), node(&root)
-	{
-		root.type = SyntaxTreeNode::Type::Expression;
-	}
+	Scope(Scope* parent, ScopeContext ctx, size_t begin, size_t end);
 
-	Function& addFunction(Token* name, size_t begin, size_t end);
+	Function& addFunction(Token* name);
 	Type& addType(Token* name, size_t begin, size_t end);
 	Variable& addVariable(Token* name);
 

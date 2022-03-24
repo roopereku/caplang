@@ -55,6 +55,7 @@ struct SyntaxTreeNode
 		Array,
 		Parentheses,
 		AnonFunction,
+		Parameters,
 
 		Variable,
 		Condition,

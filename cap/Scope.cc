@@ -1,10 +1,23 @@
 #include "Scope.hh"
 #include "Debug.hh"
 
-Cap::Function& Cap::Scope::addFunction(Token* name, size_t begin, size_t end)
+Cap::Scope::Scope(Scope* parent, ScopeContext ctx, size_t begin, size_t end)
+		:	parent(parent), ctx(ctx), begin(begin), end(end),
+			root(nullptr), node(&root)
+{
+	//	If this scope belongs to a function, the first node always contains parameters
+	if(ctx == ScopeContext::Function)
+	{
+		root.type = SyntaxTreeNode::Type::Parameters;
+		root.right = std::make_shared <SyntaxTreeNode> (&root, nullptr, SyntaxTreeNode::Type::Expression);
+	}
+
+	else root.type = SyntaxTreeNode::Type::Expression;
+}
+
+Cap::Function& Cap::Scope::addFunction(Token* name)
 {
 	functions.emplace_back(name);
-	functions.back().scope = std::make_shared <Scope> (this, ScopeContext::Function, begin, end);
 	DBG_LOG("Added function '%s'", name ? name->getString().c_str() : "anonymous");
 
 	return functions.back();
