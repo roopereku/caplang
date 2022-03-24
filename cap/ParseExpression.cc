@@ -115,7 +115,8 @@ bool Cap::SourceFile::parseExpression(size_t& i, Scope& current, bool inBrackets
 
 			//	TODO handle curly braces
 			//	Are there brackets after the identifier
-			if(isToken(TokenType::Parenthesis, next) || isToken(TokenType::SquareBracket, next))
+			if((isToken(TokenType::Parenthesis, next) || isToken(TokenType::SquareBracket, next))
+				&& tokens[next].length > 0)
 			{
 				//	Which brackets do we have?
 				SyntaxTreeNode::Type t = tokens[next].type == TokenType::Parenthesis ?
@@ -147,6 +148,9 @@ bool Cap::SourceFile::parseExpression(size_t& i, Scope& current, bool inBrackets
 			if(	tokens[i].type == TokenType::Parenthesis ||
 				tokens[i].type == TokenType::SquareBracket)
 			{
+				parts.back().type = tokens[i].type == TokenType::Parenthesis ?
+					SyntaxTreeNode::Type::Parentheses : SyntaxTreeNode::Type::Array;
+
 				DBG_LOG("bracket at %lu - %lu", i, i + tokens[i].length);
 				i += tokens[i].length;
 			}
@@ -365,12 +369,21 @@ bool Cap::SourceFile::parseExpression(size_t& i, Scope& current, bool inBrackets
 	if(lastWasOperator)
 		return showExpected("a value after an operator", i);
 
+	//	We're no longer in an expression
 	inExpression = false;
 
 	if(parts.empty())
 	{
+		//	If there are no expression parts and these are standalone brackets, report an error
+		if(	current.node->parent->type == SyntaxTreeNode::Type::Parentheses ||
+			current.node->parent->type == SyntaxTreeNode::Type::Array)
+		{
+			ERROR_LOG(tokens[current.begin], "Empty brackets\n");
+			return true;
+		}
+
 		DBG_LOG("No parts%s", "");
-		return false;
+		return true;
 	}
 
 	DBG_LOG("Expression parts %s", "");
@@ -408,7 +421,8 @@ bool Cap::SourceFile::parseExpression(size_t& i, Scope& current, bool inBrackets
 	}
 
 	//	Add the expression as nodes with the correct precedence
-	parseExpressionOrder(parts, parts.size() - 1, 0, 0, current.node, current);
+	if(!parseExpressionOrder(parts, parts.size() - 1, 0, 0, current.node, current))
+		return true;
 
 	//	Should a node be added for the next expression
 	if(!inBrackets)
@@ -477,7 +491,7 @@ bool Cap::SourceFile::parseExpressionOrder(std::vector <ExpressionPart>& parts,
 						parts[i + m].value->type == TokenType::SquareBracket)
 					{
 						//	Parse the contents of the brackets
-						side = std::make_shared <SyntaxTreeNode> (node, parts[i + m].value, SyntaxTreeNode::Type::Expression);
+						side = std::make_shared <SyntaxTreeNode> (node, parts[i + m].value, parts[i + m].type);
 						if(!parseExpressionInBracket(side.get(), parts[i + m].value, current))
 							return false;
 					}
@@ -532,17 +546,22 @@ bool Cap::SourceFile::parseExpressionInBracket(SyntaxTreeNode* node, Token* at, 
 	//	Where is the token at the beginning of the brackets
 	size_t index = tokens.getIndex(at) + 1;
 
+	DBG_LOG("PARSING BRACKET OF TYPE '%s'", at->getTypeString());
+
 	//	Save old states
 	size_t oldEnd = current.end;
+	size_t oldBegin = current.begin;
 	SyntaxTreeNode* oldCurrentNode = current.node;
 
 	//	Temporarily modify the scope to fit the brackets and parse the contents
 	current.node = node;
 	current.end = index + at->length;
+	current.begin = index - 1;
 	bool result = parseExpression(index, current, true);
 
 	//	Restore the earlier state
 	current.node = oldCurrentNode;
+	current.begin = oldBegin;
 	current.end = oldEnd;
 
 	return result;
