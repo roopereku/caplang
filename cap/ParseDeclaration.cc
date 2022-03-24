@@ -48,8 +48,9 @@ bool Cap::SourceFile::parseFunction(size_t& i, Scope& current)
 
 		//	TODO allow overloads
 		//	Prevent duplicates
-		if(isDuplicateDeclaration(name, current))
-			return true;
+		//	FIXME do the duplicate checking in validation
+		//if(isDuplicateDeclaration(name, current))
+		//	return true;
 
 		i++;
 	}
