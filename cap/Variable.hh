@@ -13,6 +13,9 @@ struct Variable
 
 	Token* name;
 	Type* type = nullptr;
+
+	bool isFunctionPointer = false;
+	bool isArray = false;
 };
 
 }
