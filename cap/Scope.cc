@@ -9,6 +9,11 @@ Cap::Scope::Scope(Scope* parent, ScopeContext ctx, size_t begin, size_t end)
 	if(ctx == ScopeContext::Function)
 	{
 		root.type = SyntaxTreeNode::Type::Parameters;
+
+		//	Create a Variable node so that the expression parser can add variables without "var"
+		root.left = std::make_shared <SyntaxTreeNode> (&root, nullptr, SyntaxTreeNode::Type::Variable);
+
+		//	This node is used for the first expression inside the function
 		root.right = std::make_shared <SyntaxTreeNode> (&root, nullptr, SyntaxTreeNode::Type::Expression);
 	}
 

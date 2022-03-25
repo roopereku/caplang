@@ -1,7 +1,3 @@
-func abc(x)
-{
-}
-
-func main()
+func main(x = int, y = u8)
 {
 }

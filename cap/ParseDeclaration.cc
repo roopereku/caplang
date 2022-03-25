@@ -9,13 +9,17 @@ bool Cap::SourceFile::parseVariable(size_t& i, Scope& current)
 	else if(inExpression)
 		return true;
 
-	//	At this point the node has type "None". Change it to variable
-	current.node->type = SyntaxTreeNode::Type::Variable;
-	current.node->value = &tokens[i];
+	//	Don't make nested Variable nodes
+	if(current.node->parent->type != SyntaxTreeNode::Type::Variable)
+	{
+		//	At this point the node has type "None". Change it to variable
+		current.node->type = SyntaxTreeNode::Type::Variable;
+		current.node->value = &tokens[i];
 
-	//	Initialize a node for the expression that declares variables
-	current.node->left = std::make_shared <SyntaxTreeNode> (current.node);
-	current.node = current.node->left.get();
+		//	Initialize a node for the expression that declares variables
+		current.node->left = std::make_shared <SyntaxTreeNode> (current.node);
+		current.node = current.node->left.get();
+	}
 
 	i++;
 	return true;
@@ -52,6 +56,7 @@ bool Cap::SourceFile::parseFunction(size_t& i, Scope& current)
 
 	//	Initially we want to to have the scope cover the parentheses to parse the parameters
 	function.scope = std::make_shared <Scope> (&current, ScopeContext::Function, i, i + tokens[i].length);
+	function.scope->node = function.scope->root.left.get();
 	i++;
 
 	//	Parse the parameters

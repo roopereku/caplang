@@ -18,6 +18,14 @@ bool Cap::SourceFile::parseExpression(size_t& i, Scope& current, bool inBrackets
 	std::vector <ExpressionPart> parts;
 	SyntaxTreeNode* lastNode = current.node;
 
+	//	If the parent node should contain parameters, declare variables implicitly
+	if(	current.node->parent &&
+		current.node->parent->type == SyntaxTreeNode::Type::Parameters)
+	{
+		expectVariableName = true;
+		inExpression = true;
+	}
+
 	//	Create a node for a new expression
 	current.node->left = std::make_shared <SyntaxTreeNode> (current.node, &tokens[i], SyntaxTreeNode::Type::None);
 	current.node = current.node->left.get();
@@ -90,14 +98,14 @@ bool Cap::SourceFile::parseExpression(size_t& i, Scope& current, bool inBrackets
 			{
 				//	Does a reserved keyword interrupt the expression?
 				if(i == old)
-					return showExpected("';' before a reserved keyword", i);
+					return showExpected("Can't use reserved keyword '" + tokens[i].getString() + "' in an expression", i);
 
 				//	Variable mode was started
 				else if(i == start + 1)
 				{
 					//	Add an unused part so that operators don't think they're unary
-					parts.push_back({ SyntaxTreeNode::Type::Value, &tokens[old] });
-					parts.back().used = true;
+					//parts.push_back({ SyntaxTreeNode::Type::Value, &tokens[old] });
+					//parts.back().used = true;
 
 					expectVariableName = true;
 					inExpression = true;
