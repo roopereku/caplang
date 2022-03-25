@@ -1,6 +1,7 @@
-func main(var x = 2, y = u8)
+func abc(x)
 {
-	var xyz = func(var z = 64)
-	{
-	}
+}
+
+func main()
+{
 }

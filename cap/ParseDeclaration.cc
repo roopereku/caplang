@@ -9,25 +9,15 @@ bool Cap::SourceFile::parseVariable(size_t& i, Scope& current)
 	else if(inExpression)
 		return true;
 
-	//	At this point the node is an expression. Change it to variable
+	//	At this point the node has type "None". Change it to variable
 	current.node->type = SyntaxTreeNode::Type::Variable;
 	current.node->value = &tokens[i];
 
+	//	Initialize a node for the expression that declares variables
+	current.node->left = std::make_shared <SyntaxTreeNode> (current.node);
+	current.node = current.node->left.get();
+
 	i++;
-	if(!isToken(TokenType::Identifier, i) || isKeyword(tokens[i]))
-		return showExpected("a name for variable", i);
-
-	//	Prevent duplicates
-	if(isDuplicateDeclaration(&tokens[i], current))
-		return true;
-
-	current.addVariable(&tokens[i]);
-
-	//	Initialize a node for the variable name and the following expression
-	current.node->left = std::make_shared <SyntaxTreeNode> (current.node, &tokens[i], SyntaxTreeNode::Type::Value);
-	current.node->right = std::make_shared <SyntaxTreeNode> (current.node);
-	current.node = current.node->right.get();
-
 	return true;
 }
 

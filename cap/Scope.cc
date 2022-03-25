@@ -35,6 +35,7 @@ Cap::Type& Cap::Scope::addType(Token* name, size_t begin, size_t end)
 Cap::Variable& Cap::Scope::addVariable(Token* name)
 {
 	variables.emplace_back(name);
+	DBG_LOG("Added variable '%s'", name->getString().c_str());
 	return variables.back();
 }
 

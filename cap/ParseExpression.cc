@@ -3,8 +3,6 @@
 
 bool Cap::SourceFile::parseExpression(size_t& i, Scope& current, bool inBrackets)
 {
-	DBG_LOG("Parsing expression in scope %lu - %lu", current.begin, current.end);
-
 	/*	If the first token is an identifier, we could have a
 	 *	declaration or an import. In that case we might
 	 *	not yet be inside an expression */
@@ -15,7 +13,7 @@ bool Cap::SourceFile::parseExpression(size_t& i, Scope& current, bool inBrackets
 	bool lastWasIncDec = false;
 	bool lastWasOperator = false;
 
-	DBG_LOG("Current node is of type '%s'", current.node->getTypeString());
+	bool expectVariableName = false;
 
 	std::vector <ExpressionPart> parts;
 	SyntaxTreeNode* lastNode = current.node;
@@ -26,13 +24,15 @@ bool Cap::SourceFile::parseExpression(size_t& i, Scope& current, bool inBrackets
 
 	for(; i < current.end; i++)
 	{
+		if(expectVariableName && !isToken(TokenType::Identifier, i))
+			return showExpected("a name for variable", i);
+
 		//	Did a line change happen?
 		if(tokens[i].line > tokens[start].line)
 		{
 			//	If neither the last or current token is an operator, the expression ends here
 			if(!lastWasOperator && !isToken(TokenType::Operator, i))
 			{
-				DBG_LOG("Line change at %lu", i);
 				i--;
 				break;
 			}
@@ -60,7 +60,7 @@ bool Cap::SourceFile::parseExpression(size_t& i, Scope& current, bool inBrackets
 
 		else if(isToken(TokenType::Identifier, i))
 		{
-			if(i != start && !lastWasOperator)
+			if(!expectVariableName && i != start && !lastWasOperator)
 				return showExpected("an operator before identifier", i);
 
 			size_t old = i;
@@ -88,22 +88,26 @@ bool Cap::SourceFile::parseExpression(size_t& i, Scope& current, bool inBrackets
 			//	Are there any declarations or imports
 			else if(parseImport(i, current) || parseType(i, current) || parseVariable(i, current))
 			{
-				//	If something interrupts an expression, error out
-				if(old > start)
-					return showExpected("';' or a new line", old);
+				//	Does a reserved keyword interrupt the expression?
+				if(i == old)
+					return showExpected("';' before a reserved keyword", i);
 
-				/*	There was a valid declaration or import.
-				 *	Let's exit the function to get a clean state */
-
-				//	Variable declarations shouldn't cause a return
-				if(i == start + 1)
+				//	Variable mode was started
+				else if(i == start + 1)
 				{
-					DBG_LOG("Variable '%s' was declared", tokens[i].getString().c_str());
+					//	Add an unused part so that operators don't think they're unary
+					parts.push_back({ SyntaxTreeNode::Type::Value, &tokens[old] });
+					parts.back().used = true;
 
-					//	Variable declaration can still go wrong
-					if(!valid) return true;
+					expectVariableName = true;
+					inExpression = true;
+					i--;
+
+					continue;
 				}
 
+				/*	An import was added or a type was declared.
+				 *	Return to get a clean state for the next expression */
 				else return true;
 			}
 
@@ -129,29 +133,46 @@ bool Cap::SourceFile::parseExpression(size_t& i, Scope& current, bool inBrackets
 
 			else
 			{
-				DBG_LOG("Expression: Identifier '%s'", tokens[i].getString().c_str());
 				parts.push_back({ SyntaxTreeNode::Type::Value, &tokens[i] });
+
+				//	If a variable name is expected, use this token as the variable name
+				if(expectVariableName)
+				{
+					current.addVariable(&tokens[i]);
+					expectVariableName = false;
+
+					size_t next = i + 1;
+
+					//	If the next token isn't '=', report an error
+					if(!isToken(TokenType::Operator, next) ||
+						*tokens[next].begin != '=' ||
+						tokens[next].length != 1)
+					{
+						return showExpected("an initial value or a type for variable '" +
+											tokens[i].getString() + '\'', next);
+					}
+				}
 			}
 		}
 
 		//	Check for other values
 		else if(!isToken(TokenType::Operator, i))
 		{
-			DBG_LOG("Expression: %s '%s'", tokens[i].getTypeString(), tokens[i].getString().c_str());
-
 			if(i > start && !lastWasOperator)
 				return showExpected("an operator before value", i);
 
 			lastWasOperator = false;
 			parts.push_back({ SyntaxTreeNode::Type::Value, &tokens[i] });
 
+			//	Brackets count as a value
 			if(	tokens[i].type == TokenType::Parenthesis ||
 				tokens[i].type == TokenType::SquareBracket)
 			{
+				//	Which type do the brackets have?
 				parts.back().type = tokens[i].type == TokenType::Parenthesis ?
 					SyntaxTreeNode::Type::Parentheses : SyntaxTreeNode::Type::Array;
 
-				DBG_LOG("bracket at %lu - %lu", i, i + tokens[i].length);
+				//	Skip the brackets
 				i += tokens[i].length;
 			}
 		}
@@ -160,7 +181,6 @@ bool Cap::SourceFile::parseExpression(size_t& i, Scope& current, bool inBrackets
 		else
 		{
 			size_t next = i + 1;
-			DBG_LOG("Expression: Operator '%s'", tokens[i].getString().c_str());
 
 			/*	An operator can be unary if there's an operator or nothing before it,
 			 *	and no operator after it. An unary also cannot happen if the preceding
@@ -185,12 +205,9 @@ bool Cap::SourceFile::parseExpression(size_t& i, Scope& current, bool inBrackets
 			if(isToken(TokenType::Operator, next) && *tokens[next].begin == *tokens[i].begin)
 			{
 				size_t gap = tokens.getBeginIndex(next) - tokens.getBeginIndex(i) - 1;
-				//DBG_LOG("Gap is %lu", gap);
 
 				if(gap == 0)
 				{
-					DBG_LOG("Combine '%c'", *tokens[next].begin);
-
 					switch(*tokens[next].begin)
 					{
 						//	TODO Make sure that there's an identifiers on the appropriate side
@@ -228,8 +245,6 @@ bool Cap::SourceFile::parseExpression(size_t& i, Scope& current, bool inBrackets
 					 *	Let's go to the normal operator parser and see
 					 *	if the current double operator has an extension */
 					next = i + 1;
-
-					DBG_LOG("Checking for extension for double '%c'", *tokens[i].begin);
 				}
 			}
 
@@ -239,7 +254,7 @@ bool Cap::SourceFile::parseExpression(size_t& i, Scope& current, bool inBrackets
 			 *	of an unary operator, it is an unary operator */
 			else if(possiblyUnary)
 			{
-				DBG_LOG("Unary '%c'", *tokens[i].begin);
+				//DBG_LOG("Unary '%c'", *tokens[i].begin);
 
 				switch(*tokens[i].begin)
 				{
@@ -258,7 +273,7 @@ bool Cap::SourceFile::parseExpression(size_t& i, Scope& current, bool inBrackets
 				continue;
 			}
 
-			DBG_LOG("Normal operator '%c'", *tokens[i].begin);
+			//	Is the next token '='
 			unsigned char nextEqual =	isToken(TokenType::Operator, next) &&
 										*tokens[next].begin == '=';
 
@@ -287,6 +302,10 @@ bool Cap::SourceFile::parseExpression(size_t& i, Scope& current, bool inBrackets
 						}
 
 						type = SyntaxTreeNode::Type::Comma;
+
+						if(current.node->parent->type == SyntaxTreeNode::Type::Variable)
+							expectVariableName = true;
+
 						break;
 					}
 
@@ -336,6 +355,7 @@ bool Cap::SourceFile::parseExpression(size_t& i, Scope& current, bool inBrackets
 			size_t old = i;
 			if(nextEqual)
 			{
+				//	TODO implement "<=", ">=", "!="
 				if(isComparison)
 				{
 					i = next;
@@ -345,6 +365,8 @@ bool Cap::SourceFile::parseExpression(size_t& i, Scope& current, bool inBrackets
 				{
 					//	Make sure that whatever is on the left is an identifier
 					//	FIXME show the earlier token
+
+					//	FIXME allow stuff like "@0x08FC = 12"
 					if(i == start || parts.back().value->type != TokenType::Identifier)
 						return showExpected("an identifier before assignment", i);
 
@@ -398,16 +420,16 @@ bool Cap::SourceFile::parseExpression(size_t& i, Scope& current, bool inBrackets
 		return showExpected(std::string("a declaration ") + (current.parent ? "inside a type" : "in the global scope"), index);
 	}
 
-	//	Variables always require a type or an initial value
-	if(current.node->parent->type == SyntaxTreeNode::Type::Variable)
-	{
-		size_t index = parts.size() < 2 ? 0 : 1;
-		if(parts[index].type != SyntaxTreeNode::Type::Assign)
-		{
-			index = tokens.getIndex(parts[index].value);
-			return showExpected("a type or an initial value for variable", index);
-		}
-	}
+	////	Variables always require a type or an initial value
+	//if(current.node->parent->type == SyntaxTreeNode::Type::Variable)
+	//{
+	//	size_t index = parts.size() < 2 ? 0 : 1;
+	//	if(parts[index].type != SyntaxTreeNode::Type::Assign)
+	//	{
+	//		index = tokens.getIndex(parts[index].value);
+	//		return showExpected("a type or an initial value for variable", index);
+	//	}
+	//}
 
 	//	TODO handle brackets
 	//	Single values don't need ordering
@@ -546,8 +568,6 @@ bool Cap::SourceFile::parseExpressionInBracket(SyntaxTreeNode* node, Token* at, 
 	//	Where is the token at the beginning of the brackets
 	size_t index = tokens.getIndex(at) + 1;
 
-	DBG_LOG("PARSING BRACKET OF TYPE '%s'", at->getTypeString());
-
 	//	Save old states
 	size_t oldEnd = current.end;
 	size_t oldBegin = current.begin;
@@ -585,8 +605,7 @@ Cap::OperatorPrioty Cap::operatorsAtPriority(size_t priority)
 		case 9: return OperatorPrioty(T::Multiplication, T::Division, T::Modulus);
 		case 10: return OperatorPrioty(T::Power);
 		case 11: return OperatorPrioty(T::UnaryPositive, T::UnaryNegative, T::Not, T::BitwiseNOT, T::Reference);
-
-		case 12: return OperatorPrioty(T::Call, T::Access);
+		case 12: return OperatorPrioty(T::Call, T::Subscript, T::Access);
 	}
 
 	return OperatorPrioty();
