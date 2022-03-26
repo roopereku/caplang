@@ -18,9 +18,8 @@ bool Cap::SourceFile::parseExpression(size_t& i, Scope& current, bool inBrackets
 	std::vector <ExpressionPart> parts;
 	SyntaxTreeNode* lastNode = current.node;
 
-	//	If the parent node should contain parameters, declare variables implicitly
-	if(	current.node->parent &&
-		current.node->parent->type == SyntaxTreeNode::Type::Parameters)
+	//	If the current node is "Variable", declare variables implicitly
+	if(current.node->type == SyntaxTreeNode::Type::Variable)
 	{
 		expectVariableName = true;
 		inExpression = true;
@@ -103,10 +102,6 @@ bool Cap::SourceFile::parseExpression(size_t& i, Scope& current, bool inBrackets
 				//	Variable mode was started
 				else if(i == start + 1)
 				{
-					//	Add an unused part so that operators don't think they're unary
-					//parts.push_back({ SyntaxTreeNode::Type::Value, &tokens[old] });
-					//parts.back().used = true;
-
 					expectVariableName = true;
 					inExpression = true;
 					i--;
