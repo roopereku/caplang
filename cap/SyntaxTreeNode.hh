@@ -13,6 +13,7 @@ struct SyntaxTreeNode
 	enum class Type
 	{
 		Assign,
+		Access,
 
 		Or,
 		And,
@@ -45,10 +46,11 @@ struct SyntaxTreeNode
 		UnaryNegative,
 
 		None,
+
 		Subscript,
 		Call,
+
 		Range,
-		Access,
 		Ternary,
 		Comma,
 
