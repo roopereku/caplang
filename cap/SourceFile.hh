@@ -34,7 +34,6 @@ private:
 
 	bool parseExpressionInBracket(SyntaxTreeNode* node, Token* at, Scope& current);
 
-	bool isDuplicateDeclaration(Token* name, Scope& current);
 	bool parseVariable(size_t& i, Scope& current);
 	bool parseFunction(size_t& i, Scope& current);
 	bool parseType(size_t& i, Scope& current);

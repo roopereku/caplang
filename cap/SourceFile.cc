@@ -25,8 +25,6 @@ bool Cap::SourceFile::parseScope(Scope& current)
 
 bool Cap::SourceFile::validate()
 {
-	return true;
-
 	if(!valid)
 		return false;
 
@@ -51,25 +49,20 @@ bool Cap::SourceFile::validate()
 				ERROR_LOG((*errorAt->value), "Assigning type '%s' only allowed in initialization of a variable\n", errorAt->value->getString().c_str());
 				break;
 
+			case ValidationResult::UseBeforeInit:
+				ERROR_LOG((*errorAt->value), "Can't use '%s' before it is initialized\n", errorAt->value->getString().c_str());
+				break;
+
 			case ValidationResult::InvalidAssign:
 				ERROR_LOG((*errorAt->value), "Unable to assign to '%s'\n", errorAt->value->getString().c_str());
 				break;
 
+			case ValidationResult::NoConversion:
+				ERROR_LOG((*errorAt->value), "'%s' has no conversion\n", errorAt->value->getString().c_str());
+				break;
+
 			default: break;
 		}
-	}
-
-	return false;
-}
-
-bool Cap::SourceFile::isDuplicateDeclaration(Token* name, Scope& current)
-{
-	if( current.findType(name) ||
-		current.findFunction(name) ||
-		current.findVariable(name))
-	{
-		ERROR_LOG((*name), "Duplicate identifier '%s'\n", name->getString().c_str());
-		return true;
 	}
 
 	return false;
