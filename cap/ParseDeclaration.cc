@@ -40,12 +40,6 @@ bool Cap::SourceFile::parseFunction(size_t& i, Scope& current)
 
 		name = &tokens[i];
 
-		//	TODO allow overloads
-		//	Prevent duplicates
-		//	FIXME do the duplicate checking in validation
-		//if(isDuplicateDeclaration(name, current))
-		//	return true;
-
 		i++;
 	}
 
@@ -98,17 +92,13 @@ bool Cap::SourceFile::parseType(size_t& i, Scope& current)
 
 	Token* name = &tokens[i];
 
-	//	Prevent duplicates
-	if(isDuplicateDeclaration(name, current))
-		return true;
-
 	i++;
 	if(!isToken(TokenType::CurlyBrace, i) || *tokens[i].begin == '}')
 		return showExpected("a body for type '" + name->getString() + '\'', i);
 
 	Type& type = current.addType(name, i + 1, i + 1 + tokens[i].length);
 
-	i = type.scope->end;
+	i = type.scope->end - 1;
 	parseScope(*type.scope);
 
 	DBG_LOG("---- Listing type '%s' ----", name->getString().c_str());
