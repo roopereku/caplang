@@ -1,4 +1,5 @@
 #include "Type.hh"
+#include "Debug.hh"
 
 //	A really clear string that contains names for primitives
 static const char* primitiveNames = "i8u8i16u16i32u32i64u64";
@@ -28,6 +29,22 @@ static Cap::Type primitives[]
 	Cap::Type(&primitiveTokens[7], true),	//	u64
 };
 
+bool Cap::Type::hasConversion(Type& other)
+{
+	if(isPrimitive)
+	{
+		//	TODO add floats
+		//	Are both of the types primitives that are numeric
+		if(	(this >= &primitives[0] && this <= &primitives[7]) &&
+			(&other >= &primitives[0] && &other <= &primitives[7]))
+		{
+			return true;
+		}
+	}
+
+	return false;
+}
+
 Cap::Type* Cap::Type::findPrimitiveType(TokenType t)
 {
 	switch(t)
@@ -35,7 +52,9 @@ Cap::Type* Cap::Type::findPrimitiveType(TokenType t)
 		case TokenType::Integer: return &primitives[6];
 		case TokenType::Character: return &primitives[0];
 
-		default: return nullptr;
+		default:
+			DBG_LOG("UNIMPLEMENTED '%s'", Token::getTypeString(t));
+			return nullptr;
 	}
 }
 
@@ -47,7 +66,7 @@ Cap::Type* Cap::Type::findPrimitiveType(Token* name)
 			return &it;
 	}
 
-	return nullptr;
+	return findPrimitiveType(name->type);
 }
 
 bool Cap::Type::isPrimitiveName(Token* name)

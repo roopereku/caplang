@@ -17,6 +17,8 @@ struct Type
 		: name(name), isPrimitive(isPrimitive)
 	{}
 
+	bool hasConversion(Type& other);
+
 	Token* name;
 	std::shared_ptr <Scope> scope;
 	bool isPrimitive = false;
