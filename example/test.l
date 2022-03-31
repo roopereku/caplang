@@ -1,4 +1,17 @@
-func main(x = 20, y = 2)
+type A
 {
-	var z = x + y, o = 12
+	var y = 3
+	var x = u64
+}
+
+type T
+{
+	var y = 2
+	var z = A.y * y
+}
+
+func main()
+{
+	var i = T.z
+	T.y = A
 }

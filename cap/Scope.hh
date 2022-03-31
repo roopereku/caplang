@@ -27,7 +27,9 @@ enum class ValidationResult
 	IdentifierNotFound,
 	InvalidAssign,
 	InvalidOperand,
-	TypingOutsideInit
+	TypingOutsideInit,
+	UseBeforeInit,
+	NoConversion,
 };
 
 class Scope
@@ -57,7 +59,20 @@ public:
 
 private:
 	SyntaxTreeNode* validateNode(SyntaxTreeNode* n, ValidationResult& result);
-	SyntaxTreeNode* findLeftmostNode(SyntaxTreeNode* n);
+	SyntaxTreeNode* findAppropriateNode(SyntaxTreeNode* n);
+
+	struct NodeInfo
+	{
+		Type* t = nullptr;
+		Variable* v = nullptr;
+		Function* f = nullptr;
+
+		SyntaxTreeNode* at = nullptr;
+	};
+
+	NodeInfo getNodeInfo(SyntaxTreeNode* n, ValidationResult& result);
+	NodeInfo getNodeInfoRecursive(SyntaxTreeNode* n, ValidationResult& result);
+	bool isNodeTypeName(NodeInfo& info);
 
 	std::vector <Type> types;
 	std::vector <Scope> blocks;

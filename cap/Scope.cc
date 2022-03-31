@@ -59,7 +59,7 @@ Cap::Variable* Cap::Scope::findVariable(Token* name)
 {
 	for(auto& it : variables)
 	{
-		DBG_LOG("var '%s'", it.name->getString().c_str());
+		//DBG_LOG("var '%s'", it.name->getString().c_str());
 		if(it.name->tokenEquals(name))
 			return &it;
 	}
@@ -80,10 +80,23 @@ Cap::Type* Cap::Scope::findType(Token* name)
 
 Cap::SyntaxTreeNode* Cap::Scope::validate(Cap::ValidationResult& result)
 {
+	/*	TODO
+	 *	Once there is a way to look into other global scopes,
+	 *	look for duplicate declarations */
 	SyntaxTreeNode* errorAt = validateNode(&root, result);
 
 	if(result != ValidationResult::Success)
 		return errorAt;
+
+	for(auto& t : types)
+	{
+		DBG_LOG("Validating type %s", t.name->getString().c_str());
+
+		errorAt = t.scope->validate(result);
+		if(result != ValidationResult::Success)
+			return errorAt;
+
+	}
 
 	for(auto& f : functions)
 	{
@@ -99,76 +112,126 @@ Cap::SyntaxTreeNode* Cap::Scope::validate(Cap::ValidationResult& result)
 
 Cap::SyntaxTreeNode* Cap::Scope::validateNode(SyntaxTreeNode* n, ValidationResult& result)
 {
-	if(n->type == SyntaxTreeNode::Type::Value && n->value->type == TokenType::Identifier)
+	//	Does the current node contains an operator
+	if(n->type <= SyntaxTreeNode::Type::UnaryNegative)
 	{
-		Variable* v = findVariable(n->value);
-		Function* f = findFunction(n->value);
-		Type* t = findType(n->value);
-		
-		//	Make sure that the given identifier actually exists
-		if(!v && !f && !t)
-		{
-			result = ValidationResult::IdentifierNotFound;
-			return n;
+		//	Does the expression do anything
+		if(	n->parent->type == SyntaxTreeNode::Type::Expression &&
+			n->type != SyntaxTreeNode::Type::Assign)
+	{
+			printf("UNUSED EXPRESSION on line at %u:%u\n", n->value->line, n->value->column);
 		}
 
-		//	Only allow types in expressions when it's a variable type initialization
-		if(t && n->parent->type != SyntaxTreeNode::Type::Assign)
+		/*	If the current node contains an access operator, we only need to
+		 *	get info starting from said node because of
+		 *	the way getNodeInfoRecursive() works */
+		SyntaxTreeNode* leftOrigin = n->type == SyntaxTreeNode::Type::Access ?
+			n : n->left.get();
+
+		//	Get information about the left node
+		NodeInfo left = getNodeInfoRecursive(leftOrigin, result);
+
+		if(result != ValidationResult::Success)
+			return left.at;
+
+		//	The left node can only be a plain typename if an access is being made
+		if(isNodeTypeName(left) && left.at->parent->type != SyntaxTreeNode::Type::Access)
 		{
 			result = ValidationResult::InvalidOperand;
-			return n;
+			return left.at;
 		}
 
-		//	Check for assignments and initialize a type for a variable if necessary
-		if(n == n->parent->left.get() && n->parent->type == SyntaxTreeNode::Type::Assign)
+		DBG_LOG("Left of '%s' is '%s'", n->value->getString().c_str(), left.at->value->getString().c_str());
+
+		//	Does said operator have 2 operands?
+		if(	n->type <= SyntaxTreeNode::Type::Power &&
+			n->type != SyntaxTreeNode::Type::Access)
 		{
-			//	Forbid re-assigning a type or a function
-			if(t || f)
+			NodeInfo right = getNodeInfoRecursive(n->right.get(), result);
+
+			if(result != ValidationResult::Success)
+				return right.at;
+
+			bool isRightType = isNodeTypeName(right);
+
+			//	Does the right node have a conversion to the type of the left node
+			if(left.t && right.t && !right.t->hasConversion(*left.t))
 			{
-				result = ValidationResult::InvalidAssign;
-				return n;
+				//	TODO add a way to return a range betweem 2 nodes
+				result = ValidationResult::NoConversion;
+				return right.at;
 			}
-			
-			if(!v->type)
+
+			DBG_LOG("Right of '%s' is '%s'", n->value->getString().c_str(), right.at->value->getString().c_str());
+
+			if(n->type == SyntaxTreeNode::Type::Assign)
 			{
-				//	Find whatever value is right after the assignment
-				SyntaxTreeNode* afterAssign = findLeftmostNode(n->parent->right.get());
-
-				//	Look for variables or types
-				if(afterAssign->value->type == TokenType::Identifier)
+				//	If the node on the right doesn't contain a plain type, it's a value
+				if(!isRightType)
 				{
-					//	Was a type given by name?
-					v->type = findType(afterAssign->value);
-					if(!v->type)
+					if(left.v)
 					{
-						Variable* v2 = findVariable(afterAssign->value);
+						//	Forbid assigning a variable it's own value before it's initialized
+						if(!left.v->initialized && left.at->value->tokenEquals(right.at->value))
+						{
+							result = ValidationResult::UseBeforeInit;
+							return right.at;
+						}
 
-						//	Was a variable assigned
-						if(v2) v->type = v2->type;
+						left.v->type = right.t;
+						left.v->initialized = true;
 
-						//	TODO look for functions as well
+						DBG_LOG("Variable '%s' initialized", left.v->name->getString().c_str());
 					}
 				}
 
-				//	Look for literal values
 				else
 				{
-					v->type = Type::findPrimitiveType(afterAssign->value->type);
-
-					if(!v->type)
+					//	Is the left node a variable that's initialized
+					if(left.v)
 					{
-						DBG_LOG("UNIMPLEMENTED literal '%s'", afterAssign->value->getTypeString());
-						result = ValidationResult::InvalidOperand;
-						return afterAssign;
+						//	Types cannot be assigned to variables if they already have types
+						if(left.v->type && isRightType)
+						{
+							result = ValidationResult::TypingOutsideInit;
+							return right.at;
+						}
+
+						//	If the variable doesn't have a type, give it one
+						else if(!left.v->type)
+						{
+							DBG_LOG("Assigning type '%s' to '%s'", right.t->name->getString().c_str(), left.v->name->getString().c_str());
+							left.v->type = right.t;
+						}
 					}
 				}
-
-				DBG_LOG("Variable '%s' now has type '%s'", v->name->getString().c_str(), v->type->name->getString().c_str());
 			}
 
 			else
 			{
+				//	The right node can't be a plain type if no assignment was done
+				if(isRightType)
+				{
+					result = ValidationResult::InvalidOperand;
+					return right.at;
+				}
+
+				if(left.v && !left.v->initialized)
+				{
+					result = ValidationResult::UseBeforeInit;
+					return left.at;
+				}
+
+				if(right.v && !right.v->initialized)
+				{
+					result = ValidationResult::UseBeforeInit;
+					return right.at;
+				}
 			}
+		}
+
+		else
+		{
 		}
 	}
 
@@ -185,11 +248,107 @@ Cap::SyntaxTreeNode* Cap::Scope::validateNode(SyntaxTreeNode* n, ValidationResul
 	return nullptr;
 }
 
-Cap::SyntaxTreeNode* Cap::Scope::findLeftmostNode(SyntaxTreeNode* n)
+Cap::SyntaxTreeNode* Cap::Scope::findAppropriateNode(SyntaxTreeNode* n)
 {
-	if(!n->left)
+	if(	n->type == SyntaxTreeNode::Type::Value ||
+		n->type == SyntaxTreeNode::Type::Call ||
+		n->type == SyntaxTreeNode::Type::Subscript)
+	{
 		return n;
+	}
 
-	//	TODO handle calls
-	return findLeftmostNode(n->left.get());
+	SyntaxTreeNode* current = n;
+
+	while(current->left)
+	{
+		if(current->type == SyntaxTreeNode::Type::Access)
+			return current;
+
+		current = current->left.get();
+	}
+
+	return current;
+}
+
+Cap::Scope::NodeInfo Cap::Scope::getNodeInfoRecursive(SyntaxTreeNode* n, ValidationResult& result)
+{
+	Scope* scope = this;
+	NodeInfo info;
+	info.at = findAppropriateNode(n);
+
+	while(info.at->type == SyntaxTreeNode::Type::Access)
+	{
+		NodeInfo left = scope->getNodeInfo(info.at->left.get(), result);
+
+		if(result != ValidationResult::Success)
+			return left;
+
+		//	FIXME use a more describing result
+		//	Accessing a function scope is forbidden
+		if(left.f)
+		{
+			result = ValidationResult::InvalidOperand;
+			return left;
+		}
+
+		else if(left.v)
+		{
+			DBG_LOG("VARIABLE '%s'", left.at->value->getString().c_str());
+			//	The left operand has to be initialized
+			if(!left.v->initialized)
+			{
+				result = ValidationResult::UseBeforeInit;
+				return left;
+			}
+
+			//	TODO use the scope of the type of the variable
+		}
+
+		if(left.t)
+		{
+			//	FIXME use a more describing result
+			//	Primitive types don't have visible members
+			if(left.t->isPrimitive)
+			{
+				result = ValidationResult::InvalidOperand;
+				return left;
+			}
+
+			DBG_LOG("UPDATE SCOPE TO '%s'", left.at->value->getString().c_str());
+			scope = left.t->scope.get();
+		}
+
+		info.at = info.at->right.get();
+	}
+
+	return scope->getNodeInfo(info.at, result);
+}
+
+Cap::Scope::NodeInfo Cap::Scope::getNodeInfo(SyntaxTreeNode* n, ValidationResult& result)
+{
+	NodeInfo info;
+	info.at = n;
+
+	info.v = findVariable(info.at->value);
+	info.t = findType(info.at->value);
+	info.f = findFunction(info.at->value);
+
+	//	Is the given node a known identifier?
+	if(!info.v && !info.t && !info.f)
+	{
+		result = ValidationResult::IdentifierNotFound;
+		return info;
+	}
+
+	if(info.v)
+		info.t = info.v->type;
+
+	return info;
+}
+
+bool Cap::Scope::isNodeTypeName(NodeInfo& info)
+{
+	return	info.at->value->type == TokenType::Identifier &&
+			info.at->type == SyntaxTreeNode::Type::Value &&
+			!info.v && info.t;
 }
