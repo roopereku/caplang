@@ -7,8 +7,9 @@
 #include "Function.hh"
 #include "Type.hh"
 
-#include <vector>
 #include <utility>
+#include <string>
+#include <vector>
 
 namespace Cap
 {
@@ -21,15 +22,22 @@ enum class ScopeContext
 	Type,
 };
 
-enum class ValidationResult
+struct ValidationResult
 {
-	Success,
-	IdentifierNotFound,
-	InvalidAssign,
-	InvalidOperand,
-	TypingOutsideInit,
-	UseBeforeInit,
-	NoConversion,
+	enum class Status
+	{
+		Success,
+		IdentifierNotFound,
+		InvalidAssign,
+		InvalidOperand,
+		TypingOutsideInit,
+		UseBeforeInit,
+		NoConversion
+	};
+
+	std::string msg;
+	SyntaxTreeNode* at = nullptr;
+	Status status = Status::Success;
 };
 
 class Scope
@@ -46,7 +54,7 @@ public:
 	Type* findType(Token* name);
 
 	size_t getFunctionCount() { return functions.size(); }
-	SyntaxTreeNode* validate(ValidationResult& result);
+	bool validate(ValidationResult& result);
 
 	Scope* parent;
 	ScopeContext ctx;
@@ -58,7 +66,7 @@ public:
 	SyntaxTreeNode* node;
 
 private:
-	SyntaxTreeNode* validateNode(SyntaxTreeNode* n, ValidationResult& result);
+	bool validateNode(SyntaxTreeNode* n, ValidationResult& result);
 	SyntaxTreeNode* findAppropriateNode(SyntaxTreeNode* n);
 
 	struct NodeInfo

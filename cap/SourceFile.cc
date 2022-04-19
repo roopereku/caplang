@@ -28,44 +28,17 @@ bool Cap::SourceFile::validate()
 	if(!valid)
 		return false;
 
-	ValidationResult result = ValidationResult::Success;
-	SyntaxTreeNode* errorAt = root.validate(result);
+	ValidationResult result;
 
-	DBG_LOG("Final result is %d", static_cast <int> (result));
-
-	if(result != ValidationResult::Success)
+	if(!root.validate(result))
 	{
-		switch(result)
-		{
-			case ValidationResult::IdentifierNotFound:
-				ERROR_LOG((*errorAt->value), "Unknown identifier '%s'\n", errorAt->value->getString().c_str());
-				break;
-
-			case ValidationResult::InvalidOperand:
-				ERROR_LOG((*errorAt->value), "Invalid operand '%s'\n", errorAt->value->getString().c_str());
-				break;
-
-			case ValidationResult::TypingOutsideInit:
-				ERROR_LOG((*errorAt->value), "Assigning type '%s' only allowed in initialization of a variable\n", errorAt->value->getString().c_str());
-				break;
-
-			case ValidationResult::UseBeforeInit:
-				ERROR_LOG((*errorAt->value), "Can't use '%s' before it is initialized\n", errorAt->value->getString().c_str());
-				break;
-
-			case ValidationResult::InvalidAssign:
-				ERROR_LOG((*errorAt->value), "Unable to assign to '%s'\n", errorAt->value->getString().c_str());
-				break;
-
-			case ValidationResult::NoConversion:
-				ERROR_LOG((*errorAt->value), "'%s' has no conversion\n", errorAt->value->getString().c_str());
-				break;
-
-			default: break;
-		}
+		ERROR_LOG((*result.at->value), "%s\n", result.msg.c_str());
+		return false;
 	}
 
-	return false;
+	DBG_LOG("Final result is %d", static_cast <int> (result.status));
+
+	return true;
 }
 
 const std::vector <Cap::Filename>& Cap::SourceFile::getImports() const
