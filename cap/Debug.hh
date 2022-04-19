@@ -5,11 +5,11 @@
 
 #ifdef DEBUG
 #define DBG(...) { __VA_ARGS__ }
-#define DBG_LOG(fmt, ...) printf("[Debug] " fmt "\n", __VA_ARGS__)
+#define DBG_LOG(...) printf("[Debug] " __VA_ARGS__); putchar('\n')
 
 #else
 #define DBG(...)
-#define DBG_LOG(fmt, ...)
+#define DBG_LOG(...)
 #endif
 
 #endif

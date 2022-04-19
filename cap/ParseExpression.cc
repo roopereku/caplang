@@ -407,13 +407,15 @@ bool Cap::SourceFile::parseExpression(size_t& i, Scope& current, bool inBrackets
 			return true;
 		}
 
-		DBG_LOG("No parts%s", "");
+		DBG_LOG("No parts");
 		return true;
 	}
 
-	DBG_LOG("Expression parts %s", "");
+	DBG_LOG("Expression parts");
 	for(auto& part : parts)
+	{
 		DBG_LOG("Part '%s' '%s' of type '%s'", SyntaxTreeNode::getTypeString(part.type), part.value->getString().c_str(), part.value->getTypeString());
+	}
 
 	//	If inside a type oe the global scope, forbid anything else but variable declarations
 	if((current.ctx == ScopeContext::Type || current.parent == nullptr) &&
@@ -438,7 +440,7 @@ bool Cap::SourceFile::parseExpression(size_t& i, Scope& current, bool inBrackets
 	//	Single values don't need ordering
 	if(parts.size() == 1)
 	{
-		DBG_LOG("Single value%s", "");
+		DBG_LOG("Single value");
 		current.node->type = SyntaxTreeNode::Type::Value;
 		current.node->value = parts[0].value;
 
