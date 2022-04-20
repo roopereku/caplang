@@ -136,7 +136,7 @@ bool Cap::Scope::validateNode(SyntaxTreeNode* n, ValidationResult& result)
 		//	The left node can only be a plain typename if an access is being made
 		if(isNodeTypeName(left) && left.at->parent->type != SyntaxTreeNode::Type::Access)
 		{
-			result.msg = "Expected '.' after type name '" + left.t->name->getString() + '\'';
+			result.msg = "Expected '.' after type name '" + getFullAccessName(left.at) + '\'';
 			result.status = ValidationResult::Status::InvalidOperand;
 			result.at = left.at;
 			return false;
@@ -161,7 +161,7 @@ bool Cap::Scope::validateNode(SyntaxTreeNode* n, ValidationResult& result)
 			//	Does the right node have a conversion to the type of the left node
 			if(!isRightType && left.t && right.t && !right.t->hasConversion(*left.t))
 			{
-				//	TODO add a way to return a range betweem 2 nodes
+				result.msg = "Type '" + right.t->name->getString() + "' doesn't have a conversion to '" + left.t->name->getString() + '\'';
 				result.status = ValidationResult::Status::NoConversion;
 				result.at = right.at;
 				return false;
@@ -179,7 +179,7 @@ bool Cap::Scope::validateNode(SyntaxTreeNode* n, ValidationResult& result)
 						//	Forbid assigning a variable it's own value before it's initialized
 						if(!left.v->initialized && left.at->value->tokenEquals(right.at->value))
 						{
-							result.msg = "Can't use '" + right.at->value->getString() + "' before it's initialized";
+							result.msg = "Can't use '" + getFullAccessName(right.at) + "' before it's initialized";
 							result.status = ValidationResult::Status::UseBeforeInit;
 							result.at = right.at;
 							return false;
@@ -201,7 +201,7 @@ bool Cap::Scope::validateNode(SyntaxTreeNode* n, ValidationResult& result)
 						//	Types cannot be assigned to variables if they already have types
 						if(left.v->type)
 						{
-							result.msg = "Can't assign type '" + right.t->name->getString() + "' to '" + left.v->name->getString() + "' because it already has a type";
+							result.msg = "Can't assign type '" + getFullAccessName(right.at) + "' to '" + getFullAccessName(left.at) + "' because it already has a type";
 							result.status = ValidationResult::Status::TypingOutsideInit;
 							result.at = right.at;
 							return false;
@@ -222,7 +222,7 @@ bool Cap::Scope::validateNode(SyntaxTreeNode* n, ValidationResult& result)
 				//	The right node can't be a plain type if no assignment was done
 				if(isRightType)
 				{
-					result.msg = "Type '" + right.t->name->getString() + "' can only be used when assigning";
+					result.msg = "Type '" + getFullAccessName(right.at) + "' can only be used when assigning";
 					result.status = ValidationResult::Status::InvalidOperand;
 					result.at = right.at;
 					return false;
@@ -230,7 +230,7 @@ bool Cap::Scope::validateNode(SyntaxTreeNode* n, ValidationResult& result)
 
 				if(left.v && !left.v->initialized)
 				{
-					result.msg = "Can't use variable '" + left.t->name->getString() + "' until it's initialized";
+					result.msg = "Type '" + getFullAccessName(left.at) + "' can only be used when assigning";
 					result.status = ValidationResult::Status::UseBeforeInit;
 					result.at = left.at;
 					return false;
@@ -238,7 +238,7 @@ bool Cap::Scope::validateNode(SyntaxTreeNode* n, ValidationResult& result)
 
 				if(right.v && !right.v->initialized)
 				{
-					result.msg = "Can't use variable '" + right.t->name->getString() + "' until it's initialized";
+					result.msg = "Can't use variable '" + getFullAccessName(right.at) + "' until it's initialized";
 					result.status = ValidationResult::Status::UseBeforeInit;
 					result.at = right.at;
 					return false;
@@ -353,7 +353,7 @@ Cap::Scope::NodeInfo Cap::Scope::getNodeInfo(SyntaxTreeNode* n, ValidationResult
 	if(!info.v && !info.t && !info.f)
 	{
 		result.at = info.at;
-		result.msg = "Unknown identifier '" + info.at->value->getString() + '\'';
+		result.msg = "Unknown identifier '" + getFullAccessName(info.at) + '\'';
 		result.status = ValidationResult::Status::IdentifierNotFound;
 		return info;
 	}
@@ -362,6 +362,29 @@ Cap::Scope::NodeInfo Cap::Scope::getNodeInfo(SyntaxTreeNode* n, ValidationResult
 		info.t = info.v->type;
 
 	return info;
+}
+
+std::string Cap::Scope::getFullAccessName(SyntaxTreeNode* last)
+{
+	//	First we need to know where the first access node is
+	SyntaxTreeNode* current = last;
+	while(current->parent->type == SyntaxTreeNode::Type::Access)
+		current = current->parent;
+
+	//	If there's no accesses, return a single identifier
+	if(current->type != SyntaxTreeNode::Type::Access)
+		return current->value->getString();
+
+	std::string name = current->left->value->getString();
+
+	//	Add the rest of the access nodes to the string
+	while(current->left)
+	{
+		name += '.' + current->right->value->getString();
+		current = current->right.get();
+	}
+
+	return name;
 }
 
 bool Cap::Scope::isNodeTypeName(NodeInfo& info)

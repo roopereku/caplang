@@ -12,6 +12,6 @@ type T
 
 func main()
 {
-	var i = T.z
-	T.y = A
+	var i = A
+	var x = T.y + A
 }

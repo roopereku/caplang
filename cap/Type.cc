@@ -53,7 +53,7 @@ Cap::Type* Cap::Type::findPrimitiveType(TokenType t)
 		case TokenType::Character: return &primitives[0];
 
 		default:
-			DBG_LOG("UNIMPLEMENTED '%s'", Token::getTypeString(t));
+			//DBG_LOG("UNIMPLEMENTED '%s'", Token::getTypeString(t));
 			return nullptr;
 	}
 }

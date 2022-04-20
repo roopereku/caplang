@@ -80,6 +80,9 @@ private:
 
 	NodeInfo getNodeInfo(SyntaxTreeNode* n, ValidationResult& result);
 	NodeInfo getNodeInfoRecursive(SyntaxTreeNode* n, ValidationResult& result);
+
+	std::string getFullAccessName(SyntaxTreeNode* last);
+
 	bool isNodeTypeName(NodeInfo& info);
 
 	std::vector <Type> types;
