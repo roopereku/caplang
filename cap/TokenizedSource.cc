@@ -1,4 +1,5 @@
 #include "TokenizedSource.hh"
+#include "Logger.hh"
 #include "Debug.hh"
 
 #include <fstream>
@@ -27,13 +28,8 @@ static bool isBreak(char c)
 	return c == ';';
 }
 
-static decltype(Cap::Token::line) line;
-static decltype(Cap::Token::column) column;
-static decltype(Cap::Token::line) startLine;
-static decltype(Cap::Token::column) startColumn;
-static bool error;
 
-static bool errorOut()
+bool Cap::TokenizedSource::errorOut()
 {
 	error = true;
 	return true;
@@ -46,8 +42,7 @@ Cap::TokenizedSource::TokenizedSource(const std::string& path) : path(path)
 
 	if(!file.is_open())
 	{
-		//	FIXME use a more generic error reporting function
-		printf("Error: Couldn't open file '%s'\n", path.c_str());
+		Logger::error(path, "Unable to open source file");
 		return;
 	}
 
@@ -81,8 +76,7 @@ bool Cap::TokenizedSource::matchBraces()
 			//	Does the closing brace have a match?
 			if(tokens[i].length > 0)
 			{
-				//	FIXME use a more generic error reporting function
-				printf("Error: Unnecessary '%c' on line %u at column %u\n", match, tokens[i].line, tokens[i].column);
+				Logger::error(path, tokens[i], "Unnecessary '%c'", match);
 				return false;
 			}
 		}
@@ -114,8 +108,7 @@ bool Cap::TokenizedSource::matchBraces()
 			//	If the inner brace is outside the outer brace, the braces are out of sequence
 			if(innerEnd > end)
 			{
-				//	FIXME use a more generic error reporting function
-				printf("Error: Braces out of sequence\n");
+				Logger::error(path, tokens[j], "Braces out of sequence");
 				return false;
 			}
 		}
@@ -146,8 +139,7 @@ bool Cap::TokenizedSource::matchBrace(size_t i, char match)
 
 	if(depth > 0)
 	{
-		//	FIXME use a more generic error reporting function
-		printf("Error: Unterminated '%c' on line %u at column %u\n", *tokens[begin].begin, tokens[begin].line, tokens[begin].column);
+		Logger::error(path, tokens[begin], "Unterminated '%c'", *tokens[begin].begin);
 		return false;
 	}
 
@@ -160,24 +152,30 @@ bool Cap::TokenizedSource::matchBrace(size_t i, char match)
 
 void Cap::TokenizedSource::addToken(TokenType type, size_t begin, size_t end)
 {
-	Token t;
-	t.type = type;
-	t.line = startLine;
-	t.column = startColumn;
-	t.begin = &data[begin];
-	t.length = end - begin;
+	unsigned currentLine = current->line;
+	unsigned currentColumn = current->column;
 
-	DBG_LOG("Added token of type '%s' on line %u at column %u with value '%s'", t.getTypeString(), startLine, startColumn, t.getString().c_str());
-	tokens.push_back(t);
+	current->type = type;
+	current->line = startLine;
+	current->column = startColumn;
+	current->begin = &data[begin];
+	current->length = end - begin;
 
-	startLine = line;
-	startColumn = column;
+	DBG_LOG("Added token of type '%s' on line %u at column %u with value '%s'", current->getTypeString(), startLine, startColumn, current->getString().c_str());
+	tokens.push_back({});
+	current = &tokens.back();
+
+	startLine = current->line = currentLine;
+	startColumn = current->column = currentColumn;
 }
 
 void Cap::TokenizedSource::tokenize()
 {
-	startColumn = column = 1;
-	startLine = line = 1;
+	tokens.push_back({});
+	current = &tokens.back();
+
+	startColumn = current->column = 1;
+	startLine = current->line = 1;
 	error = false;
 
 	for(size_t i = 0; i < data.length(); i++)
@@ -188,19 +186,18 @@ void Cap::TokenizedSource::tokenize()
 			//	Move onto the next line
 			if(data[i] == '\n')
 			{
-				startLine = ++line;
-				startColumn = column = 1;
+				startLine = ++current->line;
+				startColumn = current->column = 1;
 				continue;
 			}
 
 			else if(isspace(data[i]))
 			{
-				startColumn = ++column;
+				startColumn = ++current->column;
 				continue;
 			}
 
-			//	FIXME use a more generic error reporting function
-			printf("Error: Invalid character '%c'\n", data[i]);
+			Logger::error(path, *current, "Invalid character '%c'", data[i]);
 			error = true;
 			break;
 		}
@@ -225,13 +222,14 @@ bool Cap::TokenizedSource::parseString(size_t& i)
 	char match = data[i];
 	size_t begin = ++i;
 
-	for(bool escaped = false; i <= data.length(); i++, column++)
+	for(bool escaped = false; i <= data.length(); i++, current->column++)
 	{
 		//	The string is unterminated if a newline or a null is encountered
 		if(data[i] == '\n' || data[i] == 0)
 		{
-			//	FIXME use a more generic error reporting function
-			printf("Error: Unterminated string on line %u at column %u\n", startLine, startColumn);
+			current->line = startLine;
+			current->column = startColumn;
+			Logger::error(path, *current, "Unterminated %s", match == '"' ? "string" : "character");
 			return errorOut();
 		}
 
@@ -277,7 +275,7 @@ bool Cap::TokenizedSource::parseSingleLineComment(size_t& i)
 {
 	//	Loop until the next line
 	size_t begin = i += 2;
-	for(; i < data.length() && data[i] != '\n'; i++, column++);
+	for(; i < data.length() && data[i] != '\n'; i++, current->column++);
 
 	addToken(TokenType::SingleLineComment, begin, i);
 	return true;
@@ -289,12 +287,12 @@ bool Cap::TokenizedSource::parseMultiLineComment(size_t& i)
 	size_t begin = i += 2;
 	size_t matched = 0;
 
-	for(; i < data.length() && matched < 2; i++, column++)
+	for(; i < data.length() && matched < 2; i++, current->column++)
 	{
 		if(data[i] == '\n')
 		{
-			line++;
-			column = 1;
+			current->line++;
+			current->column = 1;
 		}
 
 		//	Move on to the next character to match if one matched
@@ -307,8 +305,9 @@ bool Cap::TokenizedSource::parseMultiLineComment(size_t& i)
 
 	if(i >= data.length())
 	{
-		//	FIXME use a more generic error reporting function
-		printf("Unterminated multiline comment on line %u at column %u\n", startLine, startColumn);
+		current->line = startLine;
+		current->column = startColumn;
+		Logger::error(path, *current, "Unterminated multiline comment");
 		return errorOut();
 	}
 
@@ -335,7 +334,7 @@ bool Cap::TokenizedSource::parseIdentifier(size_t& i)
 	size_t begin = i;
 	for(; i < data.length() && !isspace(data[i]) && !isBreak(data[i]) &&
 		  !isOperator(data[i]) && !isBracket(data[i]) && !isString(data[i]) &&
-		 (!isdigit(data[i]) || i > begin); i++, column++);
+		 (!isdigit(data[i]) || i > begin); i++, current->column++);
 
 	if(i > begin)
 	{
@@ -349,7 +348,7 @@ bool Cap::TokenizedSource::parseIdentifier(size_t& i)
 bool Cap::TokenizedSource::parseOperator(size_t& i)
 {
 	size_t begin = i;
-	for(; i < data.length() && isOperator(data[i]); i++, column++)
+	for(; i < data.length() && isOperator(data[i]); i++, current->column++)
 	{
 		//	Since all comments use operators, check	for comments here
 		if(parseComment(i)) return true;
@@ -388,14 +387,14 @@ bool Cap::TokenizedSource::parseNumeric(size_t& i)
 	if(i > begin)
 	{
 		for(begin = i; i < data.length() && !isspace(data[i]) && !isBreak(data[i]) &&
-					   !isOperator(data[i]) && !isString(data[i]) ; i++, column++);
+					   !isOperator(data[i]) && !isString(data[i]) ; i++, current->column++);
 
 		//	Without this validation there might be empty junk
 		if(i != begin)
 		{
 			std::string junk(data.begin() + begin, data.begin() + i);
-			//	FIXME use a more generic error reporting function
-			printf("Error: Junk after %s value '%s' ('%s')\n", tokens.back().getTypeString(), tokens.back().getString().c_str(), junk.c_str());
+			Token& value = tokens[tokens.size() - 2];
+			Logger::error(path, *current, "Junk after %s value '%s' ('%s')", value.getTypeString(), value.getString().c_str(), junk.c_str());
 
 			return errorOut();
 		}
@@ -410,7 +409,7 @@ bool Cap::TokenizedSource::parseDecimal(size_t& i)
 	size_t begin = i;
 	size_t dots = 0;
 
-	for(; i < data.length(); i++, column++)
+	for(; i < data.length(); i++, current->column++)
 	{
 		if(data[i] == '.')
 		{
@@ -423,8 +422,7 @@ bool Cap::TokenizedSource::parseDecimal(size_t& i)
 			//	If the dots aren't consecutive, error out
 			else if(dots > 1)
 			{
-				//	FIXME use a more generic error reporting function
-				printf("Error: Too many dots in a numeric literal\n");
+				Logger::error(path, *current, "Too many dots in a numeric literal");
 				return errorOut();
 			}
 		}
@@ -452,7 +450,7 @@ bool Cap::TokenizedSource::parseHexadecimal(size_t& i)
 {
 	//	Loop while there are valid hexadecimal characters
 	size_t begin = i += 2;
-	for(; i < data.length(); i++, column++)
+	for(; i < data.length(); i++, current->column++)
 	{
 		if(!isdigit(data[i]))
 		{
@@ -470,7 +468,7 @@ bool Cap::TokenizedSource::parseBinary(size_t& i)
 {
 	//	Loop while there are valid binary characters
 	size_t begin = i += 2;
-	for(; i < data.length() && (data[i] == '1' || data[i] == '0'); i++, column++);
+	for(; i < data.length() && (data[i] == '1' || data[i] == '0'); i++, current->column++);
 
 	addToken(TokenType::Binary, begin, i);
 	return isspace(data[i]) || isOperator(data[i]) || isBracket(data[i]) || isString(data[i]);
