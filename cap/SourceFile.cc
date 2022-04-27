@@ -1,4 +1,5 @@
 #include "SourceFile.hh"
+#include "Logger.hh"
 #include "Debug.hh"
 
 Cap::SourceFile::SourceFile(const std::string& path)
@@ -32,7 +33,7 @@ bool Cap::SourceFile::validate()
 
 	if(!root.validate(result))
 	{
-		ERROR_LOG((*result.at->value), "%s\n", result.msg.c_str());
+		//ERROR_LOG((*result.at->value), "%s\n", result.msg.c_str());
 		return false;
 	}
 
@@ -66,18 +67,4 @@ bool Cap::SourceFile::isKeyword(Token& token)
 	return	token.stringEquals("var") ||
 			token.stringEquals("func") ||
 			token.stringEquals("type");
-}
-
-bool Cap::SourceFile::showExpected(const std::string& msg, size_t& i)
-{
-	ERROR_LOG(tokens[i], "Expected %s\nInstead got ", msg.c_str());
-	if(i < tokens.count())
-	{
-		printf("'%s' '%s'\n",
-				tokens[i].getTypeString(),
-				tokens[i].getString().c_str());
-	}
-
-	else printf("end of file\n");
-	return true;
 }

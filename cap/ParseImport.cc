@@ -1,4 +1,5 @@
 #include "SourceFile.hh"
+#include "Logger.hh"
 #include "Debug.hh"
 
 bool Cap::SourceFile::parseImport(size_t& i, Scope& current)
@@ -13,8 +14,8 @@ bool Cap::SourceFile::parseImport(size_t& i, Scope& current)
 	 *	functional, it looks bad and doesn't make much sense */
 	if(current.parent)
 	{
-		ERROR_LOG(tokens[i], "Imports should only appear in the global scope\n");
-		return true;
+		Logger::error(tokens.getPath(), tokens[i], "Imports should only appear in the global scope");
+		return errorOut();
 	}
 
 	i++;
@@ -43,7 +44,9 @@ bool Cap::SourceFile::parseImport(size_t& i, Scope& current)
 
 			//	The next token is something unexpected
 			i++;
-			return showExpected("',' or '}' after filename", i);
+
+			Logger::error(tokens.getPath(), tokens[i], "Expected a ',' or '}' after filename");
+			return errorOut();
 		}
 	}
 
@@ -73,14 +76,20 @@ bool Cap::SourceFile::parseImportFilename(size_t& i)
 			{
 				//	Dots are the only operators allowed in filenames found in the path
 				if(*tokens[i].begin != '.')
-					return showExpected("'.' to separate filename and directory", i);
+				{
+					Logger::error(tokens.getPath(), tokens[i], "Expected '.' to separate filename and directory");
+					return errorOut();
+				}
 
 				imports.back().name += '/';
 				size_t next = i + 1;
 
 				//	Make sure that the dot isn't the end of the filename
 				if(!isToken(TokenType::Identifier, next))
-					return showExpected("a filename or directory after '.'", next);
+				{
+					Logger::error(tokens.getPath(), tokens[next], "Expected a filename or directory after '.'");
+					return errorOut();
+				}
 			}
 
 			else if(isToken(TokenType::Identifier, i))
@@ -94,12 +103,20 @@ bool Cap::SourceFile::parseImportFilename(size_t& i)
 			}
 
 			//	Only dots and identifiers are allowed
-			else return showExpected("a filename/directory or '.'", i);
+			else
+			{
+				Logger::error(tokens.getPath(), tokens[i], "Expected a filename/directory or '.'");
+				return errorOut();
+			}
 		}
 	}
 
 	//	Only identifiers and string are allowed as the first token in the filename
-	else return showExpected("Expected a filename for import", i);
+	else
+	{
+		Logger::error(tokens.getPath(), tokens[i], "Expected a filename for import");
+		return errorOut();
+	}
 
 	imports.back().name += ".cap";
 	DBG_LOG("filename '%s'", imports.back().name.c_str());

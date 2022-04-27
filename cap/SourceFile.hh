@@ -6,11 +6,6 @@
 #include "Filename.hh"
 #include "Scope.hh"
 
-#define ERROR_LOG(token, ...)\
-	printf("[Error in %s:%u:%u] ", tokens.getPath(), token.line, token.column);\
-	printf(__VA_ARGS__);\
-	valid = false
-
 namespace Cap
 {
 
@@ -38,10 +33,10 @@ private:
 	bool parseFunction(size_t& i, Scope& current);
 	bool parseType(size_t& i, Scope& current);
 
-	bool showExpected(const std::string& msg, size_t& i);
 	bool isToken(TokenType t, size_t& i);
 	void skipComments(size_t& i);
 	bool isKeyword(Token& token);
+	bool errorOut();
 
 	bool inExpression = false;
 	bool valid = true;

@@ -26,28 +26,28 @@ class Logger
 {
 public:
 	template <typename... Args>
-	static void error(const std::string& file, const char* fmt, Args&& ...args)
+	static inline void error(const std::string& file, const char* fmt, Args&& ...args)
 	{
 		snprintf(buffer, sizeof(buffer), fmt, std::forward <Args> (args)...);
 		addLog(file, nullptr, true);
 	}
 
 	template <typename... Args>
-	static void error(const std::string& file, Token& at, const char* fmt, Args&& ...args)
+	static inline void error(const std::string& file, Token& at, const char* fmt, Args&& ...args)
 	{
 		snprintf(buffer, sizeof(buffer), fmt, std::forward <Args> (args)...);
 		addLog(file, &at, true);
 	}
 
 	template <typename... Args>
-	static void warning(const std::string& file, const char* fmt, Args&& ...args)
+	static inline void warning(const std::string& file, const char* fmt, Args&& ...args)
 	{
 		snprintf(buffer, sizeof(buffer), fmt, std::forward <Args> (args)...);
 		addLog(file, nullptr, false);
 	}
 
 	template <typename... Args>
-	static void warning(const std::string& file, Token& at, const char* fmt, Args&& ...args)
+	static inline void warning(const std::string& file, Token& at, const char* fmt, Args&& ...args)
 	{
 		snprintf(buffer, sizeof(buffer), fmt, std::forward <Args> (args)...);
 		addLog(file, &at, false);

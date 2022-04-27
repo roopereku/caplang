@@ -1,5 +1,12 @@
 #include "SourceFile.hh"
+#include "Logger.hh"
 #include "Debug.hh"
+
+bool Cap::SourceFile::errorOut()
+{
+	valid = false;
+	return true;
+}
 
 bool Cap::SourceFile::parseExpression(size_t& i, Scope& current, bool inBrackets)
 {
@@ -32,7 +39,10 @@ bool Cap::SourceFile::parseExpression(size_t& i, Scope& current, bool inBrackets
 	for(; i < current.end; i++)
 	{
 		if(expectVariableName && !isToken(TokenType::Identifier, i))
-			return showExpected("a name for variable", i);
+		{
+			Logger::error(tokens.getPath(), tokens[i], "Expected a name for a variable");
+			return errorOut();
+		}
 
 		//	Did a line change happen?
 		if(tokens[i].line > tokens[start].line)
@@ -54,8 +64,8 @@ bool Cap::SourceFile::parseExpression(size_t& i, Scope& current, bool inBrackets
 			//	The expression can't be broken inside braces excluding curly braces
 			if(inBrackets)
 			{
-				ERROR_LOG(tokens[i], "Cannot end an expression inside brackets\n");
-				return true;
+				Logger::error(tokens.getPath(), tokens[i], "Cannot use ';' inside brackets");
+				return errorOut();
 			}
 
 			break;
@@ -68,7 +78,10 @@ bool Cap::SourceFile::parseExpression(size_t& i, Scope& current, bool inBrackets
 		else if(isToken(TokenType::Identifier, i))
 		{
 			if(!expectVariableName && i != start && !lastWasOperator)
-				return showExpected("an operator before identifier", i);
+			{
+				Logger::error(tokens.getPath(), tokens[i], "Expected an operator before identifier '%s'", tokens[i].getString().c_str());
+				return errorOut();
+			}
 
 			size_t old = i;
 
@@ -97,7 +110,10 @@ bool Cap::SourceFile::parseExpression(size_t& i, Scope& current, bool inBrackets
 			{
 				//	Does a reserved keyword interrupt the expression?
 				if(i == old)
-					return showExpected("Can't use reserved keyword '" + tokens[i].getString() + "' in an expression", i);
+				{
+					Logger::error(tokens.getPath(), tokens[i], "Can't use reserved keyword '%s' inside an expression", tokens[i].getString().c_str());
+					return errorOut();
+				}
 
 				//	Variable mode was started
 				else if(i == start + 1)
@@ -151,8 +167,8 @@ bool Cap::SourceFile::parseExpression(size_t& i, Scope& current, bool inBrackets
 						*tokens[next].begin != '=' ||
 						tokens[next].length != 1)
 					{
-						return showExpected("an initial value or a type for variable '" +
-											tokens[i].getString() + '\'', next);
+						Logger::error(tokens.getPath(), tokens[i], "Expected an initial value or type for variable '%s'", tokens[i].getString().c_str());
+						return errorOut();
 					}
 				}
 			}
@@ -162,7 +178,10 @@ bool Cap::SourceFile::parseExpression(size_t& i, Scope& current, bool inBrackets
 		else if(!isToken(TokenType::Operator, i))
 		{
 			if(i > start && !lastWasOperator)
-				return showExpected("an operator before value", i);
+			{
+				Logger::error(tokens.getPath(), tokens[i], "Expected an operator before value '%s'", tokens[i].getString().c_str());
+				return errorOut();
+			}
 
 			lastWasOperator = false;
 			parts.push_back({ SyntaxTreeNode::Type::Value, &tokens[i] });
@@ -194,7 +213,10 @@ bool Cap::SourceFile::parseExpression(size_t& i, Scope& current, bool inBrackets
 									!isToken(TokenType::Operator, next);
 
 			if(!possiblyUnary && lastWasOperator)
-				return showExpected("a value after an operator", i);
+			{
+				Logger::error(tokens.getPath(), tokens[i], "Expected a value after operator '%s'", parts.back().value->getString().c_str());
+				return errorOut();
+			}
 
 			SyntaxTreeNode::Type type;
 			lastWasOperator = true;
@@ -216,7 +238,7 @@ bool Cap::SourceFile::parseExpression(size_t& i, Scope& current, bool inBrackets
 						//	TODO Make sure that there's an identifiers on the appropriate side
 						case '+': case '-':
 						{
-							ERROR_LOG(tokens[next], "Unimplemented '%c%c'", *tokens[next].begin, *tokens[next].begin);
+							Logger::error(tokens.getPath(), tokens[i], "Unimplemented operator '%c%c'", *tokens[next].begin, *tokens[next].begin);
 							return true;
 
 							lastWasIncDec = true;
@@ -234,7 +256,7 @@ bool Cap::SourceFile::parseExpression(size_t& i, Scope& current, bool inBrackets
 						case '.': type = SyntaxTreeNode::Type::Range; break;
 
 						default:
-							ERROR_LOG(tokens[i], "Invalid operator '%c%c'\n", *tokens[i].begin, *tokens[i].begin);
+							Logger::error(tokens.getPath(), tokens[i], "Invalid operator '%c%c'", *tokens[i].begin, *tokens[i].begin);
 							return true;
 					}
 
@@ -268,7 +290,7 @@ bool Cap::SourceFile::parseExpression(size_t& i, Scope& current, bool inBrackets
 					case '~': type = SyntaxTreeNode::Type::BitwiseNOT; break;
 
 					default:
-						ERROR_LOG(tokens[i], "Invalid unary operator '%c'\n", *tokens[i].begin);
+						Logger::error(tokens.getPath(), tokens[i], "Invalid operator '%c'", *tokens[i].begin);
 						return true;
 				}
 
@@ -300,7 +322,7 @@ bool Cap::SourceFile::parseExpression(size_t& i, Scope& current, bool inBrackets
 					{
 						if(nextEqual)
 						{
-							ERROR_LOG(tokens[i], "Invalid operator ',='");
+							Logger::error(tokens.getPath(), tokens[i], "Invalid operator ',='");
 							return true;
 						}
 
@@ -316,12 +338,12 @@ bool Cap::SourceFile::parseExpression(size_t& i, Scope& current, bool inBrackets
 					{
 						if(nextEqual)
 						{
-							ERROR_LOG(tokens[i], "Invalid operator '?='");
+							Logger::error(tokens.getPath(), tokens[i], "Invalid operator '?='");
 							return true;
 						}
 
 						//	TODO implement ternary operators
-						ERROR_LOG(tokens[next], "Unimplemented '%c%c'", *tokens[next].begin, *tokens[next].begin);
+						Logger::error(tokens.getPath(), tokens[next], "Unimplemented '%c%c'", *tokens[next].begin, *tokens[next].begin);
 						return true;
 						break;
 					}
@@ -340,18 +362,28 @@ bool Cap::SourceFile::parseExpression(size_t& i, Scope& current, bool inBrackets
 					{
 						//	FIXME show the earlier token
 						if(i == start || parts.back().value->type != TokenType::Identifier)
-							return showExpected("an identifier before '.'", i);
+						{
+							Logger::error(tokens.getPath(), tokens[i], "Expected an identifier before '.'");
+							return errorOut();
+						}
 
 						else if(!isToken(TokenType::Identifier, next))
-							return showExpected("an identifier after '.'", next);
+						{
+							if(next >= tokens.count())
+								Logger::error(tokens.getPath(), "Expected an identifier after '.' but got end of file");
+
+							else Logger::error(tokens.getPath(), tokens[next], "Expected an identifier after '.'");
+
+							return errorOut();
+						}
 
 						type = SyntaxTreeNode::Type::Access;
 						break;
 					}
 
 					default:
-						ERROR_LOG(tokens[i], "Invalid operator '%c'\n", *tokens[i].begin);
-						return true;
+						Logger::error(tokens.getPath(), tokens[i], "Invalid operator '%c'\n", *tokens[i].begin);
+						return errorOut();
 				}
 			}
 
@@ -371,7 +403,10 @@ bool Cap::SourceFile::parseExpression(size_t& i, Scope& current, bool inBrackets
 
 					//	FIXME allow stuff like "@0x08FC = 12"
 					if(i == start || parts.back().value->type != TokenType::Identifier)
-						return showExpected("an identifier before assignment", i);
+					{
+						Logger::error(tokens.getPath(), tokens[i], "Expected an identifier before '='");
+						return errorOut();
+					}
 
 					/*	Because we don't want "x = 2" to turn into "x = x = 2",
 					 *	do the expansion only when the operator isn't a single '=' */
@@ -392,7 +427,10 @@ bool Cap::SourceFile::parseExpression(size_t& i, Scope& current, bool inBrackets
 
 	//	Forbid the expression ending with an operator
 	if(lastWasOperator)
-		return showExpected("a value after an operator", i);
+	{
+		Logger::error(tokens.getPath(), tokens[i], "Expressions can't end with operators");
+		return errorOut();
+	}
 
 	//	We're no longer in an expression
 	inExpression = false;
@@ -403,7 +441,7 @@ bool Cap::SourceFile::parseExpression(size_t& i, Scope& current, bool inBrackets
 		if(	current.node->parent->type == SyntaxTreeNode::Type::Parentheses ||
 			current.node->parent->type == SyntaxTreeNode::Type::Array)
 		{
-			ERROR_LOG(tokens[current.begin], "Empty brackets\n");
+			Logger::error(tokens.getPath(), tokens[current.begin], "Empty brackets\n");
 			return true;
 		}
 
@@ -422,19 +460,9 @@ bool Cap::SourceFile::parseExpression(size_t& i, Scope& current, bool inBrackets
 		current.node->parent->type != SyntaxTreeNode::Type::Variable)
 	{
 		size_t index = tokens.getIndex(current.node->value);
-		return showExpected(std::string("a declaration ") + (current.parent ? "inside a type" : "in the global scope"), index);
+		Logger::error(tokens.getPath(), tokens[i], "Expected a declaration %s", current.parent ? "inside a type" : "in the global scope");
+		return errorOut();
 	}
-
-	////	Variables always require a type or an initial value
-	//if(current.node->parent->type == SyntaxTreeNode::Type::Variable)
-	//{
-	//	size_t index = parts.size() < 2 ? 0 : 1;
-	//	if(parts[index].type != SyntaxTreeNode::Type::Assign)
-	//	{
-	//		index = tokens.getIndex(parts[index].value);
-	//		return showExpected("a type or an initial value for variable", index);
-	//	}
-	//}
 
 	//	TODO handle brackets
 	//	Single values don't need ordering
@@ -530,7 +558,6 @@ bool Cap::SourceFile::parseExpressionOrder(std::vector <ExpressionPart>& parts,
 						side = std::make_shared <SyntaxTreeNode> (node, parts[i + m].value, parts[i + m].type);
 
 						//	Is the value actually a call or a subscript
-						//	FIXME maybe we could have the target identifier stored in the left node
 						if(	parts[i + m].type == SyntaxTreeNode::Type::Call ||
 							parts[i + m].type == SyntaxTreeNode::Type::Subscript)
 						{

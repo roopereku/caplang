@@ -1,4 +1,5 @@
 #include "SourceFile.hh"
+#include "Logger.hh"
 #include "Debug.hh"
 
 bool Cap::SourceFile::parseVariable(size_t& i, Scope& current)
@@ -36,7 +37,10 @@ bool Cap::SourceFile::parseFunction(size_t& i, Scope& current)
 	if(!inExpression)
 	{
 		if(!isToken(TokenType::Identifier, i) || isKeyword(tokens[i]))
-			return showExpected("a name for function", i);
+		{
+			Logger::error(tokens.getPath(), tokens[i], "Expected a name for a function");
+			return errorOut();
+		}
 
 		name = &tokens[i];
 
@@ -46,7 +50,10 @@ bool Cap::SourceFile::parseFunction(size_t& i, Scope& current)
 	Function& function = current.addFunction(name);
 
 	if(!isToken(TokenType::Parenthesis, i))
-		return showExpected("parentheses after function", i);
+	{
+		Logger::error(tokens.getPath(), tokens[i], "Expected parentheses after function name '%s'", name->getString().c_str());
+		return errorOut();
+	}
 
 	//	Initially we want to to have the scope cover the parentheses to parse the parameters
 	function.scope = std::make_shared <Scope> (&current, ScopeContext::Function, i, i + tokens[i].length);
@@ -61,7 +68,10 @@ bool Cap::SourceFile::parseFunction(size_t& i, Scope& current)
 	//	Does the function have a body?
 	i++;
 	if(!isToken(TokenType::CurlyBrace, i) || *tokens[i].begin == '}')
-		return showExpected(name ? ("a body for function '" + name->getString() + '\'') : "a body for anonymous function", i);
+	{
+		Logger::error(tokens.getPath(), tokens[i], "Expected a body for function '%s'", name->getString().c_str());
+		return errorOut();
+	}
 
 	//	Tell the scope to cover the body
 	function.scope->begin = i + 1;
@@ -88,13 +98,19 @@ bool Cap::SourceFile::parseType(size_t& i, Scope& current)
 
 	i++;
 	if(!isToken(TokenType::Identifier, i) || isKeyword(tokens[i]))
-		return showExpected("a name for type", i);
+	{
+		Logger::error(tokens.getPath(), tokens[i], "Expected a name for a type");
+		return errorOut();
+	}
 
 	Token* name = &tokens[i];
 
 	i++;
 	if(!isToken(TokenType::CurlyBrace, i) || *tokens[i].begin == '}')
-		return showExpected("a body for type '" + name->getString() + '\'', i);
+	{
+		Logger::error(tokens.getPath(), tokens[i], "Expected a body for type '%s'", name->getString().c_str());
+		return errorOut();
+	}
 
 	Type& type = current.addType(name, i + 1, i + 1 + tokens[i].length);
 
