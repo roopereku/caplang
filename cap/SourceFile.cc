@@ -6,7 +6,7 @@ Cap::SourceFile::SourceFile(const std::string& path)
 {
 	//	TODO exclude comments from tokens
 
-	if(!tokens.matchBraces())
+	if(!tokens.isValid() || !tokens.matchBraces())
 		return;
 
 	parseScope(root);	
