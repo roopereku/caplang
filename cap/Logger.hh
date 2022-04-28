@@ -26,38 +26,44 @@ class Logger
 {
 public:
 	template <typename... Args>
-	static inline void error(const std::string& file, const char* fmt, Args&& ...args)
+	static inline void error(const char* fmt, Args&& ...args)
 	{
 		snprintf(buffer, sizeof(buffer), fmt, std::forward <Args> (args)...);
-		addLog(file, nullptr, true);
+		addLog(nullptr, true);
 	}
 
 	template <typename... Args>
-	static inline void error(const std::string& file, Token& at, const char* fmt, Args&& ...args)
+	static inline void error(Token& at, const char* fmt, Args&& ...args)
 	{
 		snprintf(buffer, sizeof(buffer), fmt, std::forward <Args> (args)...);
-		addLog(file, &at, true);
+		addLog(&at, true);
 	}
 
 	template <typename... Args>
-	static inline void warning(const std::string& file, const char* fmt, Args&& ...args)
+	static inline void warning(const char* fmt, Args&& ...args)
 	{
 		snprintf(buffer, sizeof(buffer), fmt, std::forward <Args> (args)...);
-		addLog(file, nullptr, false);
+		addLog(nullptr, false);
 	}
 
 	template <typename... Args>
-	static inline void warning(const std::string& file, Token& at, const char* fmt, Args&& ...args)
+	static inline void warning(Token& at, const char* fmt, Args&& ...args)
 	{
 		snprintf(buffer, sizeof(buffer), fmt, std::forward <Args> (args)...);
-		addLog(file, &at, false);
+		addLog(&at, false);
+	}
+
+	static inline void setCurrentFile(const std::string& path)
+	{
+		currentFile = path;
 	}
 
 private:
-	static void addLog(const std::string& file, Token* at, bool error);
+	static void addLog(Token* at, bool error);
 
 	static char buffer[100];
 	static std::vector <Log> logs;
+	static std::string currentFile;
 };
 
 }

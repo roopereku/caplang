@@ -38,7 +38,7 @@ bool Cap::SourceFile::parseFunction(size_t& i, Scope& current)
 	{
 		if(!isToken(TokenType::Identifier, i) || isKeyword(tokens[i]))
 		{
-			Logger::error(tokens.getPath(), tokens[i], "Expected a name for a function");
+			Logger::error(tokens[i], "Expected a name for a function");
 			return errorOut();
 		}
 
@@ -51,7 +51,7 @@ bool Cap::SourceFile::parseFunction(size_t& i, Scope& current)
 
 	if(!isToken(TokenType::Parenthesis, i))
 	{
-		Logger::error(tokens.getPath(), tokens[i], "Expected parentheses after function name '%s'", name->getString().c_str());
+		Logger::error(tokens[i], "Expected parentheses after function name '%s'", name->getString().c_str());
 		return errorOut();
 	}
 
@@ -69,7 +69,7 @@ bool Cap::SourceFile::parseFunction(size_t& i, Scope& current)
 	i++;
 	if(!isToken(TokenType::CurlyBrace, i) || *tokens[i].begin == '}')
 	{
-		Logger::error(tokens.getPath(), tokens[i], "Expected a body for function '%s'", name->getString().c_str());
+		Logger::error(tokens[i], "Expected a body for function '%s'", name->getString().c_str());
 		return errorOut();
 	}
 
@@ -99,7 +99,7 @@ bool Cap::SourceFile::parseType(size_t& i, Scope& current)
 	i++;
 	if(!isToken(TokenType::Identifier, i) || isKeyword(tokens[i]))
 	{
-		Logger::error(tokens.getPath(), tokens[i], "Expected a name for a type");
+		Logger::error(tokens[i], "Expected a name for a type");
 		return errorOut();
 	}
 
@@ -108,7 +108,7 @@ bool Cap::SourceFile::parseType(size_t& i, Scope& current)
 	i++;
 	if(!isToken(TokenType::CurlyBrace, i) || *tokens[i].begin == '}')
 	{
-		Logger::error(tokens.getPath(), tokens[i], "Expected a body for type '%s'", name->getString().c_str());
+		Logger::error(tokens[i], "Expected a body for type '%s'", name->getString().c_str());
 		return errorOut();
 	}
 

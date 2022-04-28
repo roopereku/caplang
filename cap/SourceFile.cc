@@ -10,7 +10,7 @@ Cap::SourceFile::SourceFile(const std::string& path)
 	if(!tokens.isValid() || !tokens.matchBraces())
 		return;
 
-	parseScope(root);	
+	parseScope(root);
 }
 
 bool Cap::SourceFile::parseScope(Scope& current)
@@ -29,15 +29,8 @@ bool Cap::SourceFile::validate()
 	if(!valid)
 		return false;
 
-	ValidationResult result;
-
-	if(!root.validate(result))
-	{
-		//ERROR_LOG((*result.at->value), "%s\n", result.msg.c_str());
+	if(!root.validate())
 		return false;
-	}
-
-	DBG_LOG("Final result is %d", static_cast <int> (result.status));
 
 	return true;
 }

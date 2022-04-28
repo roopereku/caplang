@@ -14,7 +14,7 @@ bool Cap::SourceFile::parseImport(size_t& i, Scope& current)
 	 *	functional, it looks bad and doesn't make much sense */
 	if(current.parent)
 	{
-		Logger::error(tokens.getPath(), tokens[i], "Imports should only appear in the global scope");
+		Logger::error(tokens[i], "Imports should only appear in the global scope");
 		return errorOut();
 	}
 
@@ -45,7 +45,7 @@ bool Cap::SourceFile::parseImport(size_t& i, Scope& current)
 			//	The next token is something unexpected
 			i++;
 
-			Logger::error(tokens.getPath(), tokens[i], "Expected a ',' or '}' after filename");
+			Logger::error(tokens[i], "Expected a ',' or '}' after filename");
 			return errorOut();
 		}
 	}
@@ -77,7 +77,7 @@ bool Cap::SourceFile::parseImportFilename(size_t& i)
 				//	Dots are the only operators allowed in filenames found in the path
 				if(*tokens[i].begin != '.')
 				{
-					Logger::error(tokens.getPath(), tokens[i], "Expected '.' to separate filename and directory");
+					Logger::error(tokens[i], "Expected '.' to separate filename and directory");
 					return errorOut();
 				}
 
@@ -87,7 +87,7 @@ bool Cap::SourceFile::parseImportFilename(size_t& i)
 				//	Make sure that the dot isn't the end of the filename
 				if(!isToken(TokenType::Identifier, next))
 				{
-					Logger::error(tokens.getPath(), tokens[next], "Expected a filename or directory after '.'");
+					Logger::error(tokens[next], "Expected a filename or directory after '.'");
 					return errorOut();
 				}
 			}
@@ -105,7 +105,7 @@ bool Cap::SourceFile::parseImportFilename(size_t& i)
 			//	Only dots and identifiers are allowed
 			else
 			{
-				Logger::error(tokens.getPath(), tokens[i], "Expected a filename/directory or '.'");
+				Logger::error(tokens[i], "Expected a filename/directory or '.'");
 				return errorOut();
 			}
 		}
@@ -114,7 +114,7 @@ bool Cap::SourceFile::parseImportFilename(size_t& i)
 	//	Only identifiers and string are allowed as the first token in the filename
 	else
 	{
-		Logger::error(tokens.getPath(), tokens[i], "Expected a filename for import");
+		Logger::error(tokens[i], "Expected a filename for import");
 		return errorOut();
 	}
 

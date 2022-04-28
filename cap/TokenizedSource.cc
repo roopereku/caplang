@@ -38,11 +38,12 @@ bool Cap::TokenizedSource::errorOut()
 Cap::TokenizedSource::TokenizedSource(const std::string& path) : path(path)
 {
 	DBG_LOG("Reading file '%s'", path.c_str());
+	Logger::setCurrentFile(path);
 	std::ifstream file(path);
 
 	if(!file.is_open())
 	{
-		Logger::error(path, "Unable to open source file");
+		Logger::error("Unable to open source file");
 		return;
 	}
 
@@ -76,7 +77,7 @@ bool Cap::TokenizedSource::matchBraces()
 			//	Does the closing brace have a match?
 			if(tokens[i].length > 0)
 			{
-				Logger::error(path, tokens[i], "Unnecessary '%c'", match);
+				Logger::error(tokens[i], "Unnecessary '%c'", match);
 				return false;
 			}
 		}
@@ -108,7 +109,7 @@ bool Cap::TokenizedSource::matchBraces()
 			//	If the inner brace is outside the outer brace, the braces are out of sequence
 			if(innerEnd > end)
 			{
-				Logger::error(path, tokens[j], "Braces out of sequence");
+				Logger::error(tokens[j], "Braces out of sequence");
 				return false;
 			}
 		}
@@ -139,7 +140,7 @@ bool Cap::TokenizedSource::matchBrace(size_t i, char match)
 
 	if(depth > 0)
 	{
-		Logger::error(path, tokens[begin], "Unterminated '%c'", *tokens[begin].begin);
+		Logger::error(tokens[begin], "Unterminated '%c'", *tokens[begin].begin);
 		return false;
 	}
 
@@ -197,7 +198,7 @@ void Cap::TokenizedSource::tokenize()
 				continue;
 			}
 
-			Logger::error(path, *current, "Invalid character '%c'", data[i]);
+			Logger::error(*current, "Invalid character '%c'", data[i]);
 			error = true;
 			break;
 		}
@@ -229,7 +230,7 @@ bool Cap::TokenizedSource::parseString(size_t& i)
 		{
 			current->line = startLine;
 			current->column = startColumn;
-			Logger::error(path, *current, "Unterminated %s", match == '"' ? "string" : "character");
+			Logger::error(*current, "Unterminated %s", match == '"' ? "string" : "character");
 			return errorOut();
 		}
 
@@ -307,7 +308,7 @@ bool Cap::TokenizedSource::parseMultiLineComment(size_t& i)
 	{
 		current->line = startLine;
 		current->column = startColumn;
-		Logger::error(path, *current, "Unterminated multiline comment");
+		Logger::error(*current, "Unterminated multiline comment");
 		return errorOut();
 	}
 
@@ -394,7 +395,7 @@ bool Cap::TokenizedSource::parseNumeric(size_t& i)
 		{
 			std::string junk(data.begin() + begin, data.begin() + i);
 			Token& value = tokens[tokens.size() - 2];
-			Logger::error(path, *current, "Junk after %s value '%s' ('%s')", value.getTypeString(), value.getString().c_str(), junk.c_str());
+			Logger::error(*current, "Junk after %s value '%s' ('%s')", value.getTypeString(), value.getString().c_str(), junk.c_str());
 
 			return errorOut();
 		}
@@ -422,7 +423,7 @@ bool Cap::TokenizedSource::parseDecimal(size_t& i)
 			//	If the dots aren't consecutive, error out
 			else if(dots > 1)
 			{
-				Logger::error(path, *current, "Too many dots in a numeric literal");
+				Logger::error(*current, "Too many dots in a numeric literal");
 				return errorOut();
 			}
 		}
