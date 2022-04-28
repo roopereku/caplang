@@ -22,24 +22,6 @@ enum class ScopeContext
 	Type,
 };
 
-struct ValidationResult
-{
-	enum class Status
-	{
-		Success,
-		IdentifierNotFound,
-		InvalidAssign,
-		InvalidOperand,
-		TypingOutsideInit,
-		UseBeforeInit,
-		NoConversion
-	};
-
-	std::string msg;
-	SyntaxTreeNode* at = nullptr;
-	Status status = Status::Success;
-};
-
 class Scope
 {
 public:
@@ -54,7 +36,7 @@ public:
 	Type* findType(Token* name);
 
 	size_t getFunctionCount() { return functions.size(); }
-	bool validate(ValidationResult& result);
+	bool validate();
 
 	Scope* parent;
 	ScopeContext ctx;
@@ -66,7 +48,7 @@ public:
 	SyntaxTreeNode* node;
 
 private:
-	bool validateNode(SyntaxTreeNode* n, ValidationResult& result);
+	bool validateNode(SyntaxTreeNode* n);
 	SyntaxTreeNode* findAppropriateNode(SyntaxTreeNode* n);
 
 	struct NodeInfo
@@ -78,8 +60,8 @@ private:
 		SyntaxTreeNode* at = nullptr;
 	};
 
-	NodeInfo getNodeInfo(SyntaxTreeNode* n, ValidationResult& result);
-	NodeInfo getNodeInfoRecursive(SyntaxTreeNode* n, ValidationResult& result);
+	NodeInfo getNodeInfo(SyntaxTreeNode* n);
+	NodeInfo getNodeInfoRecursive(SyntaxTreeNode* n);
 
 	std::string getFullAccessName(SyntaxTreeNode* last);
 
