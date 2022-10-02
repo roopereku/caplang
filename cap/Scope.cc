@@ -14,8 +14,8 @@ Cap::Scope::Scope(Scope* parent, ScopeContext ctx, size_t begin, size_t end)
 		//	Create a Variable node so that the expression parser can add variables without "var"
 		root.left = std::make_shared <SyntaxTreeNode> (&root, nullptr, SyntaxTreeNode::Type::Variable);
 
-		//	This node is used for the first expression inside the function
-		root.right = std::make_shared <SyntaxTreeNode> (&root, nullptr, SyntaxTreeNode::Type::Expression);
+		//	This node is used for the contents of the function
+		root.right = std::make_shared <SyntaxTreeNode> (&root, nullptr, SyntaxTreeNode::Type::None);
 	}
 
 	else root.type = SyntaxTreeNode::Type::Expression;
@@ -43,6 +43,12 @@ Cap::Variable& Cap::Scope::addVariable(Token* name)
 	variables.emplace_back(name);
 	DBG_LOG("Added variable '%s'", name->getString().c_str());
 	return variables.back();
+}
+
+Cap::Scope& Cap::Scope::addBlock(ScopeContext ctx)
+{
+	blocks.emplace_back(this, ctx, 0, 0);
+	return blocks.back();
 }
 
 Cap::Function* Cap::Scope::findFunction(Token* name)

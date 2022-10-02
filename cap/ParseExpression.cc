@@ -106,8 +106,11 @@ bool Cap::SourceFile::parseExpression(size_t& i, Scope& current, bool inBrackets
 			}
 
 			//	Are there any declarations or imports
-			else if(parseImport(i, current) || parseType(i, current) || parseVariable(i, current))
+			else if(parseImport(i, current) || parseType(i, current) || parseVariable(i, current) || parseMisc(i, current))
 			{
+				if(!valid)
+					return errorOut();
+
 				//	Does a reserved keyword interrupt the expression?
 				if(i == old)
 				{
@@ -479,12 +482,12 @@ bool Cap::SourceFile::parseExpression(size_t& i, Scope& current, bool inBrackets
 	if(!parseExpressionOrder(parts, parts.size() - 1, 0, 0, current.node, current))
 		return true;
 
-	//	Should a node be added for the next expression
+	//	Should a node be added for future things
 	if(!inBrackets)
 	{
-		//	Create a node for the next expression
+		//	Create a node for whatever comes next
 		lastNode->right = std::make_shared <SyntaxTreeNode> (lastNode);
-		lastNode->right->type = SyntaxTreeNode::Type::Expression;
+		lastNode->right->type = SyntaxTreeNode::Type::None;
 		current.node = lastNode->right.get();
 	}
 

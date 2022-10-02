@@ -32,6 +32,7 @@ private:
 	bool parseVariable(size_t& i, Scope& current);
 	bool parseFunction(size_t& i, Scope& current);
 	bool parseType(size_t& i, Scope& current);
+	bool parseMisc(size_t& i, Scope& current);
 
 	bool isToken(TokenType t, size_t& i);
 	void skipComments(size_t& i);

@@ -59,8 +59,11 @@ struct SyntaxTreeNode
 		AnonFunction,
 		Parameters,
 
+		If,
+		When,
+		While,
+		Return,
 		Variable,
-		Condition,
 		Expression,
 		Value,
 	};

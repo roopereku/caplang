@@ -30,12 +30,14 @@ public:
 	Function& addFunction(Token* name);
 	Type& addType(Token* name, size_t begin, size_t end);
 	Variable& addVariable(Token* name);
+	Scope& addBlock(ScopeContext ctx);
 
 	Function* findFunction(Token* name);
 	Variable* findVariable(Token* name);
 	Type* findType(Token* name);
 
 	size_t getFunctionCount() { return functions.size(); }
+	size_t getBlockCount() { return blocks.size(); }
 	bool validate();
 
 	Scope* parent;
