@@ -64,7 +64,7 @@ bool Cap::SourceFile::parseMisc(size_t& i, Scope& current)
 	scope.root.right = std::make_shared <SyntaxTreeNode> (&scope.root, nullptr, SyntaxTreeNode::Type::Expression);
 	scope.node = scope.root.left.get();
 
-	if(!parseExpression(i, scope, true))
+	if(!parseLine(i, scope, true))
 		return true;
 
 	i++;
@@ -77,7 +77,7 @@ bool Cap::SourceFile::parseMisc(size_t& i, Scope& current)
 	}
 
 	i++;
-	if(!parseExpression(i, scope, false))
+	if(!parseLine(i, scope, false))
 		return true;
 
 	return true;

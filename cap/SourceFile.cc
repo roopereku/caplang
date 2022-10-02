@@ -17,7 +17,7 @@ bool Cap::SourceFile::parseScope(Scope& current)
 {
 	for(size_t i = current.begin; i < current.end; i++)
 	{
-		if(parseExpression(i, current) && !valid)
+		if(parseLine(i, current) && !valid)
 			return true;
 	}
 

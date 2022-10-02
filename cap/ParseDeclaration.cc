@@ -61,7 +61,7 @@ bool Cap::SourceFile::parseFunction(size_t& i, Scope& current)
 	i++;
 
 	//	Parse the parameters
-	if(!parseExpression(i, *function.scope, true))
+	if(!parseLine(i, *function.scope, true))
 		return true;
 
 	//	TODO support function declarations

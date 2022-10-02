@@ -22,12 +22,12 @@ private:
 	bool parseImportFilename(size_t& i);
 
 	bool parseScope(Scope& current);
-	bool parseExpression(size_t& i, Scope& current, bool inBrackets = false);
-	bool parseExpressionOrder(std::vector <ExpressionPart>& parts,
-							  size_t offset, size_t end, size_t priority,
-							  SyntaxTreeNode* node, Scope& current);
+	bool parseLine(size_t& i, Scope& current, bool inBrackets = false);
+	bool parseExpression(std::vector <ExpressionPart>& parts,
+						 size_t offset, size_t end, size_t priority,
+						 SyntaxTreeNode* node, Scope& current);
 
-	bool parseExpressionInBracket(SyntaxTreeNode* node, Token* at, Scope& current);
+	bool parseLineInBracket(SyntaxTreeNode* node, Token* at, Scope& current);
 
 	bool parseVariable(size_t& i, Scope& current);
 	bool parseFunction(size_t& i, Scope& current);
