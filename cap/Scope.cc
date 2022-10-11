@@ -2,8 +2,8 @@
 #include "Scope.hh"
 #include "Debug.hh"
 
-Cap::Scope::Scope(Scope* parent, ScopeContext ctx, size_t begin, size_t end)
-		:	parent(parent), ctx(ctx), begin(begin), end(end),
+Cap::Scope::Scope(Scope* parent, ScopeContext ctx)
+		:	parent(parent), ctx(ctx),
 			root(nullptr), node(&root)
 {
 	//	If this scope belongs to a function, the first node always contains parameters
@@ -16,6 +16,9 @@ Cap::Scope::Scope(Scope* parent, ScopeContext ctx, size_t begin, size_t end)
 
 		//	This node is used for the contents of the function
 		root.right = std::make_shared <SyntaxTreeNode> (&root, nullptr, SyntaxTreeNode::Type::None);
+
+		//	Start with the parameters
+		node = root.left.get();
 	}
 
 	else root.type = SyntaxTreeNode::Type::Expression;
@@ -24,15 +27,16 @@ Cap::Scope::Scope(Scope* parent, ScopeContext ctx, size_t begin, size_t end)
 Cap::Function& Cap::Scope::addFunction(Token* name)
 {
 	functions.emplace_back(name);
+	functions.back().scope = std::make_shared <Scope> (this, ScopeContext::Function);
 	DBG_LOG("Added function '%s'", name ? name->getString().c_str() : "anonymous");
 
 	return functions.back();
 }
 
-Cap::Type& Cap::Scope::addType(Token* name, size_t begin, size_t end)
+Cap::Type& Cap::Scope::addType(Token* name)
 {
 	types.emplace_back(name);
-	types.back().scope = std::make_shared <Scope> (this, ScopeContext::Type, begin, end);
+	types.back().scope = std::make_shared <Scope> (this, ScopeContext::Type);
 	DBG_LOG("Added type '%s'", name->getString().c_str());
 
 	return types.back();
@@ -47,8 +51,13 @@ Cap::Variable& Cap::Scope::addVariable(Token* name)
 
 Cap::Scope& Cap::Scope::addBlock(ScopeContext ctx)
 {
-	blocks.emplace_back(this, ctx, 0, 0);
+	blocks.emplace_back(this, ctx);
 	return blocks.back();
+}
+
+Cap::Function* Cap::Scope::findFunction(size_t index)
+{
+	return &functions[index];
 }
 
 Cap::Function* Cap::Scope::findFunction(Token* name)

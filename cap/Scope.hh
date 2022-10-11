@@ -25,14 +25,16 @@ enum class ScopeContext
 class Scope
 {
 public:
-	Scope(Scope* parent, ScopeContext ctx, size_t begin, size_t end);
+	Scope(Scope* parent, ScopeContext ctx);
 
 	Function& addFunction(Token* name);
-	Type& addType(Token* name, size_t begin, size_t end);
+	Type& addType(Token* name);
 	Variable& addVariable(Token* name);
 	Scope& addBlock(ScopeContext ctx);
 
 	Function* findFunction(Token* name);
+	Function* findFunction(size_t index);
+
 	Variable* findVariable(Token* name);
 	Type* findType(Token* name);
 
@@ -42,9 +44,6 @@ public:
 
 	Scope* parent;
 	ScopeContext ctx;
-
-	size_t begin;
-	size_t end;
 
 	SyntaxTreeNode root;
 	SyntaxTreeNode* node;
