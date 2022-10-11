@@ -5,515 +5,434 @@
 bool Cap::SourceFile::errorOut()
 {
 	valid = false;
-	return true;
+	return valid;
 }
 
 bool Cap::SourceFile::parseLine(size_t& i, Scope& current, bool inBrackets)
 {
+	SyntaxTreeNode* lastNode = current.node;
+
 	/*	If the first token is an identifier, we could have a
 	 *	declaration or an import. In that case we might
 	 *	not yet be inside an expression */
 	inExpression = !isToken(TokenType::Identifier, i);
-	size_t start = i;
 
-	//	Was the last token a double operator such as '++'
-	bool lastWasIncDec = false;
-	bool lastWasOperator = false;
+	size_t start = i;
+	size_t startLine = tokens[i].line;
 
 	bool expectVariableName = false;
+	bool lastWasOperator = false;
 
 	std::vector <ExpressionPart> parts;
-	SyntaxTreeNode* lastNode = current.node;
 
 	//	If the current node is "Variable", declare variables implicitly
 	if(current.node->type == SyntaxTreeNode::Type::Variable)
 	{
+		DBG_LOG("IMPLICIT DECLARATIONS");
 		expectVariableName = true;
 		inExpression = true;
 	}
 
-	//	Create a node for a new expression
-	current.node->left = std::make_shared <SyntaxTreeNode> (current.node, &tokens[i], SyntaxTreeNode::Type::None);
-	current.node = current.node->left.get();
-
-	for(; i < current.end; i++)
+	for(; i < tokens.count(); i++)
 	{
-		if(expectVariableName && !isToken(TokenType::Identifier, i))
-		{
-			Logger::error(tokens[i], "Expected a name for a variable");
-			return errorOut();
-		}
+		skipComments(i);
 
-		//	Did a line change happen?
-		if(tokens[i].line > tokens[start].line)
+		std::string p = tokens[i].getString();
+		DBG_LOG("[%lu] line '%s' '%s'", i, tokens[i].getTypeString(), p.c_str());
+
+		//	Is the token a closing bracket or a semicolon?
+		if(tokens[i].length == 0 || tokens[i].type == TokenType::Break)
 		{
-			//	If neither the last or current token is an operator, the expression ends here
-			if(!lastWasOperator && !isToken(TokenType::Operator, i))
+			if(inBrackets && tokens[i].type == TokenType::Break)
 			{
-				i--;
-				break;
-			}
-
-			//	Update the starting position
-			start = i;
-		}
-
-		//	Stop if ';' or a closing bracket is encountered
-		if(isToken(TokenType::Break, i))
-		{
-			//	The expression can't be broken inside braces excluding curly braces
-			if(inBrackets)
-			{
-				Logger::error(tokens[i], "Cannot use ';' inside brackets");
+				Logger::error(tokens[i], "Can't use ';' inside brackets");
 				return errorOut();
 			}
 
 			break;
 		}
 
-		//	Stop the expression if a closing bracket is encountered
-		else if(tokens[i].length == 0)
-		 	break;
-
-		else if(isToken(TokenType::Identifier, i))
+		//	Is a variable name expected
+		if(expectVariableName)
 		{
-			if(!expectVariableName && i != start && !lastWasOperator)
+			if(!isToken(TokenType::Identifier, i))
 			{
-				Logger::error(tokens[i], "Expected an operator before identifier '%s'", tokens[i].getString().c_str());
+				Logger::error(tokens[i], "Expected a name for a variable");
 				return errorOut();
 			}
 
+			expectVariableName = false;
+			size_t next = i + 1;
+
+			//	If the next token isn't '=', report an error
+			if(!isToken(TokenType::Operator, next) || *tokens[next].begin != '=')
+			{
+				Logger::error(tokens[i], "Expected an initial value or type for variable '%s'", tokens[i].getString().c_str());
+				return errorOut();
+			}
+
+			startLine = tokens[next].line;
+			current.addVariable(&tokens[i]);
+			parts.push_back({ SyntaxTreeNode::Type::Value, &tokens[i] });
+
+			continue;
+		}
+
+		//	Has the line changed? (Not applicable if inside brackets)
+		if(!inBrackets && inExpression && tokens[i].line > startLine)
+		{
+			//	Expressions can be multiline if a line break happens after an operator
+			if(!lastWasOperator)
+			{
+				DBG_LOG("LINE BREAK");
+				i--;
+				break;
+			}
+
+			else startLine = tokens[i].line;
+		}
+
+		if(tokens[i].type == TokenType::Identifier)
+		{
+			bool oldInExpression = inExpression;
 			size_t old = i;
 
-			bool oldInExpression = inExpression;
+			/*	Though this is a little cryptic, store the function index to
+			 *	the token's length. This terminates the need for a non-generic
+			 *	number in SyntaxTreeNode */
 			if(parseFunction(i, current))
 			{
-				//	If we originally weren't in an expression, this is a full function
-				if(!oldInExpression) return true;
+				Function* f = current.findFunction(current.getFunctionCount() - 1);
+
+				inExpression = oldInExpression;
+				bool anonymous = f->name ? false : true;
+
+				//	Don't continue with an expression if the function is anonymous
+				if(!anonymous) return true;
 
 				//	If parseFunction() failed, stop here
-				if(!valid) return true;
+				if(!valid) return errorOut();
 
-				/*	Though this is a little cryptic, store the function index to
-				 *	the token's length. This terminates the need for a non-generic
-				 *	number in SyntaxTreeNode */
 				tokens[old].length = current.getFunctionCount() - 1;
 				parts.push_back({ SyntaxTreeNode::Type::AnonFunction, &tokens[old] });
-				inExpression = oldInExpression;
 
 				lastWasOperator = false;
 				continue;
 			}
 
-			//	Are there any declarations or imports
-			else if(parseImport(i, current) || parseType(i, current) || parseVariable(i, current) || parseMisc(i, current))
+			//	Is there a variable declaration?
+			else if(parseVariable(i, current))
 			{
-				if(!valid)
-					return errorOut();
-
-				//	Does a reserved keyword interrupt the expression?
+				//	Nothing happened because we're inside an expression
 				if(i == old)
 				{
-					Logger::error(tokens[i], "Can't use reserved keyword '%s' inside an expression", tokens[i].getString().c_str());
+					Logger::error(tokens[i], "Can't declare a variable inside an expression");
 					return errorOut();
 				}
 
-				//	Variable mode was started
-				else if(i == start + 1)
-				{
-					expectVariableName = true;
-					inExpression = true;
-					i--;
+				DBG_LOG("VARIABLE MODE");
 
-					continue;
-				}
+				inExpression = true;
+				expectVariableName = true;
+				i--;
 
-				/*	An import was added or a type was declared.
-				 *	Return to get a clean state for the next expression */
-				else return true;
+				continue;
 			}
 
-			//	At this point we're definitely inside an expression
-			inExpression = true;
+			if( parseImport(i, current) ||
+				parseType(i, current))
+			{
+				//if(i == old)
+				break;
+			}
+
+			if(parseMisc(i, current))
+			{
+				if(!valid) return errorOut();
+				break;
+			}
+
+			//	At this point the identifier is just a value
+			parts.push_back({ SyntaxTreeNode::Type::Value, &tokens[i] });
+
 			lastWasOperator = false;
-
-			size_t next = i + 1;
-
-			//	TODO handle curly braces
-			//	Are there brackets after the identifier
-			if((isToken(TokenType::Parenthesis, next) || isToken(TokenType::SquareBracket, next))
-				&& tokens[next].length > 0)
-			{
-				//	Which brackets do we have?
-				SyntaxTreeNode::Type t = tokens[next].type == TokenType::Parenthesis ?
-					SyntaxTreeNode::Type::Call : SyntaxTreeNode::Type::Subscript;
-
-				//	Add the identifier with a special type and skip over the brackets
-				parts.push_back({ t, &tokens[i] });
-				i = next + tokens[next].length;
-			}
-
-			else
-			{
-				parts.push_back({ SyntaxTreeNode::Type::Value, &tokens[i] });
-
-				//	If a variable name is expected, use this token as the variable name
-				if(expectVariableName)
-				{
-					current.addVariable(&tokens[i]);
-					expectVariableName = false;
-
-					size_t next = i + 1;
-
-					//	If the next token isn't '=', report an error
-					if(!isToken(TokenType::Operator, next) ||
-						*tokens[next].begin != '=' ||
-						tokens[next].length != 1)
-					{
-						Logger::error(tokens[i], "Expected an initial value or type for variable '%s'", tokens[i].getString().c_str());
-						return errorOut();
-					}
-				}
-			}
+			inExpression = true;
 		}
 
-		//	Check for other values
-		else if(!isToken(TokenType::Operator, i))
+		else if(tokens[i].type != TokenType::Operator)
 		{
+			SyntaxTreeNode::Type which = SyntaxTreeNode::Type::None;
+
+			bool skip = true;
+			bool lastIdentifier = !parts.empty() && parts.back().value->type == TokenType::Identifier;
+
+			DBG_LOG("Last identifier %d", lastIdentifier);
+
+			if(lastIdentifier)
+			{
+				switch(tokens[i].type)
+				{
+					case TokenType::Parenthesis: which = SyntaxTreeNode::Type::Call; break;
+					case TokenType::SquareBracket: which = SyntaxTreeNode::Type::Subscript; break;
+
+					case TokenType::CurlyBrace:
+						Logger::error(tokens[i], "TODO: Implemet curly braces after identifiers");
+						return errorOut();
+
+					default: break;
+				}
+
+				if(which != SyntaxTreeNode::Type::None)
+				{
+					DBG_LOG("OVERRIDE '%s' to '%s'", parts.back().value->getString().c_str(), SyntaxTreeNode::getTypeString(which));
+					parts.back().type = which;
+					i = i + tokens[i].length;
+					continue;
+				}
+			}
+
+			//	If the last part wasn't an operator, there can't be a value here
 			if(i > start && !lastWasOperator)
 			{
 				Logger::error(tokens[i], "Expected an operator before value '%s'", tokens[i].getString().c_str());
 				return errorOut();
 			}
 
-			lastWasOperator = false;
-			parts.push_back({ SyntaxTreeNode::Type::Value, &tokens[i] });
-
-			//	Brackets count as a value
-			if(	tokens[i].type == TokenType::Parenthesis ||
-				tokens[i].type == TokenType::SquareBracket)
+			switch(tokens[i].type)
 			{
-				//	Which type do the brackets have?
-				parts.back().type = tokens[i].type == TokenType::Parenthesis ?
-					SyntaxTreeNode::Type::Parentheses : SyntaxTreeNode::Type::Array;
+				//	Brackets need special attention if they are values
+				case TokenType::Parenthesis: which = SyntaxTreeNode::Type::Parentheses; break;
+				case TokenType::SquareBracket: which = SyntaxTreeNode::Type::Array; break;
 
-				//	Skip the brackets
-				i += tokens[i].length;
+				case TokenType::CurlyBrace:
+					Logger::error(tokens[i], "TODO: Implement curly braces as a value");
+					return errorOut();
+				break;
+
+				//	The value is anything else but brackets
+				default:
+					which = SyntaxTreeNode::Type::Value;
+					skip = false;
+				break;
 			}
+
+			parts.push_back({ which, &tokens[i] });
+			lastWasOperator = false;
+
+			//	If the value was defined inside brackets, skip the brackets for now
+			if(skip) i = i + tokens[i].length;
 		}
 
-		//	Check for operators
 		else
 		{
+			SyntaxTreeNode::Type which = SyntaxTreeNode::Type::None;
+
 			size_t next = i + 1;
+			bool nextIsOperator = isToken(TokenType::Operator, next);
 
-			/*	An operator can be unary if there's an operator or nothing before it,
-			 *	and no operator after it. An unary also cannot happen if the preceding
-			 *	operator was '++' or '--' */
-			bool possiblyUnary =	!lastWasIncDec &&
-									(parts.empty() ||
-									parts.back().value->type == TokenType::Operator) &&
-									!isToken(TokenType::Operator, next);
+			//	There can only be a double operator when the operators don't have anything in between
+			if(nextIsOperator && tokens.getBeginIndex(next) - tokens.getBeginIndex(i) > 1)
+				nextIsOperator = false;
 
-			if(!possiblyUnary && lastWasOperator)
+			//	An operator is unary if the last token is an operator or if this is the first token
+			if(!nextIsOperator && (lastWasOperator || parts.empty()))
 			{
-				Logger::error(tokens[i], "Expected a value after operator '%s'", parts.back().value->getString().c_str());
-				return errorOut();
-			}
-
-			SyntaxTreeNode::Type type;
-			lastWasOperator = true;
-
-			//	Is the operator '<<', '>>' or '**'
-			bool extendableDouble = false;
-			lastWasIncDec = false;
-			//DBG_LOG("Unary possibly %d", possiblyUnary);
-
-			//	Is the next token the same operator as this one
-			if(isToken(TokenType::Operator, next) && *tokens[next].begin == *tokens[i].begin)
-			{
-				size_t gap = tokens.getBeginIndex(next) - tokens.getBeginIndex(i) - 1;
-
-				if(gap == 0)
-				{
-					switch(*tokens[next].begin)
-					{
-						//	TODO Make sure that there's an identifiers on the appropriate side
-						case '+': case '-':
-						{
-							Logger::error(tokens[i], "Unimplemented operator '%c%c'", *tokens[next].begin, *tokens[next].begin);
-							return true;
-
-							lastWasIncDec = true;
-							lastWasOperator = false;
-							break;
-						}
-
-						case '<': type = SyntaxTreeNode::Type::BitwiseShiftLeft; extendableDouble = true; break;
-						case '>': type = SyntaxTreeNode::Type::BitwiseShiftRight; extendableDouble = true; break;
-						case '*': type = SyntaxTreeNode::Type::Power; extendableDouble = true; break;
-						case '=': type = SyntaxTreeNode::Type::Equal; break;
-						case '&': type = SyntaxTreeNode::Type::And; break;
-						case '|': type = SyntaxTreeNode::Type::Or; break;
-
-						case '.': type = SyntaxTreeNode::Type::Range; break;
-
-						default:
-							Logger::error(tokens[i], "Invalid operator '%c%c'", *tokens[i].begin, *tokens[i].begin);
-							return true;
-					}
-
-					i = next;
-
-					//	Stop if this double operator isn't extendable
-					if(!extendableDouble)
-						continue;
-
-					/*	There might be an operator like '<<=' or '**='.
-					 *	Let's go to the normal operator parser and see
-					 *	if the current double operator has an extension */
-					next = i + 1;
-				}
-			}
-
-			//	FIXME support multiple unary operators in a row. For an example "!!x"
-
-			/*	If there were no repeating operators and there was the possibility
-			 *	of an unary operator, it is an unary operator */
-			else if(possiblyUnary)
-			{
-				//DBG_LOG("Unary '%c'", *tokens[i].begin);
-
 				switch(*tokens[i].begin)
 				{
-					case '+': type = SyntaxTreeNode::Type::UnaryPositive; break;
-					case '-' :type = SyntaxTreeNode::Type::UnaryNegative; break;
-					case '@': type = SyntaxTreeNode::Type::Reference; break;
-					case '!': type = SyntaxTreeNode::Type::Not; break;
-					case '~': type = SyntaxTreeNode::Type::BitwiseNOT; break;
+					case '+': which = SyntaxTreeNode::Type::UnaryPositive; break;
+					case '-': which = SyntaxTreeNode::Type::UnaryNegative; break;
+
+					case '!': which = SyntaxTreeNode::Type::Not; break;
+					case '@': which = SyntaxTreeNode::Type::Reference; break;
+					case '~': which = SyntaxTreeNode::Type::BitwiseNOT; break;
 
 					default:
-						Logger::error(tokens[i], "Invalid operator '%c'", *tokens[i].begin);
-						return true;
+						Logger::error(tokens[i], "Invalid unary operator '%c'", *tokens[i].begin);
+						return errorOut();
 				}
 
-				parts.push_back({ type, &tokens[i] });
+				parts.push_back({ which, &tokens[i] });
+				lastWasOperator = true;
+
 				continue;
 			}
 
-			//	Is the next token '='
-			unsigned char nextEqual =	isToken(TokenType::Operator, next) &&
-										*tokens[next].begin == '=';
+			//	FIXME somehow permit ++ and --
+			//	Operators can't come before values unless they're unary
+			else if(parts.empty())
+			{
+				Logger::error(tokens[i], "Expected a value before an operator");
+				return errorOut();
+			}
 
-			bool isComparison = false;
+			//	Each type before Not is an operator that requires a value after it
+			if(lastWasOperator && parts.back().type < SyntaxTreeNode::Type::Not)
+			{
+				Logger::error(tokens[i], "Expected a value");
+				return errorOut();
+			}
 
-			//	If a double operator is already detected, this switch case is irrelevant
-			if(!extendableDouble)
+			bool hasExtension = false;
+			lastWasOperator = true;
+
+			//	Is the next token an operator?
+			if(nextIsOperator)
+			{
+				//	Are this and the next token identical?
+				if(*tokens[i].begin == *tokens[next].begin)
+				{
+					next++;
+
+					//	'=' extension are allowed if the next token is '='
+					bool allowExtension = isToken(TokenType::Operator, next) && *tokens[next].begin == '=';
+					bool canExtend = false;
+
+					switch(*tokens[i].begin)
+					{
+						case '<': which = SyntaxTreeNode::Type::BitwiseShiftLeft; canExtend = true; break;
+						case '>': which = SyntaxTreeNode::Type::BitwiseShiftRight; canExtend = true; break;
+						case '*': which = SyntaxTreeNode::Type::Power; canExtend = true; break;
+
+						case '=': which = SyntaxTreeNode::Type::Equal; break;
+						case '&': which = SyntaxTreeNode::Type::And; break;
+						case '|': which = SyntaxTreeNode::Type::Or; break;
+
+						case '.': which = SyntaxTreeNode::Type::Range; break;
+
+						default:
+							Logger::error(tokens[i], "Invalid operator '%c%c'", *tokens[i].begin, *tokens[i].begin);
+							return errorOut();
+					}
+
+					//	If '=' extension is allowed, don't jump to the next iteration
+					if(!allowExtension || !canExtend)
+					{
+						//	The operator is 2 characters long
+						tokens[i].length = 2;
+
+						parts.push_back({ which, &tokens[i] });
+						i = next - 1;
+						continue;
+					}
+
+					//	The operator is 3 characters long
+					tokens[i].length = 3;
+				}
+
+				//	There are no more >1 character operators left that don't end with '='
+				if(*tokens[next].begin == '=')
+				{
+					//	If operator type hasn't been set yet, the operator is 2 characters long
+					if(which == SyntaxTreeNode::Type:: None) tokens[i].length = 2;
+					hasExtension = true;
+				}
+			}
+
+			//	The type of the operator might have been set earlier
+			if(which == SyntaxTreeNode::Type::None)
 			{
 				switch(*tokens[i].begin)
 				{
-					case '+': type = SyntaxTreeNode::Type::Addition; break;
-					case '-': type = SyntaxTreeNode::Type::Subtraction; break;
-					case '*': type = SyntaxTreeNode::Type::Multiplication; break;
-					case '/': type = SyntaxTreeNode::Type::Division; break;
+					case '+': which = SyntaxTreeNode::Type::Addition; break;
+					case '-': which = SyntaxTreeNode::Type::Subtraction; break;
+					case '*': which = SyntaxTreeNode::Type::Multiplication; break;
+					case '/': which = SyntaxTreeNode::Type::Division; break;
+					case '%': which = SyntaxTreeNode::Type::Modulus; break;
 
-					case '<': isComparison = true; break;
-					case '>': isComparison = true; break;
-					case '!': isComparison = true; break;
+					case '&': which = SyntaxTreeNode::Type::BitwiseAND; break;
+					case '^': which = SyntaxTreeNode::Type::BitwiseXOR; break;
+					case '|': which = SyntaxTreeNode::Type::BitwiseOR; break;
 
-					case ',':
-					{
-						if(nextEqual)
-						{
-							Logger::error(tokens[i], "Invalid operator ',='");
-							return true;
-						}
-
-						type = SyntaxTreeNode::Type::Comma;
-
-						if(current.node->parent->type == SyntaxTreeNode::Type::Variable)
-							expectVariableName = true;
-
-						break;
-					}
-
-					case '?':
-					{
-						if(nextEqual)
-						{
-							Logger::error(tokens[i], "Invalid operator '?='");
-							return true;
-						}
-
-						//	TODO implement ternary operators
-						Logger::error(tokens[next], "Unimplemented '%c%c'", *tokens[next].begin, *tokens[next].begin);
-						return true;
-						break;
-					}
-
-					case '%': type = SyntaxTreeNode::Type::Modulus; break;
-
-					/*	Since == is handled elsewhere, we have to pretend
-					 *	that the next token is '=' to use the same error checking */
-					case '=': type = SyntaxTreeNode::Type::Assign; nextEqual = true; break;
-
-					case '^': type = SyntaxTreeNode::Type::BitwiseXOR; break;
-					case '&': type = SyntaxTreeNode::Type::BitwiseAND; break;
-					case '|': type = SyntaxTreeNode::Type::BitwiseOR; break;
+					case '=': which = SyntaxTreeNode::Type::Assign; hasExtension = false; break;
+					case ',': which = SyntaxTreeNode::Type::Comma; hasExtension = false; break;
 
 					case '.':
 					{
-						//	FIXME show the earlier token
-						if(i == start || parts.back().value->type != TokenType::Identifier)
+						size_t n = i + 1;
+
+						// The dot operator requires identifiers on both sides	
+						if(	parts.back().value->type != TokenType::Identifier ||
+							!isToken(TokenType::Identifier, n))
 						{
-							Logger::error(tokens[i], "Expected an identifier before '.'");
+							Logger::error(tokens[i], "'.' requires identifiers on both sides");
 							return errorOut();
 						}
 
-						else if(!isToken(TokenType::Identifier, next))
-						{
-							if(next >= tokens.count())
-								Logger::error("Expected an identifier after '.' but got end of file");
-
-							else Logger::error(tokens[next], "Expected an identifier after '.'");
-
-							return errorOut();
-						}
-
-						type = SyntaxTreeNode::Type::Access;
+						hasExtension = false;
 						break;
 					}
 
 					default:
-						Logger::error(tokens[i], "Invalid operator '%c'\n", *tokens[i].begin);
+						Logger::error(tokens[i], "Invalid operator '%c'", *tokens[i].begin);
 						return errorOut();
 				}
 			}
 
+			//	What comes before this operator?
+			Token* last = parts.back().value;
 			size_t old = i;
-			if(nextEqual)
+
+			//	Whatever comes before the operator has to be an identifier
+			if((which == SyntaxTreeNode::Type::Assign || hasExtension) && last->type != TokenType::Identifier)
 			{
-				//	TODO implement "<=", ">=", "!="
-				if(isComparison)
-				{
-					i = next;
-				}
-
-				else
-				{
-					//	Make sure that whatever is on the left is an identifier
-					//	FIXME show the earlier token
-
-					//	FIXME allow stuff like "@0x08FC = 12"
-					if(i == start || parts.back().value->type != TokenType::Identifier)
-					{
-						Logger::error(tokens[i], "Expected an identifier before '='");
-						return errorOut();
-					}
-
-					/*	Because we don't want "x = 2" to turn into "x = x = 2",
-					 *	do the expansion only when the operator isn't a single '=' */
-					if(*tokens[i].begin != '=')
-					{
-						//	For an example, turn "x += 2" to "x = x + 2" or "x <<= 2" to "x = x << 2"
-						parts.push_back({ SyntaxTreeNode::Type::Assign, &tokens[old] });
-						parts.push_back(parts[parts.size() - 2]);
-
-						i = next;
-					}
-				}
+				Logger::error(tokens[i], "Expected an identifier before assignment");
+				return errorOut();
 			}
 
-			parts.push_back({ type, &tokens[old] });
+			//	Does '=' occur after the operator?
+			if(hasExtension)
+			{
+				//	For an example, turn "x += 2" to "x = x + 2" or "x <<= 2" to "x = x << 2"
+				parts.push_back({ SyntaxTreeNode::Type::Assign, &tokens[old] });
+				parts.push_back({ SyntaxTreeNode::Type::Value, last });
+
+				i = next;
+			}
+
+			//	Append the actual operator
+			parts.push_back({ which, &tokens[old] });
 		}
 	}
-
-	//	Forbid the expression ending with an operator
-	if(lastWasOperator)
-	{
-		Logger::error(tokens[i], "Expressions can't end with operators");
-		return errorOut();
-	}
-
-	//	We're no longer in an expression
-	inExpression = false;
 
 	if(parts.empty())
 	{
-		//	If there are no expression parts and these are standalone brackets, report an error
-		if(	current.node->parent->type == SyntaxTreeNode::Type::Parentheses ||
-			current.node->parent->type == SyntaxTreeNode::Type::Array)
-		{
-			Logger::error(tokens[current.begin], "Empty brackets\n");
-			return true;
-		}
-
-		DBG_LOG("No parts");
+		DBG_LOG("Parts empty");
 		return true;
 	}
 
-	DBG_LOG("Expression parts");
-	for(auto& part : parts)
+	//	TODO If the last part is an operator, make sure that it's post increment/decrement
+	if(parts.back().value->type == TokenType::Operator)
 	{
-		DBG_LOG("Part '%s' '%s' of type '%s'", SyntaxTreeNode::getTypeString(part.type), part.value->getString().c_str(), part.value->getTypeString());
-	}
-
-	//	If inside a type oe the global scope, forbid anything else but variable declarations
-	if((current.ctx == ScopeContext::Type || current.parent == nullptr) &&
-		current.node->parent->type != SyntaxTreeNode::Type::Variable)
-	{
-		size_t index = tokens.getIndex(current.node->value);
-		Logger::error(tokens[i], "Expected a declaration %s", current.parent ? "inside a type" : "in the global scope");
+		Logger::error(*parts.back().value, "Line cannot end with an operator");
 		return errorOut();
 	}
 
-	//	TODO handle brackets
-	//	Single values don't need ordering
-	if(parts.size() == 1)
-	{
-		DBG_LOG("Single value");
-		current.node->type = SyntaxTreeNode::Type::Value;
-		current.node->value = parts[0].value;
+	//	Create a node for the expression that we're about to parse
+	current.node->type = SyntaxTreeNode::Type::Expression;
+	current.node->left = std::make_shared <SyntaxTreeNode> (current.node, nullptr, SyntaxTreeNode::Type::None);
+	current.node = current.node->left.get();
 
-		return false;
-	}
-
-	//	Add the expression as nodes with the correct precedence
+	//	Attempt to parse an expression
 	if(!parseExpression(parts, parts.size() - 1, 0, 0, current.node, current))
-		return true;
+		return errorOut();
 
-	//	Should a node be added for future things
-	if(!inBrackets)
-	{
-		//	Create a node for whatever comes next
-		lastNode->right = std::make_shared <SyntaxTreeNode> (lastNode);
-		lastNode->right->type = SyntaxTreeNode::Type::None;
-		current.node = lastNode->right.get();
-	}
+	//	Now we need a node for whatever comes next. Place it on the right side of the last node
+	lastNode->right = std::make_shared <SyntaxTreeNode> (current.node, nullptr, SyntaxTreeNode::Type::None);
+	current.node = lastNode->right.get();
 
 	return true;
 }
 
 bool Cap::SourceFile::parseLineInBracket(SyntaxTreeNode* node, Token* at, Scope& current)
 {
-	//	Where is the token at the beginning of the brackets
+	//	The first position after the opening bracket
 	size_t index = tokens.getIndex(at) + 1;
 
-	//	Save old states
-	size_t oldEnd = current.end;
-	size_t oldBegin = current.begin;
-	SyntaxTreeNode* oldCurrentNode = current.node;
-
-	//	Temporarily modify the scope to fit the brackets and parse the contents
+	SyntaxTreeNode* oldNode = current.node;
 	current.node = node;
-	current.end = index + at->length;
-	current.begin = index - 1;
+
 	bool result = parseLine(index, current, true);
 
-	//	Restore the earlier state
-	current.node = oldCurrentNode;
-	current.begin = oldBegin;
-	current.end = oldEnd;
-
+	current.node = oldNode;
 	return result;
 }

@@ -3,22 +3,24 @@
 #include "Debug.hh"
 
 Cap::SourceFile::SourceFile(const std::string& path)
-	: tokens(path), root(nullptr, ScopeContext::Block, 0, tokens.count())
+	: tokens(path), root(nullptr, ScopeContext::Block)
 {
-	//	TODO exclude comments from tokens
-
 	if(!tokens.isValid() || !tokens.matchBraces())
 		return;
 
-	parseScope(root);
+	size_t i = 0;
+	parseScope(i, tokens.count(), root);
 }
 
-bool Cap::SourceFile::parseScope(Scope& current)
+bool Cap::SourceFile::parseScope(size_t& i, size_t end, Scope& current)
 {
-	for(size_t i = current.begin; i < current.end; i++)
+	for(; i < end; i++)
 	{
-		if(parseLine(i, current) && !valid)
-			return true;
+		std::string p = tokens[i].getString();
+		DBG_LOG("[%lu] parseScope '%s' '%s'", i, tokens[i].getTypeString(), p.c_str());
+
+		if(!parseLine(i, current) && !valid)
+			return false;
 	}
 
 	return true;
@@ -57,7 +59,12 @@ void Cap::SourceFile::skipComments(size_t& i)
 
 bool Cap::SourceFile::isKeyword(Token& token)
 {
-	return	token.stringEquals("var") ||
+	return	token.stringEquals("if") ||
+			token.stringEquals("for") ||
+			token.stringEquals("var") ||
+			token.stringEquals("while") ||
 			token.stringEquals("func") ||
-			token.stringEquals("type");
+			token.stringEquals("type") ||
+			token.stringEquals("import") ||
+			Type::isPrimitiveName(&token);
 }

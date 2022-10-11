@@ -6,6 +6,45 @@ bool Cap::SourceFile::parseExpression(std::vector <ExpressionPart>& parts,
 										   size_t offset, size_t end, size_t priority,
 										   SyntaxTreeNode* node, Scope& current)
 {
+	/*	The expression order parser requires at least 1 operator,
+	 *	but there might only be 1 value. In this case manually handle said value */
+	if(parts.size() == 1)
+	{
+		//	Is the single part a call or a subscript?
+		if(	parts[0].type == SyntaxTreeNode::Type::Call ||
+			parts[0].type == SyntaxTreeNode::Type::Subscript)
+		{
+			//	Find the brackets related to the part
+			size_t tokenIndex = tokens.getIndex(parts[0].value) + 1;
+			skipComments(tokenIndex);
+
+			current.node->type = parts[0].type;
+			current.node->value = parts[0].value;
+
+			//	Parse the contents of the brackets related to this part
+			current.node->left = std::make_shared <SyntaxTreeNode> (current.node, nullptr, SyntaxTreeNode::Type::None);
+			return parseLineInBracket(current.node->left.get(), &tokens[tokenIndex], current);
+		}
+
+		//	Is the single part a pair of bracktes
+		else if(parts[0].type == SyntaxTreeNode::Type::Parentheses ||
+				parts[0].type == SyntaxTreeNode::Type::Array)
+		{
+			//	Parse the contents of the brackets
+			size_t tokenIndex = tokens.getIndex(parts[0].value);
+			return parseLineInBracket(node, &tokens[tokenIndex], current);
+		}
+
+		else
+		{
+			//	The single part is a regular value
+			current.node->type = parts[0].type;
+			current.node->value = parts[0].value;
+		}
+
+		return true;
+	}
+
 	//	Go through each priority
 	for(OperatorPrioty ops; !(ops = operatorsAtPriority(priority)).empty(); priority++)
 	{

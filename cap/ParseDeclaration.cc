@@ -11,7 +11,7 @@ bool Cap::SourceFile::parseVariable(size_t& i, Scope& current)
 		return true;
 
 	//	Don't make nested Variable nodes
-	if(current.node->parent->type != SyntaxTreeNode::Type::Variable)
+	//if(current.node->parent->type != SyntaxTreeNode::Type::Variable)
 	{
 		//	At this point the node has type "None". Change it to variable
 		current.node->type = SyntaxTreeNode::Type::Variable;
@@ -34,57 +34,42 @@ bool Cap::SourceFile::parseFunction(size_t& i, Scope& current)
 	i++;
 	Token* name = nullptr;
 
-	if(!inExpression)
+	//	The function name has to be an identifier that's not a keyword
+	if(isToken(TokenType::Identifier, i))
 	{
-		if(!isToken(TokenType::Identifier, i) || isKeyword(tokens[i]))
+		if(isKeyword(tokens[i]))
 		{
 			Logger::error(tokens[i], "Expected a name for a function");
 			return errorOut();
 		}
 
 		name = &tokens[i];
-
 		i++;
+	}
+
+	if(!isToken(TokenType::Parenthesis, i))
+	{
+		Logger::error(tokens[i], "Expected parenthesis for function parameters");
+		return errorOut();
 	}
 
 	Function& function = current.addFunction(name);
 
-	if(!isToken(TokenType::Parenthesis, i))
-	{
-		Logger::error(tokens[i], "Expected parentheses after function name '%s'", name->getString().c_str());
-		return errorOut();
-	}
-
-	//	Initially we want to to have the scope cover the parentheses to parse the parameters
-	function.scope = std::make_shared <Scope> (&current, ScopeContext::Function, i, i + tokens[i].length);
-	function.scope->node = function.scope->root.left.get();
 	i++;
-
-	//	Parse the parameters
 	if(!parseLine(i, *function.scope, true))
-		return true;
-
-	//	TODO support function declarations
-	//	Does the function have a body?
-	i++;
-	if(!isToken(TokenType::CurlyBrace, i) || *tokens[i].begin == '}')
-	{
-		Logger::error(tokens[i], "Expected a body for function '%s'", name->getString().c_str());
 		return errorOut();
-	}
 
-	//	Tell the scope to cover the body
-	function.scope->begin = i + 1;
-	function.scope->end = i + tokens[i].length;
-	i = function.scope->end;
-
-	//	Parse the function
+	//	Now that the parameters are parsed, switch to the body
 	function.scope->node = function.scope->root.right.get();
-	parseScope(*function.scope);
+	i++;
 
-	DBG_LOG("---- Listing function '%s' ----", !name ? "anonymous" : name->getString().c_str());
+	if(!parseBody(i, *function.scope))
+		return errorOut();
 
+	DBG_LOG("LISTING FUNCTION");
 	function.scope->root.list();
+
+	i--;
 	return true;
 }
 
@@ -104,18 +89,11 @@ bool Cap::SourceFile::parseType(size_t& i, Scope& current)
 	}
 
 	Token* name = &tokens[i];
+	Type& type = current.addType(name);
 
 	i++;
-	if(!isToken(TokenType::CurlyBrace, i) || *tokens[i].begin == '}')
-	{
-		Logger::error(tokens[i], "Expected a body for type '%s'", name->getString().c_str());
+	if(!parseBody(i, *type.scope))
 		return errorOut();
-	}
-
-	Type& type = current.addType(name, i + 1, i + 1 + tokens[i].length);
-
-	i = type.scope->end - 1;
-	parseScope(*type.scope);
 
 	DBG_LOG("---- Listing type '%s' ----", name->getString().c_str());
 	type.scope->root.list();

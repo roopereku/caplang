@@ -1,3 +1,4 @@
 func main()
 {
+	return 1 << 7
 }

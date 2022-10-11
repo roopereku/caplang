@@ -21,7 +21,7 @@ private:
 	bool parseImport(size_t& i, Scope& current);
 	bool parseImportFilename(size_t& i);
 
-	bool parseScope(Scope& current);
+	bool parseScope(size_t& i, size_t end, Scope& current);
 	bool parseLine(size_t& i, Scope& current, bool inBrackets = false);
 	bool parseExpression(std::vector <ExpressionPart>& parts,
 						 size_t offset, size_t end, size_t priority,
@@ -33,6 +33,7 @@ private:
 	bool parseFunction(size_t& i, Scope& current);
 	bool parseType(size_t& i, Scope& current);
 	bool parseMisc(size_t& i, Scope& current);
+	bool parseBody(size_t& i, Scope& current);
 
 	bool isToken(TokenType t, size_t& i);
 	void skipComments(size_t& i);

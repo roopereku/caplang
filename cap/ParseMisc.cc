@@ -4,81 +4,86 @@
 
 bool Cap::SourceFile::parseMisc(size_t& i, Scope& current)
 {
-	SyntaxTreeNode::Type miscType;
-
-	if(tokens[i].stringEquals("if"))
+	if(tokens[i].stringEquals("return"))
 	{
-		if(inExpression) return true;
-		miscType = SyntaxTreeNode::Type::If;
+		current.node->type = SyntaxTreeNode::Type::Return;
+		current.node->value = &tokens[i];
+
+		//	Create a node for the expression coming after the return
+		SyntaxTreeNode* old = current.node;
+		current.node->left = std::make_shared <SyntaxTreeNode> (current.node);
+		current.node = current.node->left.get();
+
+		//	Parse an expression after the return
+		i++;
+		bool result = parseLine(i, current);
+
+		//	If an expression wasn't present, throw an error
+		if(old->left->type == SyntaxTreeNode::Type::None)
+		{
+			Logger::error(*old->value, "Expected an expression after 'return'");
+			return errorOut();
+		}
+
+		current.node = old;
+		return result;
 	}
 
-	else if(tokens[i].stringEquals("while"))
-	{
-		if(inExpression) return true;
-		miscType = SyntaxTreeNode::Type::While;
-	}
+	SyntaxTreeNode::Type which = SyntaxTreeNode::Type::None;
 
-	else if(tokens[i].stringEquals("return"))
-	{
-		if(inExpression) return true;
-		miscType = SyntaxTreeNode::Type::Return;
-	}
+	//	First check if the token equals to something that can't be used inside an expression
+	if(tokens[i].stringEquals("if")) which = SyntaxTreeNode::Type::If;
+	else if(tokens[i].stringEquals("while")) which = SyntaxTreeNode::Type::While;
 
-	else if(tokens[i].stringEquals("when"))
+	if(which != SyntaxTreeNode::Type::None)
 	{
-		if(inExpression) return true;
-		miscType = SyntaxTreeNode::Type::When;
+		if(inExpression)
+		{
+			Logger::error(tokens[i], "Cannot use %s inside an expression", tokens[i].getString().c_str());
+			return errorOut();
+		}
 	}
 
 	else return false;
 
-	if(!current.parent || current.ctx == ScopeContext::Type)
-	{
-		Logger::error(tokens[i], "Can't use '%s' %s", tokens[i].getString().c_str(), !current.parent ? "in the global scope" : "inside a type");
-		return errorOut();
-	}
-
+	//	TODO context could be something specific such as "when"
 	Scope& scope = current.addBlock(ScopeContext::Block);
+	Token* name = &tokens[i];
 
-	Token& old = tokens[i];
+	current.node->type = which;
+	current.node->value = name;
+
 	i++;
-
 	if(!isToken(TokenType::Parenthesis, i))
 	{
-		Logger::error(tokens[i], "Expected parenthesis after '%s'", old.getString().c_str());
+		Logger::error(tokens[i], "Expected parenthesis after %s", name->getString().c_str());
 		return errorOut();
 	}
 
-	//	Store the index of the scope we're creating to the left node
-	old.length = current.getBlockCount();
-	current.node->type = miscType;
-	current.node->value = &old;
-	current.node->right = std::make_shared <SyntaxTreeNode> (current.node, nullptr, SyntaxTreeNode::Type::Expression);
-	current.node = current.node->right.get();
-
 	i++;
-	scope.begin = i;
-	scope.end = current.end;
-
-	scope.root.left = std::make_shared <SyntaxTreeNode> (&scope.root, nullptr, SyntaxTreeNode::Type::Expression);
-	scope.root.right = std::make_shared <SyntaxTreeNode> (&scope.root, nullptr, SyntaxTreeNode::Type::Expression);
-	scope.node = scope.root.left.get();
-
 	if(!parseLine(i, scope, true))
-		return true;
-
-	i++;
-	scope.node = scope.root.right.get();
-
-	if(!isToken(TokenType::CurlyBrace, i) || *tokens[i].begin == '}')
-	{
-		Logger::error(tokens[i], "Expected a body for '%s'", old.getString().c_str());
 		return errorOut();
-	}
 
 	i++;
-	if(!parseLine(i, scope, false))
-		return true;
+	if(!parseBody(i, scope))
+		return errorOut();
 
 	return true;
+}
+
+bool Cap::SourceFile::parseBody(size_t& i, Scope& current)
+{
+	//	Does the function have a body inside curly braces?
+	if(isToken(TokenType::CurlyBrace, i) && tokens[i].length > 0)
+	{
+		//	The body is encased in curly braces
+		size_t end = i + tokens[i].length;
+		i++;
+
+		//	Parse the body
+		return parseScope(i, end, current);
+	}
+
+	//	There's no body so try to parse the next line
+	return parseLine(i, current);
 }
