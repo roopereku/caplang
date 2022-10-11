@@ -63,7 +63,8 @@ const char* Cap::SyntaxTreeNode::getTypeString(Type t)
 
 void Cap::SyntaxTreeNode::list(unsigned indent)
 {
-	DBG_LOG("%*s %s %s", indent, "", getTypeString(), type < SyntaxTreeNode::Type::Value ? "" : value->getString().c_str());
+	bool showValue = type == SyntaxTreeNode::Type::Value || type == SyntaxTreeNode::Type::Call || type == SyntaxTreeNode::Type::Subscript;
+	DBG_LOG("%*s %s %s", indent, "", getTypeString(), showValue ? value->getString().c_str() : "");
 
 	if(left)
 	{

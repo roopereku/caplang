@@ -70,6 +70,8 @@ struct SyntaxTreeNode
 
 	SyntaxTreeNode(SyntaxTreeNode* parent) : parent(parent)
 	{
+		value = nullptr;
+		type = Type::None;
 	}
 
 	SyntaxTreeNode(SyntaxTreeNode* parent, Token* value, Type t)
@@ -84,8 +86,8 @@ struct SyntaxTreeNode
 		rhs.value = nullptr;
 	}
 
-	SyntaxTreeNode* parent = nullptr;
-	Token* value = nullptr;
+	SyntaxTreeNode* parent;
+	Token* value;
 	Type type;
 
 	//	FIXME Instead of allocating each node separately, pool them in the current scope
