@@ -73,6 +73,8 @@ bool Cap::SourceFile::parseMisc(size_t& i, Scope& current)
 
 bool Cap::SourceFile::parseBody(size_t& i, Scope& current)
 {
+	bool result;
+
 	//	Does the function have a body inside curly braces?
 	if(isToken(TokenType::CurlyBrace, i) && tokens[i].length > 0)
 	{
@@ -81,9 +83,12 @@ bool Cap::SourceFile::parseBody(size_t& i, Scope& current)
 		i++;
 
 		//	Parse the body
-		return parseScope(i, end, current);
+		result = parseScope(i, end, current);
 	}
 
 	//	There's no body so try to parse the next line
-	return parseLine(i, current);
+	else result = parseLine(i, current);
+
+	i--;
+	return result;
 }

@@ -69,7 +69,6 @@ bool Cap::SourceFile::parseFunction(size_t& i, Scope& current)
 	DBG_LOG("LISTING FUNCTION");
 	function.scope->root.list();
 
-	i--;
 	return true;
 }
 
