@@ -358,6 +358,7 @@ bool Cap::SourceFile::parseLine(size_t& i, Scope& current, bool inBrackets)
 							return errorOut();
 						}
 
+						which = SyntaxTreeNode::Type::Access;
 						hasExtension = false;
 						break;
 					}

@@ -50,6 +50,7 @@ public:
 
 private:
 	bool validateNode(SyntaxTreeNode* n);
+
 	SyntaxTreeNode* findAppropriateNode(SyntaxTreeNode* n);
 
 	struct NodeInfo
@@ -67,6 +68,8 @@ private:
 	std::string getFullAccessName(SyntaxTreeNode* last);
 
 	bool isNodeTypeName(NodeInfo& info);
+
+	bool unusedExpression;
 
 	std::vector <Type> types;
 	std::vector <Scope> blocks;

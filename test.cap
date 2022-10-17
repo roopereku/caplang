@@ -1,4 +1,7 @@
 func main()
 {
-	return 1 << 7
+	var i = 1 + 2
+	i *= 10
+
+	return i
 }

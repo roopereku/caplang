@@ -99,8 +99,36 @@ bool Cap::Scope::validate()
 	/*	TODO
 	 *	Once there is a way to look into other global scopes,
 	 *	look for duplicate declarations */
-	if(!validateNode(&root))
-		return false;
+
+	SyntaxTreeNode* n = &root;
+
+	/*	Validate each "line" separately. The left node of the root
+	 *	likely contains an expression and the right node contains the
+	 *	next thing. This means that we can just skip to the right node */
+	while(n->left)
+	{
+		//	The expression isn't unused if the current node is one of these
+		unusedExpression =	n->type != SyntaxTreeNode::Type::Parameters &&
+							n->type != SyntaxTreeNode::Type::Return &&
+							n->type != SyntaxTreeNode::Type::While &&
+							n->type != SyntaxTreeNode::Type::If;
+
+		//	Validate the inner contents of the node
+		//	FIXME validateNode might want to know about "Return" so that it can nag about invalid return type
+		if(!validateNode(n->left.get()))
+			return false;
+
+		//	Unused expressions are forbidden
+		if(unusedExpression)
+		{
+			Logger::error(*n->left->value, "Unused expression");
+			return false;
+		}
+
+		//	Stop if no right node exists
+		if(!n->right) break;
+		n = n->right.get();
+	}
 
 	for(auto& t : types)
 	{
@@ -124,130 +152,43 @@ bool Cap::Scope::validate()
 
 bool Cap::Scope::validateNode(SyntaxTreeNode* n)
 {
-	//	Does the current node contains an operator
+	//	Is the node an operator?
 	if(n->type <= SyntaxTreeNode::Type::UnaryNegative)
 	{
-		//	Does the expression do anything
-		if(	n->parent->type == SyntaxTreeNode::Type::Expression &&
-			n->type != SyntaxTreeNode::Type::Assign)
-	{
-			printf("UNUSED EXPRESSION on line at %u:%u\n", n->value->line, n->value->column);
+		SyntaxTreeNode* leftmost = findAppropriateNode(n->left.get());
+		NodeInfo left = getNodeInfoRecursive(leftmost);
+
+		if(!left.at) return false;
+
+		DBG_LOG("Leftmost at '%s' is '%s' '%s'", n->getTypeString(), leftmost->getTypeString(), leftmost->value->getString().c_str());
+
+		//	Is the operator unary?
+		if(n->type >= SyntaxTreeNode::Type::Not)
+		{
 		}
 
-		/*	If the current node contains an access operator, we only need to
-		 *	get info starting from said node because of
-		 *	the way getNodeInfoRecursive() works */
-		SyntaxTreeNode* leftOrigin = n->type == SyntaxTreeNode::Type::Access ?
-			n : n->left.get();
-
-		//	Get information about the left node
-		NodeInfo left = getNodeInfoRecursive(leftOrigin);
-
-		if(!left.at)
-			return false;
-
-		//	The left node can only be a plain typename if an access is being made
-		if(isNodeTypeName(left) && left.at->parent->type != SyntaxTreeNode::Type::Access)
+		//	The operator requires something on both sides
+		else
 		{
-			Logger::error(*left.at->value, "Expected '.' after typename '%s'", getFullAccessName(left.at).c_str());
-			return false;
-		}
+			SyntaxTreeNode* rightmost = findAppropriateNode(n->right.get());
+			NodeInfo right = getNodeInfoRecursive(rightmost);
 
-		//DBG_LOG("Left of '%s' is '%s'", n->value->getString().c_str(), left.at->value->getString().c_str());
-
-		//	Does said operator have 2 operands?
-		if(	n->type <= SyntaxTreeNode::Type::Power &&
-			n->type != SyntaxTreeNode::Type::Access)
-		{
-			NodeInfo right = getNodeInfoRecursive(n->right.get());
-
-			if(!right.at)
-				return false;
-
-			bool isRightType = isNodeTypeName(right);
-
-			//	Does the right node have a conversion to the type of the left node
-			if(!isRightType && left.t && right.t && !right.t->hasConversion(*left.t))
-			{
-				Logger::error(*right.at->value, "Type '%s' doesn't have a conversion to '%s'", right.t->name->getString().c_str(), left.t->name->getString().c_str());
-				return false;
-			}
-
-			//DBG_LOG("Right of '%s' is '%s'", n->value->getString().c_str(), right.at->value->getString().c_str());
+			if(!right.at) return false;
 
 			if(n->type == SyntaxTreeNode::Type::Assign)
 			{
-				//	If the node on the right doesn't contain a plain type, it's a value
-				if(!isRightType)
+				if(	leftmost->type == SyntaxTreeNode::Type::Call ||
+					leftmost->type == SyntaxTreeNode::Type::Subscript)
 				{
-					if(left.v)
-					{
-						//	Forbid assigning a variable it's own value before it's initialized
-						if(!left.v->initialized && left.at->value->tokenEquals(right.at->value))
-						{
-							Logger::error("Can't use '%s' before it's initialized", getFullAccessName(right.at).c_str());
-							return false;
-						}
-
-						left.v->type = right.t;
-						left.v->initialized = true;
-
-						DBG_LOG("Variable '%s' initialized with type '%s'", left.v->name->getString().c_str(), left.v->type->name->getString().c_str());
-					}
+					Logger::error("TODO: Implement assigning to '%s'", leftmost->getTypeString());
+					return false;
 				}
 
-				//	The right node contains a plain type name
-				else
-				{
-					//	Is the left node a variable that's initialized
-					if(left.v)
-					{
-						//	Types cannot be assigned to variables if they already have types
-						if(left.v->type)
-						{
-							Logger::error(*right.at->value, "Can't assign a type to '%s' because it already has one", getFullAccessName(left.at).c_str());
-							return false;
-						}
-
-						//	If the variable doesn't have a type, give it one
-						else if(!left.v->type)
-						{
-							DBG_LOG("Assigning type '%s' to '%s'", right.t->name->getString().c_str(), left.v->name->getString().c_str());
-							left.v->type = right.t;
-						}
-					}
-				}
+				//	The expression isn't unused if it assigns something
+				unusedExpression = false;
 			}
-
-			else
-			{
-				//	The right node can't be a plain type if no assignment was done
-				if(isRightType)
-				{
-					Logger::error(*right.at->value, "Type '%s' can only be used after '='", getFullAccessName(right.at).c_str());
-					return false;
-				}
-
-				if(left.v && !left.v->initialized)
-				{
-					Logger::error(*left.at->value, "Can't use variable '%s' before it's initialized", getFullAccessName(left.at).c_str());
-					return false;
-				}
-
-				if(right.v && !right.v->initialized)
-				{
-					Logger::error(*right.at->value, "Can't use variable '%s' before it's initialized", getFullAccessName(right.at).c_str());
-					return false;
-				}
-			}
-		}
-
-		else
-		{
 		}
 	}
-
-	SyntaxTreeNode* resultNode;
 
 	//	Validate the left node
 	if(n->left && !validateNode(n->left.get()))
@@ -273,8 +214,12 @@ Cap::SyntaxTreeNode* Cap::Scope::findAppropriateNode(SyntaxTreeNode* n)
 
 	while(current->left)
 	{
-		if(current->type == SyntaxTreeNode::Type::Access)
+		if(	current->type == SyntaxTreeNode::Type::Access ||
+			current->type == SyntaxTreeNode::Type::Subscript ||
+			current->type == SyntaxTreeNode::Type::Call)
+		{
 			return current;
+		}
 
 		current = current->left.get();
 	}
