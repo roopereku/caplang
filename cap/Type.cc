@@ -1,8 +1,10 @@
 #include "Type.hh"
 #include "Debug.hh"
+#include "Logger.hh"
 
-//	A really clear string that contains names for primitives
-static const char* primitiveNames = "i8u8i16u16i32u32i64u64";
+//	Names of the primitives
+static const char* primitiveNames =
+	"i8" "u8" "i16" "u16" "i32" "u32" "i64" "u64" "float" "stringliteral";
 
 //	Since the type name is a Token pointer, we need to create the tokens
 static Cap::Token primitiveTokens[]
@@ -14,7 +16,9 @@ static Cap::Token primitiveTokens[]
 	{ primitiveNames + 10, Cap::TokenType::Identifier, 3, 0, 0 },
 	{ primitiveNames + 13, Cap::TokenType::Identifier, 3, 0, 0 },
 	{ primitiveNames + 16, Cap::TokenType::Identifier, 3, 0, 0 },
-	{ primitiveNames + 19, Cap::TokenType::Identifier, 3, 0, 0 }
+	{ primitiveNames + 19, Cap::TokenType::Identifier, 3, 0, 0 },
+	{ primitiveNames + 22, Cap::TokenType::Identifier, 5, 0, 0 },
+	{ primitiveNames + 27, Cap::TokenType::Identifier, 13, 0, 0 }
 };
 
 static Cap::Type primitives[]
@@ -27,19 +31,35 @@ static Cap::Type primitives[]
 	Cap::Type(&primitiveTokens[5], true),	//	u32
 	Cap::Type(&primitiveTokens[6], true),	//	i64
 	Cap::Type(&primitiveTokens[7], true),	//	u64
+	Cap::Type(&primitiveTokens[8], true),	//	float
+	Cap::Type(&primitiveTokens[9], true),	//	stringliteral
 };
 
-bool Cap::Type::hasConversion(Type& other)
+bool Cap::Type::isNumeric()
 {
+	return this >= &primitives[0] && this <= &primitives[8];
+}
+
+bool Cap::Type::isStringLiteral()
+{
+	return this == &primitives[9];
+}
+
+bool Cap::Type::hasConversion(Type* other)
+{
+	if(other == nullptr)
+	{
+		Logger::error("FIXME: No conversion because other is nullptr");
+		return false;
+	}
+
 	if(isPrimitive)
 	{
-		//	TODO add floats
-		//	Are both of the types primitives that are numeric
-		if(	(this >= &primitives[0] && this <= &primitives[7]) &&
-			(&other >= &primitives[0] && &other <= &primitives[7]))
-		{
-			return true;
-		}
+		if(isNumeric())
+			return other->isNumeric();
+
+		else if(isStringLiteral())
+			return other->isStringLiteral();
 	}
 
 	return false;
@@ -50,10 +70,13 @@ Cap::Type* Cap::Type::findPrimitiveType(TokenType t)
 	switch(t)
 	{
 		case TokenType::Integer: return &primitives[6];
+		case TokenType::Float: return &primitives[8];
 		case TokenType::Character: return &primitives[0];
 
+		case TokenType::String: return &primitives[9];
+
 		default:
-			//DBG_LOG("UNIMPLEMENTED '%s'", Token::getTypeString(t));
+			Logger::error("UNIMPLEMENTED TYPE '%s'", Token::getTypeString(t));
 			return nullptr;
 	}
 }

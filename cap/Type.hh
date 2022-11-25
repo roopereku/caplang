@@ -17,7 +17,7 @@ struct Type
 		: name(name), isPrimitive(isPrimitive)
 	{}
 
-	bool hasConversion(Type& other);
+	bool hasConversion(Type* other);
 
 	Token* name;
 	std::shared_ptr <Scope> scope;
@@ -26,6 +26,10 @@ struct Type
 	static Type* findPrimitiveType(TokenType t);
 	static Type* findPrimitiveType(Token* name);
 	static bool isPrimitiveName(Token* name);
+
+private:
+	bool isNumeric();
+	bool isStringLiteral();
 };
 
 }
