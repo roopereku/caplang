@@ -113,8 +113,10 @@ bool Cap::Scope::validate()
 							n->type != SyntaxTreeNode::Type::While &&
 							n->type != SyntaxTreeNode::Type::If;
 
+		lineContext = n->type;
+		DBG_LOG("CTX '%s'", n->getTypeString());
+
 		//	Validate the inner contents of the node
-		//	FIXME validateNode might want to know about "Return" so that it can nag about invalid return type
 		if(!validateNode(n->left.get()))
 			return false;
 
@@ -155,12 +157,19 @@ bool Cap::Scope::validateNode(SyntaxTreeNode* n)
 	//	Is the node an operator?
 	if(n->type <= SyntaxTreeNode::Type::UnaryNegative)
 	{
+		bool checkConversion = true;
+
 		SyntaxTreeNode* leftmost = findAppropriateNode(n->left.get());
 		NodeInfo left = getNodeInfoRecursive(leftmost);
-
 		if(!left.at) return false;
 
 		DBG_LOG("Leftmost at '%s' is '%s' '%s'", n->getTypeString(), leftmost->getTypeString(), leftmost->value->getString().c_str());
+
+		if(isNodeTypeName(left))
+		{
+			Logger::error(*left.at->value, "Can't use a typename in an expression");
+			return false;
+		}
 
 		//	Is the operator unary?
 		if(n->type >= SyntaxTreeNode::Type::Not)
@@ -172,11 +181,16 @@ bool Cap::Scope::validateNode(SyntaxTreeNode* n)
 		{
 			SyntaxTreeNode* rightmost = findAppropriateNode(n->right.get());
 			NodeInfo right = getNodeInfoRecursive(rightmost);
-
 			if(!right.at) return false;
 
+			DBG_LOG("Rightmost at '%s' is '%s' '%s'", n->getTypeString(), rightmost->getTypeString(), rightmost->value->getString().c_str());
+
+			//	Is the operator assignment?
 			if(n->type == SyntaxTreeNode::Type::Assign)
 			{
+				/*	TODO
+				 *	Implement assignment to subscripts and function calls. When something
+				 *	is assigned to a function call, the function should return a reference */
 				if(	leftmost->type == SyntaxTreeNode::Type::Call ||
 					leftmost->type == SyntaxTreeNode::Type::Subscript)
 				{
@@ -186,7 +200,63 @@ bool Cap::Scope::validateNode(SyntaxTreeNode* n)
 
 				//	The expression isn't unused if it assigns something
 				unusedExpression = false;
+
+				//	NOTE This should never happen :-)
+				if(!left.v)
+				{
+					Logger::error(*left.at->value, "???: Left isn't a variable in assignment");
+					return false;
+				}
+
+				//	Is the rightmost node just a typename
+				if(isNodeTypeName(right))
+				{
+					//	Type names can only be used in a variable declaration
+					if(lineContext != SyntaxTreeNode::Type::Variable)
+					{
+						Logger::error(*right.at->value, "Type can only be set in a variable declaration");
+						return false;
+					}
+
+					DBG_LOG("Variable '%s' now has type '%s'",
+							left.v->name->getString().c_str(), right.t->name->getString().c_str());
+
+					left.v->type = right.t;
+					checkConversion = false;
+				}
+
+				//	The rightmost node isn't a typename which means that it's a value
+				else if(!left.v->initialized)
+				{
+					DBG_LOG("Variable '%s' is now initialized with type '%s'",
+							left.v->name->getString().c_str(), right.t->name->getString().c_str());
+
+					checkConversion = left.v->type != nullptr;
+
+					left.v->type = right.t;
+					left.v->initialized = true;
+				}
 			}
+
+			//	The rightmost node can't be a typename outside assignments
+			else if(isNodeTypeName(right))
+			{
+				Logger::error(*right.at->value, "Can't use a typename in an expression");
+				return false;
+			}
+
+			DBG_LOG("l %p r %p", left.t, right.t);
+			DBG_LOG("Check conversion %d", checkConversion);
+
+			//	Prevent the usage of incompatible types
+			if(checkConversion && !left.t->hasConversion(right.t))
+			{
+				Logger::error(*right.at->value, "Type '%s' has no conversion to '%s'",
+						right.t->name->getString().c_str(), left.t->name->getString().c_str());
+
+				return false;
+			}
+
 		}
 	}
 
@@ -287,19 +357,36 @@ Cap::Scope::NodeInfo Cap::Scope::getNodeInfo(SyntaxTreeNode* n)
 	info.at = n;
 
 	info.v = findVariable(info.at->value);
-	info.t = findType(info.at->value);
 	info.f = findFunction(info.at->value);
+
+	if(info.v) info.t = info.v->type;
+	else info.t = findType(info.at->value);
 
 	//	Is the given node a known identifier?
 	if(!info.v && !info.t && !info.f)
 	{
-		Logger::error(*info.at->value, "Unknown identifier '%s'", getFullAccessName(info.at).c_str());
-		info.at = nullptr;
-		return info;
+		if(n->value->type == TokenType::Identifier)
+		{
+			Logger::error(*info.at->value, "Unknown identifier '%s'", getFullAccessName(info.at).c_str());
+			info.at = nullptr;
+			return info;
+		}
+
+		//DBG_LOG("Literal '%s'", n->value->getString().c_str());
+		//info.t = Type::findPrimitiveType(n->value->type);
 	}
 
-	if(info.v)
-		info.t = info.v->type;
+	//DBG_LOG("type %p", info.t);
+
+	if(info.f)
+	{
+		DBG_LOG("Function '%s'", info.f->name->getString().c_str());
+	}
+
+	if(info.t)
+	{
+		DBG_LOG("type is '%s'", info.t->name->getString().c_str());
+	}
 
 	return info;
 }

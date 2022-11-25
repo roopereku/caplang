@@ -70,6 +70,7 @@ private:
 	bool isNodeTypeName(NodeInfo& info);
 
 	bool unusedExpression;
+	SyntaxTreeNode::Type lineContext;
 
 	std::vector <Type> types;
 	std::vector <Scope> blocks;

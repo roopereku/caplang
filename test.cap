@@ -1,7 +1,13 @@
+type T
+{
+}
+
+func moi()
+{
+}
+
 func main()
 {
-	var i = 1 + 2
-	i *= 10
-
-	return i
+	var c = u64
+	c = moi()
 }
