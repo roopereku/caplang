@@ -3,7 +3,8 @@
 #include "Debug.hh"
 
 Cap::Scope::Scope(Scope* parent, ScopeContext ctx)
-		:	parent(parent), ctx(ctx),
+		:	codeGen(*this),
+			parent(parent), ctx(ctx),
 			root(nullptr), node(&root)
 {
 	//	If this scope belongs to a function, the first node always contains parameters
@@ -44,8 +45,10 @@ Cap::Type& Cap::Scope::addType(Token* name)
 
 Cap::Variable& Cap::Scope::addVariable(Token* name)
 {
-	variables.emplace_back(name);
-	DBG_LOG("Added variable '%s'", name->getString().c_str());
+	unsigned depth = variables.empty() ? 0 : variables.back().depth + 1;
+	variables.emplace_back(name, depth);
+
+	DBG_LOG("Added variable '%s' with depth %u", name->getString().c_str(), variables.back().depth);
 	return variables.back();
 }
 
@@ -113,8 +116,8 @@ bool Cap::Scope::validate()
 							n->type != SyntaxTreeNode::Type::While &&
 							n->type != SyntaxTreeNode::Type::If;
 
-		lineContext = n->type;
-		DBG_LOG("CTX '%s'", n->getTypeString());
+		lineStart = n;
+		//DBG_LOG("CTX '%s'", n->getTypeString());
 
 		//	Validate the inner contents of the node
 		if(!validateNode(n->left.get()))
@@ -126,6 +129,10 @@ bool Cap::Scope::validate()
 			Logger::error(*n->left->value, "Unused expression");
 			return false;
 		}
+
+		//	The line is valid so let's generate code for it
+		if(!codeGen.generateLine(*n))
+			return false;
 
 		//	Stop if no right node exists
 		if(!n->right) break;
@@ -157,13 +164,14 @@ bool Cap::Scope::validateNode(SyntaxTreeNode* n)
 	//	Is the node an operator?
 	if(n->type <= SyntaxTreeNode::Type::UnaryNegative)
 	{
+		//DBG_LOG("Operator '%s'", n->getTypeString());
 		bool checkConversion = true;
 
 		SyntaxTreeNode* leftmost = findAppropriateNode(n->left.get());
 		NodeInfo left = getNodeInfoRecursive(leftmost);
 		if(!left.at) return false;
 
-		DBG_LOG("Leftmost at '%s' is '%s' '%s'", n->getTypeString(), leftmost->getTypeString(), leftmost->value->getString().c_str());
+		//DBG_LOG("Leftmost at '%s' is '%s' '%s'", n->getTypeString(), leftmost->getTypeString(), leftmost->value->getString().c_str());
 
 		if(isNodeTypeName(left))
 		{
@@ -183,7 +191,7 @@ bool Cap::Scope::validateNode(SyntaxTreeNode* n)
 			NodeInfo right = getNodeInfoRecursive(rightmost);
 			if(!right.at) return false;
 
-			DBG_LOG("Rightmost at '%s' is '%s' '%s'", n->getTypeString(), rightmost->getTypeString(), rightmost->value->getString().c_str());
+			//DBG_LOG("Rightmost at '%s' is '%s' '%s'", n->getTypeString(), rightmost->getTypeString(), rightmost->value->getString().c_str());
 
 			//	Is the operator assignment?
 			if(n->type == SyntaxTreeNode::Type::Assign)
@@ -212,14 +220,14 @@ bool Cap::Scope::validateNode(SyntaxTreeNode* n)
 				if(isNodeTypeName(right))
 				{
 					//	Type names can only be used in a variable declaration
-					if(lineContext != SyntaxTreeNode::Type::Variable)
+					if(lineStart->type != SyntaxTreeNode::Type::Variable)
 					{
 						Logger::error(*right.at->value, "Type can only be set in a variable declaration");
 						return false;
 					}
 
-					DBG_LOG("Variable '%s' now has type '%s'",
-							left.v->name->getString().c_str(), right.t->name->getString().c_str());
+					//DBG_LOG("Variable '%s' now has type '%s'",
+							//left.v->name->getString().c_str(), right.t->name->getString().c_str());
 
 					left.v->type = right.t;
 					checkConversion = false;
@@ -228,8 +236,8 @@ bool Cap::Scope::validateNode(SyntaxTreeNode* n)
 				//	The rightmost node isn't a typename which means that it's a value
 				else if(!left.v->initialized)
 				{
-					DBG_LOG("Variable '%s' is now initialized with type '%s'",
-							left.v->name->getString().c_str(), right.t->name->getString().c_str());
+					//DBG_LOG("Variable '%s' is now initialized with type '%s'",
+					//		left.v->name->getString().c_str(), right.t->name->getString().c_str());
 
 					checkConversion = left.v->type != nullptr;
 
@@ -245,8 +253,17 @@ bool Cap::Scope::validateNode(SyntaxTreeNode* n)
 				return false;
 			}
 
-			DBG_LOG("l %p r %p", left.t, right.t);
-			DBG_LOG("Check conversion %d", checkConversion);
+			//	If the rightmost node is a variable which hasn't been initialized, it can't be used
+			if(right.v && !right.v->initialized)
+			{
+				Logger::error(*right.at->value, "Can't use variable '%s' before it is initialized",
+						right.v->name->getString().c_str());
+
+				return false;
+			}
+
+			//DBG_LOG("l %p r %p", left.t, right.t);
+			//DBG_LOG("Check conversion %d", checkConversion);
 
 			//	Prevent the usage of incompatible types
 			if(checkConversion && !left.t->hasConversion(right.t))
@@ -258,6 +275,8 @@ bool Cap::Scope::validateNode(SyntaxTreeNode* n)
 			}
 
 		}
+
+		//	FIXME It would be nice to start code generation here
 	}
 
 	//	Validate the left node
@@ -380,12 +399,15 @@ Cap::Scope::NodeInfo Cap::Scope::getNodeInfo(SyntaxTreeNode* n)
 
 	if(info.f)
 	{
-		DBG_LOG("Function '%s'", info.f->name->getString().c_str());
+		//DBG_LOG("Function '%s'", info.f->name->getString().c_str());
+
+		//	FIXME use Function::returnType once that is implemented
+		info.t = Type::findPrimitiveType(TokenType::Integer);
 	}
 
 	if(info.t)
 	{
-		DBG_LOG("type is '%s'", info.t->name->getString().c_str());
+		//DBG_LOG("type is '%s'", info.t->name->getString().c_str());
 	}
 
 	return info;

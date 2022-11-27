@@ -9,7 +9,10 @@ namespace Cap
 struct Type;
 struct Variable
 {
-	Variable(Token* name) : name(name) {}
+	Variable(Token* name, unsigned depth)
+		: name(name), depth(depth)
+	{
+	}
 
 	Token* name;
 	Type* type = nullptr;
@@ -17,6 +20,8 @@ struct Variable
 
 	bool isFunctionPointer = false;
 	bool isArray = false;
+
+	unsigned depth;
 };
 
 }

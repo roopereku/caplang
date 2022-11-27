@@ -1,13 +1,6 @@
-type T
-{
-}
-
-func moi()
-{
-}
-
 func main()
 {
-	var c = u64
-	c = moi()
+	var b = 1 + 2 + 3 + 4 * 5
+	b += 5
+	var c = b * 2
 }

@@ -2,6 +2,7 @@
 #define SCOPE_HEADER
 
 #include "SyntaxTreeNode.hh"
+#include "CodeGenerator.hh"
 #include "Token.hh"
 #include "Variable.hh"
 #include "Function.hh"
@@ -70,7 +71,8 @@ private:
 	bool isNodeTypeName(NodeInfo& info);
 
 	bool unusedExpression;
-	SyntaxTreeNode::Type lineContext;
+	CodeGenerator codeGen;
+	SyntaxTreeNode* lineStart;
 
 	std::vector <Type> types;
 	std::vector <Scope> blocks;
