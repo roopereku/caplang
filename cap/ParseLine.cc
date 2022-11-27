@@ -408,18 +408,26 @@ bool Cap::SourceFile::parseLine(size_t& i, Scope& current, bool inBrackets)
 		return errorOut();
 	}
 
-	//	Create a node for the expression that we're about to parse
-	current.node->type = SyntaxTreeNode::Type::Expression;
-	current.node->left = std::make_shared <SyntaxTreeNode> (current.node, nullptr, SyntaxTreeNode::Type::None);
-	current.node = current.node->left.get();
+	//	We don't want extra "Expression" nodes where brackets start
+	if(!inBrackets)
+	{
+		//	Create a node for the expression that we're about to parse
+		current.node->type = SyntaxTreeNode::Type::Expression;
+		current.node->left = std::make_shared <SyntaxTreeNode> (current.node, nullptr, SyntaxTreeNode::Type::None);
+		current.node = current.node->left.get();
+	}
 
 	//	Attempt to parse an expression
 	if(!parseExpression(parts, parts.size() - 1, 0, 0, current.node, current))
 		return errorOut();
 
-	//	Now we need a node for whatever comes next. Place it on the right side of the last node
-	lastNode->right = std::make_shared <SyntaxTreeNode> (current.node, nullptr, SyntaxTreeNode::Type::None);
-	current.node = lastNode->right.get();
+	//	No need to create the next node when inside brackets
+	if(!inBrackets)
+	{
+		//	Now we need a node for whatever comes next. Place it on the right side of the last node
+		lastNode->right = std::make_shared <SyntaxTreeNode> (current.node, nullptr, SyntaxTreeNode::Type::None);
+		current.node = lastNode->right.get();
+	}
 
 	return true;
 }
