@@ -9,7 +9,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_BUILD_TYPE Debug)
 add_definitions(-DDEBUG)
 
-FILE(GLOB CapSources cap/*.cc)
+FILE(GLOB CapSources cap/*.cc cap/arch/*.cc)
 
 # Create the akimbo library and link it with necessary stuff
 add_library(caplang ${CapSources})

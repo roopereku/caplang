@@ -2,7 +2,9 @@
 #define CODE_GENERATOR_HEADER
 
 #include "SyntaxTreeNode.hh"
+#include "arch/Base.hh"
 
+#include <memory>
 #include <string>
 
 namespace Cap
@@ -26,22 +28,8 @@ private:
 	bool generateFromNode(SyntaxTreeNode& node);
 	bool generateInstructionTest(SyntaxTreeNode& node);
 
-	enum class InstructionType
-	{
-		Arithmetic,
-		Assignment,
-		Comparison,
-		Unary
-	};
-
-	const char* instructionTypeString(InstructionType t);
-	InstructionType getType(SyntaxTreeNode::Type t);
-
 	static Output outputType;
-
-	//	FIXME remove because this is specific to the test language
-	int accumulator;
-	int sp;
+	std::shared_ptr <Arch::Base> gen = nullptr;
 
 	std::string code;
 	Scope& scope;
