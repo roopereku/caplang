@@ -5,6 +5,6 @@ int main(int argc, char** argv)
 {
 	(void)argc;
 
-	Cap::CodeGenerator::setOutput(Cap::CodeGenerator::Output::Test);
+	Cap::CodeGenerator::setOutput(Cap::CodeGenerator::Output::X86Intel);
 	Cap::Program p(argv[1]);
 }
