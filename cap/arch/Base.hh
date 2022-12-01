@@ -16,7 +16,7 @@ public:
 	}
 
 	virtual void prepareForLine()=0;
-	virtual bool generateInstruction(SyntaxTreeNode& start, std::string& code)=0;
+	virtual bool generateInstruction(SyntaxTreeNode& node, std::string& code)=0;
 
 protected:
 	enum class InstructionType

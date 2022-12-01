@@ -16,7 +16,8 @@ class CodeGenerator
 public:
 	enum class Output
 	{
-		Test
+		Test,
+		X86Intel
 	};
 
 	CodeGenerator(Scope& scope);
@@ -26,7 +27,6 @@ public:
 
 private:
 	bool generateFromNode(SyntaxTreeNode& node);
-	bool generateInstructionTest(SyntaxTreeNode& node);
 
 	static Output outputType;
 	std::shared_ptr <Arch::Base> gen = nullptr;
