@@ -62,7 +62,9 @@ bool Cap::Arch::X86Intel::generateInstruction(SyntaxTreeNode& node, std::string&
 		case T::Addition: op = "add"; break;
 		case T::Division: op = "div"; break;
 		case T::Subtraction: op = "sub"; break;
-		case T::Multiplication: op = "mul"; break;
+		case T::Multiplication: op = "imul"; break;
+
+		case T::UnaryNegative: op = "neg"; break;
 
 		default:
 			Logger::error("???: Passed '%s' to X86Intel::generateInstruction", node.getTypeString());
@@ -133,6 +135,33 @@ bool Cap::Arch::X86Intel::generateInstruction(SyntaxTreeNode& node, std::string&
 
 			registerHasValue = true;
 		}
+	}
+
+	else if(t == InstructionType::Unary)
+	{
+		DBG_LOG("Unary");
+
+		if(currentRegister != 0)
+			currentRegister++;
+
+		if(node.left->type == T::Value)
+		{
+			if(node.left->value->type == TokenType::Identifier)
+			{
+				Variable* v = scope->findVariable(node.left->value);
+				auto it = stackLocations.find(v);
+				code += std::string("mov ") + registers[currentRegister] + ", [rbp-" + std::to_string(it->second) + "]\n";
+			}
+
+			else code += std::string("mov ") + registers[currentRegister] + ", " + getValue(*node.left) + "\n";
+		}
+
+		else
+		{
+			code += std::string("mov ") + registers[currentRegister] + ", " + registers[currentRegister - 1] + "\n";
+		}
+
+		code += std::string(op) + " " + registers[currentRegister] + "\n";
 	}
 
 	return true;
