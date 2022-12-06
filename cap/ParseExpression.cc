@@ -116,7 +116,7 @@ bool Cap::SourceFile::parseExpression(std::vector <ExpressionPart>& parts,
 							skipComments(tokenIndex);
 
 							//	Create a new expression node for what's inside the brackets and parse the contents
-							side->left = std::make_shared <SyntaxTreeNode> (node, &tokens[tokenIndex], SyntaxTreeNode::Type::Expression);
+							side->left = std::make_shared <SyntaxTreeNode> (node, &tokens[tokenIndex], SyntaxTreeNode::Type::None);
 							if(!parseLineInBracket(side->left.get(), side->left->value, current))
 								return false;
 						}
