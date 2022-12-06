@@ -2,9 +2,11 @@
 #include "Debug.hh"
 #include "Logger.hh"
 
+#include <array>
+
 //	Names of the primitives
 static const char* primitiveNames =
-	"i8" "u8" "i16" "u16" "i32" "u32" "i64" "u64" "float" "stringliteral";
+	"i8" "u8" "i16" "u16" "i32" "u32" "i64" "u64" "float" "double" "stringliteral";
 
 //	Since the type name is a Token pointer, we need to create the tokens
 static Cap::Token primitiveTokens[]
@@ -18,26 +20,28 @@ static Cap::Token primitiveTokens[]
 	{ primitiveNames + 16, Cap::TokenType::Identifier, 3, 0, 0 },
 	{ primitiveNames + 19, Cap::TokenType::Identifier, 3, 0, 0 },
 	{ primitiveNames + 22, Cap::TokenType::Identifier, 5, 0, 0 },
-	{ primitiveNames + 27, Cap::TokenType::Identifier, 13, 0, 0 }
+	{ primitiveNames + 27, Cap::TokenType::Identifier, 6, 0, 0 },
+	{ primitiveNames + 33, Cap::TokenType::Identifier, 13, 0, 0 }
 };
 
-static Cap::Type primitives[]
+static std::array <Cap::Type, 11> primitives
 {
-	Cap::Type(&primitiveTokens[0], true),	//	i8
-	Cap::Type(&primitiveTokens[1], true),	//	u8
-	Cap::Type(&primitiveTokens[2], true),	//	i16
-	Cap::Type(&primitiveTokens[3], true),	//	u16
-	Cap::Type(&primitiveTokens[4], true),	//	i32
-	Cap::Type(&primitiveTokens[5], true),	//	u32
-	Cap::Type(&primitiveTokens[6], true),	//	i64
-	Cap::Type(&primitiveTokens[7], true),	//	u64
-	Cap::Type(&primitiveTokens[8], true),	//	float
-	Cap::Type(&primitiveTokens[9], true),	//	stringliteral
+	Cap::Type(&primitiveTokens[0], true, 1),	//	i8
+	Cap::Type(&primitiveTokens[1], true, 1),	//	u8
+	Cap::Type(&primitiveTokens[2], true, 2),	//	i16
+	Cap::Type(&primitiveTokens[3], true, 2),	//	u16
+	Cap::Type(&primitiveTokens[4], true, 4),	//	i32
+	Cap::Type(&primitiveTokens[5], true, 4),	//	u32
+	Cap::Type(&primitiveTokens[6], true, 8),	//	i64
+	Cap::Type(&primitiveTokens[7], true, 8),	//	u64
+	Cap::Type(&primitiveTokens[8], true, 4),	//	float
+	Cap::Type(&primitiveTokens[9], true, 8),	//	double
+	Cap::Type(&primitiveTokens[10], true),		//	stringliteral
 };
 
 bool Cap::Type::isNumeric()
 {
-	return this >= &primitives[0] && this <= &primitives[8];
+	return this >= &primitives[0] && this <= &primitives[9];
 }
 
 bool Cap::Type::isStringLiteral()
@@ -71,6 +75,7 @@ Cap::Type* Cap::Type::findPrimitiveType(TokenType t)
 	{
 		case TokenType::Integer: return &primitives[6];
 		case TokenType::Float: return &primitives[8];
+		case TokenType::Double: return &primitives[9];
 		case TokenType::Character: return &primitives[0];
 
 		case TokenType::String: return &primitives[9];
@@ -94,21 +99,10 @@ Cap::Type* Cap::Type::findPrimitiveType(Token* name)
 
 bool Cap::Type::isPrimitiveName(Token* name)
 {
-	if(*name->begin == 'i')
+	for(auto& t : primitives)
 	{
-		return 	name->stringEquals("i8") ||
-				name->stringEquals("i16") ||
-				name->stringEquals("i32") ||
-				name->stringEquals("i64");
-
-	}
-
-	else if(*name->begin == 'u')
-	{
-		return	name->stringEquals("u8") ||
-				name->stringEquals("u16") ||
-				name->stringEquals("u32") ||
-				name->stringEquals("u64");
+		if(name->tokenEquals(t.name))
+			return true;
 	}
 
 	return false;
