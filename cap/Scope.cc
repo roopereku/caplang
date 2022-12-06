@@ -117,6 +117,7 @@ bool Cap::Scope::validate(CodeGenerator& codeGen)
 							n->type != SyntaxTreeNode::Type::If;
 
 		lineStart = n;
+		initializedVariable = nullptr;
 		//DBG_LOG("CTX '%s'", n->getTypeString());
 
 		//	Validate the inner contents of the node
@@ -129,6 +130,9 @@ bool Cap::Scope::validate(CodeGenerator& codeGen)
 			Logger::error(*n->left->value, "Unused expression");
 			return false;
 		}
+
+		if(initializedVariable)
+			initializedVariable->initialized = true;
 
 		//	The line is valid so let's generate code for it
 		if(!codeGen.generateLine(*n))
@@ -166,7 +170,7 @@ bool Cap::Scope::validateNode(SyntaxTreeNode* n)
 	//	Is the node an operator?
 	if(n->type <= SyntaxTreeNode::Type::UnaryNegative)
 	{
-		//DBG_LOG("Operator '%s'", n->getTypeString());
+		DBG_LOG("Operator '%s'", n->getTypeString());
 		bool checkConversion = true;
 
 		SyntaxTreeNode* leftmost = findAppropriateNode(n->left.get());
@@ -244,7 +248,7 @@ bool Cap::Scope::validateNode(SyntaxTreeNode* n)
 					checkConversion = left.v->type != nullptr;
 
 					left.v->type = right.t;
-					left.v->initialized = true;
+					initializedVariable = left.v;
 				}
 			}
 
@@ -381,8 +385,24 @@ Cap::Scope::NodeInfo Cap::Scope::getNodeInfo(SyntaxTreeNode* n)
 	info.f = findFunction(info.at->value);
 
 	//	FIXME use Function::returnType once that is implemented
-	if(info.f) info.t = Type::findPrimitiveType(TokenType::Integer);
-	else if(info.v) info.t = info.v->type;
+	if(info.f)
+		info.t = Type::findPrimitiveType(TokenType::Integer);
+
+	else if(info.v)
+	{
+		/*	If the token containing the variable name appears before
+		 *	the token that is used when creating the actual variable,
+		 *	report an error saying that the variable is not declared */
+		if(info.at->value < info.v->name)
+		{
+			Logger::error(*info.at->value, "Can't use variable '%s' before it's declared", getFullAccessName(info.at).c_str());
+			info.at = nullptr;
+			return info;
+		}
+
+		info.t = info.v->type;
+	}
+
 	else info.t = findType(info.at->value);
 
 	//	Is the given node a known identifier?

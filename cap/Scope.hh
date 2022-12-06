@@ -72,6 +72,7 @@ private:
 
 	bool unusedExpression;
 	SyntaxTreeNode* lineStart;
+	Variable* initializedVariable;
 
 	std::vector <Type> types;
 	std::vector <Scope> blocks;
