@@ -27,6 +27,7 @@ protected:
 
 	const char* instructionTypeString(InstructionType t);
 	InstructionType getType(SyntaxTreeNode::Type t);
+	std::string getValue(SyntaxTreeNode& node);
 
 	Scope* scope = nullptr;
 };

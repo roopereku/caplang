@@ -73,7 +73,11 @@ Cap::Type* Cap::Type::findPrimitiveType(TokenType t)
 {
 	switch(t)
 	{
-		case TokenType::Integer: return &primitives[6];
+		case TokenType::Binary:
+		case TokenType::Integer:
+		case TokenType::Hexadecimal:
+			return &primitives[6];
+
 		case TokenType::Float: return &primitives[8];
 		case TokenType::Double: return &primitives[9];
 		case TokenType::Character: return &primitives[0];

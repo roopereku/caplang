@@ -1,5 +1,8 @@
 #include "Base.hh"
+#include "../Debug.hh"
 #include "../Logger.hh"
+
+#include <sstream>
 
 const char* Cap::Arch::Base::instructionTypeString(InstructionType t)
 {
@@ -17,6 +20,55 @@ const char* Cap::Arch::Base::instructionTypeString(InstructionType t)
 void Cap::Arch::Base::setScope(Scope& scope)
 {
 	this->scope = &scope;
+}
+
+std::string Cap::Arch::Base::getValue(SyntaxTreeNode& node)
+{
+	Logger::warning("get value of '%s'", node.value->getTypeString());
+
+	switch(node.value->type)
+	{
+		case TokenType::Integer:
+		case TokenType::Identifier:
+			return node.value->getString();
+
+		case TokenType::Character:
+		{
+			int ch = static_cast <int> (*node.value->begin);
+			return std::to_string(ch);
+		}
+
+		case TokenType::Hexadecimal:
+		{
+			std::stringstream ss;
+			int dec;
+
+			ss << std::hex << node.value->getString();
+			ss >> dec;
+
+			return std::to_string(dec);
+		}
+
+		case TokenType::Binary:
+		{
+			int dec = 0;
+			int cmp = 1;
+
+			//	Create an integer from the string representation of a binary number
+			for(int i = node.value->length - 1; i >= 0; i--)
+			{
+				char c = *(node.value->begin + i);
+				if(c == '1') dec |= cmp;
+				cmp <<= 1;
+			}
+
+			return std::to_string(dec);
+		}
+
+		default:
+			Logger::error(*node.value, "???: Passed '%s' to Arch::Base::getValue", node.value->getTypeString());
+			return "";
+	}
 }
 
 Cap::Arch::Base::InstructionType Cap::Arch::Base::getType(SyntaxTreeNode::Type t)

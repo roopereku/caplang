@@ -44,7 +44,7 @@ bool Cap::Arch::X86Intel::generateInstruction(SyntaxTreeNode& node, std::string&
 		if(node.right->type == T::Value)
 		{
 			//	TODO Ignore typenames though this should probably be done before code generation
-			code += "mov [rbp-" + std::to_string(it->second) + "], " + node.right->value->getString() + "\n";
+			code += "mov [rbp-" + std::to_string(it->second) + "], " + getValue(*node.right) + "\n";
 		}
 
 		//	The right side is an operator
@@ -101,7 +101,7 @@ bool Cap::Arch::X86Intel::generateInstruction(SyntaxTreeNode& node, std::string&
 
 				//	Load the left immediate value to the current register if there's no variable
 				if(v == nullptr)
-					code += std::string("mov ") + registers[currentRegister] + ", " + node.left->value->getString() + "\n";
+					code += std::string("mov ") + registers[currentRegister] + ", " + getValue(*node.left) + "\n";
 
 				else
 				{
@@ -118,7 +118,7 @@ bool Cap::Arch::X86Intel::generateInstruction(SyntaxTreeNode& node, std::string&
 
 				//	If there's no variable on the right, it should be a literal value
 				if(v == nullptr)
-					code += std::string(op) + " " + registers[currentRegister] + ", " + node.right->value->getString() + "\n";
+					code += std::string(op) + " " + registers[currentRegister] + ", " + getValue(*node.right) + "\n";
 
 				else
 				{
