@@ -20,7 +20,8 @@ public:
 		X86Intel
 	};
 
-	CodeGenerator(Scope& scope);
+	CodeGenerator();
+	void setScope(Scope& scope);
 
 	static void setOutput(Output type);
 	bool generateLine(SyntaxTreeNode& start);
@@ -32,7 +33,6 @@ private:
 	std::shared_ptr <Arch::Base> gen = nullptr;
 
 	std::string code;
-	Scope& scope;
 };
 
 }

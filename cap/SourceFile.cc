@@ -1,3 +1,4 @@
+#include "CodeGenerator.hh"
 #include "SourceFile.hh"
 #include "Logger.hh"
 #include "Debug.hh"
@@ -31,7 +32,8 @@ bool Cap::SourceFile::validate()
 	if(!valid)
 		return false;
 
-	if(!root.validate())
+	CodeGenerator codeGen;
+	if(!root.validate(codeGen))
 		return false;
 
 	return true;

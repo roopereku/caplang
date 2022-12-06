@@ -14,6 +14,11 @@ const char* Cap::Arch::Base::instructionTypeString(InstructionType t)
 	return "";
 }
 
+void Cap::Arch::Base::setScope(Scope& scope)
+{
+	this->scope = &scope;
+}
+
 Cap::Arch::Base::InstructionType Cap::Arch::Base::getType(SyntaxTreeNode::Type t)
 {
 	switch(t)

@@ -41,7 +41,7 @@ public:
 
 	size_t getFunctionCount() { return functions.size(); }
 	size_t getBlockCount() { return blocks.size(); }
-	bool validate();
+	bool validate(CodeGenerator& codeGen);
 
 	Scope* parent;
 	ScopeContext ctx;
@@ -71,7 +71,6 @@ private:
 	bool isNodeTypeName(NodeInfo& info);
 
 	bool unusedExpression;
-	CodeGenerator codeGen;
 	SyntaxTreeNode* lineStart;
 
 	std::vector <Type> types;

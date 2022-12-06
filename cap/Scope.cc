@@ -3,8 +3,7 @@
 #include "Debug.hh"
 
 Cap::Scope::Scope(Scope* parent, ScopeContext ctx)
-		:	codeGen(*this),
-			parent(parent), ctx(ctx),
+		:	parent(parent), ctx(ctx),
 			root(nullptr), node(&root)
 {
 	//	If this scope belongs to a function, the first node always contains parameters
@@ -97,13 +96,14 @@ Cap::Type* Cap::Scope::findType(Token* name)
 	return parent == nullptr ? Type::findPrimitiveType(name) : parent->findType(name);
 }
 
-bool Cap::Scope::validate()
+bool Cap::Scope::validate(CodeGenerator& codeGen)
 {
 	/*	TODO
 	 *	Once there is a way to look into other global scopes,
 	 *	look for duplicate declarations */
 
 	SyntaxTreeNode* n = &root;
+	codeGen.setScope(*this);
 
 	/*	Validate each "line" separately. The left node of the root
 	 *	likely contains an expression and the right node contains the
@@ -143,7 +143,8 @@ bool Cap::Scope::validate()
 	{
 		DBG_LOG("Validating type %s", t.name->getString().c_str());
 
-		if(!t.scope->validate())
+		CodeGenerator cg;
+		if(!t.scope->validate(cg))
 			return false;
 
 	}
@@ -152,7 +153,8 @@ bool Cap::Scope::validate()
 	{
 		DBG_LOG("Validating function %s", f.name->getString().c_str());
 
-		if(!f.scope->validate())
+		CodeGenerator cg;
+		if(!f.scope->validate(cg))
 			return false;
 	}
 
@@ -378,7 +380,9 @@ Cap::Scope::NodeInfo Cap::Scope::getNodeInfo(SyntaxTreeNode* n)
 	info.v = findVariable(info.at->value);
 	info.f = findFunction(info.at->value);
 
-	if(info.v) info.t = info.v->type;
+	//	FIXME use Function::returnType once that is implemented
+	if(info.f) info.t = Type::findPrimitiveType(TokenType::Integer);
+	else if(info.v) info.t = info.v->type;
 	else info.t = findType(info.at->value);
 
 	//	Is the given node a known identifier?
@@ -393,21 +397,6 @@ Cap::Scope::NodeInfo Cap::Scope::getNodeInfo(SyntaxTreeNode* n)
 
 		//DBG_LOG("Literal '%s'", n->value->getString().c_str());
 		//info.t = Type::findPrimitiveType(n->value->type);
-	}
-
-	//DBG_LOG("type %p", info.t);
-
-	if(info.f)
-	{
-		//DBG_LOG("Function '%s'", info.f->name->getString().c_str());
-
-		//	FIXME use Function::returnType once that is implemented
-		info.t = Type::findPrimitiveType(TokenType::Integer);
-	}
-
-	if(info.t)
-	{
-		//DBG_LOG("type is '%s'", info.t->name->getString().c_str());
 	}
 
 	return info;

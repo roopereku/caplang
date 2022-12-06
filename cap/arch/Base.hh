@@ -11,12 +11,10 @@ namespace Arch {
 class Base
 {
 public:
-	Base(Scope& scope) : scope(scope)
-	{
-	}
-
 	virtual void prepareForLine()=0;
 	virtual bool generateInstruction(SyntaxTreeNode& node, std::string& code)=0;
+
+	void setScope(Scope& scope);
 
 protected:
 	enum class InstructionType
@@ -30,7 +28,7 @@ protected:
 	const char* instructionTypeString(InstructionType t);
 	InstructionType getType(SyntaxTreeNode::Type t);
 
-	Scope& scope;
+	Scope* scope = nullptr;
 };
 
 }}

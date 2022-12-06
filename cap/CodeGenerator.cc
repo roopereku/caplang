@@ -7,18 +7,18 @@
 
 Cap::CodeGenerator::Output Cap::CodeGenerator::outputType;
 
-Cap::CodeGenerator::CodeGenerator(Scope& scope) : scope(scope)
+Cap::CodeGenerator::CodeGenerator()
 {
-	//	Only functions get a name in the code :-)
-	if(scope.ctx == ScopeContext::Function)
-	{
-	}
-
 	switch(outputType)
 	{
-		case Output::Test: gen = std::make_shared <Arch::Test> (scope); break;
-		case Output::X86Intel: gen = std::make_shared <Arch::X86Intel> (scope); break;
+		case Output::Test: gen = std::make_shared <Arch::Test> (); break;
+		case Output::X86Intel: gen = std::make_shared <Arch::X86Intel> (); break;
 	}
+}
+
+void Cap::CodeGenerator::setScope(Scope& scope)
+{
+	gen->setScope(scope);
 }
 
 void Cap::CodeGenerator::setOutput(Output type)
@@ -49,8 +49,8 @@ bool Cap::CodeGenerator::generateLine(SyntaxTreeNode& start)
 
 bool Cap::CodeGenerator::generateFromNode(SyntaxTreeNode& node)
 {
-	//	Ignore values
-	if(node.type == SyntaxTreeNode::Type::Value)
+	//	Ignore values and nodes nops
+	if(node.type == SyntaxTreeNode::Type::Value || node.type == SyntaxTreeNode::Type::None)
 		return true;
 
 	//	Generate instructions on the left side

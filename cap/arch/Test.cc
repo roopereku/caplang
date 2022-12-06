@@ -18,7 +18,7 @@ bool Cap::Arch::Test::generateInstruction(SyntaxTreeNode& node, std::string& cod
 	//	On assignment, save to a slow corresponding to the variable's depth
 	if(t == InstructionType::Assignment)
 	{
-		Variable* v = scope.findVariable(node.left->value);
+		Variable* v = scope->findVariable(node.left->value);
 		code += "save " + std::to_string(v->depth) + "\n";
 
 		return true;
@@ -63,7 +63,7 @@ bool Cap::Arch::Test::generateInstruction(SyntaxTreeNode& node, std::string& cod
 			if(node.left->value->type == TokenType::Identifier)
 			{
 				//	Tell the interpreter to load a value from the storage
-				Variable* v = scope.findVariable(node.left->value);
+				Variable* v = scope->findVariable(node.left->value);
 				code += "load " + std::to_string(v->depth) + "\n";
 			}
 

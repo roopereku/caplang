@@ -8,10 +8,6 @@ namespace Cap::Arch {
 class Test : public Base
 {
 public:
-	Test(Scope& scope) : Base(scope)
-	{
-	}
-
 	void prepareForLine() override;
 	bool generateInstruction(SyntaxTreeNode& start, std::string& code) override;
 
