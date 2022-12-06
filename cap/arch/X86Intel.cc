@@ -14,12 +14,45 @@ bool Cap::Arch::X86Intel::generateInstruction(SyntaxTreeNode& node, std::string&
 {
 	using T = SyntaxTreeNode::Type;
 
+	if(node.type == T::Call)
+	{
+		code += "call " + node.value->getString() + "\n";
+		registerHasValue = true;
+		return true;
+	}
+
 	InstructionType t = getType(node.type);
 	std::string op = "nop";
 
 	if(t == InstructionType::Assignment)
 	{
-		Variable* v = scope.findVariable(node.left->value);
+		Variable* v = scope->findVariable(node.left->value);
+		auto it = stackLocations.find(v);
+
+		if(it == stackLocations.end())
+		{
+			//	FIXME Use insert instead
+			stackLocations[v] = stackPointer;
+			it = stackLocations.find(v);
+
+			stackPointer += v->type->baseSize;
+
+			DBG_LOG("Stackpointer -> %lu because '%s' was added", stackPointer, v->name->getString().c_str());
+		}
+
+		//	Is there a value on the right side?
+		if(node.right->type == T::Value)
+		{
+			//	TODO Ignore typenames though this should probably be done before code generation
+			code += "mov [rbp-" + std::to_string(it->second) + "], " + node.right->value->getString() + "\n";
+		}
+
+		//	The right side is an operator
+		else
+		{
+			code += "mov [rbp-" + std::to_string(it->second) + "], " + registers[currentRegister] + "\n";
+		}
+
 		return true;
 	}
 
@@ -64,8 +97,16 @@ bool Cap::Arch::X86Intel::generateInstruction(SyntaxTreeNode& node, std::string&
 					currentRegister++;
 				}
 
-				//	Load the left value to the current register
-				code += std::string("mov ") + registers[currentRegister] + ", " + node.left->value->getString() + "\n";
+				Variable* v = scope->findVariable(node.left->value);
+
+				//	Load the left immediate value to the current register if there's no variable
+				if(v == nullptr)
+					code += std::string("mov ") + registers[currentRegister] + ", " + node.left->value->getString() + "\n";
+
+				else
+				{
+					//	TODO Modify the depth of the variable so that it is the position in the stack
+				}
 			}
 
 			//	If there's a value on the right side, use it as an operand

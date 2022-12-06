@@ -2,7 +2,9 @@
 #define ARCH_X86_INTEL_HEADER
 
 #include "Base.hh"
+#include "../Variable.hh"
 
+#include <unordered_map>
 #include <array>
 
 namespace Cap::Arch {
@@ -10,10 +12,6 @@ namespace Cap::Arch {
 class X86Intel : public Base
 {
 public:
-	X86Intel(Scope& scope) : Base(scope)
-	{
-	}
-
 	void prepareForLine() override;
 	bool generateInstruction(SyntaxTreeNode& start, std::string& code) override;
 
@@ -23,6 +21,8 @@ private:
 		"eax", "ebx", "edx",
 		"r12d", "r13d", "r14d", "r15d",
 	};
+
+	std::unordered_map <Variable*, size_t> stackLocations;
 
 	size_t currentRegister;
 	bool registerHasValue;
