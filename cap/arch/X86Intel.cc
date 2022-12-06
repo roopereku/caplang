@@ -105,13 +105,28 @@ bool Cap::Arch::X86Intel::generateInstruction(SyntaxTreeNode& node, std::string&
 
 				else
 				{
-					//	TODO Modify the depth of the variable so that it is the position in the stack
+					//	If there is a variable, load a value from the stack to some register
+					auto it = stackLocations.find(v);
+					code += std::string("mov ") + registers[currentRegister] + ", [rbp-" + std::to_string(it->second) + "]\n";
 				}
 			}
 
 			//	If there's a value on the right side, use it as an operand
 			if(rightValue)
-				code += std::string(op) + " " + registers[currentRegister] + ", " + node.right->value->getString() + "\n";
+			{
+				Variable* v = scope->findVariable(node.right->value);
+
+				//	If there's no variable on the right, it should be a literal value
+				if(v == nullptr)
+					code += std::string(op) + " " + registers[currentRegister] + ", " + node.right->value->getString() + "\n";
+
+				else
+				{
+					//	If there is a variable on the right, use a value from the stack as the operand
+					auto it = stackLocations.find(v);
+					code += std::string(op) + " " + registers[currentRegister] + ", [rbp-" + std::to_string(it->second) + "]\n";
+				}
+			}
 
 			//	If there's an operator on the right side, use the previous register as an operand
 			else code += std::string(op) + " " + registers[currentRegister] + ", " + registers[currentRegister - 1] + "\n";

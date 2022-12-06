@@ -1,5 +1,11 @@
+func abc()
+{
+}
+
 func main()
 {
-	var a = 2 + b
-	var b = 13
+	var a = 2
+	var b = 5
+
+	b *= abc() + a
 }
