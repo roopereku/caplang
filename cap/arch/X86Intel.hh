@@ -22,10 +22,13 @@ private:
 		"r12d", "r13d", "r14d", "r15d",
 	};
 
+	std::array <bool, 7> registerHasValue;
 	std::unordered_map <Variable*, size_t> stackLocations;
 
 	size_t currentRegister;
-	bool registerHasValue;
+	size_t previousRegister;
+	bool didArithmetic;
+
 	size_t stackPointer = 0;
 };
 

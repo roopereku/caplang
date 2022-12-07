@@ -1,24 +1,5 @@
-func abc()
-{
-}
-
 func main()
 {
 	var a = 5
-	var b = -a * 2 + -(48 + 5)
-
-	/*
-		mov [rbp-0], 5
-
-		mov eax, [rbp-0]
-		neg eax
-		imul eax, 2
-
-		mov ebx, 48
-		add ebx, 5
-		neg ebx
-
-		add eax, ebx
-		mov [rbp-8], eax
-	*/
+	var b = -a * 2 - -(48 + 5 * -3 / (50 - 3))
 }
