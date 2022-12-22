@@ -24,11 +24,12 @@ private:
 
 	std::array <bool, 7> registerHasValue;
 	std::unordered_map <Variable*, size_t> stackLocations;
+	std::unordered_map <SyntaxTreeNode*, size_t> registerUsedAt;
 
 	size_t currentRegister;
 	size_t previousRegister;
-	bool didArithmetic;
 
+	SyntaxTreeNode* previousNode;
 	size_t stackPointer = 0;
 };
 

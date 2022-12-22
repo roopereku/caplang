@@ -1,5 +1,69 @@
 func main()
 {
 	var a = 5
-	var b = -a * 2 - -(48 + 5 * -3 / (50 - 3))
+	var b = 10
+
+	var c = -a * 2 - -(48 + 5 * -3 / (50 - 3))
+	//var c = (-30 + -a * ((1 + -b) / 3)) + 40
+
+
+	//var b = (69 * (420 / 2) / 5) * 6969
+
+	/*
+		; Immediate on the left, Load to next available register (eax)
+		mov eax, 30
+		neg eax
+
+		; Variable on the left, Load to next available register (ebx)
+		mov ebx, a
+		neg ebx
+
+		; Variable on the left, Load to next available register (edx)
+		mov edx, b
+		neg edx
+
+		; 1 + (-b)
+
+		; Immediate on the left, Load to next available register (r12d)
+		mov r12d, 1
+
+		; Operator on the right. It is previous operator so use last register
+		add r12d, edx
+
+		; Edx is now unused
+
+		; (...) / 3
+		
+		; Operator on the left. Is is previous operator so use current register
+		; Immediate on the right. Use as operand
+		div r12d, 3
+
+		-a * (...)
+
+		; Operator on the left. Is not previous operator so look up usage (ebx)
+		; Set previous register (edx) to current register (r12d) and set current register to ebx
+
+		; Operator on the right. It is previous so use previous register (r12d at this point)
+		imul ebx, r12d
+
+		; r12d is now unused
+
+		; -30 + (...)
+
+		; Operator on the left. Is not previous operator so look up usage (eax)
+		; Set previous register (r12d) to current register (ebx) and set current register to eax
+
+		; Operator on the right. It is previous so use previous register (ebx at this point)
+		add eax, ebx
+
+		; ebx is now unused
+
+		; (...) + 40
+
+		; Operator on the left. Is is previous operator so use current register
+		; Immediate on the right. Use as operand
+		add eax, 40
+
+		mov c, eax
+	*/
 }

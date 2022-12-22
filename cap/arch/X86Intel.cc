@@ -4,7 +4,7 @@
 #include "../Debug.hh"
 #include "../Variable.hh"
 
-#define EXPLAIN_CODE
+//#define EXPLAIN_CODE
 
 #ifdef EXPLAIN_CODE
 #define EXPLANATION(what) what 
@@ -18,7 +18,8 @@ void Cap::Arch::X86Intel::prepareForLine()
 {
 	currentRegister = 0;
 	previousRegister = 0;
-	didArithmetic = false;
+	previousNode = nullptr;
+	registerUsedAt.clear();
 	registerHasValue.fill(false);
 }
 
@@ -30,7 +31,6 @@ bool Cap::Arch::X86Intel::generateInstruction(SyntaxTreeNode& node, std::string&
 	{
 		code += "call " + node.value->getString() + "\n";
 		registerHasValue[currentRegister] = true;
-		didArithmetic = false;
 		return true;
 	}
 
@@ -49,8 +49,6 @@ bool Cap::Arch::X86Intel::generateInstruction(SyntaxTreeNode& node, std::string&
 			it = stackLocations.find(v);
 
 			stackPointer += v->type->baseSize;
-
-			DBG_LOG("Stackpointer -> %lu because '%s' was added", stackPointer, v->name->getString().c_str());
 		}
 
 		//	Is there a value on the right side?
@@ -67,7 +65,6 @@ bool Cap::Arch::X86Intel::generateInstruction(SyntaxTreeNode& node, std::string&
 			registerHasValue[currentRegister] = false;
 		}
 
-		didArithmetic = false;
 		return true;
 	}
 
@@ -95,8 +92,10 @@ bool Cap::Arch::X86Intel::generateInstruction(SyntaxTreeNode& node, std::string&
 		if(registerHasValue[currentRegister])
 		{
 			code += EXPLANATION(std::string("\n; Register ") + registers[currentRegister] + " has a value so use the next one\n");
+
 			previousRegister = currentRegister;
 			currentRegister++;
+
 			code += EXPLANATION(std::string("\n; The current register is now ") + registers[currentRegister] + "\n");
 		}
 
@@ -111,92 +110,59 @@ bool Cap::Arch::X86Intel::generateInstruction(SyntaxTreeNode& node, std::string&
 			//	If there is a variable, load a value from the stack to some register
 			auto it = stackLocations.find(v);
 			code += std::string("mov ") + registers[currentRegister] + ", [rbp-" + std::to_string(it->second) + "]" +
-					EXPLANATION("\t; Loading value of variable " + v->name->getString()) + "\n";
+					EXPLANATION("\t; Load value of variable " + v->name->getString()) + "\n";
 		}
 
 		registerHasValue[currentRegister] = true;
-		didArithmetic = false;
 	}
 
 	if(t == InstructionType::Arithmetic)
 	{
-		//	Which side of the node has a literal or an identifier
-		bool rightValue = node.right->type == T::Value;
-		
-		//	If neither side has a value, use the current and the previous register as operands
-		if(!leftValue && !rightValue)
+		/*	If there is an operator on the left which isn't the previous operator,
+		 *	look up what register needs to be used */
+		if(!leftValue && previousNode != node.left.get())
 		{
-			if(previousRegister == 0)
+			size_t newCurrent = registerUsedAt[node.left.get()];
+			previousRegister = currentRegister;
+
+			currentRegister = newCurrent;
+			registerHasValue[currentRegister] = true;
+		}
+
+		//	Is the right node an operator?
+		if(node.right->type != T::Value)
+		{
+			size_t rightOperand;
+
+			/*	If the right node is the previous node, use the previous register as
+			 *	the right operand because the current register has changed. The previous
+			 *	register should contain whatever was previously calculated */
+			if(previousNode == node.right.get())
+				rightOperand = previousRegister;
+
+			else
 			{
-				code += EXPLANATION(std::string("\n; Swap ") + registers[currentRegister] + " and " + registers[previousRegister] + "\n");
-				std::swap(currentRegister, previousRegister);
+				Logger::error(*node.value, "???: Right node isn't the previous one");
+				return false;
 			}
 
-			code += EXPLANATION("\n; Operators on both sides\n");
-
-			code += std::string(op) + " " + registers[currentRegister] + ", " + registers[previousRegister] + "\n";
-			registerHasValue[currentRegister] = true;
-			registerHasValue[previousRegister] = false;
+			code += std::string(op) + " " + registers[currentRegister] + ", " + registers[rightOperand] + "\n";
+			registerHasValue[rightOperand] = false;
 		}
 
 		else
 		{
-			//	If there's a value on the right side, use it as an operand
-			if(rightValue)
-			{
-				Variable* v = scope->findVariable(node.right->value);
-
-				//	If there's no variable on the right, it should be a literal value
-				if(v == nullptr)
-					code += std::string(op) + " " + registers[currentRegister] + ", " + getValue(*node.right) + "\n";
-
-				else
-				{
-					//	If there is a variable on the right, use a value from the stack as the operand
-					auto it = stackLocations.find(v);
-					code += std::string(op) + " " + registers[currentRegister] + ", [rbp-" + std::to_string(it->second) + "]\n";
-				}
-
-				registerHasValue[currentRegister] = true;
-			}
-
-			//	If there's an operator on the right side, use the previous register as an operand
-			else
-			{
-				code += std::string(op) + " " + registers[currentRegister] + ", " + registers[previousRegister] +
-						EXPLANATION("\t; Register " + registers[previousRegister] + " is no longer used") + "\n";
-
-				registerHasValue[currentRegister] = true;
-				registerHasValue[previousRegister] = false;
-
-				previousRegister = currentRegister;
-				code += EXPLANATION(std::string("\n; Register ") + registers[previousRegister] + " is now the previous register\n");
-
-				currentRegister--;
-
-				code += EXPLANATION(std::string("; Register ") + registers[currentRegister] + " is now the current register\n");
-			}
+			code += std::string(op) + " " + registers[currentRegister] + ", " + getValue(*node.right) + "\n";
 		}
-
-		didArithmetic = true;
 	}
 
 	else if(t == InstructionType::Unary)
 	{
-		DBG_LOG("Unary");
-
-		/*	If the last instruction used a as it's right operand, we
-		 *	still need t
-		 */
-		if(didArithmetic)// && currentRegister > 0)
-		{
-			code += EXPLANATION(std::string("\n; Use ") + registers[previousRegister] + " instead of " + registers[currentRegister] + " because the last instruction was arithmetic\n");
-			code += std::string(op) + " " + registers[previousRegister] + "\n";
-		}
-
-		else code += std::string(op) + " " + registers[currentRegister] + "\n";
-		didArithmetic = false;
+		code += std::string(op) + " " + registers[currentRegister] + "\n";
 	}
+
+	previousNode = &node;
+	registerUsedAt[&node] = currentRegister;
 
 	return true;
 }
