@@ -38,7 +38,7 @@ bool Cap::SourceFile::parseLine(size_t& i, Scope& current, bool inBrackets)
 		skipComments(i);
 
 		std::string p = tokens[i].getString();
-		DBG_LOG("[%lu] line '%s' '%s'", i, tokens[i].getTypeString(), p.c_str());
+		//DBG_LOG("[%lu] line '%s' '%s'", i, tokens[i].getTypeString(), p.c_str());
 
 		//	Is the token a closing bracket or a semicolon?
 		if(tokens[i].length == 0 || tokens[i].type == TokenType::Break)
@@ -84,7 +84,7 @@ bool Cap::SourceFile::parseLine(size_t& i, Scope& current, bool inBrackets)
 			//	Expressions can be multiline if a line break happens after an operator
 			if(!lastWasOperator)
 			{
-				DBG_LOG("LINE BREAK");
+				//DBG_LOG("LINE BREAK");
 				i--;
 				break;
 			}
@@ -94,6 +94,13 @@ bool Cap::SourceFile::parseLine(size_t& i, Scope& current, bool inBrackets)
 
 		if(tokens[i].type == TokenType::Identifier)
 		{
+			//	If the last part wasn't an operator, there can't be an identifier here
+			if(i > start && !lastWasOperator)
+			{
+				Logger::error(tokens[i], "Expected an operator before identifier '%s'", tokens[i].getString().c_str());
+				return errorOut();
+			}
+
 			bool oldInExpression = inExpression;
 			size_t old = i;
 
@@ -130,7 +137,7 @@ bool Cap::SourceFile::parseLine(size_t& i, Scope& current, bool inBrackets)
 					return errorOut();
 				}
 
-				DBG_LOG("VARIABLE MODE");
+				//DBG_LOG("VARIABLE MODE");
 
 				inExpression = true;
 				expectVariableName = true;
@@ -166,7 +173,7 @@ bool Cap::SourceFile::parseLine(size_t& i, Scope& current, bool inBrackets)
 			bool skip = true;
 			bool lastIdentifier = !parts.empty() && parts.back().value->type == TokenType::Identifier;
 
-			DBG_LOG("Last identifier %d", lastIdentifier);
+			//DBG_LOG("Last identifier %d", lastIdentifier);
 
 			if(lastIdentifier)
 			{
@@ -397,7 +404,7 @@ bool Cap::SourceFile::parseLine(size_t& i, Scope& current, bool inBrackets)
 
 	if(parts.empty())
 	{
-		DBG_LOG("Parts empty");
+		//DBG_LOG("Parts empty");
 		return true;
 	}
 
