@@ -18,7 +18,7 @@ bool Cap::SourceFile::parseScope(size_t& i, size_t end, Scope& current)
 	for(; i < end; i++)
 	{
 		std::string p = tokens[i].getString();
-		DBG_LOG("[%lu] parseScope '%s' '%s'", i, tokens[i].getTypeString(), p.c_str());
+		//DBG_LOG("[%lu] parseScope '%s' '%s'", i, tokens[i].getTypeString(), p.c_str());
 
 		if(!parseLine(i, current) && !valid)
 			return false;

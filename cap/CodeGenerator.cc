@@ -61,6 +61,6 @@ bool Cap::CodeGenerator::generateFromNode(SyntaxTreeNode& node)
 	if(node.right && !generateFromNode(*node.right))
 		return false;
 
-	DBG_LOG("Process '%s'", node.getTypeString());
+	//DBG_LOG("Process '%s'", node.getTypeString());
 	return gen->generateInstruction(node, code);
 }

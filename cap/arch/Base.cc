@@ -24,8 +24,6 @@ void Cap::Arch::Base::setScope(Scope& scope)
 
 std::string Cap::Arch::Base::getValue(SyntaxTreeNode& node)
 {
-	Logger::warning("get value of '%s'", node.value->getTypeString());
-
 	switch(node.value->type)
 	{
 		case TokenType::Integer:

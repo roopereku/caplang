@@ -47,7 +47,6 @@ Cap::Variable& Cap::Scope::addVariable(Token* name)
 	unsigned depth = variables.empty() ? 0 : variables.back().depth + 1;
 	variables.emplace_back(name, depth);
 
-	DBG_LOG("Added variable '%s' with depth %u", name->getString().c_str(), variables.back().depth);
 	return variables.back();
 }
 
