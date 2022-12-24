@@ -76,7 +76,19 @@ bool Cap::Arch::X86Intel::generateInstruction(SyntaxTreeNode& node, std::string&
 		case T::Subtraction: op = "sub"; break;
 		case T::Multiplication: op = "imul"; break;
 
+		case T::BitwiseShiftLeft: op = "shl"; break;
+		case T::BitwiseShiftRight: op = "shr"; break;
+		case T::BitwiseAND: op = "and"; break;
+		case T::BitwiseOR: op = "or"; break;
+		case T::BitwiseXOR: op = "xor"; break;
+		case T::BitwiseNOT: op = "not"; break;
+
 		case T::UnaryNegative: op = "neg"; break;
+
+		case T::UnaryPositive:
+			Logger::error("TODO: Ignore unary positive. This probably should be done in parseLine()");
+			return false;
+		   break;
 
 		default:
 			Logger::error("???: Passed '%s' to X86Intel::generateInstruction", node.getTypeString());

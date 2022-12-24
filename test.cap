@@ -1,7 +1,7 @@
 func main()
 {
-	bcd var a = 5
-	abc var b = 10
+	var a = 5
+	var b = 10
 
-	var c = ((1 * 2) + 40) / ( 30 - (3 - 4))
+	var c = ((1 * 2) + 40) / ( 30 - (1 << 16))
 }
