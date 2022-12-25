@@ -28,7 +28,7 @@ bool Cap::SourceFile::parseImport(size_t& i, Scope& current)
 		{
 			//	The return value is validity so stop if there were errors
 			if(!parseImportFilename(i))
-				return true;
+				return errorOut();
 
 			//	Is the next token the matching brace
 			if(tokens[i + 1].length == 0)

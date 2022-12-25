@@ -65,6 +65,8 @@ struct SyntaxTreeNode
 		Return,
 		Variable,
 		Expression,
+		Block,
+
 		Value,
 	};
 

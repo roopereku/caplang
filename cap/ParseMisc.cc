@@ -1,6 +1,7 @@
 #include "SourceFile.hh"
 #include "Logger.hh"
 #include "Debug.hh"
+#include <memory>
 
 bool Cap::SourceFile::parseMisc(size_t& i, Scope& current)
 {
@@ -35,23 +36,18 @@ bool Cap::SourceFile::parseMisc(size_t& i, Scope& current)
 	if(tokens[i].stringEquals("if")) which = SyntaxTreeNode::Type::If;
 	else if(tokens[i].stringEquals("while")) which = SyntaxTreeNode::Type::While;
 
-	if(which != SyntaxTreeNode::Type::None)
-	{
-		if(inExpression)
-		{
-			Logger::error(tokens[i], "Cannot use %s inside an expression", tokens[i].getString().c_str());
-			return errorOut();
-		}
-	}
+	if(which == SyntaxTreeNode::Type::None)
+		return false;
 
-	else return false;
+	if(inExpression)
+	{
+		Logger::error(tokens[i], "Cannot use %s inside an expression", tokens[i].getString().c_str());
+		return errorOut();
+	}
 
 	//	TODO context could be something specific such as "when"
 	Scope& scope = current.addBlock(ScopeContext::Block);
 	Token* name = &tokens[i];
-
-	current.node->type = which;
-	current.node->value = name;
 
 	i++;
 	if(!isToken(TokenType::Parenthesis, i))
@@ -61,12 +57,46 @@ bool Cap::SourceFile::parseMisc(size_t& i, Scope& current)
 	}
 
 	i++;
+	size_t parenthesisStart = i;
+
+	scope.root.type = which;
+
+	//	Create a root node for the expression inside the parenthesis
+	scope.root.left = std::make_shared <SyntaxTreeNode> (&scope.root);
+	scope.node = scope.root.left.get();
+
+	//	Parse the contents of the parenthesis
 	if(!parseLine(i, scope, true))
 		return errorOut();
+
+	//	If there is node left node, or the left node contains nothing, the parentheses are empty
+	if(!scope.root.left || scope.root.left->type == SyntaxTreeNode::Type::None)
+	{
+		//	FIXME Depending on the context, emit a different more fitting error message
+		Logger::error(tokens[parenthesisStart], "The parenthesis of '%s' are empty", name->getString().c_str());
+		return errorOut();
+	}
+
+	//	Create a root node for the for the contents of the block
+	scope.root.right = std::make_shared <SyntaxTreeNode> (&scope.root);
+	scope.node = scope.root.right.get();
 
 	i++;
 	if(!parseBody(i, scope))
 		return errorOut();
+
+	//	If the miscellaneous block is valid, update the current node to represent it
+	current.node->type = SyntaxTreeNode::Type::Block;
+
+	//	Though this is a little cryptic, let's store the scope index to the token length to save space
+	current.node->value = name;
+	current.node->value->length = current.getBlockCount() - 1;
+
+	DBG_LOG("Scope number %u", current.node->value->length);
+
+	//	Create a new node on the right to represent a new line
+	current.node->right = std::make_shared <SyntaxTreeNode> (current.node);
+	current.node = current.node->right.get();
 
 	return true;
 }

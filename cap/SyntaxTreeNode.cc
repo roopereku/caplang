@@ -55,6 +55,7 @@ const char* Cap::SyntaxTreeNode::getTypeString(Type t)
 		case Type::Variable: return "Variable";
 		case Type::Value: return "Value";
 		case Type::Expression: return "Expression";
+		case Type::Block: return "Block";
 		case Type::None: return "None";
 	}
 

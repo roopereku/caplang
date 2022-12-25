@@ -97,6 +97,8 @@ Cap::Type* Cap::Scope::findType(Token* name)
 
 bool Cap::Scope::validate(CodeGenerator& codeGen)
 {
+	root.list();
+
 	/*	TODO
 	 *	Once there is a way to look into other global scopes,
 	 *	look for duplicate declarations */
@@ -107,7 +109,7 @@ bool Cap::Scope::validate(CodeGenerator& codeGen)
 	/*	Validate each "line" separately. The left node of the root
 	 *	likely contains an expression and the right node contains the
 	 *	next thing. This means that we can just skip to the right node */
-	while(n->left)
+	while(n->right)
 	{
 		//	The expression isn't unused if the current node is one of these
 		unusedExpression =	n->type != SyntaxTreeNode::Type::Parameters &&
@@ -119,15 +121,26 @@ bool Cap::Scope::validate(CodeGenerator& codeGen)
 		initializedVariable = nullptr;
 		//DBG_LOG("CTX '%s'", n->getTypeString());
 
-		//	Validate the inner contents of the node
-		if(!validateNode(n->left.get()))
-			return false;
-
-		//	Unused expressions are forbidden
-		if(unusedExpression)
+		//	If the node is not a block, it contains an expression that needs validating
+		if(n->type != SyntaxTreeNode::Type::Block)
 		{
-			Logger::error(*n->left->value, "Unused expression");
-			return false;
+			//	Validate the inner contents of the node
+			if(!validateNode(n->left.get()))
+				return false;
+
+			//	Unused expressions are forbidden
+			if(unusedExpression)
+			{
+				Logger::error(*n->left->value, "Unused expression");
+				return false;
+			}
+		}
+
+		//	If the node contains an index to the block, validate said block
+		else
+		{
+			Logger::warning("Validating scope of misc block");
+			blocks[n->value->length].validate(codeGen);
 		}
 
 		if(initializedVariable)
@@ -137,8 +150,6 @@ bool Cap::Scope::validate(CodeGenerator& codeGen)
 		if(!codeGen.generateLine(*n))
 			return false;
 
-		//	Stop if no right node exists
-		if(!n->right) break;
 		n = n->right.get();
 	}
 

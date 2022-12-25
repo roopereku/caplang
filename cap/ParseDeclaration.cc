@@ -63,11 +63,8 @@ bool Cap::SourceFile::parseFunction(size_t& i, Scope& current)
 	function.scope->node = function.scope->root.right.get();
 	i++;
 
-	if(!parseBody(i, *function.scope))
+	if(!parseBody(i, *function.scope) && !valid)
 		return errorOut();
-
-	DBG_LOG("LISTING FUNCTION");
-	function.scope->root.list();
 
 	return true;
 }
@@ -91,11 +88,8 @@ bool Cap::SourceFile::parseType(size_t& i, Scope& current)
 	Type& type = current.addType(name);
 
 	i++;
-	if(!parseBody(i, *type.scope))
+	if(!parseBody(i, *type.scope) && !valid)
 		return errorOut();
-
-	DBG_LOG("---- Listing type '%s' ----", name->getString().c_str());
-	type.scope->root.list();
 
 	return true;
 }
