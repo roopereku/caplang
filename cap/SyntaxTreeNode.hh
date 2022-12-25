@@ -60,6 +60,8 @@ struct SyntaxTreeNode
 		Parameters,
 
 		If,
+		Else,
+		ElseIf,
 		When,
 		While,
 		Return,

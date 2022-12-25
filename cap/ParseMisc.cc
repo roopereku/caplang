@@ -32,13 +32,30 @@ bool Cap::SourceFile::parseMisc(size_t& i, Scope& current)
 
 	SyntaxTreeNode::Type which = SyntaxTreeNode::Type::None;
 
-	//	First check if the token equals to something that can't be used inside an expression
+	//	Check if the current token contains some keyword like "if", "while" or "else"
 	if(tokens[i].stringEquals("if")) which = SyntaxTreeNode::Type::If;
 	else if(tokens[i].stringEquals("while")) which = SyntaxTreeNode::Type::While;
 
+	else if(tokens[i].stringEquals("else"))
+	{
+		size_t next = i + 1;
+
+		//	If the next token contains the string "else". We have an else if
+		if(isToken(TokenType::Identifier, next) && tokens[next].stringEquals("if"))
+		{
+			which = SyntaxTreeNode::Type::ElseIf;
+			i = next;
+		}
+
+		//	The next token isn't "else" so let's just keep it at "else"
+		else which = SyntaxTreeNode::Type::Else;
+	}
+
+	//	No valid keyword was found
 	if(which == SyntaxTreeNode::Type::None)
 		return false;
 
+	//	If an expression has been started, throw an error
 	if(inExpression)
 	{
 		Logger::error(tokens[i], "Cannot use %s inside an expression", tokens[i].getString().c_str());
@@ -49,37 +66,44 @@ bool Cap::SourceFile::parseMisc(size_t& i, Scope& current)
 	Scope& scope = current.addBlock(ScopeContext::Block);
 	Token* name = &tokens[i];
 
-	i++;
-	if(!isToken(TokenType::Parenthesis, i))
+	if(which != SyntaxTreeNode::Type::Else)
 	{
-		Logger::error(tokens[i], "Expected parenthesis after %s", name->getString().c_str());
-		return errorOut();
+		i++;
+		if(!isToken(TokenType::Parenthesis, i))
+		{
+			//	"else if" has 2 words so as an exception print out the error with a literal context string
+			if(which == SyntaxTreeNode::Type::ElseIf)
+				Logger::error(tokens[i], "Expected parenthesis after else if");
+
+			else Logger::error(tokens[i], "Expected parenthesis after %s", name->getString().c_str());
+			return errorOut();
+		}
+
+		i++;
+		size_t parenthesisStart = i;
+
+		scope.root.type = which;
+
+		//	Create a root node for the expression inside the parenthesis
+		scope.root.left = std::make_shared <SyntaxTreeNode> (&scope.root);
+		scope.node = scope.root.left.get();
+
+		//	Parse the contents of the parenthesis
+		if(!parseLine(i, scope, true))
+			return errorOut();
+
+		//	If there is node left node, or the left node contains nothing, the parentheses are empty
+		if(!scope.root.left || scope.root.left->type == SyntaxTreeNode::Type::None)
+		{
+			//	FIXME Depending on the context, emit a different more fitting error message
+			Logger::error(tokens[parenthesisStart], "The parenthesis of '%s' are empty", name->getString().c_str());
+			return errorOut();
+		}
+
+		//	Create a root node for the for the contents of the block
+		scope.root.right = std::make_shared <SyntaxTreeNode> (&scope.root);
+		scope.node = scope.root.right.get();
 	}
-
-	i++;
-	size_t parenthesisStart = i;
-
-	scope.root.type = which;
-
-	//	Create a root node for the expression inside the parenthesis
-	scope.root.left = std::make_shared <SyntaxTreeNode> (&scope.root);
-	scope.node = scope.root.left.get();
-
-	//	Parse the contents of the parenthesis
-	if(!parseLine(i, scope, true))
-		return errorOut();
-
-	//	If there is node left node, or the left node contains nothing, the parentheses are empty
-	if(!scope.root.left || scope.root.left->type == SyntaxTreeNode::Type::None)
-	{
-		//	FIXME Depending on the context, emit a different more fitting error message
-		Logger::error(tokens[parenthesisStart], "The parenthesis of '%s' are empty", name->getString().c_str());
-		return errorOut();
-	}
-
-	//	Create a root node for the for the contents of the block
-	scope.root.right = std::make_shared <SyntaxTreeNode> (&scope.root);
-	scope.node = scope.root.right.get();
 
 	i++;
 	if(!parseBody(i, scope))

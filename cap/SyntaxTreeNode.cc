@@ -41,6 +41,8 @@ const char* Cap::SyntaxTreeNode::getTypeString(Type t)
 		case Type::UnaryNegative: return "UnaryNegative";
 		case Type::Ternary: return "Ternary";
 		case Type::If: return "If";
+		case Type::Else: return "Else";
+		case Type::ElseIf: return "ElseIf";
 		case Type::When: return "When";
 		case Type::While: return "While";
 		case Type::Return: return "Return";
