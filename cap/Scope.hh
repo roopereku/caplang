@@ -35,6 +35,7 @@ public:
 
 	Function* findFunction(Token* name);
 	Function* findFunction(size_t index);
+	Scope* findBlock(size_t index);
 
 	Variable* findVariable(Token* name);
 	Type* findType(Token* name);

@@ -38,6 +38,15 @@ bool Cap::SourceFile::parseMisc(size_t& i, Scope& current)
 
 	else if(tokens[i].stringEquals("else"))
 	{
+		//	If the parent node doesn't contain "If" or "Else if", else shouldn't be allowed
+		if(	current.node->parent->type != SyntaxTreeNode::Type::Block ||
+			(current.findBlock(current.node->parent->value->length)->root.type != SyntaxTreeNode::Type::If &&
+			current.findBlock(current.node->parent->value->length)->root.type != SyntaxTreeNode::Type::ElseIf))
+		{
+			Logger::error(tokens[i], "Else without preceding if");
+			return errorOut();
+		}
+
 		size_t next = i + 1;
 
 		//	If the next token contains the string "else". We have an else if
