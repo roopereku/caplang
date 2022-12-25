@@ -38,7 +38,7 @@ bool Cap::SourceFile::parseLine(size_t& i, Scope& current, bool inBrackets)
 		skipComments(i);
 
 		std::string p = tokens[i].getString();
-		//DBG_LOG("[%lu] line '%s' '%s'", i, tokens[i].getTypeString(), p.c_str());
+		DBG_LOG("[%lu] line '%s' '%s'", i, tokens[i].getTypeString(), p.c_str());
 
 		//	Is the token a closing bracket or a semicolon?
 		if(tokens[i].length == 0 || tokens[i].type == TokenType::Break)
@@ -127,8 +127,11 @@ bool Cap::SourceFile::parseLine(size_t& i, Scope& current, bool inBrackets)
 				continue;
 			}
 
+			//	Did function parsing emit errors?
+			else if(!valid) return errorOut();
+
 			//	Is there a variable declaration?
-			else if(parseVariable(i, current))
+			if(parseVariable(i, current))
 			{
 				//	Nothing happened because we're inside an expression
 				if(i == old)
@@ -146,18 +149,14 @@ bool Cap::SourceFile::parseLine(size_t& i, Scope& current, bool inBrackets)
 				continue;
 			}
 
-			if( parseImport(i, current) ||
-				parseType(i, current))
-			{
-				//if(i == old)
-				break;
-			}
+			//	Did variable parsing emit errors?
+			else if(!valid) return errorOut();
 
-			if(parseMisc(i, current))
-			{
-				if(!valid) return errorOut();
-				break;
-			}
+			//	If some parser fails, stop parsing
+			if(parseType(i, current) || parseMisc(i, current) || parseImport(i, current))
+				continue;
+
+			else if(!valid) return errorOut();
 
 			//	At this point the identifier is just a value
 			parts.push_back({ SyntaxTreeNode::Type::Value, &tokens[i] });
