@@ -19,7 +19,7 @@ const char* Cap::Arch::Base::instructionTypeString(InstructionType t)
 
 void Cap::Arch::Base::setScope(Scope& scope)
 {
-	code += "; Scope set\n";
+	//	TODO Insert function name here
 	this->scope = &scope;
 }
 

@@ -16,14 +16,15 @@ class CodeGenerator
 public:
 	enum class Output
 	{
-		Test,
 		X86Intel
 	};
 
 	CodeGenerator();
-	void setScope(Scope& scope);
+	void setScope(Scope& scope, bool finishPrevious = false);
 
-	static void setOutput(Output type);
+	static void setOutputType(Output type);
+	const std::string& getOutput() { return gen->getOutput(); }
+
 	bool generateLine(SyntaxTreeNode& start);
 
 private:
@@ -31,8 +32,6 @@ private:
 
 	static Output outputType;
 	std::shared_ptr <Arch::Base> gen = nullptr;
-
-	std::string code;
 };
 
 }

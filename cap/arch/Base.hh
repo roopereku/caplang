@@ -14,6 +14,8 @@ class Base
 {
 public:
 	virtual void prepareForLine()=0;
+	virtual void finishScope()=0;
+
 	virtual bool generateInstruction(SyntaxTreeNode& node)=0;
 
 	void setScope(Scope& scope);

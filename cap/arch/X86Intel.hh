@@ -13,6 +13,8 @@ class X86Intel : public Base
 {
 public:
 	void prepareForLine() override;
+	void finishScope() override;
+
 	bool generateInstruction(SyntaxTreeNode& start) override;
 
 private:

@@ -23,6 +23,16 @@ void Cap::Arch::X86Intel::prepareForLine()
 	registerHasValue.fill(false);
 }
 
+void Cap::Arch::X86Intel::finishScope()
+{
+	if(	scope->root.type == SyntaxTreeNode::Type::If ||
+		scope->root.type == SyntaxTreeNode::Type::ElseIf ||
+		scope->root.type == SyntaxTreeNode::Type::Else)
+	{
+		code += std::string("; Insert label for ") + scope->root.getTypeString() + "\n";
+	}
+}
+
 bool Cap::Arch::X86Intel::generateInstruction(SyntaxTreeNode& node)
 {
 	using T = SyntaxTreeNode::Type;

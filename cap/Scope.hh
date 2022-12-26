@@ -27,6 +27,7 @@ class Scope
 {
 public:
 	Scope(Scope* parent, ScopeContext ctx);
+	Scope(Scope&& rhs);
 
 	Function& addFunction(Token* name);
 	Type& addType(Token* name);

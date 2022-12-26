@@ -24,6 +24,16 @@ Cap::Scope::Scope(Scope* parent, ScopeContext ctx)
 	else root.type = SyntaxTreeNode::Type::Expression;
 }
 
+Cap::Scope::Scope(Scope&& rhs)
+	:	parent(rhs.parent), ctx(rhs.ctx),
+		root(std::move(rhs.root)), node(rhs.node),
+		types(std::move(rhs.types)), blocks(std::move(rhs.blocks)),
+		variables(std::move(rhs.variables)), functions(std::move(rhs.functions))
+{
+	rhs.parent = nullptr;
+	rhs.node = nullptr;
+}
+
 Cap::Function& Cap::Scope::addFunction(Token* name)
 {
 	functions.emplace_back(name);
@@ -59,6 +69,11 @@ Cap::Scope& Cap::Scope::addBlock(ScopeContext ctx)
 Cap::Function* Cap::Scope::findFunction(size_t index)
 {
 	return &functions[index];
+}
+
+Cap::Scope* Cap::Scope::findBlock(size_t index)
+{
+	return &blocks[index];
 }
 
 Cap::Function* Cap::Scope::findFunction(Token* name)
@@ -114,6 +129,7 @@ bool Cap::Scope::validate(CodeGenerator& codeGen)
 		//	The expression isn't unused if the current node is one of these
 		unusedExpression =	n->type != SyntaxTreeNode::Type::Parameters &&
 							n->type != SyntaxTreeNode::Type::Return &&
+							n->type != SyntaxTreeNode::Type::ElseIf &&
 							n->type != SyntaxTreeNode::Type::While &&
 							n->type != SyntaxTreeNode::Type::If;
 
@@ -134,22 +150,25 @@ bool Cap::Scope::validate(CodeGenerator& codeGen)
 				Logger::error(*n->left->value, "Unused expression");
 				return false;
 			}
+
+			if(initializedVariable)
+				initializedVariable->initialized = true;
+
+			//	The line is valid so let's generate code for it
+			if(!codeGen.generateLine(*n))
+				return false;
 		}
 
 		//	If the node contains an index to the block, validate said block
 		else
 		{
-			Logger::warning("Validating scope of misc block");
-			blocks[n->value->length].validate(codeGen);
+			Logger::warning("Validating scope of misc block %u", n->value->length);
+			if(!findBlock(n->value->length)->validate(codeGen))
+				return false;
+
+			codeGen.setScope(*this, true);
 		}
-
-		if(initializedVariable)
-			initializedVariable->initialized = true;
-
-		//	The line is valid so let's generate code for it
-		if(!codeGen.generateLine(*n))
-			return false;
-
+		
 		n = n->right.get();
 	}
 
@@ -161,6 +180,7 @@ bool Cap::Scope::validate(CodeGenerator& codeGen)
 		if(!t.scope->validate(cg))
 			return false;
 
+		Logger::warning("Final output of type\n%s", cg.getOutput().c_str());
 	}
 
 	for(auto& f : functions)
@@ -170,6 +190,8 @@ bool Cap::Scope::validate(CodeGenerator& codeGen)
 		CodeGenerator cg;
 		if(!f.scope->validate(cg))
 			return false;
+
+		DBG_LOG("Final output of function\n%s", cg.getOutput().c_str());
 	}
 
 	return true;

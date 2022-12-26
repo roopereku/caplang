@@ -1,6 +1,5 @@
 #include "CodeGenerator.hh"
 #include "arch/X86Intel.hh"
-#include "arch/Test.hh"
 #include "Logger.hh"
 #include "Scope.hh"
 #include "Debug.hh"
@@ -11,17 +10,21 @@ Cap::CodeGenerator::CodeGenerator()
 {
 	switch(outputType)
 	{
-		case Output::Test: gen = std::make_shared <Arch::Test> (); break;
 		case Output::X86Intel: gen = std::make_shared <Arch::X86Intel> (); break;
 	}
 }
 
-void Cap::CodeGenerator::setScope(Scope& scope)
+void Cap::CodeGenerator::setScope(Scope& scope, bool finishPrevious)
 {
+	DBG_LOG("FINISH PREV %d", finishPrevious);
+
+	if(finishPrevious)
+		gen->finishScope();
+
 	gen->setScope(scope);
 }
 
-void Cap::CodeGenerator::setOutput(Output type)
+void Cap::CodeGenerator::setOutputType(Output type)
 {
 	outputType = type;
 }
@@ -43,7 +46,7 @@ bool Cap::CodeGenerator::generateLine(SyntaxTreeNode& start)
 	//	Generate instructions for the expression
 	bool result = generateFromNode(*expr->left);
 
-	DBG_LOG("CODE IS NOW\n%s", code.c_str());
+	DBG_LOG("CODE IS NOW\n%s", gen->getOutput().c_str());
 	return result;
 }
 
@@ -62,5 +65,5 @@ bool Cap::CodeGenerator::generateFromNode(SyntaxTreeNode& node)
 		return false;
 
 	//DBG_LOG("Process '%s'", node.getTypeString());
-	return gen->generateInstruction(node, code);
+	return gen->generateInstruction(node);
 }

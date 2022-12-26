@@ -71,12 +71,19 @@ bool Cap::SourceFile::parseMisc(size_t& i, Scope& current)
 		return errorOut();
 	}
 
-	//	TODO context could be something specific such as "when"
 	Scope& scope = current.addBlock(ScopeContext::Block);
 	Token* name = &tokens[i];
 
+	scope.root.type = which;
+
+	//	"Else" doesn't use parenthesis
 	if(which != SyntaxTreeNode::Type::Else)
 	{
+		//	Create a root node for the expression inside the parenthesis
+		scope.root.left = std::make_shared <SyntaxTreeNode> (&scope.root, nullptr, SyntaxTreeNode::Type::Expression);
+		scope.root.left->left = std::make_shared <SyntaxTreeNode> (scope.root.left.get());
+		scope.node = scope.root.left->left.get();
+
 		i++;
 		if(!isToken(TokenType::Parenthesis, i))
 		{
@@ -90,12 +97,6 @@ bool Cap::SourceFile::parseMisc(size_t& i, Scope& current)
 
 		i++;
 		size_t parenthesisStart = i;
-
-		scope.root.type = which;
-
-		//	Create a root node for the expression inside the parenthesis
-		scope.root.left = std::make_shared <SyntaxTreeNode> (&scope.root);
-		scope.node = scope.root.left.get();
 
 		//	Parse the contents of the parenthesis
 		if(!parseLine(i, scope, true))
@@ -112,6 +113,16 @@ bool Cap::SourceFile::parseMisc(size_t& i, Scope& current)
 		//	Create a root node for the for the contents of the block
 		scope.root.right = std::make_shared <SyntaxTreeNode> (&scope.root);
 		scope.node = scope.root.right.get();
+	}
+
+	else
+	{
+		//	If we're processing an "else", the left node is the root node for the body
+		scope.root.left = std::make_shared <SyntaxTreeNode> (&scope.root);
+		scope.node = scope.root.left.get();
+
+		//	The code generator expects there to be a right node even if it's empty
+		scope.root.right = std::make_shared <SyntaxTreeNode> (&scope.root, nullptr, SyntaxTreeNode::Type::None);
 	}
 
 	i++;
