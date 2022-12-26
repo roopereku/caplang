@@ -13,7 +13,7 @@ class X86Intel : public Base
 {
 public:
 	void prepareForLine() override;
-	bool generateInstruction(SyntaxTreeNode& start, std::string& code) override;
+	bool generateInstruction(SyntaxTreeNode& start) override;
 
 private:
 	std::array <const char*, 7> registers

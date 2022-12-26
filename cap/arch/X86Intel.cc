@@ -23,7 +23,7 @@ void Cap::Arch::X86Intel::prepareForLine()
 	registerHasValue.fill(false);
 }
 
-bool Cap::Arch::X86Intel::generateInstruction(SyntaxTreeNode& node, std::string& code)
+bool Cap::Arch::X86Intel::generateInstruction(SyntaxTreeNode& node)
 {
 	using T = SyntaxTreeNode::Type;
 
@@ -90,6 +90,8 @@ bool Cap::Arch::X86Intel::generateInstruction(SyntaxTreeNode& node, std::string&
 			return false;
 		   break;
 
+		case T::Equal: op = "test"; break;
+
 		default:
 			Logger::error("???: Passed '%s' to X86Intel::generateInstruction", node.getTypeString());
 			return false;
@@ -126,6 +128,11 @@ bool Cap::Arch::X86Intel::generateInstruction(SyntaxTreeNode& node, std::string&
 		}
 
 		registerHasValue[currentRegister] = true;
+	}
+
+	if(t == InstructionType::Comparison)
+	{
+		code += "; Comparsion\n";
 	}
 
 	if(t == InstructionType::Arithmetic)

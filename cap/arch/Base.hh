@@ -3,6 +3,8 @@
 
 #include "../SyntaxTreeNode.hh"
 
+#include <string>
+
 namespace Cap {
 class Scope;
 
@@ -12,9 +14,10 @@ class Base
 {
 public:
 	virtual void prepareForLine()=0;
-	virtual bool generateInstruction(SyntaxTreeNode& node, std::string& code)=0;
+	virtual bool generateInstruction(SyntaxTreeNode& node)=0;
 
 	void setScope(Scope& scope);
+	const std::string& getOutput() { return code; }
 
 protected:
 	enum class InstructionType
@@ -30,6 +33,7 @@ protected:
 	std::string getValue(SyntaxTreeNode& node);
 
 	Scope* scope = nullptr;
+	std::string code;
 };
 
 }}
