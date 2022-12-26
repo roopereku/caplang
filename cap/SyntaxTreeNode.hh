@@ -84,7 +84,8 @@ struct SyntaxTreeNode
 	}
 	
 	SyntaxTreeNode(SyntaxTreeNode&& rhs)
-		:	parent(rhs.parent), value(rhs.value), type(rhs.type)
+		:	parent(rhs.parent), value(rhs.value), type(rhs.type),
+			left(std::move(rhs.left)), right(std::move(rhs.right))
 	{
 		rhs.parent = nullptr;
 		rhs.value = nullptr;
