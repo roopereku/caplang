@@ -1,11 +1,10 @@
 func main()
 {
-	var test = 48
-	var valtteri = 50
+	var test = 1
 	
-	if(valtteri + "homo")
+	if(test == 2)
 	{
-		var v = valtteri + "jdslkfjlk"
+		test += 5
 	}
 
 	else
