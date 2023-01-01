@@ -32,10 +32,10 @@ bool Cap::SourceFile::validate()
 	if(!valid)
 		return false;
 
-	CodeGenerator codeGen;
-	if(!root.validate(codeGen))
+	if(!root.validate())
 		return false;
 
+	CodeGenerator cg(root);
 	return true;
 }
 

@@ -19,19 +19,22 @@ public:
 		X86Intel
 	};
 
-	CodeGenerator();
-	void setScope(Scope& scope, bool finishPrevious = false);
+	CodeGenerator(Scope& scope);
 
 	static void setOutputType(Output type);
 	const std::string& getOutput() { return gen->getOutput(); }
 
-	bool generateLine(SyntaxTreeNode& start);
-
 private:
-	bool generateFromNode(SyntaxTreeNode& node);
+	CodeGenerator(Scope& scope, std::shared_ptr <Arch::Base> gen);
+
+	bool run();
+	bool generateLine(SyntaxTreeNode* start);
+	bool generateFromNode(SyntaxTreeNode* node);
 
 	static Output outputType;
 	std::shared_ptr <Arch::Base> gen = nullptr;
+
+	Scope& scope;
 };
 
 }

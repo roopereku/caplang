@@ -43,7 +43,7 @@ public:
 
 	size_t getFunctionCount() { return functions.size(); }
 	size_t getBlockCount() { return blocks.size(); }
-	bool validate(CodeGenerator& codeGen);
+	bool validate();
 
 	Scope* parent;
 	ScopeContext ctx;
@@ -53,6 +53,7 @@ public:
 
 private:
 	bool validateNode(SyntaxTreeNode* n);
+	bool validateBlock(SyntaxTreeNode* at);
 
 	SyntaxTreeNode* findAppropriateNode(SyntaxTreeNode* n);
 

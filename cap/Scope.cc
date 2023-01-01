@@ -110,7 +110,7 @@ Cap::Type* Cap::Scope::findType(Token* name)
 	return parent == nullptr ? Type::findPrimitiveType(name) : parent->findType(name);
 }
 
-bool Cap::Scope::validate(CodeGenerator& codeGen)
+bool Cap::Scope::validate()
 {
 	root.list();
 
@@ -119,7 +119,6 @@ bool Cap::Scope::validate(CodeGenerator& codeGen)
 	 *	look for duplicate declarations */
 
 	SyntaxTreeNode* n = &root;
-	codeGen.setScope(*this);
 
 	/*	Validate each "line" separately. The left node of the root
 	 *	likely contains an expression and the right node contains the
@@ -134,11 +133,17 @@ bool Cap::Scope::validate(CodeGenerator& codeGen)
 							n->type != SyntaxTreeNode::Type::If;
 
 		lineStart = n;
+
 		initializedVariable = nullptr;
 		//DBG_LOG("CTX '%s'", n->getTypeString());
 
-		//	If the node is not a block, it contains an expression that needs validating
-		if(n->type != SyntaxTreeNode::Type::Block)
+		if(n->type == SyntaxTreeNode::Type::Block)
+		{
+			Logger::warning("Validate block");
+			validateBlock(n);
+		}
+
+		else
 		{
 			//	Validate the inner contents of the node
 			if(!validateNode(n->left.get()))
@@ -153,21 +158,44 @@ bool Cap::Scope::validate(CodeGenerator& codeGen)
 
 			if(initializedVariable)
 				initializedVariable->initialized = true;
-
-			//	The line is valid so let's generate code for it
-			if(!codeGen.generateLine(*n))
-				return false;
 		}
 
 		//	If the node contains an index to the block, validate said block
-		else
-		{
-			Logger::warning("Validating scope of misc block %u", n->value->length);
-			if(!findBlock(n->value->length)->validate(codeGen))
-				return false;
+		//Logger::warning("Validating scope of misc block %u", n->value->length);
 
-			codeGen.setScope(*this, true);
-		}
+		//Scope* block = findBlock(n->value->length);
+
+		////	How many elses/else ifs come after this if?
+		//if(block->root.type == SyntaxTreeNode::Type::If)
+		//{
+		//	unsigned branchDepth = 0;
+		//	SyntaxTreeNode* b = n->right.get();
+
+		//	//	Loop while the right node is a block
+		//	while(b->type == SyntaxTreeNode::Type::Block)
+		//	{
+		//		Scope* next = findBlock(b->value->length);
+
+		//		//	Does the block represent else if/else
+		//		if(	next->root.type == SyntaxTreeNode::Type::ElseIf ||
+		//			next->root.type == SyntaxTreeNode::Type::Else)
+		//		{
+		//			branchDepth++;
+		//		}
+
+		//		//	It's something different
+		//		else break;
+
+		//		b = b->right.get();
+		//	}
+
+		//	codeGen.setBranchDepth(branchDepth);
+		//}
+
+		//if(!block->validate(codeGen))
+		//	return false;
+
+		//codeGen.setScope(*this, true);
 		
 		n = n->right.get();
 	}
@@ -176,29 +204,41 @@ bool Cap::Scope::validate(CodeGenerator& codeGen)
 	{
 		DBG_LOG("Validating type %s", t.name->getString().c_str());
 
-		CodeGenerator cg;
-		if(!t.scope->validate(cg))
+		if(!t.scope->validate())
 			return false;
-
-		Logger::warning("Final output of type\n%s", cg.getOutput().c_str());
 	}
 
 	for(auto& f : functions)
 	{
 		DBG_LOG("Validating function %s", f.name->getString().c_str());
 
-		CodeGenerator cg;
-		if(!f.scope->validate(cg))
+		if(!f.scope->validate())
 			return false;
-
-		DBG_LOG("Final output of function\n%s", cg.getOutput().c_str());
 	}
+
+	return true;
+}
+
+bool Cap::Scope::validateBlock(SyntaxTreeNode* at)
+{
+	Logger::warning("Validating scope of misc block %u", at->value->length);
+
+	Scope* block = findBlock(at->value->length);
+	if(!block->validate())
+		return false;
 
 	return true;
 }
 
 bool Cap::Scope::validateNode(SyntaxTreeNode* n)
 {
+	//DBG_LOG("Node '%s'", n->getTypeString());
+
+	if(n->type == SyntaxTreeNode::Type::Block)
+	{
+		return validateBlock(n);
+	}
+
 	//	Is the node an operator?
 	if(n->type <= SyntaxTreeNode::Type::UnaryNegative)
 	{
