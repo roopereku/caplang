@@ -136,6 +136,14 @@ bool Cap::Scope::validate()
 
 		initializedVariable = nullptr;
 		//DBG_LOG("CTX '%s'", n->getTypeString());
+		
+		//	Make sure that only variable declarations happen in the global scope
+		if(parent == nullptr && n->type != SyntaxTreeNode::Type::Variable)
+		{
+			//	FIXME Come up with a better error message because imports are also allowed :-)
+			Logger::error(*n->value, "Only variable declarations are allowed in the global scope");
+			return false;
+		}
 
 		if(n->type == SyntaxTreeNode::Type::Block)
 		{

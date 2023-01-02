@@ -1,14 +1,6 @@
+var a = 12
+a *= 2
+
 func main()
 {
-	var test = 1
-	
-	if(test == 2)
-	{
-		test += 5
-	}
-
-	else
-	{
-		test |= 1 << 7
-	}
 }
