@@ -1,6 +1,43 @@
-var a = 12
-a *= 2
-
 func main()
 {
+	var a = 12
+
+	if(a == 13)
+	{
+	}
+
+	else if(a == 14)
+	{
+	}
+
+	else
+	{
+	}
+
+	/*
+		main:
+
+			; If
+
+			cmp eax, 13
+			jne .L1
+
+			; ...
+
+			jump .L2
+		.L1:
+
+			; Else if
+
+			cmp eax, 14
+			jne .L2
+
+			; ...
+
+			jump .L2
+
+			; Else
+
+		.L2:
+	*/
 }

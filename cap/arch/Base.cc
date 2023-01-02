@@ -23,6 +23,12 @@ void Cap::Arch::Base::setScope(Scope& scope)
 	this->scope = &scope;
 }
 
+void Cap::Arch::Base::setBranchDepth(unsigned depth)
+{
+	Logger::warning("Branch depth -> %u", depth);
+	branchDepth = depth;
+}
+
 std::string Cap::Arch::Base::getValue(SyntaxTreeNode& node)
 {
 	switch(node.value->type)

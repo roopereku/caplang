@@ -19,6 +19,8 @@ public:
 	virtual bool generateInstruction(SyntaxTreeNode& node)=0;
 
 	void setScope(Scope& scope);
+	void setBranchDepth(unsigned depth);
+
 	const std::string& getOutput() { return code; }
 
 protected:
@@ -36,6 +38,8 @@ protected:
 
 	Scope* scope = nullptr;
 	std::string code;
+
+	unsigned branchDepth = 0;
 };
 
 }}
