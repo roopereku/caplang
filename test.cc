@@ -1,10 +1,6 @@
-#include "cap/CodeGenerator.hh"
-#include "cap/Program.hh"
+#include <cap/SourceFile.hh>
 
-int main(int argc, char** argv)
+int main()
 {
-	(void)argc;
-
-	Cap::CodeGenerator::setOutputType(Cap::CodeGenerator::Output::X86Intel);
-	Cap::Program p(argv[1]);
+	cap::SourceFile entry("../test.cap");
 }

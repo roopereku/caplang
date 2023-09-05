@@ -1,43 +1,16 @@
-func main()
+type test
 {
-	var a = 12
-
-	if(a == 13)
+	type InnerType
 	{
+		func funtionInInnerType()
+		{
+		}
 	}
 
-	else if(a == 14)
+	func funtionInTest()
 	{
+		type TypeInFunction
+		{
+		}
 	}
-
-	else
-	{
-	}
-
-	/*
-		main:
-
-			; If
-
-			cmp eax, 13
-			jne .L1
-
-			; ...
-
-			jump .L2
-		.L1:
-
-			; Else if
-
-			cmp eax, 14
-			jne .L2
-
-			; ...
-
-			jump .L2
-
-			; Else
-
-		.L2:
-	*/
 }
