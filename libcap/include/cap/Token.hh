@@ -31,13 +31,16 @@ public:
 	};
 
 	Token(Type t, std::string_view data, IndexType row, IndexType column);
+	Token(Token&& rhs);
+
+	Token(const Token& rhs) = default;
+	Token& operator=(const Token& rhs) = default;
 
 	/// Creates an invalid token. This can be used to create an invalid
 	/// fake token when next() returns something incorrect.
 	///
 	/// \returns Token with the type TokenType::Invalid.
 	static Token createInvalid();
-
 
 	/// Gets the token type represented as a string.
 	///

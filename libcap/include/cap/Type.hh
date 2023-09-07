@@ -14,7 +14,7 @@ public:
 	{
 	}
 
-	bool parse(Tokenizer& tokens, BraceMatcher& braces) override;
+	bool parse(ParserState& state) override;
 
 private:
 };

@@ -3,9 +3,15 @@
 namespace cap
 {
 
-void Node::associateToken(Token&& token)
+bool Node::handleToken(Token&& token, ParserState& state)
 {
-	tokens.emplace_back(std::move(token));
+	printf("handleToken called for Node\n");
+	return false;
+}
+
+void Node::adopt(std::shared_ptr <Node> node)
+{
+	node->parent = shared_from_this();
 }
 
 }

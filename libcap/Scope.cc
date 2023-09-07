@@ -2,6 +2,9 @@
 #include <cap/Scope.hh>
 #include <cap/Function.hh>
 
+#include <cap/node/ExpressionRoot.hh>
+#include <cap/node/VariableDeclaration.hh>
+
 namespace cap
 {
 
@@ -18,47 +21,61 @@ Token Scope::consumeName(Tokenizer& tokens)
 	return name;
 }
 
-bool Scope::createFunction(Tokenizer& tokens)
+bool Scope::createFunction(ParserState& state)
 {
-	Token name = consumeName(tokens);
+	Token name = consumeName(state.tokens);
 	scopes.emplace_back(std::make_shared <Function> (*this, std::move(name)));
 
 	BraceMatcher braces;
-	return scopes.back()->parse(tokens, braces);
+	return scopes.back()->parse(state);
 }
 
-bool Scope::createType(Tokenizer& tokens)
+bool Scope::createType(ParserState& state)
 {
-	Token name = consumeName(tokens);
+	Token name = consumeName(state.tokens);
 	scopes.emplace_back(std::make_shared <Type> (*this, std::move(name)));
 
 	BraceMatcher braces;
-	return scopes.back()->parse(tokens, braces);
+	return scopes.back()->parse(state);
 }
 
-bool Scope::parse(Tokenizer& tokens, BraceMatcher& braces)
+bool Scope::createVariable(ParserState& state)
+{
+	Token name = consumeName(state.tokens);
+	state.node = state.node->createNext <VariableDeclaration> (std::move(name));
+
+	return true;
+}
+
+bool Scope::parse(Tokenizer& tokens)
+{
+	ParserState state(tokens, root);
+	return parse(state);
+}
+
+bool Scope::parse(ParserState& state)
 {
 	printf("Scope parse\n");
 
 	// While there are tokens left the brace matcher is tracking braces,
 	// consume the token. NOTE: The global scope isn't contained in any
 	// braces so there's no brace matching if a scope doesn't have a parent.
-	while(!tokens.empty() && (!parent || braces.depth() > 0))
+	while(!state.tokens.empty() && (!parent || state.braces.depth() > 0))
 	{
-		Token token = tokens.next();
+		Token token = state.tokens.next();
 		BraceType braceType = BraceMatcher::getBraceType(token);
 
 		// Is the current token an opening brace?
 		if(braceType == BraceType::Opening)
 		{
-			if(!braces.open(std::move(token)))
+			if(!state.braces.open(std::move(token)))
 				return false;
 		}
 
 		// Is the current token a closing brace?
 		else if(braceType == BraceType::Closing)
 		{
-			if(!braces.close(std::move(token)))
+			if(!state.braces.close(std::move(token)))
 				return false;
 		}
 
@@ -71,7 +88,7 @@ bool Scope::parse(Tokenizer& tokens, BraceMatcher& braces)
 			if(token == "func")
 			{
 				// If the function creation fails, stop parsing.
-				if(!createFunction(tokens))
+				if(!createFunction(state))
 					return false;
 			}
 
@@ -79,7 +96,32 @@ bool Scope::parse(Tokenizer& tokens, BraceMatcher& braces)
 			else if(token == "type")
 			{
 				// If the type creation fails, stop parsing.
-				if(!createType(tokens))
+				if(!createType(state))
+					return false;
+			}
+
+			// "var" indicates that a variable should be created.
+			else if(token == "var")
+			{
+				// If the variable creation fails, stop parsing.
+				if(!createVariable(state))
+					return false;
+
+				// Since variables require assignment, we can assume that we're in an expression.
+				state.inExpression = true;
+			}
+
+			else
+			{
+				if(!state.inExpression)
+				{
+					state.node = findLastNode();
+					state.node = state.node->createNext <ExpressionRoot> (Token::createInvalid());
+
+					state.inExpression = true;
+				}
+
+				if(!state.node->handleToken(std::move(token), state))
 					return false;
 			}
 		}
@@ -87,13 +129,24 @@ bool Scope::parse(Tokenizer& tokens, BraceMatcher& braces)
 
 	// If we're not in a global scope and braces are still
 	// being tracked, we have unterminated braces.
-	if(parent && braces.depth() > 0)
+	if(parent && state.braces.depth() > 0)
 	{
-		printf("Unterminated brace '%c'\n", braces.getMostRecent()[0]);
+		printf("Unterminated brace '%c'\n", state.braces.getMostRecent()[0]);
 		return false;
 	}
 
 	return true;
+}
+
+std::shared_ptr <Node> Scope::findLastNode()
+{
+	std::shared_ptr <Node> current = root;
+	while(current->hasNext())
+	{
+		current = current->getNext();
+	}
+
+	return current;
 }
 
 }

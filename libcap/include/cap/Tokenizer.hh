@@ -29,6 +29,7 @@ private:
 	void updateCursorPosition();
 
 	Token::Type parseIdentifier();
+	Token::Type parseOperator();
 	Token::Type parseNumber();
 	Token::Type junkAfterNumber();
 

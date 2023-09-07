@@ -6,12 +6,12 @@
 namespace cap
 {
 
-bool Type::parse(Tokenizer& tokens, BraceMatcher& braces)
+bool Type::parse(ParserState& state)
 {
 	printf("Parsing type '%s'\n", name.getString().c_str());
 
 	// Make sure that the next token is an opening curly brace.
-	Token signatureOpener = tokens.next();
+	Token signatureOpener = state.tokens.next();
 	if(signatureOpener.getType() != Token::Type::CurlyBrace || signatureOpener[0] != '{')
 	{
 		printf("Expected '{' after a type name\n");
@@ -19,11 +19,11 @@ bool Type::parse(Tokenizer& tokens, BraceMatcher& braces)
 	}
 
 	// Open the type body.
-	braces.open(std::move(signatureOpener));
+	state.braces.open(std::move(signatureOpener));
 
 	// Parse the type body and stop on failure.
 	printf("Parsing body of '%s'\n", name.getString().c_str());
-	if(!Scope::parse(tokens, braces))
+	if(!Scope::parse(state))
 		return false;
 
 	return true;

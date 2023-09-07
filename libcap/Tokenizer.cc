@@ -75,8 +75,7 @@ Token Tokenizer::next()
 
 	else if(isOperatorCharacter(ch))
 	{
-		tokenType = Token::Type::Operator;
-		nextCharacter();
+		tokenType = parseOperator();
 	}
 
 	else if(isdigit(ch))
@@ -160,6 +159,16 @@ Token::Type Tokenizer::parseIdentifier()
 	}
 
 	return Token::Type::Identifier;
+}
+
+Token::Type Tokenizer::parseOperator()
+{
+	while(!empty() && isOperatorCharacter(data[index]))
+	{
+		nextCharacter();
+	}
+
+	return Token::Type::Operator;
 }
 
 Token::Type Tokenizer::parseNumber()

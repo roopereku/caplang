@@ -1,8 +1,8 @@
 #ifndef CAP_SCOPE_HH
 #define CAP_SCOPE_HH
 
-#include <cap/BraceMatcher.hh>
-#include <cap/Tokenizer.hh>
+#include <cap/ParserState.hh>
+#include <cap/Variable.hh>
 #include <cap/Node.hh>
 
 #include <memory>
@@ -14,35 +14,54 @@ namespace cap
 class Scope
 {
 public:
-	Scope(Scope& parent) : parent(&parent)
+	Scope(Scope& parent) : Scope(&parent)
 	{
 	}
 
-	Scope() : parent(nullptr)
+	Scope() : Scope(nullptr)
 	{
 	}
 
 	/// Creates a new function from the next tokens.
 	///
-	/// \param tokens Tokenizer to get tokens from.
+	/// \param state The state of the parser.
 	/// \returns True if the function was created succesfully.
-	bool createFunction(Tokenizer& tokens);
+	bool createFunction(ParserState& state);
 
 	/// Creates a new type from the next tokens.
 	///
-	/// \param tokens Tokenizer to get tokens from.
+	/// \param state The state of the parser.
 	/// \returns True if the type was created succesfully.
-	bool createType(Tokenizer& tokens);
+	bool createType(ParserState& state);
 
+	/// Creates a new variable from the next tokens.
+	///
+	/// \param state The state of the parser.
+	/// \returns True if the variable was created succesfully.
+	bool createVariable(ParserState& state);
 
-	virtual bool parse(Tokenizer& tokens, BraceMatcher& braces);
+	bool parse(Tokenizer& tokens);
+	virtual bool parse(ParserState& state);
+
+	const std::shared_ptr <Node> getRoot() const
+	{
+		return root;
+	}
 
 private:
+	Scope(Scope* parent) : parent(parent),
+		root(std::make_shared <Node> (Token::createInvalid()))
+	{
+	}
+
+	std::shared_ptr <Node> findLastNode();
+
 	static Token consumeName(Tokenizer& tokens);
 
 	std::vector <std::shared_ptr <Scope>> scopes;
 	Scope* parent;
-	Node root;
+
+	std::shared_ptr <Node> root;
 };
 
 }

@@ -9,7 +9,7 @@ SourceFile::SourceFile(std::string_view path)
 	Tokenizer tokens(path);
 	BraceMatcher braces;
 
-	global.parse(tokens, braces);
+	global.parse(tokens);
 }
 
 }

@@ -8,6 +8,11 @@ Token::Token(Type t, std::string_view data, IndexType row, IndexType column) :
 {
 }
 
+Token::Token(Token&& rhs) : type(rhs.type), data(std::move(rhs.data))
+{
+	rhs.type = Type::Invalid;
+}
+
 Token Token::createInvalid()
 {
 	Token invalid;
@@ -38,7 +43,7 @@ const char* Token::getTypeString() const
 
 std::string Token::getString() const
 {
-	return std::string(data);
+	return data.empty() ? "<empty token>" : std::string(data);
 }
 
 bool Token::operator==(std::string_view rhs) const
