@@ -1,6 +1,6 @@
 #include <cap/Tokenizer.hh>
 
-#include <fstream>
+#include <string_view>
 #include <cctype>
 #include <stack>
 
@@ -30,23 +30,8 @@ bool isBracket(char ch)
 	return ch == '(' || ch == ')' || ch == '{' || ch == '}' || ch == '[' || ch == ']';
 }
 
-Tokenizer::Tokenizer(std::string_view filePath)
+Tokenizer::Tokenizer(std::string& data) : data(data)
 {
-	std::ifstream file(filePath.data());
-
-	if(!file.is_open())
-	{
-		printf("Unable to open source file\n");
-		return;
-	}
-
-	//	Read the file with a single allocation
-	file.seekg(0, std::ios::end);
-	data.resize(file.tellg());
-	file.seekg(0, std::ios::beg);
-	file.read(&data[0], data.size());
-	file.close();
-
 	// Set the column to 1.
 	// If the first character is a newline, row is incremented.
 	updateCursorPosition();

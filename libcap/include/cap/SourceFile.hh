@@ -4,6 +4,7 @@
 #include <cap/Scope.hh>
 
 #include <string_view>
+#include <string>
 
 namespace cap
 {
@@ -15,6 +16,7 @@ public:
 
 private:
 	Scope global;
+	std::string source;
 };
 
 }

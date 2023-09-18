@@ -3,7 +3,6 @@
 
 #include <cap/Token.hh>
 
-#include <string_view>
 #include <string>
 
 namespace cap
@@ -12,7 +11,7 @@ namespace cap
 class Tokenizer
 {
 public:
-	Tokenizer(std::string_view filePath);
+	Tokenizer(std::string& data);
 
 	/// Consumes the next token.
 	///
@@ -33,7 +32,7 @@ private:
 	Token::Type parseNumber();
 	Token::Type junkAfterNumber();
 
-	std::string data;
+	std::string& data;
 	size_t index = 0;
 
 	Token::IndexType currentRow = 1;
