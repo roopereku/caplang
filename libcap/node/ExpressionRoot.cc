@@ -12,6 +12,7 @@ bool ExpressionRoot::handleToken(Token&& token, ParserState& state)
 	if(!root)
 	{
 		auto first = parseToken(std::move(token), state);
+		adopt(first);
 
 		if(!first)
 		{
@@ -22,6 +23,13 @@ bool ExpressionRoot::handleToken(Token&& token, ParserState& state)
 		{
 			printf("[ExpressionRoot] Cache token '%s'\n", first->getToken().c_str());
 
+			if(state.cachedValue)
+			{
+				printf("??? There's already a cached value\n");
+				return false;
+			}
+
+			// TODO: Support operator in parenthesis
 			state.cachedValue = std::move(std::static_pointer_cast <Value> (first));
 			state.previousIsValue = true;
 

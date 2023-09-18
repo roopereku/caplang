@@ -14,6 +14,11 @@ class SourceFile
 public:
 	SourceFile(std::string_view path);
 
+	const Scope& getGlobal()
+	{
+		return global;
+	}
+
 private:
 	Scope global;
 	std::string source;

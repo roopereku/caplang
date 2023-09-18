@@ -4,6 +4,7 @@
 
 #include <cap/node/ExpressionRoot.hh>
 #include <cap/node/VariableDeclaration.hh>
+#include <cap/node/FunctionDeclaration.hh>
 
 namespace cap
 {
@@ -21,16 +22,25 @@ Token Scope::consumeName(Tokenizer& tokens)
 	return name;
 }
 
-bool Scope::createFunction(ParserState& state)
+bool Scope::createFunction(Token&& token, ParserState& state)
 {
+	state.node = state.node->createNext <FunctionDeclaration> (std::move(token));
+
 	Token name = consumeName(state.tokens);
 	scopes.emplace_back(std::make_shared <Function> (*this, std::move(name)));
 
-	BraceMatcher braces;
-	return scopes.back()->parse(state);
+	auto function = std::static_pointer_cast <Function> (scopes.back());
+	ParserState newState(state.tokens, function->getRoot());
+	std::static_pointer_cast <FunctionDeclaration> (state.node)->function = function;
+
+	printf("-------------------------- START PARSING FUNCTION --------------------------------------------\n");
+	bool ret = function->parse(newState);
+	printf("-------------------------- STOP PARSING FUNCTION ---------------------------------------------\n");
+
+	return ret;
 }
 
-bool Scope::createType(ParserState& state)
+bool Scope::createType(Token&& token, ParserState& state)
 {
 	Token name = consumeName(state.tokens);
 	scopes.emplace_back(std::make_shared <Type> (*this, std::move(name)));
@@ -88,7 +98,7 @@ bool Scope::parse(ParserState& state)
 			if(token == "func")
 			{
 				// If the function creation fails, stop parsing.
-				if(!createFunction(state))
+				if(!createFunction(std::move(token), state))
 					return false;
 			}
 
@@ -96,7 +106,7 @@ bool Scope::parse(ParserState& state)
 			else if(token == "type")
 			{
 				// If the type creation fails, stop parsing.
-				if(!createType(state))
+				if(!createType(std::move(token), state))
 					return false;
 			}
 
@@ -116,6 +126,8 @@ bool Scope::parse(ParserState& state)
 				if(!state.inExpression)
 				{
 					state.node = findLastNode();
+					printf("CREATE NEXT FOR %u\n", state.node->id);
+
 					state.node = state.node->createNext <ExpressionRoot> (Token::createInvalid());
 
 					state.inExpression = true;

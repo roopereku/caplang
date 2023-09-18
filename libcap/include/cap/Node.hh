@@ -15,6 +15,11 @@ class Node : public std::enable_shared_from_this <Node>
 public:
 	Node(Token&& token) : token(std::move(token))
 	{
+		static unsigned ids = 0;
+		ids++;
+
+		id = ids;
+		//printf("Create node %u\n", id);
 	}
 
 	~Node()
@@ -24,13 +29,18 @@ public:
 	template <typename T>
 	std::shared_ptr <T> createNext(Token&& token)
 	{
-		auto ptr = std::make_shared <T> (std::move(token));
-		ptr->parent = shared_from_this();
+		next = std::make_shared <T> (std::move(token));
+		next->parent = shared_from_this();
 
-		return std::static_pointer_cast <T> (ptr);
+		return std::static_pointer_cast <T> (next);
 	}
 
 	virtual bool handleToken(Token&& token, ParserState& state);
+
+	std::shared_ptr <Node> getParent()
+	{
+		return parent;
+	}
 
 	bool hasNext()
 	{
@@ -42,17 +52,12 @@ public:
 		return next;
 	}
 
-	virtual bool isVariable()
+	virtual bool isExpression()
 	{
 		return false;
 	}
 
-	virtual bool isArithmeticOperation()
-	{
-		return false;
-	}
-
-	virtual bool isAssignment()
+	virtual bool isFunctionDeclaration()
 	{
 		return false;
 	}
@@ -63,6 +68,8 @@ public:
 	}
 
 	void adopt(std::shared_ptr <Node> node);
+
+	unsigned id;
 
 protected:
 	Token token;

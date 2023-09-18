@@ -14,6 +14,7 @@ public:
 		Assignment,
 		Addition,
 		Multiplication,
+		Division,
 	};
 
 	TwoSidedOperator(Token&& token, Type type)
@@ -28,6 +29,16 @@ public:
 	unsigned getPrecedence() override;
 
 	bool isTwoSidedOperator() override;
+
+	std::shared_ptr <Expression> getLeft()
+	{
+		return left;
+	}
+
+	std::shared_ptr <Expression> getRight()
+	{
+		return right;
+	}
 
 protected:
 	std::shared_ptr <Expression> left;

@@ -14,6 +14,11 @@ public:
 	{
 	}
 
+	const Token& getName()
+	{
+		return name;
+	}
+
 protected:
 	const Token name;
 };

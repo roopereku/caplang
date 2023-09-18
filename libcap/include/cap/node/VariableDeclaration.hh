@@ -16,7 +16,7 @@ public:
 
 	bool handleToken(Token&& token, ParserState& state) override;
 
-	bool isVariable() override
+	bool isVariableDeclaration() override
 	{
 		return true;
 	}

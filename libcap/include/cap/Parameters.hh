@@ -11,6 +11,7 @@ class Parameters : public Scope
 public:
 	Parameters(Scope& parent) : Scope(parent)
 	{
+		printf("Create parameters\n");
 	}
 };
 

@@ -15,6 +15,16 @@ public:
 
 	bool handleToken(Token&& token, ParserState& state) override;
 
+	bool isExpressionRoot() override
+	{
+		return true;
+	}
+
+	std::shared_ptr <Expression> getRoot()
+	{
+		return root;
+	}
+
 private:
 	std::shared_ptr <Expression> root;
 };

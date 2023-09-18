@@ -21,6 +21,16 @@ bool Expression::isOperator()
 	return false;
 }
 
+bool Expression::isVariableDeclaration()
+{
+	return false;
+}
+
+bool Expression::isExpressionRoot()
+{
+	return false;
+}
+
 std::shared_ptr <Expression> Expression::parseToken(Token&& token, ParserState& state)
 {
 	if(token.getType() == Token::Type::Operator)
@@ -51,6 +61,11 @@ std::shared_ptr <Expression> Expression::parseToken(Token&& token, ParserState& 
 			else if(token == "*")
 			{
 				t = TwoSidedOperator::Type::Multiplication;
+			}
+
+			else if(token == "/")
+			{
+				t = TwoSidedOperator::Type::Division;
 			}
 
 			else

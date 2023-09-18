@@ -24,15 +24,17 @@ public:
 
 	/// Creates a new function from the next tokens.
 	///
+	/// \param token The token containing "func".
 	/// \param state The state of the parser.
 	/// \returns True if the function was created succesfully.
-	bool createFunction(ParserState& state);
+	bool createFunction(Token&& token, ParserState& state);
 
 	/// Creates a new type from the next tokens.
 	///
+	/// \param token The token containing "type".
 	/// \param state The state of the parser.
 	/// \returns True if the type was created succesfully.
-	bool createType(ParserState& state);
+	bool createType(Token&& token, ParserState& state);
 
 	/// Creates a new variable from the next tokens.
 	///
@@ -52,6 +54,7 @@ private:
 	Scope(Scope* parent) : parent(parent),
 		root(std::make_shared <Node> (Token::createInvalid()))
 	{
+		printf("Create scope\n");
 	}
 
 	std::shared_ptr <Node> findLastNode();
