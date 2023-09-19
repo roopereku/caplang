@@ -1,6 +1,7 @@
 #include <cap/SourceFile.hh>
 #include <cap/node/FunctionDeclaration.hh>
 #include <cap/node/TwoSidedOperator.hh>
+#include <cap/node/OneSidedOperator.hh>
 #include <cap/node/ExpressionRoot.hh>
 #include <cap/node/Operator.hh>
 
@@ -47,6 +48,15 @@ private:
 
 					generateNode(twoSided->getLeft(), depth + 1);
 					generateNode(twoSided->getRight(), depth + 1);
+				}
+
+				else if(op->isOneSided())
+				{
+					auto oneSided = std::static_pointer_cast <cap::OneSidedOperator> (op);
+					file << indent(depth) << oneSided->getTypeString() << "\n";
+
+					generateNode(oneSided->getExpression(), depth + 1);
+
 				}
 			}
 

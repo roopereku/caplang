@@ -6,6 +6,8 @@
 namespace cap
 {
 
+class Operator;
+
 class Expression : public Node
 {
 public:
@@ -22,6 +24,10 @@ public:
 	virtual bool isExpressionRoot();
 
 	static std::shared_ptr <Expression> parseToken(Token&& token, ParserState& state);
+
+private:
+	static std::shared_ptr <Operator> parseOneSidedOperator(Token&& token, ParserState& state);
+	static std::shared_ptr <Operator> parseTwoSidedOperator(Token&& token, ParserState& state);
 };
 
 }

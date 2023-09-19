@@ -33,7 +33,7 @@ public:
 		return false;
 	}
 
-	bool isOperator() override
+	bool isOperator() final override
 	{
 		return true;
 	}
