@@ -22,13 +22,12 @@ public:
 	{
 	}
 
-	bool handleToken(Token&& token, ParserState& state) override;
 	bool applyCached(std::shared_ptr <Expression>&& cached) override;
 
 	const char* getTypeString() override;
 	unsigned getPrecedence() override;
 
-	bool isTwoSidedOperator() override;
+	bool isTwoSided() override;
 
 	std::shared_ptr <Expression> getLeft()
 	{
@@ -41,6 +40,10 @@ public:
 	}
 
 protected:
+	bool handleLowerPrecedence(std::shared_ptr <Operator> op, ParserState& state) override;
+	bool handleHigherPrecedence(std::shared_ptr <Operator> op, ParserState& state) override;
+	bool handleValue(std::shared_ptr <Value> value, ParserState& state) override;
+
 	std::shared_ptr <Expression> left;
 	std::shared_ptr <Expression> right;
 

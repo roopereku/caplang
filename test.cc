@@ -27,21 +27,21 @@ public:
 private:
 	void generateNode(std::shared_ptr <cap::Node> node, unsigned depth)
 	{
-		printf("%u '%s' %u\n", node->id, node->getToken().c_str(), depth);
+		//printf("%u '%s' %u\n", node->id, node->getToken().c_str(), depth);
 
 		if(node->isExpression())
 		{
-			printf("Expression node\n");
+			//printf("Expression node\n");
 			auto expr = std::static_pointer_cast <cap::Expression> (node);
 
 			if(expr->isOperator())
 			{
-				printf("Operator\n");
+				//printf("Operator\n");
 				auto op = std::static_pointer_cast <cap::Operator> (node);
 
-				if(op->isTwoSidedOperator())
+				if(op->isTwoSided())
 				{
-					printf("Two sided operator\n");
+					//printf("Two sided operator\n");
 					auto twoSided = std::static_pointer_cast <cap::TwoSidedOperator> (op);
 					file << indent(depth) << twoSided->getTypeString() << "\n";
 
@@ -52,13 +52,13 @@ private:
 
 			else if(expr->isValue())
 			{
-				printf("Value\n");
+				//printf("Value\n");
 				file << indent(depth) << "Value: " << expr->getToken() << "\n";
 			}
 
 			else if(expr->isExpressionRoot())
 			{
-				printf("Expression root\n");
+				//printf("Expression root\n");
 				file << indent(depth) << "Expression root\n";
 				generateNode(std::static_pointer_cast <cap::ExpressionRoot> (node)->getRoot(), depth + 1);
 			}
@@ -68,7 +68,7 @@ private:
 		{
 			auto decl = std::static_pointer_cast <cap::FunctionDeclaration> (node);
 
-			printf("Function declaration\n");
+			//printf("Function declaration\n");
 			file << indent(depth) << "Function: " << decl->function->getName().getString() << "\n";
 			generateNode(decl->function->getRoot(), depth + 1);
 		}

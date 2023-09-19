@@ -26,7 +26,11 @@ SourceFile::SourceFile(std::string_view path)
 	Tokenizer tokens(source);
 	BraceMatcher braces;
 
-	global.parse(tokens);
+	if(!global.parse(tokens))
+	{
+		// FIXME: Don't exit on failure.
+		std::quick_exit(1);
+	}
 }
 
 }

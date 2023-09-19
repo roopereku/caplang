@@ -3,142 +3,107 @@
 namespace cap
 {
 
-bool TwoSidedOperator::handleToken(Token&& token, ParserState& state)
+bool TwoSidedOperator::handleLowerPrecedence(std::shared_ptr <Operator> op, ParserState& state)
 {
-	printf("[TwoSidedOperator] Handle token '%s'\n", token.getString().c_str());
-
-	auto result = parseToken(std::move(token), state);
-
-	if(!result)
+	// Move the rhs of the current node to the lhs of the new node.
+	if(op->isTwoSided())
 	{
-		return false;
-	}
+		printf("Set current node '%s' to lhs of new node '%s'\n", getToken().c_str(), op->getTypeString());
+		printf("Adopt new node '%s' as rhs of parent'%s'\n", op->getTypeString(), parent->getToken().c_str());
 
-	else if(result->isValue())
-	{
-		if(!left)
+		auto twoSided = std::static_pointer_cast <TwoSidedOperator> (op);
+		twoSided->left = std::static_pointer_cast <Expression> (shared_from_this());
+
+		if(parent->isExpression())
 		{
-			printf("??? Left is missing\n");
-			return false;
-		}
+			auto parentExpr = std::static_pointer_cast <Expression> (parent);
 
-		printf("Result is value. Save '%s' rhs of %s\n", result->getToken().c_str(), getTypeString());
-		right = std::move(result);
-	}
-
-	else if(result->isOperator())
-	{
-		// Adopt the created operator.
-		adopt(result);
-
-		auto op = std::static_pointer_cast <Operator> (result);
-		printf("Result is operator %s\n", op->getTypeString());
-
-		// The concept of high and low is inverted here as 0 is the
-		// highest priority, therefore highest precedence.
-		if(op->getPrecedence() < getPrecedence())
-		{
-			printf("NEW OPERATOR HAS HIGHER PRECEDENCE\n");
-
-			if(op->isTwoSidedOperator())
+			if(parentExpr->isOperator())
 			{
-				printf("Set '%s' to lhs of new node '%s'\n", right->getToken().c_str(), op->getTypeString());
-				printf("Set new node '%s' to rhs of '%s'\n", result->getToken().c_str(), getTypeString());
+				auto parentOp = std::static_pointer_cast <Operator> (parentExpr);
 
-				auto twoSided = std::static_pointer_cast <TwoSidedOperator> (op);
-
-				// Move the rhs of the current node to the lhs of the new node.
-				twoSided->adopt(right);
-				twoSided->left = std::move(right);
-			}
-
-			else if(op->isOneSidedOperator())
-			{
-				printf("TODO: Implement one sided operator higher precedence\n");
-				return false;
-			}
-
-			else
-			{
-				printf("??? Weird operator type\n");
-				return false;
-			}
-
-			// The rhs of current becomes the new node.
-			right = std::move(op);
-		}
-
-		else
-		{
-			printf("NEW OPERATOR HAS LOWER OR SAME PRECEDENCE\n");
-
-			// Move the rhs of the current node to the lhs of the new node.
-			if(op->isTwoSidedOperator())
-			{
-				printf("Set current node '%s' to lhs of new node '%s'\n", getToken().c_str(), op->getTypeString());
-				printf("Adopt new node '%s' as rhs of parent'%s'\n", op->getTypeString(), parent->getToken().c_str());
-
-				auto twoSided = std::static_pointer_cast <TwoSidedOperator> (op);
-				twoSided->left = std::static_pointer_cast <Expression> (shared_from_this());
-
-				if(parent->isExpression())
+				// If the parent is a two sided operator, make the new node its rhs value.
+				if(parentOp->isTwoSided())
 				{
-					auto parentExpr = std::static_pointer_cast <Expression> (parent);
-
-					if(parentExpr->isOperator())
-					{
-						auto parentOp = std::static_pointer_cast <Operator> (parentExpr);
-
-						if(parentOp->isTwoSidedOperator())
-						{
-							parent->adopt(twoSided);
-							std::static_pointer_cast <TwoSidedOperator> (parentOp)->right = twoSided;
-						}
-
-						else
-						{
-							printf("TODO: Implement one sided parent\n");
-							return false;
-						}
-					}
-
-					else
-					{
-						printf("??? Parent isn't operator\n");
-						return false;
-					}
+					parent->adopt(twoSided);
+					std::static_pointer_cast <TwoSidedOperator> (parentOp)->right = twoSided;
 				}
 
 				else
 				{
-					printf("??? Parent isn't expression\n");
+					printf("[TwoSidedOperator::handleLowerPrecedence] One sided parent unimplemented\n");
 					return false;
 				}
 			}
 
-			else if(op->isOneSidedOperator())
-			{
-				printf("TODO: Implement one sided operator lower precedence\n");
-				return false;
-			}
-
 			else
 			{
-				printf("??? Weird operator type\n");
+				printf("??? Parent isn't operator\n");
 				return false;
 			}
 		}
 
-		state.node = result;
+		else
+		{
+			printf("??? Parent isn't expression\n");
+			return false;
+		}
+	}
+
+	else if(op->isOneSided())
+	{
+		printf("[TwoSidedOperator::handleLowerPrecedence] One sided operators unimplemented\n");
+		return false;
 	}
 
 	else
 	{
-		printf("??? Weird result\n");
+		printf("??? Weird operator type\n");
 		return false;
 	}
 
 	return true;
+}
+
+bool TwoSidedOperator::handleHigherPrecedence(std::shared_ptr <Operator> op, ParserState& state)
+{
+	if(op->isTwoSided())
+	{
+		auto twoSided = std::static_pointer_cast <TwoSidedOperator> (op);
+
+		printf("Set '%s' to lhs of new node '%s'\n", right->getToken().c_str(), op->getTypeString());
+		printf("Set new node '%s' to rhs of '%s'\n", twoSided->getToken().c_str(), getTypeString());
+
+		// Move the rhs of the current node to the lhs of the new node.
+		twoSided->adopt(right);
+		twoSided->left = std::move(right);
+	}
+
+	else
+	{
+		printf("[TwoSidedOperator::handleHigherPrecedence] One sided operators unimplemented\n");
+		return false;
+	}
+
+	// The rhs of current becomes the new node.
+	right = std::move(op);
+
+	return true;
+}
+
+bool TwoSidedOperator::handleValue(std::shared_ptr <Value> value, ParserState& state)
+{
+	if(!left)
+	{
+		printf("??? Left is missing\n");
+		return false;
+	}
+
+	printf("Result is value. Save '%s' rhs of %s\n", value->getToken().c_str(), getTypeString());
+	right = std::move(value);
+
+	return true;
+
 }
 
 bool TwoSidedOperator::applyCached(std::shared_ptr <Expression>&& cached)
@@ -182,7 +147,7 @@ unsigned TwoSidedOperator::getPrecedence()
 	return -1;
 }
 
-bool TwoSidedOperator::isTwoSidedOperator()
+bool TwoSidedOperator::isTwoSided()
 {
 	return true;
 }

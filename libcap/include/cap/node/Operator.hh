@@ -16,16 +16,19 @@ public:
 	{
 	}
 
+	bool handleToken(Token&& token, ParserState& state) final override;
+
 	virtual bool applyCached(std::shared_ptr <Expression>&& cached) = 0;
+
 	virtual const char* getTypeString() = 0;
 	virtual unsigned getPrecedence() = 0;
 
-	virtual bool isTwoSidedOperator()
+	virtual bool isTwoSided()
 	{
 		return false;
 	}
 
-	virtual bool isOneSidedOperator()
+	virtual bool isOneSided()
 	{
 		return false;
 	}
@@ -34,6 +37,11 @@ public:
 	{
 		return true;
 	}
+
+protected:
+	virtual bool handleLowerPrecedence(std::shared_ptr <Operator> op, ParserState& state) = 0;
+	virtual bool handleHigherPrecedence(std::shared_ptr <Operator> op, ParserState& state) = 0;
+	virtual bool handleValue(std::shared_ptr <Value> value, ParserState& state) = 0;
 };
 
 }
