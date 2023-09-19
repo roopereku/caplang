@@ -26,6 +26,9 @@ public:
 	}
 
 private:
+	/// Replaces the root with the given operator node.
+	bool replaceExpression(std::shared_ptr <Expression> node) override;
+
 	std::shared_ptr <Expression> root;
 };
 

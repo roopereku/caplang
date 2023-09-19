@@ -32,6 +32,12 @@ bool Expression::isExpressionRoot()
 	return false;
 }
 
+bool Expression::replaceExpression(std::shared_ptr <Expression> node)
+{
+	printf("called Expression::replaceExpression\n");
+	return false;
+}
+
 std::shared_ptr <Expression> Expression::parseToken(Token&& token, ParserState& state)
 {
 	if(token.getType() == Token::Type::Operator)

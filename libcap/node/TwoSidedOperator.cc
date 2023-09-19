@@ -1,4 +1,5 @@
 #include <cap/node/TwoSidedOperator.hh>
+#include <cap/node/ExpressionRoot.hh>
 
 namespace cap
 {
@@ -18,29 +19,27 @@ bool TwoSidedOperator::handleLowerPrecedence(std::shared_ptr <Operator> op, Pars
 		{
 			auto parentExpr = std::static_pointer_cast <Expression> (parent);
 
-			if(parentExpr->isOperator())
-			{
-				auto parentOp = std::static_pointer_cast <Operator> (parentExpr);
-
-				// If the parent is a two sided operator, make the new node its rhs value.
-				if(parentOp->isTwoSided())
-				{
-					parent->adopt(twoSided);
-					std::static_pointer_cast <TwoSidedOperator> (parentOp)->right = twoSided;
-				}
-
-				else
-				{
-					printf("[TwoSidedOperator::handleLowerPrecedence] One sided parent unimplemented\n");
-					return false;
-				}
-			}
-
-			else
-			{
-				printf("??? Parent isn't operator\n");
+			parentExpr->adopt(twoSided);
+			if(!parentExpr->replaceExpression(twoSided))
 				return false;
-			}
+
+			//if(parentExpr->isOperator())
+			//{
+			//	auto parentOp = std::static_pointer_cast <Operator> (parentExpr);
+
+			//	// If the parent is a two sided operator, make the new node its rhs value.
+			//	if(parentOp->isTwoSided())
+			//	{
+			//		parent->adopt(twoSided);
+			//		std::static_pointer_cast <TwoSidedOperator> (parentOp)->right = twoSided;
+			//	}
+
+			//	else
+			//	{
+			//		printf("[TwoSidedOperator::handleLowerPrecedence] One sided parent unimplemented\n");
+			//		return false;
+			//	}
+			//}
 		}
 
 		else
@@ -77,12 +76,6 @@ bool TwoSidedOperator::handleHigherPrecedence(std::shared_ptr <Operator> op, Par
 		// Move the rhs of the current node to the lhs of the new node.
 		twoSided->adopt(right);
 		twoSided->left = std::move(right);
-	}
-
-	else
-	{
-		printf("[TwoSidedOperator::handleHigherPrecedence] One sided operators unimplemented\n");
-		return false;
 	}
 
 	// The rhs of current becomes the new node.
@@ -149,6 +142,12 @@ unsigned TwoSidedOperator::getPrecedence()
 
 bool TwoSidedOperator::isTwoSided()
 {
+	return true;
+}
+
+bool TwoSidedOperator::replaceExpression(std::shared_ptr <Expression> node)
+{
+	right = node;
 	return true;
 }
 

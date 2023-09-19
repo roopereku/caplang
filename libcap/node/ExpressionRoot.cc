@@ -54,4 +54,10 @@ bool ExpressionRoot::handleToken(Token&& token, ParserState& state)
 	return true;
 }
 
+bool ExpressionRoot::replaceExpression(std::shared_ptr <Expression> node)
+{
+	root = node;
+	return true;
+}
+
 }

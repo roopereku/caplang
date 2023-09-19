@@ -57,8 +57,12 @@ bool OneSidedOperator::handleHigherPrecedence(std::shared_ptr <Operator> op, Par
 
 bool OneSidedOperator::handleValue(std::shared_ptr <Value> value, ParserState& state)
 {
-	printf("[OneSidedOperator] handleValue unimplemented\n");
-	return false;
+	expression = std::move(value);
+
+	// The current node should never contain a one sided operator with a value.
+	state.node = state.node->getParent();
+
+	return true;
 }
 
 }

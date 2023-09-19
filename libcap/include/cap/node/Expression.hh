@@ -23,6 +23,17 @@ public:
 	virtual bool isVariableDeclaration();
 	virtual bool isExpressionRoot();
 
+	/// Custom handler for when an operator should replace what's currently stored.
+	///
+	/// \param The node that will replace the currently stored node.
+	/// \return True if replacing succeeded.
+	virtual bool replaceExpression(std::shared_ptr <Expression> node);
+
+	/// Convert a token into the appropriate expression node.
+	///
+	/// \param token The token converted into a node.
+	/// \param The current state of the parser.
+	/// \returns The constructed node or nullptr.
 	static std::shared_ptr <Expression> parseToken(Token&& token, ParserState& state);
 
 private:
