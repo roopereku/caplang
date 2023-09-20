@@ -36,13 +36,14 @@ public:
 
 	friend class TwoSidedOperator;
 
+	Type type;
+
 protected:
 	bool handleLowerPrecedence(std::shared_ptr <Operator> op, ParserState& state) override;
 	bool handleHigherPrecedence(std::shared_ptr <Operator> op, ParserState& state) override;
 	bool handleValue(std::shared_ptr <Expression> value, ParserState& state) override;
 
 	std::shared_ptr <Expression> expression;
-	Type type;
 };
 
 }

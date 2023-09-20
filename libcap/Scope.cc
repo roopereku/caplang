@@ -181,6 +181,8 @@ bool Scope::parseBracket(Token&& token, ParserState& state)
 			printf("FUNCTION CALL\n");
 			auto call = std::make_shared <FunctionCall> (Token::createInvalid());
 
+			call->setParameters(inBraces);
+
 			if(!std::static_pointer_cast <Expression> (state.node)->handleExpressionNode(call, state))
 				return false;
 		}

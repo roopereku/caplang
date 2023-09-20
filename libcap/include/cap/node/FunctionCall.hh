@@ -2,6 +2,7 @@
 #define CAP_NODE_FUNCTION_CALL_HH
 
 #include <cap/node/OneSidedOperator.hh>
+#include <cap/node/ExpressionRoot.hh>
 
 namespace cap
 {
@@ -12,6 +13,15 @@ public:
 	FunctionCall(Token&& token) : OneSidedOperator(std::move(token), Type::FunctionCall)
 	{
 	}
+
+	void setParameters(std::shared_ptr <ExpressionRoot> params)
+	{
+		adopt(params);
+		parameters = params;
+	}
+
+private:
+	std::shared_ptr <ExpressionRoot> parameters;
 };
 
 }

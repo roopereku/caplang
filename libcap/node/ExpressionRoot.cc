@@ -12,37 +12,8 @@ bool ExpressionRoot::handleToken(Token&& token, ParserState& state)
 	if(!root)
 	{
 		auto first = parseToken(std::move(token), state);
-		adopt(first);
-
-		if(!first)
-		{
-			return false;
-		}
-
-		if(first->isValue())
-		{
-			printf("[ExpressionRoot] Cache token '%s'\n", first->getToken().c_str());
-
-			if(state.cachedValue)
-			{
-				printf("??? There's already a cached value\n");
-				return false;
-			}
-
-			// TODO: Support operator in parenthesis
-			state.cachedValue = std::move(std::static_pointer_cast <Value> (first));
-			state.previousIsValue = true;
-
-			return true;
-		}
-
-		else
-		{
-			printf("[ExpressionRoot] Initialize expression\n");
-
-			root = std::move(first);
-			state.node = root;
-		}
+		if(!handleExpressionNode(first, state))
+			return false;	
 	}
 
 	else
@@ -57,6 +28,49 @@ bool ExpressionRoot::handleToken(Token&& token, ParserState& state)
 bool ExpressionRoot::replaceExpression(std::shared_ptr <Expression> node)
 {
 	root = node;
+	return true;
+}
+
+bool ExpressionRoot::handleExpressionNode(std::shared_ptr <Expression> node, ParserState& state)
+{
+	adopt(node);
+
+	if(!node)
+	{
+		return false;
+	}
+
+	if(node->isValue())
+	{
+		printf("[ExpressionRoot] Cache token '%s'\n", node->getToken().c_str());
+
+		if(state.cachedValue)
+		{
+			printf("??? There's already a cached value\n");
+			return false;
+		}
+
+		state.cachedValue = std::move(std::static_pointer_cast <Value> (node));
+		state.previousIsValue = true;
+
+		return true;
+	}
+
+	else
+	{
+		printf("[ExpressionRoot] Initialize expression\n");
+
+		// Some operator like FunctionCall require a cached value.
+		if(state.cachedValue)
+		{
+			if(!node->handleExpressionNode(std::move(state.cachedValue), state))
+				return false;
+		}
+
+		root = std::move(node);
+		state.node = root;
+	}
+
 	return true;
 }
 

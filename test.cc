@@ -28,7 +28,7 @@ public:
 private:
 	void generateNode(std::shared_ptr <cap::Node> node, unsigned depth)
 	{
-		//printf("%u '%s' %u\n", node->id, node->getToken().c_str(), depth);
+		printf("%u '%s' %u\n", node->id, node->getToken().c_str(), depth);
 
 		if(node->isExpression())
 		{
@@ -55,8 +55,14 @@ private:
 					auto oneSided = std::static_pointer_cast <cap::OneSidedOperator> (op);
 					file << indent(depth) << oneSided->getTypeString() << "\n";
 
-					generateNode(oneSided->getExpression(), depth + 1);
+					if(oneSided->type == cap::OneSidedOperator::Type::FunctionCall)
+					{
+						printf("Function call %p\n", oneSided->getExpression().get());
+						if(oneSided->getExpression())
+							generateNode(oneSided->getExpression(), depth + 1);
+					}
 
+					else generateNode(oneSided->getExpression(), depth + 1);
 				}
 			}
 
@@ -68,9 +74,18 @@ private:
 
 			else if(expr->isExpressionRoot())
 			{
-				//printf("Expression root\n");
+				printf("Expression root\n");
 				file << indent(depth) << "Expression root\n";
-				generateNode(std::static_pointer_cast <cap::ExpressionRoot> (node)->getRoot(), depth + 1);
+
+				if(!std::static_pointer_cast <cap::ExpressionRoot> (node)->getRoot())
+				{
+					printf("No root\n");
+				}
+
+				else
+				{
+					generateNode(std::static_pointer_cast <cap::ExpressionRoot> (node)->getRoot(), depth + 1);
+				}
 			}
 		}
 

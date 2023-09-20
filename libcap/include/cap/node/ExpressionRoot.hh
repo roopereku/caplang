@@ -29,7 +29,7 @@ private:
 	/// Replaces the root with the given operator node.
 	bool replaceExpression(std::shared_ptr <Expression> node) override;
 
-	//bool handleExpressionNode(std::shared_ptr <Expression> node) override;
+	bool handleExpressionNode(std::shared_ptr <Expression> node, ParserState& state) override;
 
 	std::shared_ptr <Expression> root;
 };
