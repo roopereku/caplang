@@ -8,24 +8,29 @@ bool Operator::handleToken(Token&& token, ParserState& state)
 	printf("[Operator] Handle token '%s'\n", token.getString().c_str());
 
 	auto result = parseToken(std::move(token), state);
+	return handleExpressionNode(result, state);
+}
 
-	if(!result)
+bool Operator::handleExpressionNode(std::shared_ptr <Expression> node, ParserState& state)
+{
+	if(!node)
 	{
 		return false;
 	}
 
-	else if(result->isValue())
+	else if(node->isValue() || node->isExpressionRoot())
 	{
-		if(!handleValue(std::static_pointer_cast <Value> (result), state))
+		printf("Handle value '%s'\n", node->getToken().c_str());
+		if(!handleValue((node), state))
 			return false;
 	}
 
-	else if(result->isOperator())
+	else if(node->isOperator())
 	{
 		// Adopt the created operator.
-		adopt(result);
+		adopt(node);
 
-		auto op = std::static_pointer_cast <Operator> (result);
+		auto op = std::static_pointer_cast <Operator> (node);
 		printf("Result is operator %s\n", op->getTypeString());
 
 		// The concept of high and low is inverted here as 0 is the
@@ -44,7 +49,7 @@ bool Operator::handleToken(Token&& token, ParserState& state)
 				return false;
 		}
 			
-		state.node = result;
+		state.node = node;
 	}
 
 	else
@@ -55,5 +60,6 @@ bool Operator::handleToken(Token&& token, ParserState& state)
 
 	return true;
 }
+
 
 }

@@ -15,6 +15,7 @@ public:
 		Addition,
 		Multiplication,
 		Division,
+		Access,
 	};
 
 	TwoSidedOperator(Token&& token, Type type)
@@ -39,13 +40,15 @@ public:
 		return right;
 	}
 
+	friend class OneSidedOperator;
+
 protected:
 	/// Replaces the rhs node with the given operator.
 	bool replaceExpression(std::shared_ptr <Expression> node) override;
 
 	bool handleLowerPrecedence(std::shared_ptr <Operator> op, ParserState& state) override;
 	bool handleHigherPrecedence(std::shared_ptr <Operator> op, ParserState& state) override;
-	bool handleValue(std::shared_ptr <Value> value, ParserState& state) override;
+	bool handleValue(std::shared_ptr <Expression> value, ParserState& state) override;
 
 	std::shared_ptr <Expression> left;
 	std::shared_ptr <Expression> right;

@@ -38,6 +38,12 @@ bool Expression::replaceExpression(std::shared_ptr <Expression> node)
 	return false;
 }
 
+bool Expression::handleExpressionNode(std::shared_ptr <Expression> node, ParserState& state)
+{
+	printf("called Expression::handleExpressionNode\n");
+	return false;
+}
+
 std::shared_ptr <Expression> Expression::parseToken(Token&& token, ParserState& state)
 {
 	if(token.getType() == Token::Type::Operator)
@@ -47,12 +53,14 @@ std::shared_ptr <Expression> Expression::parseToken(Token&& token, ParserState& 
 		// If the previous token wasn't a value, assume this to be an unary operator.
 		if(!state.previousIsValue)
 		{
+			printf("Parse one sided\n");
 			op = parseOneSidedOperator(std::move(token), state);
 		}
 
 		// This is not an unary operator.
 		else
 		{
+			printf("Parse two sided\n");
 			op = parseTwoSidedOperator(std::move(token), state);
 		}
 
@@ -116,6 +124,11 @@ std::shared_ptr <Operator> Expression::parseTwoSidedOperator(Token&& token, Pars
 	else if(token == "/")
 	{
 		t = TwoSidedOperator::Type::Division;
+	}
+
+	else if(token == ".")
+	{
+		t = TwoSidedOperator::Type::Access;
 	}
 
 	else

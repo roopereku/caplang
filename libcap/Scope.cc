@@ -5,6 +5,7 @@
 #include <cap/node/ExpressionRoot.hh>
 #include <cap/node/VariableDeclaration.hh>
 #include <cap/node/FunctionDeclaration.hh>
+#include <cap/node/FunctionCall.hh>
 
 namespace cap
 {
@@ -67,18 +68,23 @@ bool Scope::parse(ParserState& state)
 {
 	printf("Scope parse\n");
 
-	// While there are tokens left the brace matcher is tracking braces,
-	// consume the token. NOTE: The global scope isn't contained in any
-	// braces so there's no brace matching if a scope doesn't have a parent.
-	while(!state.tokens.empty() && (!parent || state.braces.depth() > 0))
+	// Braces are only tracked if there were none open initially.
+	// For example the global scope utilizes this.
+	bool trackBraces = state.braces.depth() > 0;
+
+	// Loop while there are tokens and there are braces to track.
+	while(!state.tokens.empty())
 	{
+		if(trackBraces && state.braces.depth() == 0)
+			break;
+
 		Token token = state.tokens.next();
 		BraceType braceType = BraceMatcher::getBraceType(token);
 
 		// Is the current token an opening brace?
 		if(braceType == BraceType::Opening)
 		{
-			if(!state.braces.open(std::move(token)))
+			if(!parseBracket(std::move(token), state))
 				return false;
 		}
 
@@ -129,8 +135,13 @@ bool Scope::parse(ParserState& state)
 					printf("CREATE NEXT FOR %u\n", state.node->id);
 
 					state.node = state.node->createNext <ExpressionRoot> (Token::createInvalid());
-
 					state.inExpression = true;
+				}
+
+				if(!state.node)
+				{
+					printf("??? No current node\n");
+					return false;
 				}
 
 				if(!state.node->handleToken(std::move(token), state))
@@ -146,6 +157,61 @@ bool Scope::parse(ParserState& state)
 		printf("Unterminated brace '%c'\n", state.braces.getMostRecent()[0]);
 		return false;
 	}
+
+	return true;
+}
+
+bool Scope::parseBracket(Token&& token, ParserState& state)
+{
+	Token copy = token;
+	Token::Type t = token.getType();
+
+	auto inBraces = std::make_shared <ExpressionRoot> (Token::createInvalid());
+
+	if(state.previousIsValue)
+	{
+		if(!state.inExpression)
+		{
+			printf("??? Not in expression\n");
+			return false;
+		}
+
+		if(t == Token::Type::Parenthesis)
+		{
+			printf("FUNCTION CALL\n");
+			auto call = std::make_shared <FunctionCall> (Token::createInvalid());
+
+			if(!std::static_pointer_cast <Expression> (state.node)->handleExpressionNode(call, state))
+				return false;
+		}
+	}
+
+	ParserState newState(state.tokens, inBraces);
+	newState.inExpression = true;
+
+	if(!newState.braces.open(std::move(token)))
+		return false;
+
+	printf("------------------- START BRACES ------------------------\n");
+
+	if(!Scope::parse(newState))
+		return false;
+
+	printf("------------------- END BRACES --------------------------\n");
+
+	state.previousIsValue = true;
+
+	//if(state.inExpression)
+	//{
+	//	if(!std::static_pointer_cast <Expression> (state.node)->handleExpressionNode(inBraces, state))
+	//		return false;
+	//}
+
+	//else
+	//{
+	//	// Cache the brace contents if there's no active expression.
+	//	state.cachedValue = std::move(inBraces);
+	//}
 
 	return true;
 }

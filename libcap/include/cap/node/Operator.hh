@@ -38,10 +38,12 @@ public:
 		return true;
 	}
 
+	bool handleExpressionNode(std::shared_ptr <Expression> node, ParserState& state) override;
+
 protected:
 	virtual bool handleLowerPrecedence(std::shared_ptr <Operator> op, ParserState& state) = 0;
 	virtual bool handleHigherPrecedence(std::shared_ptr <Operator> op, ParserState& state) = 0;
-	virtual bool handleValue(std::shared_ptr <Value> value, ParserState& state) = 0;
+	virtual bool handleValue(std::shared_ptr <Expression> value, ParserState& state) = 0;
 };
 
 }

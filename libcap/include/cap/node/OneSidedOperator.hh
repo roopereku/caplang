@@ -11,6 +11,7 @@ class OneSidedOperator : public Operator
 public:
 	enum class Type
 	{
+		FunctionCall,
 		Negate
 	};
 
@@ -23,18 +24,22 @@ public:
 
 	const char* getTypeString() override;
 	unsigned getPrecedence() override;
-
 	bool isOneSided() override;
+
+	bool affectsPreviousValue();
+	bool affectsNextValue();
 
 	std::shared_ptr <Expression> getExpression()
 	{
 		return expression;
 	}
 
+	friend class TwoSidedOperator;
+
 protected:
 	bool handleLowerPrecedence(std::shared_ptr <Operator> op, ParserState& state) override;
 	bool handleHigherPrecedence(std::shared_ptr <Operator> op, ParserState& state) override;
-	bool handleValue(std::shared_ptr <Value> value, ParserState& state) override;
+	bool handleValue(std::shared_ptr <Expression> value, ParserState& state) override;
 
 	std::shared_ptr <Expression> expression;
 	Type type;

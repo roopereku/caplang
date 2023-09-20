@@ -57,6 +57,8 @@ private:
 		printf("Create scope\n");
 	}
 
+	bool parseBracket(Token&& token, ParserState& state);
+
 	std::shared_ptr <Node> findLastNode();
 
 	static Token consumeName(Tokenizer& tokens);

@@ -1,3 +1,4 @@
+#include <cap/node/OneSidedOperator.hh>
 #include <cap/node/TwoSidedOperator.hh>
 #include <cap/node/ExpressionRoot.hh>
 
@@ -22,24 +23,6 @@ bool TwoSidedOperator::handleLowerPrecedence(std::shared_ptr <Operator> op, Pars
 			parentExpr->adopt(twoSided);
 			if(!parentExpr->replaceExpression(twoSided))
 				return false;
-
-			//if(parentExpr->isOperator())
-			//{
-			//	auto parentOp = std::static_pointer_cast <Operator> (parentExpr);
-
-			//	// If the parent is a two sided operator, make the new node its rhs value.
-			//	if(parentOp->isTwoSided())
-			//	{
-			//		parent->adopt(twoSided);
-			//		std::static_pointer_cast <TwoSidedOperator> (parentOp)->right = twoSided;
-			//	}
-
-			//	else
-			//	{
-			//		printf("[TwoSidedOperator::handleLowerPrecedence] One sided parent unimplemented\n");
-			//		return false;
-			//	}
-			//}
 		}
 
 		else
@@ -51,8 +34,21 @@ bool TwoSidedOperator::handleLowerPrecedence(std::shared_ptr <Operator> op, Pars
 
 	else if(op->isOneSided())
 	{
-		printf("[TwoSidedOperator::handleLowerPrecedence] One sided operators unimplemented\n");
-		return false;
+		auto oneSided = std::static_pointer_cast <OneSidedOperator> (op);
+
+		//printf("[TwoSidedOperator::handleLowerPrecedence] One sided operators unimplemented\n");
+		printf("Steal rhs of '%s'\n", getTypeString());
+
+		auto parentExpr = std::static_pointer_cast <Expression> (parent);
+		oneSided->expression = std::static_pointer_cast <Expression> (shared_from_this());
+
+		parentExpr->adopt(oneSided);
+		if(!parentExpr->replaceExpression(oneSided))
+			return false;
+
+		oneSided->adopt(oneSided->expression);
+
+		return true;
 	}
 
 	else
@@ -78,13 +74,26 @@ bool TwoSidedOperator::handleHigherPrecedence(std::shared_ptr <Operator> op, Par
 		twoSided->left = std::move(right);
 	}
 
+	else if(op->isOneSided())
+	{
+		auto oneSided = std::static_pointer_cast <OneSidedOperator> (op);
+
+		if(oneSided->affectsPreviousValue())
+		{
+			printf("Set '%s' to new node '%s'\n", right->getToken().c_str(), oneSided->getTypeString());
+			printf("Set new node '%s' to rhs of '%s'\n", oneSided->getTypeString(), getTypeString());
+			oneSided->handleExpressionNode(right, state);
+			right = oneSided;
+		}
+	}
+
 	// The rhs of current becomes the new node.
 	right = std::move(op);
 
 	return true;
 }
 
-bool TwoSidedOperator::handleValue(std::shared_ptr <Value> value, ParserState& state)
+bool TwoSidedOperator::handleValue(std::shared_ptr <Expression> value, ParserState& state)
 {
 	if(!left)
 	{
@@ -121,6 +130,7 @@ const char* TwoSidedOperator::getTypeString()
 		case Type::Addition: return "Addition";
 		case Type::Multiplication: return "Multiplication";
 		case Type::Division: return "Division";
+		case Type::Access: return "Access";
 	}
 
 	return "???";
@@ -135,6 +145,7 @@ unsigned TwoSidedOperator::getPrecedence()
 		case Type::Addition: return 6;
 		case Type::Multiplication: return 5;
 		case Type::Division: return 5;
+		case Type::Access: return 2;
 	}
 
 	return -1;

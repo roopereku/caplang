@@ -29,6 +29,13 @@ public:
 	/// \return True if replacing succeeded.
 	virtual bool replaceExpression(std::shared_ptr <Expression> node);
 
+	/// Custom handler for when an existing expression node should be handled.
+	///
+	/// \param The expression node that will be handled.
+	/// \param The current state of the parser.
+	/// \return True if handling succeeded.
+	virtual bool handleExpressionNode(std::shared_ptr <Expression> node, ParserState& state);
+
 	/// Convert a token into the appropriate expression node.
 	///
 	/// \param token The token converted into a node.
