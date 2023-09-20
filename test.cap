@@ -1,4 +1,4 @@
 func main()
 {
-	a = abc.foo.bar() * 2 + 5
+	a = (1 + 2) / abc()
 }

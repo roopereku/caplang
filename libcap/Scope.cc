@@ -201,17 +201,36 @@ bool Scope::parseBracket(Token&& token, ParserState& state)
 
 	state.previousIsValue = true;
 
-	//if(state.inExpression)
-	//{
-	//	if(!std::static_pointer_cast <Expression> (state.node)->handleExpressionNode(inBraces, state))
-	//		return false;
-	//}
+	if(state.inExpression)
+	{
+		auto expr = std::static_pointer_cast <Expression> (state.node);
+		bool setAfterCurrent = true;
 
-	//else
-	//{
-	//	// Cache the brace contents if there's no active expression.
-	//	state.cachedValue = std::move(inBraces);
-	//}
+		if(expr->isOperator())
+		{
+			auto op = std::static_pointer_cast <Operator> (expr);
+
+			if(op->isOneSided())
+			{
+				auto oneSided = std::static_pointer_cast <OneSidedOperator> (op);
+
+				if(oneSided->affectsPreviousValue())
+				{
+					printf("Don't set after current\n");
+					setAfterCurrent = false;
+				}
+			}
+		}
+
+		if(setAfterCurrent && !expr->handleExpressionNode(inBraces, state))
+			return false;
+	}
+
+	else
+	{
+		// Cache the brace contents if there's no active expression.
+		state.cachedValue = std::move(inBraces);
+	}
 
 	return true;
 }
