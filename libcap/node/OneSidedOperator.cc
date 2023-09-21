@@ -4,6 +4,32 @@
 namespace cap
 {
 
+struct OperatorEntry
+{
+	std::string_view str;
+	OneSidedOperator::Type type;
+};
+
+static OperatorEntry operatorLookup[]
+{
+	{ "!", OneSidedOperator::Type::Not },
+	{ "-", OneSidedOperator::Type::Negate },
+	{ "~", OneSidedOperator::Type::BitwiseNot },
+};
+
+std::shared_ptr <Operator> OneSidedOperator::parse(Token&& token, ParserState& state)
+{
+	for(auto& entry : operatorLookup)
+	{
+		if(token == entry.str)
+		{
+			return std::make_shared <OneSidedOperator> (std::move(token), entry.type);
+		}
+	}
+
+	return nullptr;
+}
+
 bool OneSidedOperator::applyCached(std::shared_ptr <Expression>&& cached)
 {
 	printf("[OneSidedOperator] Apply cached '%s'\n", cached->getToken().c_str());
@@ -24,7 +50,10 @@ const char* OneSidedOperator::getTypeString()
 	{
 		case Type::FunctionCall: return "Function call";
 		case Type::Subscript: return "Subscript";
+
+		case Type::Not: return "Not";
 		case Type::Negate: return "Negate";
+		case Type::BitwiseNot: return "Bitwise not";
 	}
 
 	return "???";
@@ -37,7 +66,10 @@ unsigned OneSidedOperator::getPrecedence()
 	{
 		case Type::FunctionCall: return 2;
 		case Type::Subscript: return 2;
+
+		case Type::Not: return 3;
 		case Type::Negate: return 3;
+		case Type::BitwiseNot: return 3;
 	}
 
 	return -1;

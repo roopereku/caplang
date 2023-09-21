@@ -13,9 +13,26 @@ public:
 	{
 		Assignment,
 		Addition,
+		Subtraction,
 		Multiplication,
 		Division,
+		Modulus,
 		Access,
+
+		GreaterThan,
+		GreaterOrEqual,
+		LessThan,
+		LessOrEqual,
+		Equals,
+		NotEquals,
+		Or,
+		And,
+
+		BitwiseShiftLeft,
+		BitwiseShiftRight,
+		BitwiseAnd,
+		BitwiseOr,
+		BitwiseXor,
 	};
 
 	TwoSidedOperator(Token&& token, Type type)
@@ -39,6 +56,13 @@ public:
 	{
 		return right;
 	}
+
+	/// Parses a two sided operator from the given token.
+	///
+	/// \param token The token to parse a two sided operator from.
+	/// \state The current parser state.
+	/// \returns New two sided operator or nullptr if the token has an invalid operator.
+	static std::shared_ptr <Operator> parse(Token&& token, ParserState& state);
 
 	friend class OneSidedOperator;
 

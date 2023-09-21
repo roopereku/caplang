@@ -13,7 +13,10 @@ public:
 	{
 		FunctionCall,
 		Subscript,
-		Negate
+
+		Not,
+		Negate,
+		BitwiseNot,
 	};
 
 	OneSidedOperator(Token&& token, Type type)
@@ -35,8 +38,16 @@ public:
 		return expression;
 	}
 
+	/// Parses a one sided operator from the given token.
+	///
+	/// \param token The token to parse a one sided operator from.
+	/// \state The current parser state.
+	/// \returns New one sided operator or nullptr if the token has an invalid operator.
+	static std::shared_ptr <Operator> parse(Token&& token, ParserState& state);
+
 	friend class TwoSidedOperator;
 
+	// FIXME: Make this private.
 	Type type;
 
 protected:

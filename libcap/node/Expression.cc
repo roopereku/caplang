@@ -54,14 +54,14 @@ std::shared_ptr <Expression> Expression::parseToken(Token&& token, ParserState& 
 		if(!state.previousIsValue)
 		{
 			printf("Parse one sided\n");
-			op = parseOneSidedOperator(std::move(token), state);
+			op = OneSidedOperator::parse(std::move(token), state);
 		}
 
 		// This is not an unary operator.
 		else
 		{
 			printf("Parse two sided\n");
-			op = parseTwoSidedOperator(std::move(token), state);
+			op = TwoSidedOperator::parse(std::move(token), state);
 		}
 
 		if(!op)
@@ -83,60 +83,6 @@ std::shared_ptr <Expression> Expression::parseToken(Token&& token, ParserState& 
 	// The result is a value node.
 	state.previousIsValue = true;
 	return std::make_shared <Value> (std::move(token));
-}
-
-std::shared_ptr <Operator> Expression::parseOneSidedOperator(Token&& token, ParserState& state)
-{
-	OneSidedOperator::Type t;
-
-	if(token == "-")
-	{
-		t = OneSidedOperator::Type::Negate;
-	}
-
-	else
-	{
-		return nullptr;
-	}
-
-	return std::make_shared <OneSidedOperator> (std::move(token), t);
-}
-
-std::shared_ptr <Operator> Expression::parseTwoSidedOperator(Token&& token, ParserState& state)
-{
-	TwoSidedOperator::Type t;
-
-	if(token == "=")
-	{
-		t = TwoSidedOperator::Type::Assignment;
-	}
-
-	else if(token == "+")
-	{
-		t = TwoSidedOperator::Type::Addition;
-	}
-
-	else if(token == "*")
-	{
-		t = TwoSidedOperator::Type::Multiplication;
-	}
-
-	else if(token == "/")
-	{
-		t = TwoSidedOperator::Type::Division;
-	}
-
-	else if(token == ".")
-	{
-		t = TwoSidedOperator::Type::Access;
-	}
-
-	else
-	{
-		return nullptr;
-	}
-
-	return std::make_shared <TwoSidedOperator> (std::move(token), t);
 }
 
 }
