@@ -20,6 +20,11 @@ public:
 		parameters = params;
 	}
 
+	std::shared_ptr <ExpressionRoot> getParameters()
+	{
+		return parameters;
+	}
+
 private:
 	std::shared_ptr <ExpressionRoot> parameters;
 };

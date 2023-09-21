@@ -6,6 +6,7 @@
 #include <cap/node/VariableDeclaration.hh>
 #include <cap/node/FunctionDeclaration.hh>
 #include <cap/node/FunctionCall.hh>
+#include <cap/node/Subscript.hh>
 
 namespace cap
 {
@@ -163,11 +164,11 @@ bool Scope::parse(ParserState& state)
 
 bool Scope::parseBracket(Token&& token, ParserState& state)
 {
-	Token copy = token;
 	Token::Type t = token.getType();
-
 	auto inBraces = std::make_shared <ExpressionRoot> (Token::createInvalid());
 
+	// If there was a value previously, the brackets might indicate
+	// a function call or a subscript operator.
 	if(state.previousIsValue)
 	{
 		if(!state.inExpression)
@@ -176,20 +177,35 @@ bool Scope::parseBracket(Token&& token, ParserState& state)
 			return false;
 		}
 
+		std::shared_ptr <OneSidedOperator> op;
+
 		if(t == Token::Type::Parenthesis)
 		{
 			printf("FUNCTION CALL\n");
-			auto call = std::make_shared <FunctionCall> (Token::createInvalid());
-
-			call->setParameters(inBraces);
-
-			if(!std::static_pointer_cast <Expression> (state.node)->handleExpressionNode(call, state))
-				return false;
+			op = std::make_shared <FunctionCall> (Token::createInvalid());
+			std::static_pointer_cast <FunctionCall> (op)->setParameters(inBraces);
 		}
+
+		else if(t == Token::Type::SquareBracket)
+		{
+			printf("SUBSCRIPT\n");
+			op = std::make_shared <Subscript> (Token::createInvalid());
+			std::static_pointer_cast <Subscript> (op)->setContents(inBraces);
+		}
+
+		else
+		{
+			printf("??? {} after value not implemented\n");
+			return false;
+		}
+
+		if(!std::static_pointer_cast <Expression> (state.node)->handleExpressionNode(op, state))
+			return false;
 	}
 
 	ParserState newState(state.tokens, inBraces);
 	newState.inExpression = true;
+	state.previousIsValue = true;
 
 	if(!newState.braces.open(std::move(token)))
 		return false;
@@ -200,8 +216,6 @@ bool Scope::parseBracket(Token&& token, ParserState& state)
 		return false;
 
 	printf("------------------- END BRACES --------------------------\n");
-
-	state.previousIsValue = true;
 
 	if(state.inExpression)
 	{

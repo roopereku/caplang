@@ -3,6 +3,8 @@
 #include <cap/node/TwoSidedOperator.hh>
 #include <cap/node/OneSidedOperator.hh>
 #include <cap/node/ExpressionRoot.hh>
+#include <cap/node/FunctionCall.hh>
+#include <cap/node/Subscript.hh>
 #include <cap/node/Operator.hh>
 
 #include <fstream>
@@ -57,9 +59,21 @@ private:
 
 					if(oneSided->type == cap::OneSidedOperator::Type::FunctionCall)
 					{
-						printf("Function call %p\n", oneSided->getExpression().get());
-						if(oneSided->getExpression())
-							generateNode(oneSided->getExpression(), depth + 1);
+						//	printf("Function call %p\n", oneSided->getExpression().get());
+						auto call = std::static_pointer_cast <cap::FunctionCall> (oneSided);
+						generateNode(call->getParameters(), depth + 1);
+
+						if(call->getExpression())
+							generateNode(call->getExpression(), depth + 1);
+					}
+
+					else if(oneSided->type == cap::OneSidedOperator::Type::Subscript)
+					{
+						auto subscript = std::static_pointer_cast <cap::Subscript> (oneSided);
+						generateNode(subscript->getContents(), depth + 1);
+
+						if(subscript->getExpression())
+							generateNode(subscript->getExpression(), depth + 1);
 					}
 
 					else generateNode(oneSided->getExpression(), depth + 1);

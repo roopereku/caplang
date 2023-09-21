@@ -12,6 +12,7 @@ public:
 	enum class Type
 	{
 		FunctionCall,
+		Subscript,
 		Negate
 	};
 

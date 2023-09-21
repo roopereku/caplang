@@ -22,8 +22,9 @@ const char* OneSidedOperator::getTypeString()
 {
 	switch(type)
 	{
-		case Type::Negate: return "Negate";
 		case Type::FunctionCall: return "Function call";
+		case Type::Subscript: return "Subscript";
+		case Type::Negate: return "Negate";
 	}
 
 	return "???";
@@ -34,8 +35,9 @@ unsigned OneSidedOperator::getPrecedence()
 	// Values from https://en.cppreference.com/w/cpp/language/operator_precedence
 	switch(type)
 	{
-		case Type::Negate: return 3;
 		case Type::FunctionCall: return 2;
+		case Type::Subscript: return 2;
+		case Type::Negate: return 3;
 	}
 
 	return -1;
@@ -51,6 +53,7 @@ bool OneSidedOperator::affectsPreviousValue()
 	switch(type)
 	{
 		case Type::FunctionCall:
+		case Type::Subscript:
 			return true;
 
 		default:
@@ -65,13 +68,11 @@ bool OneSidedOperator::affectsNextValue()
 
 bool OneSidedOperator::handleLowerPrecedence(std::shared_ptr <Operator> op, ParserState& state)
 {
+	auto parentExpr = std::static_pointer_cast <Expression> (parent);
+
 	if(op->isTwoSided())
 	{
 		auto twoSided = std::static_pointer_cast <TwoSidedOperator> (op);
-
-		printf("Steal lhs of '%s'\n", getTypeString());
-
-		auto parentExpr = std::static_pointer_cast <Expression> (parent);
 		twoSided->left = std::static_pointer_cast <Expression> (shared_from_this());
 
 		parentExpr->adopt(twoSided);
@@ -79,6 +80,18 @@ bool OneSidedOperator::handleLowerPrecedence(std::shared_ptr <Operator> op, Pars
 			return false;
 
 		twoSided->adopt(twoSided->left);
+	}
+
+	else if(op->isOneSided())
+	{
+		auto oneSided = std::static_pointer_cast <OneSidedOperator> (op);
+		oneSided->expression = std::static_pointer_cast <Expression> (shared_from_this());
+
+		parentExpr->adopt(oneSided);
+		if(!parentExpr->replaceExpression(oneSided))
+			return false;
+
+		oneSided->adopt(oneSided->expression);
 	}
 
 	return true;
