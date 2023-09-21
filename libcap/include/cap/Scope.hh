@@ -58,6 +58,8 @@ private:
 	}
 
 	bool parseBracket(Token&& token, ParserState& state);
+	bool initExpression(ParserState& state, Token::IndexType startRow);
+	void checkExpressionState(ParserState& state, Token::IndexType row);
 
 	std::shared_ptr <Node> findLastNode();
 

@@ -71,7 +71,7 @@ bool Scope::parse(ParserState& state)
 
 	// Braces are only tracked if there were none open initially.
 	// For example the global scope utilizes this.
-	bool trackBraces = state.braces.depth() > 0;
+	const bool trackBraces = state.braces.depth() > 0;
 
 	// Loop while there are tokens and there are braces to track.
 	while(!state.tokens.empty())
@@ -100,6 +100,8 @@ bool Scope::parse(ParserState& state)
 		else
 		{
 			printf("Token %s '%s'\n", token.getTypeString(), token.getString().c_str());
+
+			checkExpressionState(state, token.getRow());
 
 			// "func" indicates that a function should be created.
 			if(token == "func")
@@ -132,11 +134,8 @@ bool Scope::parse(ParserState& state)
 			{
 				if(!state.inExpression)
 				{
-					state.node = findLastNode();
-					printf("CREATE NEXT FOR %u\n", state.node->id);
-
-					state.node = state.node->createNext <ExpressionRoot> (Token::createInvalid());
-					state.inExpression = true;
+					if(!initExpression(state, token.getRow()))
+						return false;
 				}
 
 				if(!state.node)
@@ -205,7 +204,10 @@ bool Scope::parseBracket(Token&& token, ParserState& state)
 
 	ParserState newState(state.tokens, inBraces);
 	newState.inExpression = true;
+	newState.canEndExpression = false;
+
 	state.previousIsValue = true;
+	Token::IndexType row = token.getRow();
 
 	if(!newState.braces.open(std::move(token)))
 		return false;
@@ -244,11 +246,41 @@ bool Scope::parseBracket(Token&& token, ParserState& state)
 
 	else
 	{
-		// Cache the brace contents if there's no active expression.
-		state.cachedValue = std::move(inBraces);
+		if(!initExpression(state, row))
+			return false;
+
+		// Try to cache the contents inside the braces.
+		if(!std::static_pointer_cast <Expression> (state.node)->handleExpressionNode(std::move(inBraces), state))
+			return false;
 	}
 
 	return true;
+}
+
+bool Scope::initExpression(ParserState& state, Token::IndexType startRow)
+{
+	printf("INIT EXPRESSION AT LINE %lu\n", startRow);
+
+	state.node = findLastNode();
+	state.node = state.node->createNext <ExpressionRoot> (Token::createInvalid());
+
+	state.inExpression = true;
+	state.expressionStartRow = startRow;
+
+	return true;
+}
+
+void Scope::checkExpressionState(ParserState& state, Token::IndexType row)
+{
+	if(!state.inExpression)
+		return;
+
+	if(row > state.expressionStartRow)
+	{
+		printf("END EXPRESSION AT %lu\n", row);
+		state.inExpression = false;
+		return;
+	}
 }
 
 std::shared_ptr <Node> Scope::findLastNode()

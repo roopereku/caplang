@@ -21,6 +21,8 @@ struct ParserState
 
 	bool inExpression = false;
 	bool previousIsValue = false;
+	bool canEndExpression = true;
+	Token::IndexType expressionStartRow;
 
 	std::shared_ptr <Expression> cachedValue;
 	std::shared_ptr <Node> node;
