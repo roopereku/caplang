@@ -1,4 +1,4 @@
 func main()
 {
-	a = abc[1 + 2](3 / 4)[0 * index]
+	a = ~util.getBitMask() > 1
 }

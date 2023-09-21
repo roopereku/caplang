@@ -51,7 +51,10 @@ public:
 	Type type;
 
 protected:
-	bool handleLowerPrecedence(std::shared_ptr <Operator> op, ParserState& state) override;
+	/// Replaces the expression node with the given operator.
+	bool replaceExpression(std::shared_ptr <Expression> node) override;
+
+	bool handleSamePrecedence(std::shared_ptr <Operator> op, ParserState& state) override;
 	bool handleHigherPrecedence(std::shared_ptr <Operator> op, ParserState& state) override;
 	bool handleValue(std::shared_ptr <Expression> value, ParserState& state) override;
 

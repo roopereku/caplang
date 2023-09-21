@@ -70,7 +70,7 @@ protected:
 	/// Replaces the rhs node with the given operator.
 	bool replaceExpression(std::shared_ptr <Expression> node) override;
 
-	bool handleLowerPrecedence(std::shared_ptr <Operator> op, ParserState& state) override;
+	bool handleSamePrecedence(std::shared_ptr <Operator> op, ParserState& state) override;
 	bool handleHigherPrecedence(std::shared_ptr <Operator> op, ParserState& state) override;
 	bool handleValue(std::shared_ptr <Expression> value, ParserState& state) override;
 

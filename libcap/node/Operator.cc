@@ -31,7 +31,7 @@ bool Operator::handleExpressionNode(std::shared_ptr <Expression> node, ParserSta
 		adopt(node);
 
 		auto op = std::static_pointer_cast <Operator> (node);
-		printf("Result is operator %s\n", op->getTypeString());
+		printf("[%s] Result is operator %s\n", getTypeString(), op->getTypeString());
 
 		// The concept of high and low is inverted here as 0 is the
 		// highest priority, therefore highest precedence.
@@ -44,8 +44,17 @@ bool Operator::handleExpressionNode(std::shared_ptr <Expression> node, ParserSta
 
 		else
 		{
-			printf("NEW OPERATOR HAS LOWER OR SAME PRECEDENCE\n");
-			if(!handleLowerPrecedence(op, state))
+			// If the precedence is not the same, make the parent the current node and try again.
+			if(op->getPrecedence() != getPrecedence())
+			{
+				printf("NEW OPERATOR HAS LOWER PRECEDENCE\n");
+
+				state.node = parent;
+				return std::static_pointer_cast <Expression> (parent)->handleExpressionNode(node, state);
+			}
+
+			printf("NEW OPERATOR HAS SAME PRECEDENCE\n");
+			if(!handleSamePrecedence(op, state))
 				return false;
 		}
 			

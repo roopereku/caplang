@@ -48,14 +48,12 @@ std::shared_ptr <Operator> TwoSidedOperator::parse(Token&& token, ParserState& s
 	return nullptr;
 }
 
-bool TwoSidedOperator::handleLowerPrecedence(std::shared_ptr <Operator> op, ParserState& state)
+bool TwoSidedOperator::handleSamePrecedence(std::shared_ptr <Operator> op, ParserState& state)
 {
 	// Move the rhs of the current node to the lhs of the new node.
 	if(op->isTwoSided())
 	{
-		printf("Set current node '%s' to lhs of new node '%s'\n", getToken().c_str(), op->getTypeString());
-		printf("Adopt new node '%s' as rhs of parent'%s'\n", op->getTypeString(), parent->getToken().c_str());
-
+		// Make this operator the lhs of the new operator.
 		auto twoSided = std::static_pointer_cast <TwoSidedOperator> (op);
 		twoSided->left = std::static_pointer_cast <Expression> (shared_from_this());
 
@@ -63,6 +61,7 @@ bool TwoSidedOperator::handleLowerPrecedence(std::shared_ptr <Operator> op, Pars
 		{
 			auto parentExpr = std::static_pointer_cast <Expression> (parent);
 
+			// Replace this operator with the new two sided operator.
 			parentExpr->adopt(twoSided);
 			if(!parentExpr->replaceExpression(twoSided))
 				return false;
@@ -79,12 +78,11 @@ bool TwoSidedOperator::handleLowerPrecedence(std::shared_ptr <Operator> op, Pars
 	{
 		auto oneSided = std::static_pointer_cast <OneSidedOperator> (op);
 
-		//printf("[TwoSidedOperator::handleLowerPrecedence] One sided operators unimplemented\n");
-		printf("Steal rhs of '%s'\n", getTypeString());
-
+		// Make this the expression of the new operator.
 		auto parentExpr = std::static_pointer_cast <Expression> (parent);
 		oneSided->expression = std::static_pointer_cast <Expression> (shared_from_this());
 
+		// Replace this operator with the new one sided operator.
 		parentExpr->adopt(oneSided);
 		if(!parentExpr->replaceExpression(oneSided))
 			return false;
@@ -109,9 +107,6 @@ bool TwoSidedOperator::handleHigherPrecedence(std::shared_ptr <Operator> op, Par
 	{
 		auto twoSided = std::static_pointer_cast <TwoSidedOperator> (op);
 
-		printf("Set '%s' to lhs of new node '%s'\n", right->getToken().c_str(), op->getTypeString());
-		printf("Set new node '%s' to rhs of '%s'\n", twoSided->getToken().c_str(), getTypeString());
-
 		// Move the rhs of the current node to the lhs of the new node.
 		twoSided->adopt(right);
 		twoSided->left = std::move(right);
@@ -121,11 +116,12 @@ bool TwoSidedOperator::handleHigherPrecedence(std::shared_ptr <Operator> op, Par
 	{
 		auto oneSided = std::static_pointer_cast <OneSidedOperator> (op);
 
+		// If the new one sided operator affects the previous value (For an example abc[]),
+		// make the one sided operator steal the rhs value of this operator. The new one
+		// sided operator will become the new rhs value of this operator.
 		if(oneSided->affectsPreviousValue())
 		{
-			printf("Set '%s' to new node '%s'\n", right->getToken().c_str(), oneSided->getTypeString());
-			printf("Set new node '%s' to rhs of '%s'\n", oneSided->getTypeString(), getTypeString());
-			oneSided->handleExpressionNode(right, state);
+			oneSided->expression = right;
 			right = oneSided;
 		}
 	}
@@ -144,17 +140,13 @@ bool TwoSidedOperator::handleValue(std::shared_ptr <Expression> value, ParserSta
 		return false;
 	}
 
-	printf("Result is value. Save '%s' rhs of %s\n", value->getToken().c_str(), getTypeString());
 	right = std::move(value);
-
 	return true;
 
 }
 
 bool TwoSidedOperator::applyCached(std::shared_ptr <Expression>&& cached)
 {
-	printf("[TwoSidedOperator] Apply cached '%s'\n", cached->getToken().c_str());
-
 	if(left)
 	{
 		printf("Left is already set\n");
@@ -181,8 +173,8 @@ const char* TwoSidedOperator::getTypeString()
 		case Type::GreaterOrEqual: return "Greater or equal";
 		case Type::LessThan: return "Less than";
 		case Type::LessOrEqual: return "Less or equal";
-		case Type::Equals: return "Less or equal";
-		case Type::NotEquals: return "Less or equal";
+		case Type::Equals: return "Equals";
+		case Type::NotEquals: return "Not equals";
 		case Type::Or: return "Or";
 		case Type::And: return "And";
 
@@ -211,7 +203,7 @@ unsigned TwoSidedOperator::getPrecedence()
 
 		case Type::GreaterThan: return 9;
 		case Type::GreaterOrEqual: return 9;
-		case Type::LessThan: return 9 ;
+		case Type::LessThan: return 9;
 		case Type::LessOrEqual: return 9;
 		case Type::Equals: return 10;
 		case Type::NotEquals: return 10;

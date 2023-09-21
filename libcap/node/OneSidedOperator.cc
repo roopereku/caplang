@@ -98,15 +98,23 @@ bool OneSidedOperator::affectsNextValue()
 	return !affectsPreviousValue();
 }
 
-bool OneSidedOperator::handleLowerPrecedence(std::shared_ptr <Operator> op, ParserState& state)
+bool OneSidedOperator::replaceExpression(std::shared_ptr <Expression> node)
+{
+	expression = node;
+	return true;
+}
+
+bool OneSidedOperator::handleSamePrecedence(std::shared_ptr <Operator> op, ParserState& state)
 {
 	auto parentExpr = std::static_pointer_cast <Expression> (parent);
 
 	if(op->isTwoSided())
 	{
+		// Make this operator the lhs of the new operator.
 		auto twoSided = std::static_pointer_cast <TwoSidedOperator> (op);
 		twoSided->left = std::static_pointer_cast <Expression> (shared_from_this());
 
+		// Replace this operator with the new two sided operator.
 		parentExpr->adopt(twoSided);
 		if(!parentExpr->replaceExpression(twoSided))
 			return false;
@@ -116,9 +124,11 @@ bool OneSidedOperator::handleLowerPrecedence(std::shared_ptr <Operator> op, Pars
 
 	else if(op->isOneSided())
 	{
+		// Make this the expression of the new operator.
 		auto oneSided = std::static_pointer_cast <OneSidedOperator> (op);
 		oneSided->expression = std::static_pointer_cast <Expression> (shared_from_this());
 
+		// Replace this operator with the new one sided operator.
 		parentExpr->adopt(oneSided);
 		if(!parentExpr->replaceExpression(oneSided))
 			return false;
@@ -131,17 +141,39 @@ bool OneSidedOperator::handleLowerPrecedence(std::shared_ptr <Operator> op, Pars
 
 bool OneSidedOperator::handleHigherPrecedence(std::shared_ptr <Operator> op, ParserState& state)
 {
-	printf("[OneSidedOperator] handleHigherPrecedence unimplemented\n");
-	return false;
+	if(op->isTwoSided())
+	{
+		auto twoSided = std::static_pointer_cast <TwoSidedOperator> (op);
+
+		// Move the expression of the current node to the lhs of the new node.
+		twoSided->adopt(expression);
+		twoSided->left = std::move(expression);
+	}
+
+	else if(op->isOneSided())
+	{
+		auto oneSided = std::static_pointer_cast <OneSidedOperator> (op);
+
+		// If the new one sided operator affects the previous value (For an example abc[]),
+		// make the one sided operator steal the expression of this operator. The new one
+		// sided operator will become the new expression of this operator.
+		if(oneSided->affectsPreviousValue())
+		{
+			oneSided->expression = expression;
+			expression = oneSided;
+		}
+	}
+
+	// The rhs of current becomes the new node.
+	expression = std::move(op);
+
+	return true;
+
 }
 
 bool OneSidedOperator::handleValue(std::shared_ptr <Expression> value, ParserState& state)
 {
 	expression = std::move(value);
-
-	// The current node should never contain a one sided operator with a value.
-	state.node = state.node->getParent();
-
 	return true;
 }
 
