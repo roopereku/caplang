@@ -25,6 +25,11 @@ public:
 		return root;
 	}
 
+	void setRoot(std::shared_ptr <Expression>&& node)
+	{
+		root = std::move(node);
+	}
+
 private:
 	/// Replaces the root with the given operator node.
 	bool replaceExpression(std::shared_ptr <Expression> node) override;

@@ -58,6 +58,7 @@ private:
 	}
 
 	bool parseBracket(Token&& token, ParserState& state);
+	bool checkRowChange(Token::IndexType currentRow, ParserState& state);
 
 	static Token consumeName(Tokenizer& tokens);
 

@@ -86,6 +86,9 @@ bool Scope::parse(ParserState& state)
 		// Is the current token an opening brace?
 		if(braceType == BraceType::Opening)
 		{
+			if(!checkRowChange(token.getRow(), state))
+				return false;
+
 			if(!parseBracket(std::move(token), state))
 				return false;
 		}
@@ -106,11 +109,8 @@ bool Scope::parse(ParserState& state)
 		{
 			printf("Token %s '%s'\n", token.getTypeString(), token.getString().c_str());
 
-			if(state.inExpression && token.getRow() > state.expressionStartRow)
-			{
-				if(!state.endExpression())
-					return false;
-			}
+			if(!checkRowChange(token.getRow(), state))
+				return false;
 
 			if(!state.inExpression)
 			{
@@ -274,6 +274,17 @@ bool Scope::parseBracket(Token&& token, ParserState& state)
 
 		// Try to cache the contents inside the braces.
 		if(!std::static_pointer_cast <Expression> (state.node)->handleExpressionNode(std::move(inBraces), state))
+			return false;
+	}
+
+	return true;
+}
+
+bool Scope::checkRowChange(Token::IndexType currentRow, ParserState& state)
+{
+	if(state.inExpression && currentRow > state.expressionStartRow)
+	{
+		if(!state.endExpression())
 			return false;
 	}
 
