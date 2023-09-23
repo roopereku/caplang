@@ -31,11 +31,12 @@ bool Scope::createFunction(Token&& token, ParserState& state)
 	Token name = consumeName(state.tokens);
 	scopes.emplace_back(std::make_shared <Function> (*this, std::move(name)));
 
+	printf("-------------------------- START PARSING FUNCTION --------------------------------------------\n");
+
 	auto function = std::static_pointer_cast <Function> (scopes.back());
 	ParserState newState(state.tokens, function->getRoot());
 	std::static_pointer_cast <FunctionDeclaration> (state.node)->function = function;
 
-	printf("-------------------------- START PARSING FUNCTION --------------------------------------------\n");
 	bool ret = function->parse(newState);
 	printf("-------------------------- STOP PARSING FUNCTION ---------------------------------------------\n");
 
@@ -94,6 +95,10 @@ bool Scope::parse(ParserState& state)
 		{
 			if(!state.braces.close(std::move(token)))
 				return false;
+
+			// End the expression when a brace is closed
+			if(state.inExpression && !state.endExpression())
+				return false;
 		}
 
 		// The current token is not a brace.
@@ -101,43 +106,59 @@ bool Scope::parse(ParserState& state)
 		{
 			printf("Token %s '%s'\n", token.getTypeString(), token.getString().c_str());
 
-			checkExpressionState(state, token.getRow());
-
-			// "func" indicates that a function should be created.
-			if(token == "func")
+			if(state.inExpression && token.getRow() > state.expressionStartRow)
 			{
-				// If the function creation fails, stop parsing.
-				if(!createFunction(std::move(token), state))
+				if(!state.endExpression())
 					return false;
 			}
 
-			// "type" indicates that a type should be created.
-			else if(token == "type")
+			if(!state.inExpression)
 			{
-				// If the type creation fails, stop parsing.
-				if(!createType(std::move(token), state))
-					return false;
-			}
+				printf("Not in expression\n");
 
-			// "var" indicates that a variable should be created.
-			else if(token == "var")
-			{
-				// If the variable creation fails, stop parsing.
-				if(!createVariable(state))
-					return false;
-
-				// Since variables require assignment, we can assume that we're in an expression.
-				state.inExpression = true;
-			}
-
-			else
-			{
-				if(!state.inExpression)
+				// "func" indicates that a function should be created.
+				if(token == "func")
 				{
-					if(!initExpression(state, token.getRow()))
+					// If the function creation fails, stop parsing.
+					if(!createFunction(std::move(token), state))
 						return false;
 				}
 
+				// "type" indicates that a type should be created.
+				else if(token == "type")
+				{
+					// If the type creation fails, stop parsing.
+					if(!createType(std::move(token), state))
+						return false;
+				}
+
+				// "var" indicates that a variable should be created.
+				else if(token == "var")
+				{
+					// If the variable creation fails, stop parsing.
+					if(!createVariable(state))
+						return false;
+
+					// Since variables require assignment, we can assume that we're in an expression.
+					state.inExpression = true;
+				}
+
+				// If the token belongs to an expression, initialize an expression.
+				else
+				{
+					if(!state.initExpression(token.getRow()))
+						return false;
+
+					state.node = state.node->createNext <ExpressionRoot> (Token::createInvalid());
+
+					if(!state.node->handleToken(std::move(token), state))
+						return false;
+				}
+			}
+
+			// Pass the token to an expression node.
+			else
+			{
 				if(!state.node)
 				{
 					printf("??? No current node\n");
@@ -165,6 +186,10 @@ bool Scope::parseBracket(Token&& token, ParserState& state)
 {
 	Token::Type t = token.getType();
 	auto inBraces = std::make_shared <ExpressionRoot> (Token::createInvalid());
+
+	ParserState newState(state.tokens, inBraces);
+	newState.initExpression(token.getRow());
+	newState.canEndExpression = false;
 
 	// If there was a value previously, the brackets might indicate
 	// a function call or a subscript operator.
@@ -201,10 +226,6 @@ bool Scope::parseBracket(Token&& token, ParserState& state)
 		if(!std::static_pointer_cast <Expression> (state.node)->handleExpressionNode(op, state))
 			return false;
 	}
-
-	ParserState newState(state.tokens, inBraces);
-	newState.inExpression = true;
-	newState.canEndExpression = false;
 
 	state.previousIsValue = true;
 	Token::IndexType row = token.getRow();
@@ -246,8 +267,10 @@ bool Scope::parseBracket(Token&& token, ParserState& state)
 
 	else
 	{
-		if(!initExpression(state, row))
+		if(!state.initExpression(row))
 			return false;
+
+		state.node = state.node->createNext <ExpressionRoot> (Token::createInvalid());
 
 		// Try to cache the contents inside the braces.
 		if(!std::static_pointer_cast <Expression> (state.node)->handleExpressionNode(std::move(inBraces), state))
@@ -255,43 +278,6 @@ bool Scope::parseBracket(Token&& token, ParserState& state)
 	}
 
 	return true;
-}
-
-bool Scope::initExpression(ParserState& state, Token::IndexType startRow)
-{
-	printf("INIT EXPRESSION AT LINE %lu\n", startRow);
-
-	state.node = findLastNode();
-	state.node = state.node->createNext <ExpressionRoot> (Token::createInvalid());
-
-	state.inExpression = true;
-	state.expressionStartRow = startRow;
-
-	return true;
-}
-
-void Scope::checkExpressionState(ParserState& state, Token::IndexType row)
-{
-	if(!state.inExpression)
-		return;
-
-	if(row > state.expressionStartRow)
-	{
-		printf("END EXPRESSION AT %lu\n", row);
-		state.inExpression = false;
-		return;
-	}
-}
-
-std::shared_ptr <Node> Scope::findLastNode()
-{
-	std::shared_ptr <Node> current = root;
-	while(current->hasNext())
-	{
-		current = current->getNext();
-	}
-
-	return current;
 }
 
 }

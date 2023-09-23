@@ -52,6 +52,8 @@ public:
 		return next;
 	}
 
+	std::shared_ptr <Node> findLastNode();
+
 	virtual bool isExpression()
 	{
 		return false;

@@ -11,10 +11,13 @@ namespace cap
 
 struct ParserState
 {
-	ParserState(Tokenizer& tokens, std::shared_ptr <Node> node)
-		: tokens(tokens), node(std::move(node))
+	ParserState(Tokenizer& tokens, std::shared_ptr <Node> root)
+		: tokens(tokens), root(std::move(root)), node(this->root)
 	{
 	}
+
+	bool endExpression();
+	bool initExpression(Token::IndexType startRow);
 
 	BraceMatcher braces;
 	Tokenizer& tokens;
@@ -25,6 +28,7 @@ struct ParserState
 	Token::IndexType expressionStartRow;
 
 	std::shared_ptr <Expression> cachedValue;
+	std::shared_ptr <Node> root;
 	std::shared_ptr <Node> node;
 };
 
