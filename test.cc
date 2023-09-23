@@ -1,5 +1,6 @@
 #include <cap/SourceFile.hh>
 #include <cap/node/FunctionDeclaration.hh>
+#include <cap/node/TypeDeclaration.hh>
 #include <cap/node/TwoSidedOperator.hh>
 #include <cap/node/OneSidedOperator.hh>
 #include <cap/node/ExpressionRoot.hh>
@@ -110,6 +111,14 @@ private:
 			//printf("Function declaration\n");
 			file << indent(depth) << "Function: " << decl->function->getName().getString() << "\n";
 			generateNode(decl->function->getRoot(), depth + 1);
+		}
+
+		else if(node->isTypeDeclaration())
+		{
+			auto decl = std::static_pointer_cast <cap::TypeDeclaration> (node);
+
+			file << indent(depth) << "Type: " << decl->type->getName().getString() << "\n";
+			generateNode(decl->type->getRoot(), depth + 1);
 		}
 
 		if(node->hasNext())

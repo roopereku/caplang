@@ -1,3 +1,16 @@
+type CustomType
+{
+	func memberFunction1()
+	{
+		memberVar = 1 + 2 * 3
+	}
+
+	func memberFunction2()
+	{
+		memberVar = memberFunction1() << 2
+	}
+}
+
 func main()
 {
 	a = ~util.getBitMask() > 1

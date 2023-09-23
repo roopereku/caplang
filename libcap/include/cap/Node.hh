@@ -64,6 +64,11 @@ public:
 		return false;
 	}
 
+	virtual bool isTypeDeclaration()
+	{
+		return false;
+	}
+
 	std::string getToken()
 	{
 		return token.getString();

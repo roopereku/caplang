@@ -5,6 +5,7 @@
 #include <cap/node/ExpressionRoot.hh>
 #include <cap/node/VariableDeclaration.hh>
 #include <cap/node/FunctionDeclaration.hh>
+#include <cap/node/TypeDeclaration.hh>
 #include <cap/node/FunctionCall.hh>
 #include <cap/node/Subscript.hh>
 
@@ -45,11 +46,22 @@ bool Scope::createFunction(Token&& token, ParserState& state)
 
 bool Scope::createType(Token&& token, ParserState& state)
 {
+	state.node = state.node->createNext <TypeDeclaration> (std::move(token));
+
 	Token name = consumeName(state.tokens);
 	scopes.emplace_back(std::make_shared <Type> (*this, std::move(name)));
 
-	BraceMatcher braces;
-	return scopes.back()->parse(state);
+	printf("-------------------------- START PARSING TYPE---- --------------------------------------------\n");
+
+	auto type = std::static_pointer_cast <Type> (scopes.back());
+	ParserState newState(state.tokens, type->getRoot());
+	std::static_pointer_cast <TypeDeclaration> (state.node)->type = type;
+
+	bool ret = type->parse(newState);
+	printf("-------------------------- STOP PARSING TYPE --------------------------------------------------\n");
+
+	return ret;
+
 }
 
 bool Scope::createVariable(ParserState& state)
