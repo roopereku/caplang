@@ -18,26 +18,26 @@ enum class BraceType
 class BraceMatcher
 {
 public:
-	bool open(Token&& brace);
-	bool close(Token&& brace);
+	bool open(Token brace);
+	bool close(Token brace);
 
-		/// Checks the type of the given brace.
+	/// Checks the type of the given brace.
 	///
 	/// \returns BraceTye::None if the token isn't a brace, otherwise the appropriate BraceType.
 	static BraceType getBraceType(Token& token);
 
-	size_t depth()
+	size_t isOpened()
 	{
-		return braces.size();
+		return opener.getType() != Token::Type::Invalid;
 	}
 
-	const Token& getMostRecent()
+	const Token& getOpener()
 	{
-		return braces.top();
+		return opener;
 	}
 
 private:
-	std::stack <Token> braces;
+	Token opener = Token::createInvalid();
 };
 
 }

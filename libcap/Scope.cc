@@ -71,12 +71,12 @@ bool Scope::parse(ParserState& state)
 
 	// Braces are only tracked if there were none open initially.
 	// For example the global scope utilizes this.
-	const bool trackBraces = state.braces.depth() > 0;
+	const bool trackBraces = state.braces.isOpened();
 
 	// Loop while there are tokens and there are braces to track.
 	while(!state.tokens.empty())
 	{
-		if(trackBraces && state.braces.depth() == 0)
+		if(trackBraces && !state.braces.isOpened())
 			break;
 
 		Token token = state.tokens.next();
@@ -152,9 +152,9 @@ bool Scope::parse(ParserState& state)
 
 	// If we're not in a global scope and braces are still
 	// being tracked, we have unterminated braces.
-	if(parent && state.braces.depth() > 0)
+	if(parent && state.braces.isOpened())
 	{
-		printf("Unterminated brace '%c'\n", state.braces.getMostRecent()[0]);
+		printf("Unterminated brace '%c'\n", state.braces.getOpener()[0]);
 		return false;
 	}
 

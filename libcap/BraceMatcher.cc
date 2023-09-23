@@ -3,7 +3,7 @@
 namespace cap
 {
 
-bool BraceMatcher::open(Token&& brace)
+bool BraceMatcher::open(Token brace)
 {
 	BraceType braceType = getBraceType(brace);
 
@@ -21,11 +21,18 @@ bool BraceMatcher::open(Token&& brace)
 		return false;
 	}
 
-	braces.emplace(std::move(brace));
+	else if(opener.getType() != Token::Type::Invalid)
+	{
+		printf("??? Opener already opened\n");
+		return false;
+	}
+
+	opener = brace;
+
 	return true;
 }
 
-bool BraceMatcher::close(Token&& brace)
+bool BraceMatcher::close(Token brace)
 {
 	BraceType braceType = getBraceType(brace);
 
@@ -36,6 +43,12 @@ bool BraceMatcher::close(Token&& brace)
 		return false;
 	}
 
+	else if(opener.getType() == Token::Type::Invalid)
+	{
+		printf("??? Opener not opened\n");
+		return false;
+	}
+
 	// Fail if the brace isn't a closing brace.
 	else if(braceType != BraceType::Closing)
 	{
@@ -43,13 +56,14 @@ bool BraceMatcher::close(Token&& brace)
 		return false;
 	}
 
-	if(brace.getType() != braces.top().getType())
+	else if(brace.getType() != opener.getType())
 	{
-		printf("Mismatching closing bracket '%c' (Opened with '%c')\n", brace[0], braces.top()[0]);
+		printf("Mismatching closing bracket '%c' (Opened with '%c')\n", brace[0], opener[0]);
 		return false;
 	}
 
-	braces.pop();
+	opener = Token::createInvalid();
+
 	return true;
 
 }
