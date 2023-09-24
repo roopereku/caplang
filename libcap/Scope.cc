@@ -8,6 +8,7 @@
 #include <cap/node/TypeDeclaration.hh>
 #include <cap/node/FunctionCall.hh>
 #include <cap/node/Subscript.hh>
+#include <cap/node/Return.hh>
 
 namespace cap
 {
@@ -153,6 +154,21 @@ bool Scope::parse(ParserState& state)
 
 					// Since variables require assignment, we can assume that we're in an expression.
 					state.inExpression = true;
+				}
+
+				else if(token == "return")
+				{
+					auto row = token.getRow();
+					state.node = state.node->createNext <Return> (std::move(token));
+
+					if(!state.initExpression(row))
+						return false;
+
+					auto exprRoot = std::make_unique <ExpressionRoot> (Token::createInvalid());
+					auto returnNode = std::static_pointer_cast <Return> (state.node);
+
+					returnNode->expression = std::move(exprRoot);
+					state.node = returnNode->expression;
 				}
 
 				// If the token belongs to an expression, initialize an expression.

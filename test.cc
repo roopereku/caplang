@@ -7,6 +7,8 @@
 #include <cap/node/FunctionCall.hh>
 #include <cap/node/Subscript.hh>
 #include <cap/node/Operator.hh>
+#include <cap/node/Statement.hh>
+#include <cap/node/Return.hh>
 
 #include <fstream>
 
@@ -119,6 +121,17 @@ private:
 
 			file << indent(depth) << "Type: " << decl->type->getName().getString() << "\n";
 			generateNode(decl->type->getRoot(), depth + 1);
+		}
+
+		else if(node->isStatement())
+		{
+			auto statement = std::static_pointer_cast <cap::Statement> (node);
+			file << indent(depth) << "Statement: " << statement->getToken() << "\n";
+
+			if(statement->isReturn())
+			{
+				generateNode(std::static_pointer_cast <cap::Return> (statement)->expression, depth + 1);
+			}
 		}
 
 		if(node->hasNext())

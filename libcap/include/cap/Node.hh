@@ -69,6 +69,11 @@ public:
 		return false;
 	}
 
+	virtual bool isStatement()
+	{
+		return false;
+	}
+
 	std::string getToken()
 	{
 		return token.getString();

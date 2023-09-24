@@ -1,14 +1,6 @@
-type CustomType
+func getValue()
 {
-	func memberFunction1()
-	{
-		memberVar = 1 + 2 * 3
-	}
-
-	func memberFunction2()
-	{
-		memberVar = memberFunction1() << 2
-	}
+	return param1 + param2
 }
 
 func main()
