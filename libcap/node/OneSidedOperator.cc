@@ -106,13 +106,13 @@ bool OneSidedOperator::replaceExpression(std::shared_ptr <Expression> node)
 
 bool OneSidedOperator::handleSamePrecedence(std::shared_ptr <Operator> op, ParserState& state)
 {
-	auto parentExpr = std::static_pointer_cast <Expression> (parent);
+	auto parentExpr = parent->as <Expression> ();
 
 	if(op->isTwoSided())
 	{
 		// Make this operator the lhs of the new operator.
-		auto twoSided = std::static_pointer_cast <TwoSidedOperator> (op);
-		twoSided->left = std::static_pointer_cast <Expression> (shared_from_this());
+		auto twoSided = op->as <TwoSidedOperator> ();
+		twoSided->left = shared_from_this()->as <Expression> ();
 
 		// Replace this operator with the new two sided operator.
 		parentExpr->adopt(twoSided);
@@ -125,8 +125,8 @@ bool OneSidedOperator::handleSamePrecedence(std::shared_ptr <Operator> op, Parse
 	else if(op->isOneSided())
 	{
 		// Make this the expression of the new operator.
-		auto oneSided = std::static_pointer_cast <OneSidedOperator> (op);
-		oneSided->expression = std::static_pointer_cast <Expression> (shared_from_this());
+		auto oneSided = op->as <OneSidedOperator> ();
+		oneSided->expression = shared_from_this()->as <Expression> ();
 
 		// Replace this operator with the new one sided operator.
 		parentExpr->adopt(oneSided);
@@ -143,7 +143,7 @@ bool OneSidedOperator::handleHigherPrecedence(std::shared_ptr <Operator> op, Par
 {
 	if(op->isTwoSided())
 	{
-		auto twoSided = std::static_pointer_cast <TwoSidedOperator> (op);
+		auto twoSided = op->as <TwoSidedOperator> ();
 
 		// Move the expression of the current node to the lhs of the new node.
 		twoSided->adopt(expression);
@@ -152,7 +152,7 @@ bool OneSidedOperator::handleHigherPrecedence(std::shared_ptr <Operator> op, Par
 
 	else if(op->isOneSided())
 	{
-		auto oneSided = std::static_pointer_cast <OneSidedOperator> (op);
+		auto oneSided = op->as <OneSidedOperator> ();
 
 		// If the new one sided operator affects the previous value (For an example abc[]),
 		// make the one sided operator steal the expression of this operator. The new one

@@ -50,7 +50,7 @@ bool ExpressionRoot::handleExpressionNode(std::shared_ptr <Expression> node, Par
 			return false;
 		}
 
-		state.cachedValue = std::move(std::static_pointer_cast <Value> (node));
+		state.cachedValue = std::move(node->as <Value> ());
 		state.previousIsValue = true;
 
 		return true;

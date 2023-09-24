@@ -27,6 +27,12 @@ public:
 	}
 
 	template <typename T>
+	std::shared_ptr <T> as()
+	{
+		return std::static_pointer_cast <T> (shared_from_this());
+	}
+
+	template <typename T>
 	std::shared_ptr <T> createNext(Token&& token)
 	{
 		next = std::make_shared <T> (std::move(token));

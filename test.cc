@@ -38,17 +38,17 @@ private:
 		if(node->isExpression())
 		{
 			//printf("Expression node\n");
-			auto expr = std::static_pointer_cast <cap::Expression> (node);
+			auto expr = node->as <cap::Expression> ();
 
 			if(expr->isOperator())
 			{
 				//printf("Operator\n");
-				auto op = std::static_pointer_cast <cap::Operator> (node);
+				auto op = node->as <cap::Operator> ();
 
 				if(op->isTwoSided())
 				{
 					//printf("Two sided operator\n");
-					auto twoSided = std::static_pointer_cast <cap::TwoSidedOperator> (op);
+					auto twoSided = op->as <cap::TwoSidedOperator> ();
 					file << indent(depth) << twoSided->getTypeString() << "\n";
 
 					generateNode(twoSided->getLeft(), depth + 1);
@@ -57,13 +57,13 @@ private:
 
 				else if(op->isOneSided())
 				{
-					auto oneSided = std::static_pointer_cast <cap::OneSidedOperator> (op);
+					auto oneSided = op->as <cap::OneSidedOperator> ();
 					file << indent(depth) << oneSided->getTypeString() << "\n";
 
 					if(oneSided->type == cap::OneSidedOperator::Type::FunctionCall)
 					{
 						//	printf("Function call %p\n", oneSided->getExpression().get());
-						auto call = std::static_pointer_cast <cap::FunctionCall> (oneSided);
+						auto call = oneSided->as <cap::FunctionCall> ();
 						generateNode(call->getParameters(), depth + 1);
 
 						if(call->getExpression())
@@ -72,7 +72,7 @@ private:
 
 					else if(oneSided->type == cap::OneSidedOperator::Type::Subscript)
 					{
-						auto subscript = std::static_pointer_cast <cap::Subscript> (oneSided);
+						auto subscript = oneSided->as <cap::Subscript> ();
 						generateNode(subscript->getContents(), depth + 1);
 
 						if(subscript->getExpression())
@@ -94,21 +94,21 @@ private:
 				printf("Expression root\n");
 				file << indent(depth) << "Expression root\n";
 
-				if(!std::static_pointer_cast <cap::ExpressionRoot> (node)->getRoot())
+				if(!node->as <cap::ExpressionRoot> ()->getRoot())
 				{
 					printf("No root\n");
 				}
 
 				else
 				{
-					generateNode(std::static_pointer_cast <cap::ExpressionRoot> (node)->getRoot(), depth + 1);
+					generateNode(node->as <cap::ExpressionRoot> ()->getRoot(), depth + 1);
 				}
 			}
 		}
 
 		else if(node->isFunctionDeclaration())
 		{
-			auto decl = std::static_pointer_cast <cap::FunctionDeclaration> (node);
+			auto decl = node->as <cap::FunctionDeclaration> ();
 
 			//printf("Function declaration\n");
 			file << indent(depth) << "Function: " << decl->function->getName().getString() << "\n";
@@ -117,7 +117,7 @@ private:
 
 		else if(node->isTypeDeclaration())
 		{
-			auto decl = std::static_pointer_cast <cap::TypeDeclaration> (node);
+			auto decl = node->as <cap::TypeDeclaration> ();
 
 			file << indent(depth) << "Type: " << decl->type->getName().getString() << "\n";
 			generateNode(decl->type->getRoot(), depth + 1);
@@ -125,12 +125,12 @@ private:
 
 		else if(node->isStatement())
 		{
-			auto statement = std::static_pointer_cast <cap::Statement> (node);
+			auto statement = node->as <cap::Statement> ();
 			file << indent(depth) << "Statement: " << statement->getToken() << "\n";
 
 			if(statement->isReturn())
 			{
-				generateNode(std::static_pointer_cast <cap::Return> (statement)->expression, depth + 1);
+				generateNode(statement->as <cap::Return> ()->expression, depth + 1);
 			}
 		}
 

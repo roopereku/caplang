@@ -30,7 +30,7 @@ bool Operator::handleExpressionNode(std::shared_ptr <Expression> node, ParserSta
 		// Adopt the created operator.
 		adopt(node);
 
-		auto op = std::static_pointer_cast <Operator> (node);
+		auto op = node->as <Operator> ();
 		printf("[%s] Result is operator %s\n", getTypeString(), op->getTypeString());
 
 		// The concept of high and low is inverted here as 0 is the
@@ -50,7 +50,7 @@ bool Operator::handleExpressionNode(std::shared_ptr <Expression> node, ParserSta
 				printf("NEW OPERATOR HAS LOWER PRECEDENCE\n");
 
 				state.node = parent;
-				return std::static_pointer_cast <Expression> (parent)->handleExpressionNode(node, state);
+				return parent->as <Expression> ()->handleExpressionNode(node, state);
 			}
 
 			printf("NEW OPERATOR HAS SAME PRECEDENCE\n");

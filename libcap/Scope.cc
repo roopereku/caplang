@@ -37,7 +37,7 @@ bool Scope::createFunction(Token&& token, ParserState& state)
 
 	auto function = std::static_pointer_cast <Function> (scopes.back());
 	ParserState newState(state.tokens, function->getRoot());
-	std::static_pointer_cast <FunctionDeclaration> (state.node)->function = function;
+	state.node->as <FunctionDeclaration> ()->function = function;
 
 	bool ret = function->parse(newState);
 	printf("-------------------------- STOP PARSING FUNCTION ---------------------------------------------\n");
@@ -56,7 +56,7 @@ bool Scope::createType(Token&& token, ParserState& state)
 
 	auto type = std::static_pointer_cast <Type> (scopes.back());
 	ParserState newState(state.tokens, type->getRoot());
-	std::static_pointer_cast <TypeDeclaration> (state.node)->type = type;
+	state.node->as <TypeDeclaration> ()->type = type;
 
 	bool ret = type->parse(newState);
 	printf("-------------------------- STOP PARSING TYPE --------------------------------------------------\n");
@@ -165,7 +165,7 @@ bool Scope::parse(ParserState& state)
 						return false;
 
 					auto exprRoot = std::make_unique <ExpressionRoot> (Token::createInvalid());
-					auto returnNode = std::static_pointer_cast <Return> (state.node);
+					auto returnNode = state.node->as <Return> ();
 
 					returnNode->expression = std::move(exprRoot);
 					state.node = returnNode->expression;
@@ -235,14 +235,14 @@ bool Scope::parseBracket(Token&& token, ParserState& state)
 		{
 			printf("FUNCTION CALL\n");
 			op = std::make_shared <FunctionCall> (Token::createInvalid());
-			std::static_pointer_cast <FunctionCall> (op)->setParameters(inBraces);
+			op->as <FunctionCall> ()->setParameters(inBraces);
 		}
 
 		else if(t == Token::Type::SquareBracket)
 		{
 			printf("SUBSCRIPT\n");
 			op = std::make_shared <Subscript> (Token::createInvalid());
-			std::static_pointer_cast <Subscript> (op)->setContents(inBraces);
+			op->as <Subscript> ()->setContents(inBraces);
 		}
 
 		else
@@ -251,7 +251,7 @@ bool Scope::parseBracket(Token&& token, ParserState& state)
 			return false;
 		}
 
-		if(!std::static_pointer_cast <Expression> (state.node)->handleExpressionNode(op, state))
+		if(!state.node->as <Expression> ()->handleExpressionNode(op, state))
 			return false;
 	}
 
@@ -270,16 +270,16 @@ bool Scope::parseBracket(Token&& token, ParserState& state)
 
 	if(state.inExpression)
 	{
-		auto expr = std::static_pointer_cast <Expression> (state.node);
+		auto expr = state.node->as <Expression> ();
 		bool setAfterCurrent = true;
 
 		if(expr->isOperator())
 		{
-			auto op = std::static_pointer_cast <Operator> (expr);
+			auto op = expr->as <Operator> ();
 
 			if(op->isOneSided())
 			{
-				auto oneSided = std::static_pointer_cast <OneSidedOperator> (op);
+				auto oneSided = op->as <OneSidedOperator> ();
 
 				if(oneSided->affectsPreviousValue())
 				{
@@ -301,7 +301,7 @@ bool Scope::parseBracket(Token&& token, ParserState& state)
 		state.node = state.node->createNext <ExpressionRoot> (Token::createInvalid());
 
 		// Try to cache the contents inside the braces.
-		if(!std::static_pointer_cast <Expression> (state.node)->handleExpressionNode(std::move(inBraces), state))
+		if(!state.node->as <Expression> ()->handleExpressionNode(std::move(inBraces), state))
 			return false;
 	}
 
