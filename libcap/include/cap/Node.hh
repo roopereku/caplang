@@ -32,6 +32,10 @@ public:
 		return std::static_pointer_cast <T> (shared_from_this());
 	}
 
+	/// Initializes the next node to the given type.
+	/// 
+	/// \param token The associated token.
+	/// \returns New node of the given type.
 	template <typename T>
 	std::shared_ptr <T> createNext(Token&& token)
 	{

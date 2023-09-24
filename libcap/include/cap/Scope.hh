@@ -43,7 +43,16 @@ public:
 	/// \returns True if the variable was created succesfully.
 	bool createVariable(Token&& token, ParserState& state);
 
+	/// Parses a scope from the given tokens.
+	///
+	/// \param tokens The tokens to parse a scope from.
+	/// \returns True if parsing was succesful.
 	bool parse(Tokenizer& tokens);
+
+	/// Parses a scope using the given state.
+	///
+	/// \param tokens The state the use during parsing.
+	/// \returns True if parsing was succesful.
 	virtual bool parse(ParserState& state);
 
 	const std::shared_ptr <Node> getRoot() const
