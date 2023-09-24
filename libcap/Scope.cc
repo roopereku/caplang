@@ -65,10 +65,16 @@ bool Scope::createType(Token&& token, ParserState& state)
 
 }
 
-bool Scope::createVariable(ParserState& state)
+bool Scope::createVariable(Token&& token, ParserState& state)
 {
-	Token name = consumeName(state.tokens);
-	state.node = state.node->createNext <VariableDeclaration> (std::move(name));
+	if(!state.initExpression(token.getRow()))
+		return false;
+
+	state.node = state.node->createNext <VariableDeclaration> (std::move(token));
+	auto variable = state.node->as <VariableDeclaration> ();
+
+	variable->initialization = std::make_unique <ExpressionRoot> (Token::createInvalid());
+	state.node = variable->initialization;
 
 	return true;
 }
@@ -149,7 +155,7 @@ bool Scope::parse(ParserState& state)
 				else if(token == "var")
 				{
 					// If the variable creation fails, stop parsing.
-					if(!createVariable(state))
+					if(!createVariable(std::move(token), state))
 						return false;
 
 					// Since variables require assignment, we can assume that we're in an expression.

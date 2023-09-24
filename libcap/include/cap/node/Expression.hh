@@ -20,7 +20,6 @@ public:
 
 	virtual bool isValue();
 	virtual bool isOperator();
-	virtual bool isVariableDeclaration();
 	virtual bool isExpressionRoot();
 
 	/// Custom handler for when an operator should replace what's currently stored.

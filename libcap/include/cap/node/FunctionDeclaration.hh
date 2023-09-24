@@ -1,20 +1,20 @@
 #ifndef CAP_FUNCTION_DECLARATION_HH
 #define CAP_FUNCTION_DECLARATION_HH
 
-#include <cap/Node.hh>
+#include <cap/node/Declaration.hh>
 #include <cap/Function.hh>
 
 namespace cap
 {
 
-class FunctionDeclaration : public Node
+class FunctionDeclaration : public Declaration
 {
 public:
-	FunctionDeclaration(Token&& token) : Node(std::move(token))
+	FunctionDeclaration(Token&& token) : Declaration(std::move(token))
 	{
 	}
 
-	bool isFunctionDeclaration() override
+	bool isFunction() override
 	{
 		return true;
 	}

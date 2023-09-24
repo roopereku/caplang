@@ -1,5 +1,7 @@
 #include <cap/SourceFile.hh>
+#include <cap/node/Declaration.hh>
 #include <cap/node/FunctionDeclaration.hh>
+#include <cap/node/VariableDeclaration.hh>
 #include <cap/node/TypeDeclaration.hh>
 #include <cap/node/TwoSidedOperator.hh>
 #include <cap/node/OneSidedOperator.hh>
@@ -106,21 +108,34 @@ private:
 			}
 		}
 
-		else if(node->isFunctionDeclaration())
+		else if(node->isDeclaration())
 		{
-			auto decl = node->as <cap::FunctionDeclaration> ();
+			auto declNode = node->as <cap::Declaration> ();
 
-			//printf("Function declaration\n");
-			file << indent(depth) << "Function: " << decl->function->getName().getString() << "\n";
-			generateNode(decl->function->getRoot(), depth + 1);
-		}
+			if(declNode->isFunction())
+			{
+				auto decl = node->as <cap::FunctionDeclaration> ();
 
-		else if(node->isTypeDeclaration())
-		{
-			auto decl = node->as <cap::TypeDeclaration> ();
+				//printf("Function declaration\n");
+				file << indent(depth) << "Function: " << decl->function->getName().getString() << "\n";
+				generateNode(decl->function->getRoot(), depth + 1);
+			}
 
-			file << indent(depth) << "Type: " << decl->type->getName().getString() << "\n";
-			generateNode(decl->type->getRoot(), depth + 1);
+			else if(declNode->isType())
+			{
+				auto decl = node->as <cap::TypeDeclaration> ();
+
+				file << indent(depth) << "Type: " << decl->type->getName().getString() << "\n";
+				generateNode(decl->type->getRoot(), depth + 1);
+			}
+
+			else if(declNode->isVariable())
+			{
+				auto decl = node->as <cap::VariableDeclaration> ();
+
+				file << indent(depth) << "Variable declaration\n";
+				generateNode(decl->initialization, depth + 1);
+			}
 		}
 
 		else if(node->isStatement())

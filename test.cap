@@ -1,5 +1,6 @@
 func getValue()
 {
+	var abc = 12 * 3
 	return param1 + param2
 }
 

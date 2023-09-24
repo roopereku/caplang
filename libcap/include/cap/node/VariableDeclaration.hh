@@ -1,28 +1,25 @@
 #ifndef CAP_NODE_VARIABLE_DECLARATION_HH
 #define CAP_NODE_VARIABLE_DECLARATION_HH
 
-#include <cap/node/Expression.hh>
+#include <cap/node/Declaration.hh>
+#include <cap/node/ExpressionRoot.hh>
 
 namespace cap
 {
 
-class VariableDeclaration : public Expression
+class VariableDeclaration : public Declaration
 {
 public:
-	VariableDeclaration(Token&& token) : Expression(std::move(token))
+	VariableDeclaration(Token&& token) : Declaration(std::move(token))
 	{
-		printf("Create VariableDeclaration %s\n", getToken().c_str());
 	}
 
-	bool handleToken(Token&& token, ParserState& state) override;
-
-	bool isVariableDeclaration() override
+	bool isVariable() override
 	{
 		return true;
 	}
 
-private:
-	std::shared_ptr <Expression> initialization;
+	std::shared_ptr <ExpressionRoot> initialization;
 };
 
 }

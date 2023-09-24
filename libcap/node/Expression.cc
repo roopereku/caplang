@@ -22,11 +22,6 @@ bool Expression::isOperator()
 	return false;
 }
 
-bool Expression::isVariableDeclaration()
-{
-	return false;
-}
-
 bool Expression::isExpressionRoot()
 {
 	return false;

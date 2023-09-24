@@ -38,9 +38,10 @@ public:
 
 	/// Creates a new variable from the next tokens.
 	///
+	/// \param token The token containing "var".
 	/// \param state The state of the parser.
 	/// \returns True if the variable was created succesfully.
-	bool createVariable(ParserState& state);
+	bool createVariable(Token&& token, ParserState& state);
 
 	bool parse(Tokenizer& tokens);
 	virtual bool parse(ParserState& state);

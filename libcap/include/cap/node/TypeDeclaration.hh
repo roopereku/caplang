@@ -1,20 +1,20 @@
 #ifndef CAP_NODE_TYPE_DECLARATION_HH
 #define CAP_NODE_TYPE_DECLARATION_HH
 
-#include <cap/Node.hh>
+#include <cap/node/Declaration.hh>
 #include <cap/Type.hh>
 
 namespace cap
 {
 
-class TypeDeclaration : public Node
+class TypeDeclaration : public Declaration
 {
 public:
-	TypeDeclaration(Token&& token) : Node(std::move(token))
+	TypeDeclaration(Token&& token) : Declaration(std::move(token))
 	{
 	}
 
-	bool isTypeDeclaration() override
+	bool isType() override
 	{
 		return true;
 	}

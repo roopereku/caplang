@@ -65,12 +65,7 @@ public:
 		return false;
 	}
 
-	virtual bool isFunctionDeclaration()
-	{
-		return false;
-	}
-
-	virtual bool isTypeDeclaration()
+	virtual bool isDeclaration()
 	{
 		return false;
 	}
