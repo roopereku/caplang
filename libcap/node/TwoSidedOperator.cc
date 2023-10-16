@@ -20,6 +20,7 @@ static OperatorEntry operatorLookup[]
 	{ "/", TwoSidedOperator::Type::Division },
 	{ "%", TwoSidedOperator::Type::Modulus },
 	{ ".", TwoSidedOperator::Type::Access },
+	{ ",", TwoSidedOperator::Type::Comma },
 	{ ">", TwoSidedOperator::Type::GreaterThan },
 	{ ">=", TwoSidedOperator::Type::GreaterOrEqual },
 	{ "<", TwoSidedOperator::Type::LessThan },
@@ -56,6 +57,7 @@ bool TwoSidedOperator::handleSamePrecedence(std::shared_ptr <Operator> op, Parse
 		// Make this operator the lhs of the new operator.
 		auto twoSided = op->as <TwoSidedOperator> ();
 		twoSided->left = shared_from_this()->as <Expression> ();
+		twoSided->adopt(twoSided->left);
 
 		if(parent->isExpression())
 		{
@@ -122,12 +124,13 @@ bool TwoSidedOperator::handleHigherPrecedence(std::shared_ptr <Operator> op, Par
 		if(oneSided->affectsPreviousValue())
 		{
 			oneSided->expression = right;
-			right = oneSided;
+			oneSided->adopt(right);
 		}
 	}
 
 	// The rhs of current becomes the new node.
 	right = std::move(op);
+	adopt(right);
 
 	return true;
 }
@@ -141,6 +144,8 @@ bool TwoSidedOperator::handleValue(std::shared_ptr <Expression> value, ParserSta
 	}
 
 	right = std::move(value);
+	adopt(right);
+
 	return true;
 
 }
@@ -154,6 +159,8 @@ bool TwoSidedOperator::applyCached(std::shared_ptr <Expression>&& cached)
 	}
 
 	left = std::move(cached);
+	adopt(left);
+
 	return true;
 }
 
@@ -168,6 +175,7 @@ const char* TwoSidedOperator::getTypeString()
 		case Type::Division: return "Division";
 		case Type::Modulus: return "Modulus";
 		case Type::Access: return "Access";
+		case Type::Comma: return "Comma";
 
 		case Type::GreaterThan: return "Greater than";
 		case Type::GreaterOrEqual: return "Greater or equal";
@@ -200,6 +208,7 @@ unsigned TwoSidedOperator::getPrecedence()
 		case Type::Division: return 5;
 		case Type::Modulus: return 5;
 		case Type::Access: return 2;
+		case Type::Comma: return 17;
 
 		case Type::GreaterThan: return 9;
 		case Type::GreaterOrEqual: return 9;
@@ -227,7 +236,9 @@ bool TwoSidedOperator::isTwoSided()
 
 bool TwoSidedOperator::replaceExpression(std::shared_ptr <Expression> node)
 {
-	right = node;
+	right = std::move(node);
+	adopt(right);
+
 	return true;
 }
 

@@ -1,11 +1,9 @@
-func getValue()
+type outer
 {
-	var abc = 12 * 3
-	return param1 + param2
-}
+	type inner
+	{
+	}
 
-func main()
-{
-	a = ~util.getBitMask() > 1
-	b = (abc)
+	var abc = 12 + 23
+	inner + 2
 }

@@ -1,15 +1,19 @@
 #ifndef CAP_SCOPE_HH
 #define CAP_SCOPE_HH
 
+#include <cap/ValidationState.hh>
 #include <cap/ParserState.hh>
-#include <cap/Variable.hh>
 #include <cap/Node.hh>
+#include <cap/node/Declaration.hh>
 
 #include <memory>
 #include <vector>
 
 namespace cap
 {
+
+class Type;
+class NamedScope;
 
 class Scope
 {
@@ -18,9 +22,10 @@ public:
 	{
 	}
 
-	Scope() : Scope(nullptr)
-	{
-	}
+	/// Gets the shared scope which is a scope that all scopes should reside in.
+	///
+	/// \returns Reference to the shared scope.
+	static Scope& getSharedScope();
 
 	/// Creates a new function from the next tokens.
 	///
@@ -55,26 +60,41 @@ public:
 	/// \returns True if parsing was succesful.
 	virtual bool parse(ParserState& state);
 
+	bool validate();
+
 	const std::shared_ptr <Node> getRoot() const
 	{
 		return root;
 	}
 
+	virtual bool isNamed()
+	{
+		return false;
+	}
+
 private:
+	Scope() : Scope(nullptr)
+	{
+	}
+
 	Scope(Scope* parent) : parent(parent),
 		root(std::make_shared <Node> (Token::createInvalid()))
 	{
 		printf("Create scope\n");
 	}
 
+	bool validateNode(std::shared_ptr <Node> node, ValidationState& state);
+	std::shared_ptr <Expression> validateExpression(std::shared_ptr <Expression> expr, ValidationState& state);
+
+	bool handleVariableDeclaration(std::shared_ptr <Expression> node, ValidationState& state);
+
 	bool parseBracket(Token&& token, ParserState& state);
 	bool checkRowChange(Token::IndexType currentRow, ParserState& state);
 
 	static Token consumeName(Tokenizer& tokens);
 
-	std::vector <std::shared_ptr <Scope>> scopes;
 	Scope* parent;
-
+	std::vector <std::shared_ptr <Declaration>> members;
 	std::shared_ptr <Node> root;
 };
 

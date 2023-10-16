@@ -1,4 +1,5 @@
 #include <cap/ParserState.hh>
+#include <cap/PrimitiveType.hh>
 
 #include <cap/node/OneSidedOperator.hh>
 #include <cap/node/TwoSidedOperator.hh>
@@ -27,6 +28,16 @@ bool Expression::isExpressionRoot()
 	return false;
 }
 
+bool Expression::isDeclarationReference()
+{
+	return false;
+}
+
+bool Expression::isTypedConstant()
+{
+	return false;
+}
+
 bool Expression::replaceExpression(std::shared_ptr <Expression> node)
 {
 	printf("called Expression::replaceExpression\n");
@@ -37,6 +48,12 @@ bool Expression::handleExpressionNode(std::shared_ptr <Expression> node, ParserS
 {
 	printf("called Expression::handleExpressionNode\n");
 	return false;
+}
+
+Type& Expression::getResultType()
+{
+	printf("NOTE: Return invalid type from Expression::getResultType()\n");
+	return Type::getInvalid();
 }
 
 std::shared_ptr <Expression> Expression::parseToken(Token&& token, ParserState& state)

@@ -20,7 +20,7 @@ bool Operator::handleExpressionNode(std::shared_ptr <Expression> node, ParserSta
 
 	else if(node->isValue() || node->isExpressionRoot())
 	{
-		printf("Handle value '%s'\n", node->getToken().c_str());
+		//printf("Handle value '%s'\n", node->getToken().c_str());
 		if(!handleValue((node), state))
 			return false;
 	}

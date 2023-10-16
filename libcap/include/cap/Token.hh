@@ -54,8 +54,16 @@ public:
 
 	/// Checks if the contents of this token matches a string.
 	///
+	/// \param rhs The string to compare against.
 	/// \returns True if this token matches the given string.
 	bool operator==(std::string_view rhs) const;
+
+	/// Checks if the contents of this token matches the contents of another token.
+	///
+	/// \param rhs The token to compare against.
+	/// \returns True if this token matches the given token.
+	bool operator==(const Token& rhs) const;
+
 
 	/// Gets the character at the given index.
 	///

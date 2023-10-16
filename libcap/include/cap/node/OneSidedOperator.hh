@@ -38,6 +38,16 @@ public:
 		return expression;
 	}
 
+	void setExpression(std::shared_ptr <Expression> value)
+	{
+		expression = std::move(value);
+	}
+
+	Type getType()
+	{
+		return type;
+	}
+
 	/// Parses a one sided operator from the given token.
 	///
 	/// \param token The token to parse a one sided operator from.

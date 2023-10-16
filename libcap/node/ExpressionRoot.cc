@@ -28,6 +28,8 @@ bool ExpressionRoot::handleToken(Token&& token, ParserState& state)
 bool ExpressionRoot::replaceExpression(std::shared_ptr <Expression> node)
 {
 	root = node;
+	adopt(root);
+
 	return true;
 }
 
@@ -42,7 +44,7 @@ bool ExpressionRoot::handleExpressionNode(std::shared_ptr <Expression> node, Par
 
 	if(node->isValue())
 	{
-		printf("[ExpressionRoot] Cache token '%s'\n", node->getToken().c_str());
+		//printf("[ExpressionRoot] Cache token '%s'\n", node->getToken().c_str());
 
 		if(state.cachedValue)
 		{
@@ -68,6 +70,8 @@ bool ExpressionRoot::handleExpressionNode(std::shared_ptr <Expression> node, Par
 		}
 
 		root = std::move(node);
+		adopt(root);
+
 		state.node = root;
 	}
 

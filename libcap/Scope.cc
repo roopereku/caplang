@@ -1,17 +1,29 @@
 #include <cap/Type.hh>
 #include <cap/Scope.hh>
 #include <cap/Function.hh>
+#include <cap/PrimitiveType.hh>
 
 #include <cap/node/ExpressionRoot.hh>
+#include <cap/node/TwoSidedOperator.hh>
+#include <cap/node/OneSidedOperator.hh>
+#include <cap/node/TypedConstant.hh>
+#include <cap/node/VariableDefinition.hh>
 #include <cap/node/VariableDeclaration.hh>
 #include <cap/node/FunctionDeclaration.hh>
 #include <cap/node/TypeDeclaration.hh>
 #include <cap/node/FunctionCall.hh>
 #include <cap/node/Subscript.hh>
 #include <cap/node/Return.hh>
+#include <cap/node/DeclarationReference.hh>
 
 namespace cap
 {
+
+Scope& Scope::getSharedScope()
+{
+	static Scope sharedScope;
+	return sharedScope;
+}
 
 Token Scope::consumeName(Tokenizer& tokens)
 {
@@ -28,15 +40,15 @@ Token Scope::consumeName(Tokenizer& tokens)
 
 bool Scope::createFunction(Token&& token, ParserState& state)
 {
-	state.node = state.node->createNext <FunctionDeclaration> (std::move(token));
-
+	members.emplace_back(state.node->createNext <FunctionDeclaration> (std::move(token)));
 	Token name = consumeName(state.tokens);
-	scopes.emplace_back(std::make_shared <Function> (*this, std::move(name)));
 
 	printf("-------------------------- START PARSING FUNCTION --------------------------------------------\n");
 
-	auto function = std::static_pointer_cast <Function> (scopes.back());
+	auto function = std::make_shared <Function> (*this, std::move(name));
 	ParserState newState(state.tokens, function->getRoot());
+
+	state.node = members.back();
 	state.node->as <FunctionDeclaration> ()->function = function;
 
 	bool ret = function->parse(newState);
@@ -47,15 +59,15 @@ bool Scope::createFunction(Token&& token, ParserState& state)
 
 bool Scope::createType(Token&& token, ParserState& state)
 {
-	state.node = state.node->createNext <TypeDeclaration> (std::move(token));
-
+	members.emplace_back(state.node->createNext <TypeDeclaration> (std::move(token)));
 	Token name = consumeName(state.tokens);
-	scopes.emplace_back(std::make_shared <Type> (*this, std::move(name)));
 
 	printf("-------------------------- START PARSING TYPE---- --------------------------------------------\n");
 
-	auto type = std::static_pointer_cast <Type> (scopes.back());
+	auto type = std::make_shared <Type> (*this, std::move(name));
 	ParserState newState(state.tokens, type->getRoot());
+
+	state.node = members.back();
 	state.node->as <TypeDeclaration> ()->type = type;
 
 	bool ret = type->parse(newState);
@@ -323,6 +335,213 @@ bool Scope::checkRowChange(Token::IndexType currentRow, ParserState& state)
 	}
 
 	return true;
+}
+
+bool Scope::validate()
+{
+	if(isNamed())
+	{
+		printf("Validating scope '%s'\n", ((NamedScope*)this)->getName().getString().c_str());
+	}
+
+	ValidationState state;
+	bool ret = validateNode(root, state);
+
+	if(isNamed())
+	{
+		printf("Done validating scope '%s'\n", ((NamedScope*)this)->getName().getString().c_str());
+	}
+
+	return ret;
+}
+
+bool Scope::handleVariableDeclaration(std::shared_ptr <Expression> node, ValidationState& state)
+{
+	if(node->isOperator())
+	{
+		if(node->as <Operator> ()->isTwoSided())
+		{
+			auto twoSided = node->as <TwoSidedOperator> ();
+
+			if(twoSided->getType() == TwoSidedOperator::Type::Assignment)
+			{
+				if(twoSided->getLeft()->isValue() && twoSided->getLeft()->getToken().getType() == Token::Type::Identifier)
+				{
+					twoSided->setRight(validateExpression(twoSided->getRight(), state));
+					if(!twoSided->getRight()) return false;
+
+					Variable variable(twoSided->getLeft()->as <Value> (), twoSided->getRight()->getResultType());
+					members.emplace_back(std::make_shared <VariableDefinition> (std::move(variable)));
+
+					twoSided->setLeft(validateExpression(twoSided->getLeft(), state));
+					if(!twoSided->getLeft()) return false;
+
+					twoSided->setResultType(twoSided->getLeft()->getResultType());
+					
+					printf("Create variable '%s'\n", twoSided->getLeft()->getToken().getString().c_str());
+					return true;
+				}
+
+				else
+				{
+					printf("Variable name has to be an identifier\n");
+					return false;
+				}
+			}
+		}
+	}
+
+	printf("Expected '=' after a variable declaration\n");
+	return false;
+}
+
+bool Scope::validateNode(std::shared_ptr <Node> node, ValidationState& state)
+{
+	if(node->isDeclaration())
+	{
+		auto decl = node->as <Declaration> ();
+
+		if(decl->isVariable())
+		{
+			if(state.inVariable)
+			{
+				printf("Can't nest variable declarations\n");
+				return false;
+			}
+
+			auto initialization = decl->as <VariableDeclaration> ()->initialization->getRoot();
+			state.inVariable = true;
+
+			if(!handleVariableDeclaration(initialization, state))
+				return false;
+
+			state.inVariable = false;
+		}
+
+		else if(decl->isType())
+		{
+			auto typeDecl = decl->as <TypeDeclaration> ();
+			if(!typeDecl->type->validate())
+				return false;
+		}
+	}
+
+	else if(node->isExpression())
+	{
+		auto expr = node->as <Expression> ();
+
+		if(expr->isExpressionRoot())
+		{
+			auto exprRoot = expr->as <ExpressionRoot> ();
+			exprRoot->setRoot(validateExpression(exprRoot->getRoot(), state));
+			if(!exprRoot->getRoot()) return false;
+		}
+
+		else
+		{
+			printf("??? Expression '%s' in validateNode isn't a root\n", expr->getToken().getString().c_str());
+			return false;
+		}
+
+	}
+
+	if(node->hasNext() && !validateNode(node->getNext(), state))
+		return false;
+
+	return true;
+}
+
+std::shared_ptr <Expression> Scope::validateExpression(std::shared_ptr <Expression> expr, ValidationState& state)
+{
+	if(expr->isExpressionRoot())
+	{
+		if(!validateNode(expr, state))
+			return nullptr;
+
+		return expr;
+	}
+
+	printf("Validate expr '%s'\n", expr->getToken().getString().c_str());
+
+	if(expr->isValue())
+	{
+		if(expr->getToken().getType() == Token::Type::Identifier)
+		{
+			for(auto member : members)
+			{
+				printf("Check member '%s'\n", member->getName().getString().c_str());
+
+				if(expr->getToken() == member->getName())
+				{
+					printf("Found member '%s'\n", expr->getToken().getString().c_str());
+					auto ref = std::make_shared <DeclarationReference> (member);
+
+					expr->getParent()->adopt(ref);
+					return ref;
+				}
+			}
+
+			printf("ERROR: Unknown identifier '%s'\n", expr->getToken().getString().c_str());
+			return nullptr;
+		}
+
+		else
+		{
+			return std::make_shared <TypedConstant> (expr->as <Value> ());
+		}
+	}
+
+	else if(expr->isOperator())
+	{
+		if(expr->as <Operator> ()->isTwoSided())
+		{
+			auto twoSided = expr->as <TwoSidedOperator> ();
+
+			if(twoSided->getType() == TwoSidedOperator::Type::Access)
+			{
+				auto lhs = validateExpression(twoSided->getLeft(), state);
+				if(!lhs) return nullptr;
+
+				if(lhs->getToken().getType() != Token::Type::Identifier)
+				{
+					printf("Expected identifier as lhs of '.'\n");
+					return nullptr;
+				}
+
+				printf("TODO: Get type of lhs and call validateExpression on rhs\n");
+				return nullptr;
+			}
+
+			else
+			{
+				twoSided->setLeft(validateExpression(twoSided->getLeft(), state));
+				if(!twoSided->getLeft()) return nullptr;
+
+				twoSided->setRight(validateExpression(twoSided->getRight(), state));
+				if(!twoSided->getRight()) return nullptr;
+
+				if(!twoSided->getLeft()->getResultType().hasOperator(twoSided->getType()))
+				{
+					printf("No operator '%s' for type %s\n", twoSided->getTypeString(), twoSided->getLeft()->getResultType().getName().getString().c_str());
+					return nullptr;
+				}
+
+				twoSided->setResultType(twoSided->getLeft()->getResultType());
+
+			}
+		}
+
+		else if(expr->as <Operator> ()->isOneSided())
+		{
+			auto oneSided = expr->as <OneSidedOperator> ();
+			oneSided->setExpression(validateExpression(oneSided->getExpression(), state));
+			if(!oneSided->getExpression()) return nullptr;
+
+			oneSided->setResultType(oneSided->getExpression()->getResultType());
+		}
+	}
+
+	return expr;
 }
 
 }

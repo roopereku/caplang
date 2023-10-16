@@ -1,10 +1,13 @@
 #include <cap/SourceFile.hh>
+#include <cap/PrimitiveType.hh>
 #include <cap/node/Declaration.hh>
+#include <cap/node/DeclarationReference.hh>
 #include <cap/node/FunctionDeclaration.hh>
 #include <cap/node/VariableDeclaration.hh>
 #include <cap/node/TypeDeclaration.hh>
 #include <cap/node/TwoSidedOperator.hh>
 #include <cap/node/OneSidedOperator.hh>
+#include <cap/node/TypedConstant.hh>
 #include <cap/node/ExpressionRoot.hh>
 #include <cap/node/FunctionCall.hh>
 #include <cap/node/Subscript.hh>
@@ -35,7 +38,7 @@ public:
 private:
 	void generateNode(std::shared_ptr <cap::Node> node, unsigned depth)
 	{
-		printf("%u '%s' %u\n", node->id, node->getToken().c_str(), depth);
+		//printf("%u '%s' %u\n", node->id, node->getToken().c_str(), depth);
 
 		if(node->isExpression())
 		{
@@ -46,12 +49,14 @@ private:
 			{
 				//printf("Operator\n");
 				auto op = node->as <cap::Operator> ();
+				auto& resultType = op->getResultType();
+				std::string typeString("(" + resultType.getName().getString() + ")");
 
 				if(op->isTwoSided())
 				{
 					//printf("Two sided operator\n");
 					auto twoSided = op->as <cap::TwoSidedOperator> ();
-					file << indent(depth) << twoSided->getTypeString() << "\n";
+					file << indent(depth) << twoSided->getTypeString() << ' ' << typeString << "\n";
 
 					generateNode(twoSided->getLeft(), depth + 1);
 					generateNode(twoSided->getRight(), depth + 1);
@@ -60,7 +65,7 @@ private:
 				else if(op->isOneSided())
 				{
 					auto oneSided = op->as <cap::OneSidedOperator> ();
-					file << indent(depth) << oneSided->getTypeString() << "\n";
+					file << indent(depth) << oneSided->getTypeString() << ' ' << typeString << "\n";
 
 					if(oneSided->type == cap::OneSidedOperator::Type::FunctionCall)
 					{
@@ -88,23 +93,37 @@ private:
 			else if(expr->isValue())
 			{
 				//printf("Value\n");
-				file << indent(depth) << "Value: " << expr->getToken() << "\n";
+				file << indent(depth) << "Value: " << expr->getToken().getString() << "\n";
 			}
 
 			else if(expr->isExpressionRoot())
 			{
-				printf("Expression root\n");
+				//printf("Expression root\n");
 				file << indent(depth) << "Expression root\n";
 
 				if(!node->as <cap::ExpressionRoot> ()->getRoot())
 				{
-					printf("No root\n");
+					//printf("No root\n");
 				}
 
 				else
 				{
 					generateNode(node->as <cap::ExpressionRoot> ()->getRoot(), depth + 1);
 				}
+			}
+
+			else if(expr->isDeclarationReference())
+			{
+				auto ref = expr->as <cap::DeclarationReference> ();
+				std::string typeString("(" + ref->getResultType().getName().getString() + ")");
+
+				file << indent(depth) << "Reference to declaration \"" << ref->getDeclaration()->getName().getString() << "\" " << typeString << "\n";
+			}
+
+			else if(expr->isTypedConstant())
+			{
+				const auto& type = expr->getResultType();
+				file << indent(depth) << "Constant \"" << expr->getToken().getString() << "\" of type " << type.getName().getString() << '\n';
 			}
 		}
 
@@ -136,12 +155,20 @@ private:
 				file << indent(depth) << "Variable declaration\n";
 				generateNode(decl->initialization, depth + 1);
 			}
+
+			else if(declNode->isVariableDefinition())
+			{
+				auto decl = node->as <cap::VariableDeclaration> ();
+
+				file << indent(depth) << "Variable definition\n";
+				generateNode(decl->initialization, depth + 1);
+			}
 		}
 
 		else if(node->isStatement())
 		{
 			auto statement = node->as <cap::Statement> ();
-			file << indent(depth) << "Statement: " << statement->getToken() << "\n";
+			file << indent(depth) << "Statement: " << statement->getToken().getString() << "\n";
 
 			if(statement->isReturn())
 			{
@@ -169,4 +196,13 @@ int main()
 
 	GraphGenerator gen("output");
 	gen.generate(entry.getGlobal().getRoot());
+
+	if(!entry.validate())
+	{
+		printf("Validation failed\n");
+		return 1;
+	}
+
+	GraphGenerator validated("validated");
+	validated.generate(entry.getGlobal().getRoot());
 }

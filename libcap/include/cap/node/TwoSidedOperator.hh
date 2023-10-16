@@ -18,6 +18,7 @@ public:
 		Division,
 		Modulus,
 		Access,
+		Comma,
 
 		GreaterThan,
 		GreaterOrEqual,
@@ -47,6 +48,16 @@ public:
 
 	bool isTwoSided() override;
 
+	void setLeft(std::shared_ptr <Expression> value)
+	{
+		left = std::move(value);
+	}
+
+	void setRight(std::shared_ptr <Expression> value)
+	{
+		right = std::move(value);
+	}
+
 	std::shared_ptr <Expression> getLeft()
 	{
 		return left;
@@ -55,6 +66,11 @@ public:
 	std::shared_ptr <Expression> getRight()
 	{
 		return right;
+	}
+
+	Type getType()
+	{
+		return type;
 	}
 
 	/// Parses a two sided operator from the given token.

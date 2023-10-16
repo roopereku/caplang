@@ -13,12 +13,23 @@ public:
 	{
 	}
 
+	virtual const Token& getName()
+	{
+		static Token invalid(Token::Type::Invalid, "Invalid name", 0, 0);
+		return invalid;
+	}
+
 	bool isDeclaration() final override
 	{
 		return true;
 	}
 
 	virtual bool isVariable()
+	{
+		return false;
+	}
+
+	virtual bool isVariableDefinition()
 	{
 		return false;
 	}

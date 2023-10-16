@@ -38,12 +38,24 @@ public:
 		return true;
 	}
 
+	Type& getResultType() override
+	{
+		return resultType ? *resultType : Expression::getResultType();
+	}
+
+	void setResultType(Type& type)
+	{
+		resultType = &type;
+	}
+
 	bool handleExpressionNode(std::shared_ptr <Expression> node, ParserState& state) override;
 
 protected:
 	virtual bool handleSamePrecedence(std::shared_ptr <Operator> op, ParserState& state) = 0;
 	virtual bool handleHigherPrecedence(std::shared_ptr <Operator> op, ParserState& state) = 0;
 	virtual bool handleValue(std::shared_ptr <Expression> value, ParserState& state) = 0;
+
+	Type* resultType = nullptr;
 };
 
 }

@@ -19,6 +19,11 @@ public:
 		return true;
 	}
 
+	const Token& getName() override
+	{
+		return type->getName();
+	}
+
 	std::shared_ptr <Type> type;
 };
 

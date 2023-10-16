@@ -6,7 +6,7 @@
 namespace cap
 {
 
-SourceFile::SourceFile(std::string_view path)
+SourceFile::SourceFile(std::string_view path) : global(Scope::getSharedScope())
 {
 	std::ifstream file(path.data());
 

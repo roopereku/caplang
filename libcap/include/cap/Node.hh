@@ -79,9 +79,9 @@ public:
 		return false;
 	}
 
-	std::string getToken()
+	const Token& getToken()
 	{
-		return token.getString();
+		return token;
 	}
 
 	void adopt(std::shared_ptr <Node> node);

@@ -1,10 +1,36 @@
 #include <cap/Type.hh>
 #include <cap/BraceMatcher.hh>
-
-#include <stack>
+#include <cap/PrimitiveType.hh>
 
 namespace cap
 {
+
+static PrimitiveType primitives[]
+{
+	PrimitiveType("uint8", 1),
+	PrimitiveType("uint16", 2),
+	PrimitiveType("uint32", 4),
+	PrimitiveType("uint64", 8),
+
+	PrimitiveType("int8", 1),
+	PrimitiveType("int16", 2),
+	PrimitiveType("int32", 4),
+	PrimitiveType("int64", 8),
+
+	PrimitiveType("invalidType", 0),
+};
+
+enum class DefaultPrimitiveIndex
+{
+	// uint64
+	Unsigned = 3,
+
+	// int64
+	Signed = 7,
+
+	// invalidType
+	Invalid = 8
+};
 
 bool Type::parse(ParserState& state)
 {
@@ -27,6 +53,33 @@ bool Type::parse(ParserState& state)
 		return false;
 
 	return true;
+}
+
+PrimitiveType& Type::getPrimitive(Token::Type tokenType)
+{
+	switch(tokenType)
+	{
+		case Token::Type::Integer:
+			return primitives[static_cast <size_t> (DefaultPrimitiveIndex::Signed)];
+
+		default:
+			return getInvalid();
+	}
+}
+
+PrimitiveType& Type::getInvalid()
+{
+	return primitives[static_cast <size_t> (DefaultPrimitiveIndex::Invalid)];
+}
+
+bool Type::hasOperator(TwoSidedOperator::Type type)
+{
+	return false;
+}
+
+bool Type::hasOperator(OneSidedOperator::Type type)
+{
+	return false;
 }
 
 }

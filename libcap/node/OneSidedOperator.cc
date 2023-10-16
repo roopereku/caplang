@@ -32,7 +32,7 @@ std::shared_ptr <Operator> OneSidedOperator::parse(Token&& token, ParserState& s
 
 bool OneSidedOperator::applyCached(std::shared_ptr <Expression>&& cached)
 {
-	printf("[OneSidedOperator] Apply cached '%s'\n", cached->getToken().c_str());
+	//printf("[OneSidedOperator] Apply cached '%s'\n", cached->getToken().c_str());
 
 	if(expression)
 	{
@@ -41,6 +41,8 @@ bool OneSidedOperator::applyCached(std::shared_ptr <Expression>&& cached)
 	}
 
 	expression = std::move(cached);
+	adopt(expression);
+
 	return true;
 }
 
@@ -101,6 +103,8 @@ bool OneSidedOperator::affectsNextValue()
 bool OneSidedOperator::replaceExpression(std::shared_ptr <Expression> node)
 {
 	expression = node;
+	adopt(expression);
+
 	return true;
 }
 
@@ -113,6 +117,7 @@ bool OneSidedOperator::handleSamePrecedence(std::shared_ptr <Operator> op, Parse
 		// Make this operator the lhs of the new operator.
 		auto twoSided = op->as <TwoSidedOperator> ();
 		twoSided->left = shared_from_this()->as <Expression> ();
+		twoSided->adopt(twoSided->left);
 
 		// Replace this operator with the new two sided operator.
 		parentExpr->adopt(twoSided);
@@ -127,6 +132,7 @@ bool OneSidedOperator::handleSamePrecedence(std::shared_ptr <Operator> op, Parse
 		// Make this the expression of the new operator.
 		auto oneSided = op->as <OneSidedOperator> ();
 		oneSided->expression = shared_from_this()->as <Expression> ();
+		oneSided->adopt(oneSided->expression);
 
 		// Replace this operator with the new one sided operator.
 		parentExpr->adopt(oneSided);
@@ -160,12 +166,13 @@ bool OneSidedOperator::handleHigherPrecedence(std::shared_ptr <Operator> op, Par
 		if(oneSided->affectsPreviousValue())
 		{
 			oneSided->expression = expression;
-			expression = oneSided;
+			oneSided->adopt(oneSided->expression);
 		}
 	}
 
 	// The rhs of current becomes the new node.
 	expression = std::move(op);
+	adopt(expression);
 
 	return true;
 
@@ -174,6 +181,8 @@ bool OneSidedOperator::handleHigherPrecedence(std::shared_ptr <Operator> op, Par
 bool OneSidedOperator::handleValue(std::shared_ptr <Expression> value, ParserState& state)
 {
 	expression = std::move(value);
+	adopt(expression);
+
 	return true;
 }
 

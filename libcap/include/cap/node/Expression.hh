@@ -7,6 +7,7 @@ namespace cap
 {
 
 class Operator;
+class Type;
 
 class Expression : public Node
 {
@@ -21,6 +22,10 @@ public:
 	virtual bool isValue();
 	virtual bool isOperator();
 	virtual bool isExpressionRoot();
+	virtual bool isDeclarationReference();
+	virtual bool isTypedConstant();
+
+	virtual Type& getResultType();
 
 	/// Custom handler for when an operator should replace what's currently stored.
 	///

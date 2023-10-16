@@ -19,6 +19,11 @@ public:
 		return global;
 	}
 
+	bool validate()
+	{
+		return global.validate();
+	}
+
 private:
 	Scope global;
 	std::string source;

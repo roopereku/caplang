@@ -51,6 +51,11 @@ bool Token::operator==(std::string_view rhs) const
 	return data == rhs;
 }
 
+bool Token::operator==(const Token& rhs) const
+{
+	return data == rhs.data;
+}
+
 std::string_view::value_type Token::operator[](size_t index) const
 {
 	return data[index];

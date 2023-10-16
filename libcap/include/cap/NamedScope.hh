@@ -14,9 +14,14 @@ public:
 	{
 	}
 
-	const Token& getName()
+	const Token& getName() const
 	{
 		return name;
+	}
+
+	bool isNamed() override
+	{
+		return true;
 	}
 
 protected:
