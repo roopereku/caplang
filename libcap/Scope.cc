@@ -507,7 +507,24 @@ std::shared_ptr <Expression> Scope::validateExpression(std::shared_ptr <Expressi
 					return nullptr;
 				}
 
-				printf("TODO: Get type of lhs and call validateExpression on rhs\n");
+				if(lhs->isDeclarationReference())
+				{
+					auto ref = lhs->as <DeclarationReference> ();
+
+					if(ref->getDeclaration()->isFunction())
+					{
+						printf("ERROR: Lhs of '.' is a function\n");
+						return nullptr;
+					}
+
+					printf("Check for '%s' in '%s'\n",
+							twoSided->getRight()->getToken().getString().c_str(),
+							ref->getResultType().getName().getString().c_str());
+
+					return ref->getResultType().validateExpression(twoSided->getRight(), state);
+				}
+
+				printf("??? lhs of Access is not a declaration reference\n");
 				return nullptr;
 			}
 

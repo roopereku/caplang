@@ -2,8 +2,9 @@ type outer
 {
 	type inner
 	{
+		var member = 478
 	}
 
 	var abc = 12 + 23
-	abc + abc * 2
+	var bcd = inner.member
 }
