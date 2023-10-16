@@ -14,6 +14,7 @@ public:
 	}
 
 	bool handleToken(Token&& token, ParserState& state) override;
+	Type& getResultType() override;
 
 	bool isExpressionRoot() override
 	{

@@ -25,6 +25,11 @@ bool ExpressionRoot::handleToken(Token&& token, ParserState& state)
 	return true;
 }
 
+Type& ExpressionRoot::getResultType()
+{
+	return root->getResultType();
+}	
+
 bool ExpressionRoot::replaceExpression(std::shared_ptr <Expression> node)
 {
 	root = node;

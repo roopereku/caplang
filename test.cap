@@ -5,5 +5,5 @@ type outer
 	}
 
 	var abc = 12 + 23
-	inner + 2
+	abc + abc * 2
 }

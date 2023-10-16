@@ -44,13 +44,12 @@ private:
 		{
 			//printf("Expression node\n");
 			auto expr = node->as <cap::Expression> ();
+			std::string typeString("(" + expr->getResultType().getName().getString() + ")");
 
 			if(expr->isOperator())
 			{
 				//printf("Operator\n");
 				auto op = node->as <cap::Operator> ();
-				auto& resultType = op->getResultType();
-				std::string typeString("(" + resultType.getName().getString() + ")");
 
 				if(op->isTwoSided())
 				{
@@ -99,7 +98,7 @@ private:
 			else if(expr->isExpressionRoot())
 			{
 				//printf("Expression root\n");
-				file << indent(depth) << "Expression root\n";
+				file << indent(depth) << "Expression root " << typeString << '\n';
 
 				if(!node->as <cap::ExpressionRoot> ()->getRoot())
 				{
@@ -115,7 +114,6 @@ private:
 			else if(expr->isDeclarationReference())
 			{
 				auto ref = expr->as <cap::DeclarationReference> ();
-				std::string typeString("(" + ref->getResultType().getName().getString() + ")");
 
 				file << indent(depth) << "Reference to declaration \"" << ref->getDeclaration()->getName().getString() << "\" " << typeString << "\n";
 			}
@@ -123,7 +121,7 @@ private:
 			else if(expr->isTypedConstant())
 			{
 				const auto& type = expr->getResultType();
-				file << indent(depth) << "Constant \"" << expr->getToken().getString() << "\" of type " << type.getName().getString() << '\n';
+				file << indent(depth) << "Constant \"" << expr->getToken().getString() << "\" " << typeString << '\n';
 			}
 		}
 

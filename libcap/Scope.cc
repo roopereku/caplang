@@ -455,10 +455,9 @@ std::shared_ptr <Expression> Scope::validateExpression(std::shared_ptr <Expressi
 {
 	if(expr->isExpressionRoot())
 	{
-		if(!validateNode(expr, state))
-			return nullptr;
-
-		return expr;
+		auto exprRoot = expr->as <ExpressionRoot> ();
+		exprRoot->setRoot(validateExpression(exprRoot->getRoot(), state));
+		if(!exprRoot->getRoot()) return nullptr;
 	}
 
 	printf("Validate expr '%s'\n", expr->getToken().getString().c_str());
@@ -522,12 +521,11 @@ std::shared_ptr <Expression> Scope::validateExpression(std::shared_ptr <Expressi
 
 				if(!twoSided->getLeft()->getResultType().hasOperator(twoSided->getType()))
 				{
-					printf("No operator '%s' for type %s\n", twoSided->getTypeString(), twoSided->getLeft()->getResultType().getName().getString().c_str());
+					printf("No two sided operator '%s' for type %s\n", twoSided->getTypeString(), twoSided->getLeft()->getResultType().getName().getString().c_str());
 					return nullptr;
 				}
 
 				twoSided->setResultType(twoSided->getLeft()->getResultType());
-
 			}
 		}
 
@@ -536,6 +534,12 @@ std::shared_ptr <Expression> Scope::validateExpression(std::shared_ptr <Expressi
 			auto oneSided = expr->as <OneSidedOperator> ();
 			oneSided->setExpression(validateExpression(oneSided->getExpression(), state));
 			if(!oneSided->getExpression()) return nullptr;
+
+			if(!oneSided->getExpression()->getResultType().hasOperator(oneSided->getType()))
+			{
+				printf("No one sided operator '%s' for type %s\n", oneSided->getTypeString(), oneSided->getExpression()->getResultType().getName().getString().c_str());
+				return nullptr;
+			}
 
 			oneSided->setResultType(oneSided->getExpression()->getResultType());
 		}
