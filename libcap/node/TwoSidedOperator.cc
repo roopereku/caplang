@@ -57,7 +57,6 @@ bool TwoSidedOperator::handleSamePrecedence(std::shared_ptr <Operator> op, Parse
 		// Make this operator the lhs of the new operator.
 		auto twoSided = op->as <TwoSidedOperator> ();
 		twoSided->left = shared_from_this()->as <Expression> ();
-		twoSided->adopt(twoSided->left);
 
 		if(parent->isExpression())
 		{
@@ -67,6 +66,8 @@ bool TwoSidedOperator::handleSamePrecedence(std::shared_ptr <Operator> op, Parse
 			parentExpr->adopt(twoSided);
 			if(!parentExpr->replaceExpression(twoSided))
 				return false;
+
+			twoSided->adopt(twoSided->left);
 		}
 
 		else

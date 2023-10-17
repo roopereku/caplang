@@ -11,6 +11,12 @@ bool Node::handleToken(Token&& token, ParserState& state)
 
 void Node::adopt(std::shared_ptr <Node> node)
 {
+	if(node.get() == this)
+	{
+		printf("Node tried to adopt itself\n");
+		std::quick_exit(1);
+	}
+
 	node->parent = shared_from_this();
 }
 

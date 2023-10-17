@@ -509,12 +509,7 @@ std::shared_ptr <Expression> Scope::validateExpression(std::shared_ptr <Expressi
 
 			if(twoSided->getType() == TwoSidedOperator::Type::Access)
 			{
-				if(twoSided->getLeft()->getToken().getType() != Token::Type::Identifier)
-				{
-					printf("TODO: Implement non identifiers as lhs of '.'\n");
-					return nullptr;
-				}
-
+				printf("Get lhs of access\n");
 				auto lhs = validateExpression(twoSided->getLeft(), state);
 				if(!lhs) return nullptr;
 
