@@ -8,6 +8,7 @@ class ValidationState
 {
 public:
 	bool inVariable = false;
+	bool findMembersInParent = false;
 };
 
 };

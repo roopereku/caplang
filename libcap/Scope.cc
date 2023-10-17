@@ -367,6 +367,7 @@ bool Scope::handleVariableDeclaration(std::shared_ptr <Expression> node, Validat
 			{
 				if(twoSided->getLeft()->isValue() && twoSided->getLeft()->getToken().getType() == Token::Type::Identifier)
 				{
+					state.findMembersInParent = true;
 					twoSided->setRight(validateExpression(twoSided->getRight(), state));
 					if(!twoSided->getRight()) return false;
 
@@ -432,7 +433,9 @@ bool Scope::validateNode(std::shared_ptr <Node> node, ValidationState& state)
 
 		if(expr->isExpressionRoot())
 		{
+			state.findMembersInParent = true;
 			auto exprRoot = expr->as <ExpressionRoot> ();
+
 			exprRoot->setRoot(validateExpression(exprRoot->getRoot(), state));
 			if(!exprRoot->getRoot()) return false;
 		}
@@ -480,6 +483,14 @@ std::shared_ptr <Expression> Scope::validateExpression(std::shared_ptr <Expressi
 				}
 			}
 
+			printf("Look up in parent %d\n", state.findMembersInParent);
+
+			if(parent && state.findMembersInParent)
+			{
+				printf("Check in parent scope\n");
+				return parent->validateExpression(expr, state);
+			}
+
 			printf("ERROR: Unknown identifier '%s'\n", expr->getToken().getString().c_str());
 			return nullptr;
 		}
@@ -498,14 +509,17 @@ std::shared_ptr <Expression> Scope::validateExpression(std::shared_ptr <Expressi
 
 			if(twoSided->getType() == TwoSidedOperator::Type::Access)
 			{
+				if(twoSided->getLeft()->getToken().getType() != Token::Type::Identifier)
+				{
+					printf("TODO: Implement non identifiers as lhs of '.'\n");
+					return nullptr;
+				}
+
 				auto lhs = validateExpression(twoSided->getLeft(), state);
 				if(!lhs) return nullptr;
 
-				if(lhs->getToken().getType() != Token::Type::Identifier)
-				{
-					printf("Expected identifier as lhs of '.'\n");
-					return nullptr;
-				}
+				printf("NOTE: Members are no longer looked up in parent\n");
+				state.findMembersInParent = false;
 
 				if(lhs->isDeclarationReference())
 				{

@@ -2,9 +2,7 @@ type outer
 {
 	type inner
 	{
-		var member = 478
 	}
 
-	var abc = 12 + 23
-	var bcd = inner.member
+	var abc = outer.inner
 }
