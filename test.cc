@@ -1,4 +1,6 @@
 #include <cap/SourceFile.hh>
+#include <cap/EventEmitter.hh>
+#include <cap/event/Message.hh>
 #include <cap/PrimitiveType.hh>
 #include <cap/node/Declaration.hh>
 #include <cap/node/DeclarationReference.hh>
@@ -188,14 +190,35 @@ private:
 	std::ofstream file;
 };
 
+class StdoutEmitter : public cap::EventEmitter
+{
+public:
+	void onMessageReceived(cap::Message& message) override
+	{
+		const char* prefix = "";
+
+		switch(message.getType())
+		{
+			case cap::Message::Type::Error:
+			{
+				prefix = "\x1B[1;31mError";
+				break;
+			}
+		}
+
+		printf("[%s\x1B[0m] %s\n", prefix, message.getString().c_str());
+	}
+};
+
 int main()
 {
 	cap::SourceFile entry("../test.cap");
+	StdoutEmitter events;
 
 	GraphGenerator gen("output");
 	gen.generate(entry.getGlobal().getRoot());
 
-	if(!entry.validate())
+	if(!entry.validate(events))
 	{
 		printf("Validation failed\n");
 		return 1;

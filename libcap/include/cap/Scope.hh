@@ -1,6 +1,7 @@
 #ifndef CAP_SCOPE_HH
 #define CAP_SCOPE_HH
 
+#include <cap/EventEmitter.hh>
 #include <cap/ValidationState.hh>
 #include <cap/ParserState.hh>
 #include <cap/Node.hh>
@@ -60,7 +61,7 @@ public:
 	/// \returns True if parsing was succesful.
 	virtual bool parse(ParserState& state);
 
-	bool validate();
+	bool validate(EventEmitter& events);
 
 	const std::shared_ptr <Node> getRoot() const
 	{

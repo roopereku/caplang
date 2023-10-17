@@ -2,6 +2,7 @@
 #define CAP_SOURCE_FILE_HH
 
 #include <cap/Scope.hh>
+#include <cap/EventEmitter.hh>
 
 #include <string_view>
 #include <string>
@@ -19,9 +20,9 @@ public:
 		return global;
 	}
 
-	bool validate()
+	bool validate(EventEmitter& events)
 	{
-		return global.validate();
+		return global.validate(events);
 	}
 
 private:

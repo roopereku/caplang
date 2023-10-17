@@ -1,12 +1,4 @@
 type Outer
 {
-	type Member
-	{
-		type MemberInner
-		{
-			var member = 30
-		}
-	}
-
-	var abc = Outer.Member.MemberInner.member + 2
+	var abc = foo
 }

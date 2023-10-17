@@ -3,6 +3,8 @@
 #include <cap/Function.hh>
 #include <cap/PrimitiveType.hh>
 
+#include <cap/event/UnknownIdentifier.hh>
+
 #include <cap/node/ExpressionRoot.hh>
 #include <cap/node/TwoSidedOperator.hh>
 #include <cap/node/OneSidedOperator.hh>
@@ -337,14 +339,14 @@ bool Scope::checkRowChange(Token::IndexType currentRow, ParserState& state)
 	return true;
 }
 
-bool Scope::validate()
+bool Scope::validate(EventEmitter& events)
 {
 	if(isNamed())
 	{
 		printf("Validating scope '%s'\n", ((NamedScope*)this)->getName().getString().c_str());
 	}
 
-	ValidationState state;
+	ValidationState state(events);
 	bool ret = validateNode(root, state);
 
 	if(isNamed())
@@ -422,7 +424,7 @@ bool Scope::validateNode(std::shared_ptr <Node> node, ValidationState& state)
 		else if(decl->isType())
 		{
 			auto typeDecl = decl->as <TypeDeclaration> ();
-			if(!typeDecl->type->validate())
+			if(!typeDecl->type->validate(state.events))
 				return false;
 		}
 	}
@@ -491,7 +493,7 @@ std::shared_ptr <Expression> Scope::validateExpression(std::shared_ptr <Expressi
 				return parent->validateExpression(expr, state);
 			}
 
-			printf("ERROR: Unknown identifier '%s'\n", expr->getToken().getString().c_str());
+			state.events.emit(UnknownIdentifier(expr->getToken(), *this));
 			return nullptr;
 		}
 
