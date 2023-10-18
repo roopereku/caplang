@@ -19,6 +19,11 @@ public:
 		return true;
 	}
 
+	const Token& getName() override
+	{
+		return function->getName();
+	}
+
 	std::shared_ptr <Function> function;
 };
 

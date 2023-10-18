@@ -4,6 +4,9 @@
 #include <cap/PrimitiveType.hh>
 
 #include <cap/event/UnknownIdentifier.hh>
+#include <cap/event/InvalidAccess.hh>
+#include <cap/event/InvalidOperatorOverload.hh>
+#include <cap/event/GenericMessage.hh>
 
 #include <cap/node/ExpressionRoot.hh>
 #include <cap/node/TwoSidedOperator.hh>
@@ -48,7 +51,7 @@ bool Scope::createFunction(Token&& token, ParserState& state)
 	printf("-------------------------- START PARSING FUNCTION --------------------------------------------\n");
 
 	auto function = std::make_shared <Function> (*this, std::move(name));
-	ParserState newState(state.tokens, function->getRoot());
+	ParserState newState(state.tokens, state.events, function->getRoot());
 
 	state.node = members.back();
 	state.node->as <FunctionDeclaration> ()->function = function;
@@ -67,7 +70,7 @@ bool Scope::createType(Token&& token, ParserState& state)
 	printf("-------------------------- START PARSING TYPE---- --------------------------------------------\n");
 
 	auto type = std::make_shared <Type> (*this, std::move(name));
-	ParserState newState(state.tokens, type->getRoot());
+	ParserState newState(state.tokens, state.events, type->getRoot());
 
 	state.node = members.back();
 	state.node->as <TypeDeclaration> ()->type = type;
@@ -93,9 +96,9 @@ bool Scope::createVariable(Token&& token, ParserState& state)
 	return true;
 }
 
-bool Scope::parse(Tokenizer& tokens)
+bool Scope::parse(Tokenizer& tokens, EventEmitter& events)
 {
-	ParserState state(tokens, root);
+	ParserState state(tokens, events, root);
 	return parse(state);
 }
 
@@ -209,7 +212,7 @@ bool Scope::parse(ParserState& state)
 			{
 				if(!state.node)
 				{
-					printf("??? No current node\n");
+					state.events.emit(GenericMessage(token, "??? No current node", Message::Type::Error));
 					return false;
 				}
 
@@ -223,7 +226,7 @@ bool Scope::parse(ParserState& state)
 	// being tracked, we have unterminated braces.
 	if(parent && state.braces.isOpened())
 	{
-		printf("Unterminated brace '%c'\n", state.braces.getOpener()[0]);
+		state.events.emit(GenericMessage(state.braces.getOpener(), "Unterminated brace", Message::Type::Error));
 		return false;
 	}
 
@@ -235,7 +238,7 @@ bool Scope::parseBracket(Token&& token, ParserState& state)
 	Token::Type t = token.getType();
 	auto inBraces = std::make_shared <ExpressionRoot> (Token::createInvalid());
 
-	ParserState newState(state.tokens, inBraces);
+	ParserState newState(state.tokens, state.events, inBraces);
 	newState.initExpression(token.getRow());
 	newState.canEndExpression = false;
 
@@ -245,7 +248,7 @@ bool Scope::parseBracket(Token&& token, ParserState& state)
 	{
 		if(!state.inExpression)
 		{
-			printf("??? Not in expression\n");
+			state.events.emit(GenericMessage(token, "??? Not in expression", Message::Type::Error));
 			return false;
 		}
 
@@ -267,7 +270,7 @@ bool Scope::parseBracket(Token&& token, ParserState& state)
 
 		else
 		{
-			printf("??? {} after value not implemented\n");
+			state.events.emit(GenericMessage(token, "TODO: {} after a value", Message::Type::Error));
 			return false;
 		}
 
@@ -394,7 +397,7 @@ bool Scope::handleVariableDeclaration(std::shared_ptr <Expression> node, Validat
 		}
 	}
 
-	printf("Expected '=' after a variable declaration\n");
+	state.events.emit(GenericMessage(node->getToken(), "Expected '=' after a variable declaration", Message::Type::Error));
 	return false;
 }
 
@@ -408,7 +411,7 @@ bool Scope::validateNode(std::shared_ptr <Node> node, ValidationState& state)
 		{
 			if(state.inVariable)
 			{
-				printf("Can't nest variable declarations\n");
+				state.events.emit(GenericMessage(decl->getToken(), "Can't nest variable declarations", Message::Type::Error));
 				return false;
 			}
 
@@ -444,7 +447,7 @@ bool Scope::validateNode(std::shared_ptr <Node> node, ValidationState& state)
 
 		else
 		{
-			printf("??? Expression '%s' in validateNode isn't a root\n", expr->getToken().getString().c_str());
+			state.events.emit(GenericMessage(expr->getToken(), "??? Expression in validateNode isn't a root", Message::Type::Error));
 			return false;
 		}
 
@@ -524,7 +527,7 @@ std::shared_ptr <Expression> Scope::validateExpression(std::shared_ptr <Expressi
 
 					if(ref->getDeclaration()->isFunction())
 					{
-						printf("ERROR: Lhs of '.' is a function\n");
+						state.events.emit(InvalidAccess(expr->getToken(), ref));
 						return nullptr;
 					}
 
@@ -535,7 +538,7 @@ std::shared_ptr <Expression> Scope::validateExpression(std::shared_ptr <Expressi
 					return ref->getResultType().validateExpression(twoSided->getRight(), state);
 				}
 
-				printf("??? lhs of Access is not a declaration reference\n");
+				state.events.emit(GenericMessage(twoSided->getLeft()->getToken(), "??? Not a declaration reference", Message::Type::Error));
 				return nullptr;
 			}
 
@@ -547,9 +550,11 @@ std::shared_ptr <Expression> Scope::validateExpression(std::shared_ptr <Expressi
 				twoSided->setRight(validateExpression(twoSided->getRight(), state));
 				if(!twoSided->getRight()) return nullptr;
 
-				if(!twoSided->getLeft()->getResultType().hasOperator(twoSided->getType()))
+				auto lhsType = twoSided->getLeft()->getResultType();
+
+				if(!lhsType.hasOperator(twoSided->getType()))
 				{
-					printf("No two sided operator '%s' for type %s\n", twoSided->getTypeString(), twoSided->getLeft()->getResultType().getName().getString().c_str());
+					state.events.emit(InvalidOperatorOverload(twoSided->getToken(), lhsType));
 					return nullptr;
 				}
 
@@ -563,9 +568,11 @@ std::shared_ptr <Expression> Scope::validateExpression(std::shared_ptr <Expressi
 			oneSided->setExpression(validateExpression(oneSided->getExpression(), state));
 			if(!oneSided->getExpression()) return nullptr;
 
-			if(!oneSided->getExpression()->getResultType().hasOperator(oneSided->getType()))
+			auto resultType = oneSided->getExpression()->getResultType();
+
+			if(!resultType.hasOperator(oneSided->getType()))
 			{
-				printf("No one sided operator '%s' for type %s\n", oneSided->getTypeString(), oneSided->getExpression()->getResultType().getName().getString().c_str());
+				state.events.emit(InvalidOperatorOverload(oneSided->getToken(), resultType));
 				return nullptr;
 			}
 

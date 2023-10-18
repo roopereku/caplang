@@ -2,6 +2,7 @@
 #define CAP_PARSER_STATE_HH
 
 #include <cap/Tokenizer.hh>
+#include <cap/EventEmitter.hh>
 #include <cap/Node.hh>
 #include <cap/BraceMatcher.hh>
 #include <cap/node/Expression.hh>
@@ -11,8 +12,8 @@ namespace cap
 
 struct ParserState
 {
-	ParserState(Tokenizer& tokens, std::shared_ptr <Node> root)
-		: tokens(tokens), root(std::move(root)), node(this->root)
+	ParserState(Tokenizer& tokens, EventEmitter& events, std::shared_ptr <Node> root)
+		: tokens(tokens), events(events), root(std::move(root)), node(this->root)
 	{
 	}
 
@@ -21,6 +22,7 @@ struct ParserState
 
 	BraceMatcher braces;
 	Tokenizer& tokens;
+	EventEmitter& events;
 
 	bool inExpression = false;
 	bool previousIsValue = false;

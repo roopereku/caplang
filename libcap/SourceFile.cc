@@ -22,15 +22,12 @@ SourceFile::SourceFile(std::string_view path) : global(Scope::getSharedScope())
 	file.seekg(0, std::ios::beg);
 	file.read(&source[0], source.size());
 	file.close();
+}
 
+bool SourceFile::parse(EventEmitter& events)
+{
 	Tokenizer tokens(source);
-	BraceMatcher braces;
-
-	if(!global.parse(tokens))
-	{
-		// FIXME: Don't exit on failure.
-		std::quick_exit(1);
-	}
+	return global.parse(tokens, events);
 }
 
 }

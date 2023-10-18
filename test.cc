@@ -206,7 +206,8 @@ public:
 			}
 		}
 
-		printf("[%s\x1B[0m] %s\n", prefix, message.getString().c_str());
+		auto& location = message.getLocation();
+		printf("[%s\x1B[0m:%lu:%lu] %s\n", prefix, location.getRow(), location.getColumn(), message.getString().c_str());
 	}
 };
 
@@ -214,6 +215,12 @@ int main()
 {
 	cap::SourceFile entry("../test.cap");
 	StdoutEmitter events;
+
+	if(!entry.parse(events))
+	{
+		printf("Parsing failed\n");
+		return 1;
+	}
 
 	GraphGenerator gen("output");
 	gen.generate(entry.getGlobal().getRoot());

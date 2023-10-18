@@ -52,8 +52,9 @@ public:
 	/// Parses a scope from the given tokens.
 	///
 	/// \param tokens The tokens to parse a scope from.
+	/// \param events EventEmitter to send events to.
 	/// \returns True if parsing was succesful.
-	bool parse(Tokenizer& tokens);
+	bool parse(Tokenizer& tokens, EventEmitter& events);
 
 	/// Parses a scope using the given state.
 	///

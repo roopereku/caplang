@@ -20,6 +20,8 @@ public:
 		return global;
 	}
 
+	bool parse(EventEmitter& events);
+
 	bool validate(EventEmitter& events)
 	{
 		return global.validate(events);
@@ -27,6 +29,8 @@ public:
 
 private:
 	Scope global;
+
+	std::string_view path;
 	std::string source;
 };
 

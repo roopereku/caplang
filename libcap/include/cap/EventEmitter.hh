@@ -20,6 +20,11 @@ public:
 		return false;
 	}
 
+	const Token& getLocation()
+	{
+		return at;
+	}
+
 protected:
 	const Token at;
 };

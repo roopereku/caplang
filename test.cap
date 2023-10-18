@@ -1,4 +1,9 @@
-type Outer
+type T
 {
-	var abc = foo
+	type foo
+	{
+	}
+
+	var a = foo
+	var b = a + 2
 }
