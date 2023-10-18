@@ -1,29 +1,31 @@
 #include <cap/BraceMatcher.hh>
 
+#include <cap/event/GenericMessage.hh>
+
 namespace cap
 {
 
-bool BraceMatcher::open(Token brace)
+bool BraceMatcher::open(Token brace, EventEmitter& events)
 {
 	BraceType braceType = getBraceType(brace);
 
 	// Fail if the token is not a brace.
 	if(braceType == BraceType::None)
 	{
-		printf("Non-brace '%s' passed to BraceMatcher::open\n", brace.getTypeString());
+		events.emit(GenericMessage(brace, "??? Non-brace passed to BraceMatcher::open", Message::Type::Error));
 		return false;
 	}
 
 	// Fail if the brace isn't an opening brace.
 	else if(braceType != BraceType::Opening)
 	{
-		printf("Non-opening brace '%s' passed to BraceMatcher::open\n", brace.getTypeString());
+		events.emit(GenericMessage(brace, "??? Non-opening brace passed to BraceMatcher::open", Message::Type::Error));
 		return false;
 	}
 
 	else if(opener.getType() != Token::Type::Invalid)
 	{
-		printf("??? Opener already opened\n");
+		events.emit(GenericMessage(brace, "??? Opener already initialized", Message::Type::Error));
 		return false;
 	}
 
@@ -32,33 +34,33 @@ bool BraceMatcher::open(Token brace)
 	return true;
 }
 
-bool BraceMatcher::close(Token brace)
+bool BraceMatcher::close(Token brace, EventEmitter& events)
 {
 	BraceType braceType = getBraceType(brace);
 
 	// Fail if the token is not a brace.
 	if(braceType == BraceType::None)
 	{
-		printf("Non-brace '%s' passed to BraceMatcher::close\n", brace.getTypeString());
+		events.emit(GenericMessage(brace, "??? Non-brace passed to BraceMatcher::close", Message::Type::Error));
 		return false;
 	}
 
 	else if(opener.getType() == Token::Type::Invalid)
 	{
-		printf("??? Opener not opened\n");
+		events.emit(GenericMessage(brace, "??? Opener is uninitialized", Message::Type::Error));
 		return false;
 	}
 
 	// Fail if the brace isn't a closing brace.
 	else if(braceType != BraceType::Closing)
 	{
-		printf("Non-closing brace '%s' passed to BraceMatcher::close\n", brace.getTypeString());
+		events.emit(GenericMessage(brace, "??? Non-closing brace passed to BraceMatcher::close", Message::Type::Error));
 		return false;
 	}
 
 	else if(brace.getType() != opener.getType())
 	{
-		printf("Mismatching closing bracket '%c' (Opened with '%c')\n", brace[0], opener[0]);
+		events.emit(GenericMessage(brace, "??? Mismatching closing brace. Opened with" + opener.getString(), Message::Type::Error));
 		return false;
 	}
 

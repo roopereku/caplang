@@ -2,8 +2,7 @@
 #define CAP_BRACE_MATCHER_HH
 
 #include <cap/Token.hh>
-
-#include <stack>
+#include <cap/EventEmitter.hh>
 
 namespace cap
 {
@@ -18,8 +17,8 @@ enum class BraceType
 class BraceMatcher
 {
 public:
-	bool open(Token brace);
-	bool close(Token brace);
+	bool open(Token brace, EventEmitter& events);
+	bool close(Token brace, EventEmitter& events);
 
 	/// Checks the type of the given brace.
 	///

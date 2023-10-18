@@ -2,6 +2,8 @@
 #include <cap/BraceMatcher.hh>
 #include <cap/PrimitiveType.hh>
 
+#include <cap/event/GenericMessage.hh>
+
 namespace cap
 {
 
@@ -40,12 +42,12 @@ bool Type::parse(ParserState& state)
 	Token signatureOpener = state.tokens.next();
 	if(signatureOpener.getType() != Token::Type::CurlyBrace || signatureOpener[0] != '{')
 	{
-		printf("Expected '{' after a type name\n");
+		state.events.emit(GenericMessage(signatureOpener, "Expected '{' after a type name", Message::Type::Error));
 		return false;
 	}
 
 	// Open the type body.
-	state.braces.open(std::move(signatureOpener));
+	state.braces.open(std::move(signatureOpener), state.events);
 
 	// Parse the type body and stop on failure.
 	printf("Parsing body of '%s'\n", name.getString().c_str());

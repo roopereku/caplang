@@ -134,7 +134,7 @@ bool Scope::parse(ParserState& state)
 		// Is the current token a closing brace?
 		else if(braceType == BraceType::Closing)
 		{
-			if(!state.braces.close(std::move(token)))
+			if(!state.braces.close(std::move(token), state.events))
 				return false;
 
 			// End the expression when a brace is closed
@@ -281,7 +281,7 @@ bool Scope::parseBracket(Token&& token, ParserState& state)
 	state.previousIsValue = true;
 	Token::IndexType row = token.getRow();
 
-	if(!newState.braces.open(std::move(token)))
+	if(!newState.braces.open(std::move(token), state.events))
 		return false;
 
 	printf("------------------- START BRACES ------------------------\n");
