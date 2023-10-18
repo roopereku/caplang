@@ -6,7 +6,8 @@
 namespace cap
 {
 
-SourceFile::SourceFile(std::string_view path) : global(Scope::getSharedScope())
+SourceFile::SourceFile(std::string_view path)
+	: global(Scope::getSharedScope()), path(path)
 {
 	std::ifstream file(path.data());
 
@@ -26,8 +27,16 @@ SourceFile::SourceFile(std::string_view path) : global(Scope::getSharedScope())
 
 bool SourceFile::parse(EventEmitter& events)
 {
+	events.setCurrentFile(path);
+
 	Tokenizer tokens(source);
 	return global.parse(tokens, events);
+}
+
+bool SourceFile::validate(EventEmitter& events)
+{
+	events.setCurrentFile(path);
+	return global.validate(events);
 }
 
 }

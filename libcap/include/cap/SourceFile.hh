@@ -21,11 +21,7 @@ public:
 	}
 
 	bool parse(EventEmitter& events);
-
-	bool validate(EventEmitter& events)
-	{
-		return global.validate(events);
-	}
+	bool validate(EventEmitter& events);
 
 private:
 	Scope global;

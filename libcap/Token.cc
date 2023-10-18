@@ -8,9 +8,13 @@ Token::Token(Type t, std::string_view data, IndexType row, IndexType column) :
 {
 }
 
-Token::Token(Token&& rhs) : type(rhs.type), data(std::move(rhs.data))
+Token::Token(Token&& rhs) :
+	type(rhs.type), data(std::move(rhs.data)),
+	row(rhs.row), column(rhs.column)
 {
 	rhs.type = Type::Invalid;
+	rhs.row = 0;
+	rhs.column = 0;
 }
 
 Token Token::createInvalid()

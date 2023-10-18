@@ -119,6 +119,8 @@ bool Scope::parse(ParserState& state)
 		Token token = state.tokens.next();
 		BraceType braceType = BraceMatcher::getBraceType(token);
 
+		//printf("Token %s '%s' %lu %lu\n", token.getTypeString(), token.getString().c_str(), token.getRow(), token.getColumn());
+
 		// Is the current token an opening brace?
 		if(braceType == BraceType::Opening)
 		{
@@ -143,8 +145,6 @@ bool Scope::parse(ParserState& state)
 		// The current token is not a brace.
 		else
 		{
-			printf("Token %s '%s'\n", token.getTypeString(), token.getString().c_str());
-
 			if(!checkRowChange(token.getRow(), state))
 				return false;
 

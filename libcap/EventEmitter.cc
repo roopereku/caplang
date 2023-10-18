@@ -12,6 +12,11 @@ void EventEmitter::emit(Event&& event)
 	}
 }
 
+void EventEmitter::setCurrentFile(std::string_view name)
+{
+	currentFile = name;
+}
+
 void EventEmitter::onMessageReceived(Message& message)
 {
 }

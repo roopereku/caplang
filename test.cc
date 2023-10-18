@@ -207,7 +207,9 @@ public:
 		}
 
 		auto& location = message.getLocation();
-		printf("[%s\x1B[0m:%lu:%lu] %s\n", prefix, location.getRow(), location.getColumn(), message.getString().c_str());
+		printf("[%s\x1B[0m in %s:%lu:%lu] %s\n",
+				prefix, currentFile.data(), location.getRow(),
+				location.getColumn(), message.getString().c_str());
 	}
 };
 

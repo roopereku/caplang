@@ -4,6 +4,7 @@
 #include <cap/Token.hh>
 
 #include <string>
+#include <string_view>
 
 namespace cap
 {
@@ -35,9 +36,12 @@ class EventEmitter
 {
 public:
 	void emit(Event&& event);
+	void setCurrentFile(std::string_view name);
 
 protected:
 	virtual void onMessageReceived(Message& message);
+
+	std::string_view currentFile;
 };
 
 }
