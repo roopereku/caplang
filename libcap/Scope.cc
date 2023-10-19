@@ -426,6 +426,21 @@ bool Scope::handleVariableDeclaration(std::shared_ptr <Expression> node, Validat
 					return false;
 				}
 			}
+
+			// If the operator following a variable declaration is a comma, handle variable
+			// declarations on both sides of the comma.
+			else if(twoSided->getType() == TwoSidedOperator::Type::Comma)
+			{
+				printf("HANDLE COMMA\n");
+
+				if(!handleVariableDeclaration(twoSided->getLeft(), state))
+					return false;
+
+				if(!handleVariableDeclaration(twoSided->getRight(), state))
+					return false;
+
+				return true;
+			}
 		}
 	}
 

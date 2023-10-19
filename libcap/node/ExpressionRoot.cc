@@ -1,6 +1,10 @@
 #include <cap/ParserState.hh>
 #include <cap/node/Operator.hh>
+#include <cap/node/OneSidedOperator.hh>
+#include <cap/node/TwoSidedOperator.hh>
 #include <cap/node/ExpressionRoot.hh>
+
+#include <cap/event/GenericMessage.hh>
 
 namespace cap
 {
@@ -70,10 +74,40 @@ bool ExpressionRoot::handleExpressionNode(std::shared_ptr <Expression> node, Par
 
 	else
 	{
-		printf("[ExpressionRoot] Initialize expression\n");
+		// If this expression root already has a root, make the new node the root
+		// and make the old root an operand of the new root.
+		//
+		// NOTE: This should only happen if an operator of lower precedence is processed
+		// when the current node had higher precedence.
+		if(root)
+		{
+			// TODO: Abstract this somehow.
+			if(node->isOperator())
+			{
+				// If the new node is a two sided operator, adopt the root as lhs.
+				if(node->as <Operator> ()->isTwoSided())
+				{
+					node->as <TwoSidedOperator> ()->setLeft(root);
+				}
+
+				// If the new node is a one sided operator, adopt the root as the expression.
+				else if(node->as <Operator> ()->isOneSided())
+				{
+					node->as <OneSidedOperator> ()->setExpression(root);
+				}
+
+				node->adopt(root);
+			}
+
+			else
+			{
+				state.events.emit(GenericMessage(node->getToken(), "??? node isn't an operator", Message::Type::Error));
+				return false;
+			}
+		}
 
 		// Some operator like FunctionCall require a cached value.
-		if(state.cachedValue)
+		else if(state.cachedValue)
 		{
 			if(!node->handleExpressionNode(std::move(state.cachedValue), state))
 				return false;
