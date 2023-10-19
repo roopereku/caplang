@@ -1,6 +1,7 @@
 #include <cap/node/DeclarationReference.hh>
 #include <cap/node/VariableDefinition.hh>
 #include <cap/node/TypeDeclaration.hh>
+#include <cap/node/FunctionDeclaration.hh>
 #include <cap/Type.hh>
 
 namespace cap
@@ -16,6 +17,11 @@ Type& DeclarationReference::getResultType()
 	else if(declaration->isType())
 	{
 		return *declaration->as <TypeDeclaration> ()->type;
+	}
+
+	else if(declaration->isFunction())
+	{
+		return declaration->as <FunctionDeclaration> ()->function->getReturnType();
 	}
 
 	return Expression::getResultType();

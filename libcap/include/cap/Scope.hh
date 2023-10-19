@@ -46,8 +46,9 @@ public:
 	///
 	/// \param token The token containing "var".
 	/// \param state The state of the parser.
+	/// \param isParameter Determines whether following variables are parameters.
 	/// \returns True if the variable was created succesfully.
-	bool createVariable(Token&& token, ParserState& state);
+	bool createVariable(Token&& token, ParserState& state, bool isParameter);
 
 	/// Parses a scope from the given tokens.
 	///

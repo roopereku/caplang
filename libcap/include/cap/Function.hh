@@ -2,6 +2,7 @@
 #define CAP_FUNCTION_HH
 
 #include <cap/NamedScope.hh>
+#include <cap/Type.hh>
 #include <cap/Parameters.hh>
 
 namespace cap
@@ -17,7 +18,10 @@ public:
 
 	bool parse(ParserState& state) override;
 
+	Type& getReturnType();
+
 private:
+	Type* returnType = nullptr;
 	Parameters parameters;
 };
 

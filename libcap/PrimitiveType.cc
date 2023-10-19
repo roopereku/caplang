@@ -15,6 +15,7 @@ bool PrimitiveType::isValid()
 
 bool PrimitiveType::hasOperator(TwoSidedOperator::Type type)
 {
+	printf("CHECK PRIMITIVE\n");
 	return true;
 }
 

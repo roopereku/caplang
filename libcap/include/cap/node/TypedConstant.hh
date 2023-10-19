@@ -14,6 +14,7 @@ public:
 	TypedConstant(std::shared_ptr <Value> value) :
 		Expression(Token(value->getToken())), type(Type::getPrimitive(value->getToken().getType()))
 	{
+		printf("TYPED CONSTANT GOT %p\n", &type);
 	}
 
 	Type& getResultType() override;
@@ -24,7 +25,7 @@ public:
 	}
 
 private:
-	PrimitiveType& type;
+	Type& type;
 };
 
 }

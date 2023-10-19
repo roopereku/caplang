@@ -57,6 +57,7 @@ bool Scope::createFunction(Token&& token, ParserState& state)
 	state.node->as <FunctionDeclaration> ()->function = function;
 
 	bool ret = function->parse(newState);
+
 	printf("-------------------------- STOP PARSING FUNCTION ---------------------------------------------\n");
 
 	return ret;
@@ -82,15 +83,16 @@ bool Scope::createType(Token&& token, ParserState& state)
 
 }
 
-bool Scope::createVariable(Token&& token, ParserState& state)
+bool Scope::createVariable(Token&& token, ParserState& state, bool isParameter)
 {
 	if(!state.initExpression(token.getRow()))
 		return false;
 
 	state.node = state.node->createNext <VariableDeclaration> (std::move(token));
 	auto variable = state.node->as <VariableDeclaration> ();
+	variable->isParameter = isParameter;
 
-	variable->initialization = std::make_unique <ExpressionRoot> (Token::createInvalid());
+	variable->initialization = std::make_shared <ExpressionRoot> (Token::createInvalid());
 	state.node = variable->initialization;
 
 	return true;
@@ -172,7 +174,7 @@ bool Scope::parse(ParserState& state)
 				else if(token == "var")
 				{
 					// If the variable creation fails, stop parsing.
-					if(!createVariable(std::move(token), state))
+					if(!createVariable(std::move(token), state, false))
 						return false;
 
 					// Since variables require assignment, we can assume that we're in an expression.
@@ -257,14 +259,14 @@ bool Scope::parseBracket(Token&& token, ParserState& state)
 		if(t == Token::Type::Parenthesis)
 		{
 			printf("FUNCTION CALL\n");
-			op = std::make_shared <FunctionCall> (Token::createInvalid());
+			op = std::make_shared <FunctionCall> (Token(token));
 			op->as <FunctionCall> ()->setParameters(inBraces);
 		}
 
 		else if(t == Token::Type::SquareBracket)
 		{
 			printf("SUBSCRIPT\n");
-			op = std::make_shared <Subscript> (Token::createInvalid());
+			op = std::make_shared <Subscript> (Token(token));
 			op->as <Subscript> ()->setContents(inBraces);
 		}
 
@@ -415,19 +417,44 @@ bool Scope::validateNode(std::shared_ptr <Node> node, ValidationState& state)
 				return false;
 			}
 
-			auto initialization = decl->as <VariableDeclaration> ()->initialization->getRoot();
-			state.inVariable = true;
+			auto varDecl = decl->as <VariableDeclaration> ();
 
-			if(!handleVariableDeclaration(initialization, state))
+			if(varDecl->initialization->getRoot())
+			{
+				state.inVariable = true;
+				printf("Handle variable declaration\n");
+
+				if(!handleVariableDeclaration(varDecl->initialization->getRoot(), state))
+					return false;
+
+				printf("Variable declaration done\n");
+
+				state.inVariable = false;
+			}
+
+			else if(!varDecl->isParameter)
+			{
+				state.events.emit(GenericMessage(varDecl->getToken(), "??? Expression root empty", Message::Type::Error));
 				return false;
+			}
 
-			state.inVariable = false;
+			else
+			{
+				printf("Skip empty parameters\n");
+			}
 		}
 
 		else if(decl->isType())
 		{
 			auto typeDecl = decl->as <TypeDeclaration> ();
 			if(!typeDecl->type->validate(state.events))
+				return false;
+		}
+
+		else if(decl->isFunction())
+		{
+			auto funcDecl = decl->as <FunctionDeclaration> ();
+			if(!funcDecl->function->validate(state.events))
 				return false;
 		}
 	}
@@ -466,6 +493,8 @@ std::shared_ptr <Expression> Scope::validateExpression(std::shared_ptr <Expressi
 		auto exprRoot = expr->as <ExpressionRoot> ();
 		exprRoot->setRoot(validateExpression(exprRoot->getRoot(), state));
 		if(!exprRoot->getRoot()) return nullptr;
+
+		return exprRoot->getRoot();
 	}
 
 	printf("Validate expr '%s'\n", expr->getToken().getString().c_str());
@@ -554,7 +583,7 @@ std::shared_ptr <Expression> Scope::validateExpression(std::shared_ptr <Expressi
 
 				if(!lhsType.hasOperator(twoSided->getType()))
 				{
-					state.events.emit(InvalidOperatorOverload(twoSided->getToken(), lhsType));
+					state.events.emit(InvalidOperatorOverload(twoSided, lhsType));
 					return nullptr;
 				}
 
@@ -565,14 +594,27 @@ std::shared_ptr <Expression> Scope::validateExpression(std::shared_ptr <Expressi
 		else if(expr->as <Operator> ()->isOneSided())
 		{
 			auto oneSided = expr->as <OneSidedOperator> ();
+
 			oneSided->setExpression(validateExpression(oneSided->getExpression(), state));
 			if(!oneSided->getExpression()) return nullptr;
 
 			auto resultType = oneSided->getExpression()->getResultType();
 
+			if(oneSided->getExpression()->isDeclarationReference())
+			{
+				auto ref = oneSided->getExpression()->as <DeclarationReference> ();
+
+				if(ref->getDeclaration()->isFunction() &&
+					oneSided->getType() == OneSidedOperator::Type::FunctionCall)
+				{
+					state.events.emit(GenericMessage(ref->getToken(), "TODO: Implement function return type", Message::Type::Error));
+					return nullptr;
+				}
+			}
+
 			if(!resultType.hasOperator(oneSided->getType()))
 			{
-				state.events.emit(InvalidOperatorOverload(oneSided->getToken(), resultType));
+				state.events.emit(InvalidOperatorOverload(oneSided, resultType));
 				return nullptr;
 			}
 

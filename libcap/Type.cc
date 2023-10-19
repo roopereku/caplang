@@ -57,25 +57,31 @@ bool Type::parse(ParserState& state)
 	return true;
 }
 
-PrimitiveType& Type::getPrimitive(Token::Type tokenType)
+Type& Type::getPrimitive(Token::Type tokenType)
 {
 	switch(tokenType)
 	{
 		case Token::Type::Integer:
-			return primitives[static_cast <size_t> (DefaultPrimitiveIndex::Signed)];
+		{
+			Type& primitive = primitives[static_cast <size_t> (DefaultPrimitiveIndex::Signed)];
+			printf("RETURN PRIMITIVE TYPE '%s' %p\n", primitive.getName().getString().c_str(), &primitive);
+
+			return primitive;
+		}
 
 		default:
 			return getInvalid();
 	}
 }
 
-PrimitiveType& Type::getInvalid()
+Type& Type::getInvalid()
 {
 	return primitives[static_cast <size_t> (DefaultPrimitiveIndex::Invalid)];
 }
 
 bool Type::hasOperator(TwoSidedOperator::Type type)
 {
+	printf("CHECK TYPE '%s' %p\n", getName().getString().c_str(), this);
 	return false;
 }
 

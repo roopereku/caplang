@@ -2,6 +2,7 @@
 #define CAP_EVENT_INVALID_OPERATOR_OVERLOAD_HH
 
 #include <cap/event/Message.hh>
+#include <cap/node/Operator.hh>
 #include <cap/Type.hh>
 
 namespace cap
@@ -10,8 +11,8 @@ namespace cap
 class InvalidOperatorOverload : public Message
 {
 public:
-	InvalidOperatorOverload(Token at, cap::Type& target)
-		: Message(at), target(target)
+	InvalidOperatorOverload(std::shared_ptr <Operator> op, cap::Type& target)
+		: Message(op->getToken()), op(op), target(target)
 	{
 	}
 
@@ -22,10 +23,11 @@ public:
 
 	std::string getString() override
 	{
-		return "Operator '" + at.getString() + "' not overloaded for type " + target.getName().getString();
+		return std::string("Operator '") + op->getTypeString() + "' not overloaded for type " + target.getName().getString();
 	}
 
 private:
+	std::shared_ptr <Operator> op;
 	cap::Type& target;
 };
 

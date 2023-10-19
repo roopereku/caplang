@@ -8,8 +8,6 @@
 namespace cap
 {
 
-class PrimitiveType;
-
 class Type : public NamedScope
 {
 public:
@@ -28,8 +26,8 @@ public:
 	virtual bool hasOperator(TwoSidedOperator::Type type);
 	virtual bool hasOperator(OneSidedOperator::Type type);
 
-	static PrimitiveType& getPrimitive(Token::Type tokenType);
-	static PrimitiveType& getInvalid();
+	static Type& getPrimitive(Token::Type tokenType);
+	static Type& getInvalid();
 
 private:
 };

@@ -19,6 +19,7 @@ public:
 		return true;
 	}
 
+	bool isParameter;
 	std::shared_ptr <ExpressionRoot> initialization;
 };
 

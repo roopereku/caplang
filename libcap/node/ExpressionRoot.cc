@@ -27,6 +27,11 @@ bool ExpressionRoot::handleToken(Token&& token, ParserState& state)
 
 Type& ExpressionRoot::getResultType()
 {
+	if(!root)
+	{
+		return Expression::getResultType();
+	}
+
 	return root->getResultType();
 }	
 
