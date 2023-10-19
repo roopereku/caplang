@@ -28,6 +28,12 @@ public:
 	/// \returns Reference to the shared scope.
 	static Scope& getSharedScope();
 
+	/// Gets the declaration of the given member if it exists.
+	///
+	/// \param name The name of the member declaration.
+	/// \returns Declaration of the given member if it exists.
+	std::shared_ptr <Declaration> getMember(std::string_view name);
+
 	/// Creates a new function from the next tokens.
 	///
 	/// \param token The token containing "func".
@@ -41,6 +47,13 @@ public:
 	/// \param state The state of the parser.
 	/// \returns True if the type was created succesfully.
 	bool createType(Token&& token, ParserState& state);
+
+	/// Creates a new primitive type.
+	///
+	/// \param name The name of the new type.
+	/// \param size How many bytes does this primitive take.
+	/// \returns The newly created primitive type.
+	Type& createPrimitiveType(std::string_view name, size_t size);
 
 	/// Creates a new variable from the next tokens.
 	///
@@ -76,9 +89,7 @@ public:
 	}
 
 private:
-	Scope() : Scope(nullptr)
-	{
-	}
+	Scope();
 
 	Scope(Scope* parent) : parent(parent),
 		root(std::make_shared <Node> (Token::createInvalid()))

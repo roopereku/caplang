@@ -9,7 +9,7 @@ namespace cap
 class PrimitiveType : public Type
 {
 public:
-	PrimitiveType(std::string_view name, size_t size);
+	PrimitiveType(Scope& parent, std::string_view name, size_t size);
 
 	bool isValid();
 
@@ -20,6 +20,10 @@ public:
 
 	bool hasOperator(TwoSidedOperator::Type type) override;
 	bool hasOperator(OneSidedOperator::Type type) override;
+
+	/// Registers builtin primitive types to the shared scope.
+	/// \param to Where to register builtin types.
+	static void registerBuiltins(Scope& to);
 
 private:
 	size_t size;

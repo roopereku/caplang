@@ -24,10 +24,28 @@
 namespace cap
 {
 
+Scope::Scope() : Scope(nullptr)
+{
+	PrimitiveType::registerBuiltins(*this);
+}
+
 Scope& Scope::getSharedScope()
 {
 	static Scope sharedScope;
 	return sharedScope;
+}
+
+std::shared_ptr <Declaration> Scope::getMember(std::string_view name)
+{
+	for(auto& member : members)
+	{
+		if(member->getName() == name)
+		{
+			return member;
+		}
+	}
+
+	return nullptr;
 }
 
 Token Scope::consumeName(Tokenizer& tokens)
@@ -80,7 +98,19 @@ bool Scope::createType(Token&& token, ParserState& state)
 	printf("-------------------------- STOP PARSING TYPE --------------------------------------------------\n");
 
 	return ret;
+}
 
+Type& Scope::createPrimitiveType(std::string_view name, size_t size)
+{
+	printf("Creating primitive '%s'\n", name.data());
+
+	Token typeName(Token::Type::Identifier, name, 0, 0);
+	members.emplace_back(getRoot()->findLastNode()->createNext <TypeDeclaration> (std::move(typeName)));
+
+	auto type = std::make_shared <PrimitiveType> (*this, std::move(name), size);
+	members.back()->as <TypeDeclaration> ()->type = type;
+
+	return *type;
 }
 
 bool Scope::createVariable(Token&& token, ParserState& state, bool isParameter)

@@ -28,8 +28,6 @@ public:
 
 	static Type& getPrimitive(Token::Type tokenType);
 	static Type& getInvalid();
-
-private:
 };
 
 }
