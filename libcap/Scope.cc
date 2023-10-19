@@ -609,7 +609,7 @@ std::shared_ptr <Expression> Scope::validateExpression(std::shared_ptr <Expressi
 				twoSided->setRight(validateExpression(twoSided->getRight(), state));
 				if(!twoSided->getRight()) return nullptr;
 
-				auto lhsType = twoSided->getLeft()->getResultType();
+				auto& lhsType = twoSided->getLeft()->getResultType();
 
 				if(!lhsType.hasOperator(twoSided->getType()))
 				{
@@ -628,7 +628,7 @@ std::shared_ptr <Expression> Scope::validateExpression(std::shared_ptr <Expressi
 			oneSided->setExpression(validateExpression(oneSided->getExpression(), state));
 			if(!oneSided->getExpression()) return nullptr;
 
-			auto resultType = oneSided->getExpression()->getResultType();
+			auto& resultType = oneSided->getExpression()->getResultType();
 
 			if(oneSided->getExpression()->isDeclarationReference())
 			{

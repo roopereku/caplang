@@ -23,6 +23,8 @@ public:
 	{
 	}
 
+	Scope(const Scope& rhs) = delete;
+
 	/// Gets the shared scope which is a scope that all scopes should reside in.
 	///
 	/// \returns Reference to the shared scope.

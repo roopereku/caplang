@@ -53,7 +53,6 @@ Type& Type::getInvalid()
 
 bool Type::hasOperator(TwoSidedOperator::Type type)
 {
-	printf("CHECK TYPE '%s' %p\n", getName().getString().c_str(), this);
 	return false;
 }
 

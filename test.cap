@@ -1,4 +1,4 @@
 func main()
 {
-	var a = int8
+	var a = 12 + 3
 }
