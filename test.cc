@@ -195,20 +195,20 @@ class StdoutEmitter : public cap::EventEmitter
 public:
 	void onMessageReceived(cap::Message& message) override
 	{
-		const char* prefix = "";
+		const char* color = "";
 
 		switch(message.getType())
 		{
 			case cap::Message::Type::Error:
 			{
-				prefix = "\x1B[1;31mError";
+				color = "\x1B[1;31m";
 				break;
 			}
 		}
 
 		auto& location = message.getLocation();
-		printf("[%s\x1B[0m in %s:%lu:%lu] %s\n",
-				prefix, currentFile.data(), location.getRow(),
+		printf("[%s%s\x1B[0m in %s:%lu:%lu] %s\n",
+				color, message.getPrefix(), currentFile.data(), location.getRow(),
 				location.getColumn(), message.getString().c_str());
 	}
 };

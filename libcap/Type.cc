@@ -2,7 +2,7 @@
 #include <cap/BraceMatcher.hh>
 #include <cap/PrimitiveType.hh>
 
-#include <cap/event/GenericMessage.hh>
+#include <cap/event/ErrorMessage.hh>
 
 #include <cap/node/TypeDeclaration.hh>
 
@@ -17,7 +17,7 @@ bool Type::parse(ParserState& state)
 	Token signatureOpener = state.tokens.next();
 	if(signatureOpener.getType() != Token::Type::CurlyBrace || signatureOpener[0] != '{')
 	{
-		state.events.emit(GenericMessage(signatureOpener, "Expected '{' after a type name", Message::Type::Error));
+		state.events.emit(ErrorMessage(signatureOpener, "Expected '{' after a type name"));
 		return false;
 	}
 

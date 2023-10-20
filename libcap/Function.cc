@@ -2,7 +2,7 @@
 #include <cap/BraceMatcher.hh>
 #include <cap/PrimitiveType.hh>
 
-#include <cap/event/GenericMessage.hh>
+#include <cap/event/ErrorMessage.hh>
 
 #include <stack>
 
@@ -17,7 +17,7 @@ bool Function::parse(ParserState& state)
 	Token opener = state.tokens.next();
 	if(opener.getType() != Token::Type::Parenthesis || opener[0] != '(')
 	{
-		state.events.emit(GenericMessage(opener, "Expected '(' after function name\n", Message::Type::Error));
+		state.events.emit(ErrorMessage(opener, "Expected '(' after function name\n"));
 		return false;
 	}
 
@@ -42,7 +42,7 @@ bool Function::parse(ParserState& state)
 	opener = state.tokens.next();
 	if(opener.getType() != Token::Type::CurlyBrace || opener[0] != '{')
 	{
-		state.events.emit(GenericMessage(opener, "Expected '{' after function signature\n", Message::Type::Error));
+		state.events.emit(ErrorMessage(opener, "Expected '{' after function signature\n"));
 		return false;
 	}
 

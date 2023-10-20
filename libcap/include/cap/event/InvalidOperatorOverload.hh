@@ -1,34 +1,21 @@
 #ifndef CAP_EVENT_INVALID_OPERATOR_OVERLOAD_HH
 #define CAP_EVENT_INVALID_OPERATOR_OVERLOAD_HH
 
-#include <cap/event/Message.hh>
+#include <cap/event/ErrorMessage.hh>
 #include <cap/node/Operator.hh>
 #include <cap/Type.hh>
 
 namespace cap
 {
 
-class InvalidOperatorOverload : public Message
+class InvalidOperatorOverload : public ErrorMessage
 {
 public:
 	InvalidOperatorOverload(std::shared_ptr <Operator> op, cap::Type& target)
-		: Message(op->getToken()), op(op), target(target)
+		: ErrorMessage(op->getToken(),
+				std::string("Operator '") + op->getTypeString() + "' not overloaded for type " + target.getName().getString())
 	{
 	}
-
-	Type getType() override
-	{
-		return Type::Error;
-	}
-
-	std::string getString() override
-	{
-		return std::string("Operator '") + op->getTypeString() + "' not overloaded for type " + target.getName().getString();
-	}
-
-private:
-	std::shared_ptr <Operator> op;
-	cap::Type& target;
 };
 
 }

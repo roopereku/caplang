@@ -1,6 +1,6 @@
 #include <cap/BraceMatcher.hh>
 
-#include <cap/event/GenericMessage.hh>
+#include <cap/event/ErrorMessage.hh>
 
 namespace cap
 {
@@ -12,20 +12,20 @@ bool BraceMatcher::open(Token brace, EventEmitter& events)
 	// Fail if the token is not a brace.
 	if(braceType == BraceType::None)
 	{
-		events.emit(GenericMessage(brace, "??? Non-brace passed to BraceMatcher::open", Message::Type::Error));
+		events.emit(ErrorMessage(brace, "??? Non-brace passed to BraceMatcher::open"));
 		return false;
 	}
 
 	// Fail if the brace isn't an opening brace.
 	else if(braceType != BraceType::Opening)
 	{
-		events.emit(GenericMessage(brace, "??? Non-opening brace passed to BraceMatcher::open", Message::Type::Error));
+		events.emit(ErrorMessage(brace, "??? Non-opening brace passed to BraceMatcher::open"));
 		return false;
 	}
 
 	else if(opener.getType() != Token::Type::Invalid)
 	{
-		events.emit(GenericMessage(brace, "??? Opener already initialized", Message::Type::Error));
+		events.emit(ErrorMessage(brace, "??? Opener already initialized"));
 		return false;
 	}
 
@@ -41,26 +41,26 @@ bool BraceMatcher::close(Token brace, EventEmitter& events)
 	// Fail if the token is not a brace.
 	if(braceType == BraceType::None)
 	{
-		events.emit(GenericMessage(brace, "??? Non-brace passed to BraceMatcher::close", Message::Type::Error));
+		events.emit(ErrorMessage(brace, "??? Non-brace passed to BraceMatcher::close"));
 		return false;
 	}
 
 	else if(opener.getType() == Token::Type::Invalid)
 	{
-		events.emit(GenericMessage(brace, "??? Opener is uninitialized", Message::Type::Error));
+		events.emit(ErrorMessage(brace, "??? Opener is uninitialized"));
 		return false;
 	}
 
 	// Fail if the brace isn't a closing brace.
 	else if(braceType != BraceType::Closing)
 	{
-		events.emit(GenericMessage(brace, "??? Non-closing brace passed to BraceMatcher::close", Message::Type::Error));
+		events.emit(ErrorMessage(brace, "??? Non-closing brace passed to BraceMatcher::close"));
 		return false;
 	}
 
 	else if(brace.getType() != opener.getType())
 	{
-		events.emit(GenericMessage(brace, "??? Mismatching closing brace. Opened with" + opener.getString(), Message::Type::Error));
+		events.emit(ErrorMessage(brace, "??? Mismatching closing brace. Opened with" + opener.getString()));
 		return false;
 	}
 

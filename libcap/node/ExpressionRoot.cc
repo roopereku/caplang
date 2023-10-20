@@ -4,7 +4,7 @@
 #include <cap/node/TwoSidedOperator.hh>
 #include <cap/node/ExpressionRoot.hh>
 
-#include <cap/event/GenericMessage.hh>
+#include <cap/event/ErrorMessage.hh>
 
 namespace cap
 {
@@ -101,7 +101,7 @@ bool ExpressionRoot::handleExpressionNode(std::shared_ptr <Expression> node, Par
 
 			else
 			{
-				state.events.emit(GenericMessage(node->getToken(), "??? node isn't an operator", Message::Type::Error));
+				state.events.emit(ErrorMessage(node->getToken(), "??? node isn't an operator"));
 				return false;
 			}
 		}

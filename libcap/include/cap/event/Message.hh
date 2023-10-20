@@ -11,22 +11,36 @@ namespace cap
 class Message : public Event
 {
 public:
-	Message(Token at) : Event(at)
-	{
-	}
-
 	enum class Type
 	{
 		Error
 	};
 
-	virtual Type getType() = 0;
-	virtual std::string getString() = 0;
+	Message(Token at, std::string&& msg, Message::Type type)
+		: Event(at), msg(std::move(msg)), type(type)
+	{
+	}
+
+	virtual const char* getPrefix() = 0;
+
+	Type getType()
+	{
+		return type;
+	}
+
+	const std::string& getString()
+	{
+		return msg;
+	}
 
 	bool isMessage() final override
 	{
 		return true;
 	}
+
+private:
+	std::string msg;
+	Message::Type type;
 };
 
 }

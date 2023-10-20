@@ -1,31 +1,19 @@
 #ifndef CAP_EVENT_UNKNOWN_IDENTIFIER_HH
 #define CAP_EVENT_UNKNOWN_IDENTIFIER_HH
 
-#include <cap/event/Message.hh>
+#include <cap/event/ErrorMessage.hh>
 #include <cap/Scope.hh>
 
 namespace cap
 {
 
-class UnknownIdentifier : public Message
+class UnknownIdentifier : public ErrorMessage
 {
 public:
-	UnknownIdentifier(Token at, Scope& in) : Message(at), scope(in)
+	UnknownIdentifier(Token at, Scope& in)
+		: ErrorMessage(at, "Unknown identifier " + at.getString())
 	{
 	}
-
-	Type getType() override
-	{
-		return Type::Error;
-	}
-
-	std::string getString() override
-	{
-		return "Unknown identifier " + at.getString();
-	}
-
-private:
-	Scope& scope;
 };
 
 }

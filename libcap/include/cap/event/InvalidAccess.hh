@@ -1,26 +1,21 @@
 #ifndef CAP_EVENT_INVALID_ACCESS_HH
 #define CAP_EVENT_INVALID_ACCESS_HH
 
-#include <cap/event/Message.hh>
+#include <cap/event/ErrorMessage.hh>
 #include <cap/node/DeclarationReference.hh>
 
 namespace cap
 {
 
-class InvalidAccess : public Message
+class InvalidAccess : public ErrorMessage
 {
 public:
 	InvalidAccess(Token at, std::shared_ptr <DeclarationReference> accessed)
-		: Message(at), accessed(accessed)
+		: ErrorMessage(at, std::move(toString(accessed)))
 	{
 	}
 
-	Type getType() override
-	{
-		return Type::Error;
-	}
-
-	std::string getString() override
+	static std::string toString(std::shared_ptr <DeclarationReference> accessed)
 	{
 		if(accessed->getDeclaration()->isFunction())
 		{
@@ -29,9 +24,6 @@ public:
 
 		return "Invalid access";
 	}
-
-private:
-	std::shared_ptr <DeclarationReference> accessed;
 };
 
 }

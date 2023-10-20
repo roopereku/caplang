@@ -6,7 +6,8 @@
 #include <cap/event/UnknownIdentifier.hh>
 #include <cap/event/InvalidAccess.hh>
 #include <cap/event/InvalidOperatorOverload.hh>
-#include <cap/event/GenericMessage.hh>
+#include <cap/event/ErrorMessage.hh>
+#include <cap/event/TodoMessage.hh>
 
 #include <cap/node/ExpressionRoot.hh>
 #include <cap/node/TwoSidedOperator.hh>
@@ -244,7 +245,7 @@ bool Scope::parse(ParserState& state)
 			{
 				if(!state.node)
 				{
-					state.events.emit(GenericMessage(token, "??? No current node", Message::Type::Error));
+					state.events.emit(ErrorMessage(token, "??? No current node"));
 					return false;
 				}
 
@@ -258,7 +259,7 @@ bool Scope::parse(ParserState& state)
 	// being tracked, we have unterminated braces.
 	if(parent && state.braces.isOpened())
 	{
-		state.events.emit(GenericMessage(state.braces.getOpener(), "Unterminated brace", Message::Type::Error));
+		state.events.emit(ErrorMessage(state.braces.getOpener(), "Unterminated brace"));
 		return false;
 	}
 
@@ -280,7 +281,7 @@ bool Scope::parseBracket(Token&& token, ParserState& state)
 	{
 		if(!state.inExpression)
 		{
-			state.events.emit(GenericMessage(token, "??? Not in expression", Message::Type::Error));
+			state.events.emit(ErrorMessage(token, "??? Not in expression"));
 			return false;
 		}
 
@@ -302,7 +303,7 @@ bool Scope::parseBracket(Token&& token, ParserState& state)
 
 		else
 		{
-			state.events.emit(GenericMessage(token, "TODO: {} after a value", Message::Type::Error));
+			state.events.emit(TodoMessage(token, "{} after a value"));
 			return false;
 		}
 
@@ -406,7 +407,7 @@ bool Scope::validate(EventEmitter& events)
 		// If no return statement was encountered, assume void.
 		else
 		{
-			state.events.emit(GenericMessage(root->getToken(), "TODO: Initialize return type as void", Message::Type::Error));
+			state.events.emit(TodoMessage(root->getToken(), "Initialize return type as void"));
 			return false;
 		}
 	}
@@ -473,7 +474,7 @@ bool Scope::handleVariableDeclaration(std::shared_ptr <Expression> node, Validat
 		}
 	}
 
-	state.events.emit(GenericMessage(node->getToken(), "Expected '=' after a variable declaration", Message::Type::Error));
+	state.events.emit(ErrorMessage(node->getToken(), "Expected '=' after a variable declaration"));
 	return false;
 }
 
@@ -489,7 +490,7 @@ bool Scope::validateNode(std::shared_ptr <Node> node, ValidationState& state)
 		{
 			if(state.inVariable)
 			{
-				state.events.emit(GenericMessage(decl->getToken(), "Can't nest variable declarations", Message::Type::Error));
+				state.events.emit(ErrorMessage(decl->getToken(), "Can't nest variable declarations"));
 				return false;
 			}
 
@@ -510,7 +511,7 @@ bool Scope::validateNode(std::shared_ptr <Node> node, ValidationState& state)
 
 			else if(!varDecl->isParameter)
 			{
-				state.events.emit(GenericMessage(varDecl->getToken(), "??? Expression root empty", Message::Type::Error));
+				state.events.emit(ErrorMessage(varDecl->getToken(), "??? Expression root empty"));
 				return false;
 			}
 
@@ -550,7 +551,7 @@ bool Scope::validateNode(std::shared_ptr <Node> node, ValidationState& state)
 
 		else
 		{
-			state.events.emit(GenericMessage(expr->getToken(), "??? Expression in validateNode isn't a root", Message::Type::Error));
+			state.events.emit(ErrorMessage(expr->getToken(), "??? Expression in validateNode isn't a root"));
 			return false;
 		}
 
@@ -584,7 +585,7 @@ bool Scope::validateNode(std::shared_ptr <Node> node, ValidationState& state)
 				// If the return result type doesn't match the initialized type, error out.
 				else if(&returnExpr->getRoot()->getResultType() != state.returnType)
 				{
-					state.events.emit(GenericMessage(statement->getToken(), "Inconsistent return type", Message::Type::Error));
+					state.events.emit(ErrorMessage(statement->getToken(), "Inconsistent return type"));
 					return false;
 				}
 			}
@@ -678,7 +679,7 @@ std::shared_ptr <Expression> Scope::validateExpression(std::shared_ptr <Expressi
 					return ref->getResultType().validateExpression(twoSided->getRight(), state);
 				}
 
-				state.events.emit(GenericMessage(twoSided->getLeft()->getToken(), "??? Not a declaration reference", Message::Type::Error));
+				state.events.emit(ErrorMessage(twoSided->getLeft()->getToken(), "??? Not a declaration reference"));
 				return nullptr;
 			}
 
@@ -698,13 +699,13 @@ std::shared_ptr <Expression> Scope::validateExpression(std::shared_ptr <Expressi
 
 						if(lhsRef->getDeclaration()->isFunction())
 						{
-							state.events.emit(GenericMessage(twoSided->getLeft()->getToken(), "Invalid function assign", Message::Type::Error));
+							state.events.emit(ErrorMessage(twoSided->getLeft()->getToken(), "Invalid function assign"));
 							return nullptr;
 						}
 
 						else if(lhsRef->getDeclaration()->isType())
 						{
-							state.events.emit(GenericMessage(twoSided->getLeft()->getToken(), "Invalid type assign", Message::Type::Error));
+							state.events.emit(ErrorMessage(twoSided->getLeft()->getToken(), "Invalid type assign"));
 							return nullptr;
 						}
 					}
@@ -742,7 +743,7 @@ std::shared_ptr <Expression> Scope::validateExpression(std::shared_ptr <Expressi
 					// Using call operator with a type means a constructor call.
 					if(ref->getDeclaration()->isType())
 					{
-						state.events.emit(GenericMessage(ref->getToken(), "TODO: Implement constructor calls", Message::Type::Error));
+						state.events.emit(TodoMessage(ref->getToken(), "Implement constructor calls"));
 						return nullptr;
 					}
 
