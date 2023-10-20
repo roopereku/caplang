@@ -21,7 +21,7 @@ public:
 
 	std::string getString() override
 	{
-		return "Unknown identifier";
+		return "Unknown identifier " + at.getString();
 	}
 
 private:
