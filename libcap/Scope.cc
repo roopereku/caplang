@@ -382,7 +382,34 @@ bool Scope::validate(EventEmitter& events)
 	}
 
 	ValidationState state(events);
+
+	// Give the validation state some context about this scope.
+	if(isNamed())
+	{
+		auto& named = static_cast <NamedScope&> (*this);
+		state.inFunction = named.isFunction();
+	}
+
 	bool ret = validateNode(root, state);
+
+	// If this scope is a function, set the return type.
+	if(state.inFunction)
+	{
+		printf("RETURN TYPE IS %p\n", state.returnType);
+
+		// If there was a return type, use that for initialization.
+		if(state.returnType)
+		{
+			static_cast <Function*> (this)->initializeReturnType(*state.returnType);
+		}
+
+		// If no return statement was encountered, assume void.
+		else
+		{
+			state.events.emit(GenericMessage(root->getToken(), "TODO: Initialize return type as void", Message::Type::Error));
+			return false;
+		}
+	}
 
 	if(isNamed())
 	{
@@ -450,6 +477,8 @@ bool Scope::handleVariableDeclaration(std::shared_ptr <Expression> node, Validat
 
 bool Scope::validateNode(std::shared_ptr <Node> node, ValidationState& state)
 {
+	// TODO: Handle anonymous scopes. Call scope.validateNode(state).
+
 	if(node->isDeclaration())
 	{
 		auto decl = node->as <Declaration> ();
@@ -531,11 +560,32 @@ bool Scope::validateNode(std::shared_ptr <Node> node, ValidationState& state)
 
 		if(statement->isReturn())
 		{
-			// TODO: If in a function, validate the return type consistency. This could be done
-			// by setting the return type of the containing function and then just comparing against it.
 			auto returnExpr = statement->as <Return> ()->expression;
 			if(!validateNode(returnExpr, state))
 				return false;
+
+			// Are we in a function?
+			if(state.inFunction)
+			{
+				// If the return type has not been set, initialize it.
+				if(!state.returnType)
+				{
+					// TODO: If a return statement without an expression is encountered, returnExpr->getRoot(),
+					// will return a null and the return type should be set as void.
+
+					// The expression root contained in the return statement holds the return type.
+					state.returnType = &returnExpr->getRoot()->getResultType();
+
+					printf("INITIALIZED RETURN TYPE TO '%s'\n", state.returnType->getName().getString().c_str());
+				}
+
+				// If the return result type doesn't match the initialized type, error out.
+				else if(&returnExpr->getRoot()->getResultType() != state.returnType)
+				{
+					state.events.emit(GenericMessage(statement->getToken(), "Inconsistent return type", Message::Type::Error));
+					return false;
+				}
+			}
 		}
 	}
 
@@ -657,19 +707,24 @@ std::shared_ptr <Expression> Scope::validateExpression(std::shared_ptr <Expressi
 			oneSided->setExpression(validateExpression(oneSided->getExpression(), state));
 			if(!oneSided->getExpression()) return nullptr;
 
-			auto& resultType = oneSided->getExpression()->getResultType();
-
-			if(oneSided->getExpression()->isDeclarationReference())
+			// If the one sided operator is a function call, special handling might be needed.
+			if(oneSided->getType() == OneSidedOperator::Type::FunctionCall)
 			{
-				auto ref = oneSided->getExpression()->as <DeclarationReference> ();
-
-				if(ref->getDeclaration()->isFunction() &&
-					oneSided->getType() == OneSidedOperator::Type::FunctionCall)
+				// Are we calling a reference to a declaration?
+				if(oneSided->getExpression()->isDeclarationReference())
 				{
-					state.events.emit(GenericMessage(ref->getToken(), "TODO: Implement function return type", Message::Type::Error));
-					return nullptr;
+					auto ref = oneSided->getExpression()->as <DeclarationReference> ();
+
+					// Functions are always callable.
+					if(ref->getDeclaration()->isFunction())
+					{
+						oneSided->setResultType(ref->getResultType());
+						return oneSided;
+					}
 				}
 			}
+
+			auto& resultType = oneSided->getExpression()->getResultType();
 
 			if(!resultType.hasOperator(oneSided->getType()))
 			{

@@ -19,6 +19,12 @@ public:
 	bool parse(ParserState& state) override;
 
 	Type& getReturnType();
+	void initializeReturnType(Type& type);
+
+	bool isFunction() final override
+	{
+		return true;
+	}
 
 private:
 	Type* returnType = nullptr;

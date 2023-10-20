@@ -1,4 +1,9 @@
+func foo()
+{
+	return 5
+}
+
 func main()
 {
-	return 0
+	return foo()
 }

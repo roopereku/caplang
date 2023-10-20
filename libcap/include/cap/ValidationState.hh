@@ -6,6 +6,8 @@
 namespace cap
 {
 
+class Type;
+
 class ValidationState
 {
 public:
@@ -14,8 +16,10 @@ public:
 	}
 
 	bool inVariable = false;
+	bool inFunction = false;
 	bool findMembersInParent = false;
 
+	Type* returnType = nullptr;
 	EventEmitter& events;
 };
 

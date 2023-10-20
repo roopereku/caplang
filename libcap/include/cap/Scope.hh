@@ -78,6 +78,10 @@ public:
 	/// \returns True if parsing was succesful.
 	virtual bool parse(ParserState& state);
 
+	/// Validates this scope.
+	///
+	/// \param events EventEmitter to push events to.
+	/// \returns True if validation was succesful.
 	bool validate(EventEmitter& events);
 
 	const std::shared_ptr <Node> getRoot() const

@@ -19,9 +19,14 @@ public:
 		return name;
 	}
 
-	bool isNamed() override
+	bool isNamed() final override
 	{
 		return true;
+	}
+
+	virtual bool isFunction()
+	{
+		return false;
 	}
 
 protected:

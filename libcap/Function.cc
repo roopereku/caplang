@@ -62,4 +62,17 @@ Type& Function::getReturnType()
 	return returnType ? *returnType : Type::getInvalid();
 }
 
+void Function::initializeReturnType(Type& type)
+{
+	if(!returnType)
+	{
+		returnType = &type;
+	}
+
+	else
+	{
+		printf("NOTE: Return type already set for '%s'\n", getName().getString().c_str());
+	}
+}
+
 }
