@@ -14,19 +14,19 @@ public:
 	{
 	}
 
-	void setParameters(std::shared_ptr <ExpressionRoot> params)
+	void setParameters(std::shared_ptr <Expression> params)
 	{
 		adopt(params);
 		parameters = params;
 	}
 
-	std::shared_ptr <ExpressionRoot> getParameters()
+	std::shared_ptr <Expression> getParameters()
 	{
 		return parameters;
 	}
 
 private:
-	std::shared_ptr <ExpressionRoot> parameters;
+	std::shared_ptr <Expression> parameters;
 };
 
 }

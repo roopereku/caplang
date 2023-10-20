@@ -1,3 +1,11 @@
+type T
+{
+	func getValue(multiplier = int64)
+	{
+		return 10 * multiplier
+	}
+}
+
 func foo()
 {
 	return 5
@@ -5,5 +13,5 @@ func foo()
 
 func main()
 {
-	return foo()
+	return foo(4)
 }

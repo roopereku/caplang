@@ -72,7 +72,7 @@ private:
 					{
 						//	printf("Function call %p\n", oneSided->getExpression().get());
 						auto call = oneSided->as <cap::FunctionCall> ();
-						//generateNode(call->getParameters(), depth + 1);
+						generateNode(call->getParameters(), depth + 1);
 
 						if(call->getExpression())
 							generateNode(call->getExpression(), depth + 1);

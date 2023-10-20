@@ -466,6 +466,8 @@ bool Scope::handleVariableDeclaration(std::shared_ptr <Expression> node, Validat
 				if(!handleVariableDeclaration(twoSided->getRight(), state))
 					return false;
 
+				// TODO: Set result of comma
+
 				return true;
 			}
 		}
@@ -707,9 +709,11 @@ std::shared_ptr <Expression> Scope::validateExpression(std::shared_ptr <Expressi
 			oneSided->setExpression(validateExpression(oneSided->getExpression(), state));
 			if(!oneSided->getExpression()) return nullptr;
 
-			// If the one sided operator is a function call, special handling might be needed.
+			// If the one sided operator is a function call, special handling is needed.
 			if(oneSided->getType() == OneSidedOperator::Type::FunctionCall)
 			{
+				auto call = oneSided->as <FunctionCall> ();
+
 				// Are we calling a reference to a declaration?
 				if(oneSided->getExpression()->isDeclarationReference())
 				{
@@ -719,9 +723,17 @@ std::shared_ptr <Expression> Scope::validateExpression(std::shared_ptr <Expressi
 					if(ref->getDeclaration()->isFunction())
 					{
 						oneSided->setResultType(ref->getResultType());
-						return oneSided;
 					}
 				}
+
+				// Validate the syntax of the parameters.
+				call->setParameters(validateExpression(call->getParameters(), state));
+				printf("PROCESS FUNCTION CALL\n");
+
+				if(!call->getParameters())
+					return nullptr;
+
+				// TODO: Make sure that the parameters actually match to a function overload.
 			}
 
 			auto& resultType = oneSided->getExpression()->getResultType();
