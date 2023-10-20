@@ -1,9 +1,4 @@
-type A
-{
-	var value = 30
-}
-
 func main()
 {
-	var a = 1 + 100 * 2, b = (A.value / 2) * 3, c = 0
+	return 0
 }

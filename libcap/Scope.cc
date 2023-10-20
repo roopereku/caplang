@@ -525,6 +525,20 @@ bool Scope::validateNode(std::shared_ptr <Node> node, ValidationState& state)
 
 	}
 
+	else if(node->isStatement())
+	{
+		auto statement = node->as <Statement> ();
+
+		if(statement->isReturn())
+		{
+			// TODO: If in a function, validate the return type consistency. This could be done
+			// by setting the return type of the containing function and then just comparing against it.
+			auto returnExpr = statement->as <Return> ()->expression;
+			if(!validateNode(returnExpr, state))
+				return false;
+		}
+	}
+
 	if(node->hasNext() && !validateNode(node->getNext(), state))
 		return false;
 
