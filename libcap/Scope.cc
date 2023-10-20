@@ -393,7 +393,7 @@ bool Scope::validate(EventEmitter& events)
 	bool ret = validateNode(root, state);
 
 	// If this scope is a function, set the return type.
-	if(state.inFunction)
+	if(ret && state.inFunction)
 	{
 		printf("RETURN TYPE IS %p\n", state.returnType);
 
@@ -690,6 +690,26 @@ std::shared_ptr <Expression> Scope::validateExpression(std::shared_ptr <Expressi
 				twoSided->setRight(validateExpression(twoSided->getRight(), state));
 				if(!twoSided->getRight()) return nullptr;
 
+				if(twoSided->getType() == TwoSidedOperator::Type::Assignment)
+				{
+					if(twoSided->getLeft()->isDeclarationReference())
+					{
+						auto lhsRef = twoSided->getLeft()->as <DeclarationReference> ();
+
+						if(lhsRef->getDeclaration()->isFunction())
+						{
+							state.events.emit(GenericMessage(twoSided->getLeft()->getToken(), "Invalid function assign", Message::Type::Error));
+							return nullptr;
+						}
+
+						else if(lhsRef->getDeclaration()->isType())
+						{
+							state.events.emit(GenericMessage(twoSided->getLeft()->getToken(), "Invalid type assign", Message::Type::Error));
+							return nullptr;
+						}
+					}
+				}
+
 				auto& lhsType = twoSided->getLeft()->getResultType();
 
 				if(!lhsType.hasOperator(twoSided->getType()))
@@ -718,6 +738,13 @@ std::shared_ptr <Expression> Scope::validateExpression(std::shared_ptr <Expressi
 				if(oneSided->getExpression()->isDeclarationReference())
 				{
 					auto ref = oneSided->getExpression()->as <DeclarationReference> ();
+
+					// Using call operator with a type means a constructor call.
+					if(ref->getDeclaration()->isType())
+					{
+						state.events.emit(GenericMessage(ref->getToken(), "TODO: Implement constructor calls", Message::Type::Error));
+						return nullptr;
+					}
 
 					// Functions are always callable.
 					if(ref->getDeclaration()->isFunction())

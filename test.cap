@@ -1,17 +1,8 @@
-type T
-{
-	func getValue(multiplier = int64)
-	{
-		return 10 * multiplier
-	}
-}
-
-func foo()
-{
-	return 5
-}
-
 func main()
 {
-	return foo(4)
+	var a = int8
+
+	int16 = 12
+
+	return a
 }
