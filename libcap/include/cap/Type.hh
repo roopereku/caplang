@@ -23,6 +23,8 @@ public:
 		return false;
 	}
 
+	bool isValid();
+
 	virtual bool hasOperator(TwoSidedOperator::Type type);
 	virtual bool hasOperator(OneSidedOperator::Type type);
 

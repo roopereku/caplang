@@ -8,11 +8,6 @@ PrimitiveType::PrimitiveType(Scope& parent, std::string_view name, size_t size) 
 {
 }
 
-bool PrimitiveType::isValid()
-{
-	return size > 0;
-}
-
 bool PrimitiveType::hasOperator(TwoSidedOperator::Type type)
 {
 	printf("CHECK PRIMITIVE\n");

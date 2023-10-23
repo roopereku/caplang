@@ -48,7 +48,14 @@ Type& Type::getPrimitive(Token::Type tokenType)
 
 Type& Type::getInvalid()
 {
-	return *Scope::getSharedScope().getMember("invalidType")->as <TypeDeclaration> ()->type;
+	static Type invalid(Scope::getSharedScope(), Token(Token::Type::Identifier, "invalid", 0, 0));
+	return invalid;
+}
+
+bool Type::isValid()
+{
+	Type& invalid = Type::getInvalid();
+	return this != &invalid;
 }
 
 bool Type::hasOperator(TwoSidedOperator::Type type)

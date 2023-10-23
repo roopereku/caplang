@@ -11,8 +11,6 @@ class PrimitiveType : public Type
 public:
 	PrimitiveType(Scope& parent, std::string_view name, size_t size);
 
-	bool isValid();
-
 	bool isPrimitive() final override
 	{
 		return true;
