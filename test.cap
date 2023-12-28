@@ -1,6 +1,8 @@
 func main()
 {
-	var a = int8
+	a = int8
+}
 
-	return a
+func foo()
+{
 }

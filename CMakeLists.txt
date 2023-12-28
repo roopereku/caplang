@@ -3,7 +3,7 @@ project(caplang)
 
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
-add_subdirectory(libcap)
+add_subdirectory(cap)
 
 add_executable(captest test.cc)
-target_link_libraries(captest libcap)
+target_link_libraries(captest cap)
