@@ -1,3 +1,7 @@
+type t
+{
+}
+
 func main()
 {
 	a = int8

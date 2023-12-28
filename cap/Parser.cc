@@ -141,7 +141,7 @@ bool Parser::parseType(Token& token, EventEmitter& events)
 	}
 
 	// Create a type definition node.
-	addNode(std::make_shared <TypeDefinition> ());
+	addNode(std::make_shared <TypeDefinition> (name));
 
 	return true;
 }
@@ -173,7 +173,7 @@ bool Parser::parseFunction(Token& token, EventEmitter& events)
 	}
 
 	// Create a function definition node.
-	addNode(std::make_shared <FunctionDefinition> ());
+	addNode(std::make_shared <FunctionDefinition> (name));
 
 	// While the parameter parenthesis are open, parse the parameters.
 	while(openingBrackets.size() > oldOpeners && !tokens.empty())

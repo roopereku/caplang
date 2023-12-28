@@ -2,6 +2,7 @@
 #define CAP_NODE_SCOPE_DEFINITON_HH
 
 #include <cap/Node.hh>
+#include <cap/Token.hh>
 
 namespace cap
 {
@@ -16,11 +17,12 @@ public:
 		None
 	};
 
-	ScopeDefinition(Type type) : Node(Node::Type::ScopeDefinition), type(type)
+	ScopeDefinition(Type type, Token name)
+		: Node(Node::Type::ScopeDefinition), type(type), name(name)
 	{
 	}
 
-	ScopeDefinition() : ScopeDefinition(Type::None)
+	ScopeDefinition() : ScopeDefinition(Type::None, Token::createInvalid())
 	{
 	}
 
@@ -38,6 +40,7 @@ public:
 	}
 
 	const Type type;
+	const Token name;
 
 private:
 	std::shared_ptr <Node> root;

@@ -31,13 +31,13 @@ private:
 		{
 			case cap::ScopeDefinition::Type::FunctionDefinition:
 			{
-				file << indent(depth) << "Function\n";
+				file << indent(depth) << "Function: " << node->name.getString() << '\n';
 				break;
 			}
 
 			case cap::ScopeDefinition::Type::TypeDefinition:
 			{
-				file << indent(depth) << "Type\n";
+				file << indent(depth) << "Type: " << node->name.getString() << '\n';
 				break;
 			}
 

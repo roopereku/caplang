@@ -9,7 +9,7 @@ namespace cap
 class TypeDefinition : public ScopeDefinition
 {
 public:
-	TypeDefinition() : ScopeDefinition(Type::TypeDefinition)
+	TypeDefinition(Token name) : ScopeDefinition(Type::TypeDefinition, name)
 	{
 	}
 };

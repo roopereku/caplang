@@ -9,7 +9,7 @@ namespace cap
 class FunctionDefinition : public ScopeDefinition
 {
 public:
-	FunctionDefinition() : ScopeDefinition(Type::FunctionDefinition)
+	FunctionDefinition(Token name) : ScopeDefinition(Type::FunctionDefinition, name)
 	{
 	}
 };
