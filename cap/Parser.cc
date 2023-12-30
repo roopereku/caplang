@@ -125,6 +125,7 @@ bool Parser::handleBracketToken(Token& token, Tokenizer& tokens)
 			{
 				// If an expression is active, keep track of the brace depth;
 				expressionBraceDepth++;
+				events.emit(DebugMessage("expressionBraceDepth++ -> " + std::to_string(expressionBraceDepth), token));
 
 				events.emit(DebugMessage("Start a subexpression", token));
 				events.emit(DebugMessage("Current is " + currentNode->token.getString(), token));
@@ -196,7 +197,19 @@ bool Parser::handleBracketToken(Token& token, Tokenizer& tokens)
 			}
 
 			// If an expression is active, keep track of the brace depth;
-			expressionBraceDepth -= inExpression;
+			if(inExpression)
+			{
+				// Only if the expression brace depth is known decrement it.
+				// It might be unknown if something like (3) - ((8) + 3) is passed
+				// as the expression starts at the first occurence of "3".
+				if(expressionBraceDepth > 0)
+				{
+					// TODO: Somehow tell the appropriate expression node the correct depth.
+
+					expressionBraceDepth -= inExpression;
+					events.emit(DebugMessage("expressionBraceDepth-- -> " + std::to_string(expressionBraceDepth), token));
+				}
+			}
 
 			// If the last brace was closed, the expression can now be terminated with
 			// a line change. Update the beginning line so that the expression
