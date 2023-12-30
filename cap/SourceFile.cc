@@ -39,10 +39,10 @@ bool SourceFile::parse(EventEmitter& events)
 	events.emit(DebugMessage(std::string("Parsing source file ") + std::string(path), Token::createInvalid()));
 
 	Tokenizer tokens(data);
-	Parser parser(tokens);
+	Parser parser(events);
 
 	global = std::make_shared <ScopeDefinition> ();
-	return parser.parse(events, global);
+	return parser.parse(tokens, global);
 }
 
 }

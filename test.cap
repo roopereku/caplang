@@ -1,12 +1,4 @@
-type t
-{
-}
-
 func main()
 {
-	a = int8
-}
-
-func foo()
-{
+	a = 20 >> 2 * 3 + 5
 }

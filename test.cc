@@ -2,6 +2,9 @@
 #include <cap/event/Message.hh>
 
 #include <cap/node/ScopeDefinition.hh>
+#include <cap/node/Expression.hh>
+#include <cap/node/OneSidedOperator.hh>
+#include <cap/node/TwoSidedOperator.hh>
 
 #include <iostream>
 #include <fstream>
@@ -51,6 +54,45 @@ private:
 		generateNode(node->getRoot(), depth + 1);
 	}
 
+	void generateOperator(std::shared_ptr <cap::Operator> node, unsigned depth)
+	{
+		file << indent(depth) << "Operator: " << node->getTypeString() << '\n';
+
+		switch(node->type)
+		{
+			case cap::Operator::Type::OneSided:
+			{
+				generateNode(node->as <cap::OneSidedOperator> ()->getExpression(), depth + 1);
+				break;
+			}
+
+			case cap::Operator::Type::TwoSided:
+			{
+				generateNode(node->as <cap::TwoSidedOperator> ()->getLeft(), depth + 1);
+				generateNode(node->as <cap::TwoSidedOperator> ()->getRight(), depth + 1);
+				break;
+			}
+		}
+	}
+
+	void generateExpression(std::shared_ptr <cap::Expression> node, unsigned depth)
+	{
+		switch(node->type)
+		{
+			case cap::Expression::Type::Operator:
+			{
+				generateOperator(node->as <cap::Operator> (), depth);
+				break;
+			}
+
+			case cap::Expression::Type::Value:
+			{
+				file << indent(depth) << "Value: " << node->token.getString() << '\n';
+				break;
+			}
+		}
+	}
+
 	void generateNode(std::shared_ptr <cap::Node> node, unsigned depth)
 	{
 		if(!node)
@@ -69,6 +111,12 @@ private:
 			case cap::Node::Type::ScopeDefinition:
 			{
 				generateScope(std::static_pointer_cast <cap::ScopeDefinition> (node), depth);
+				break;
+			}
+
+			case cap::Node::Type::Expression:
+			{
+				generateExpression(std::static_pointer_cast <cap::Expression> (node), depth);
 				break;
 			}
 		}

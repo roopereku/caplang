@@ -1,6 +1,8 @@
 #ifndef CAP_NODE_HH
 #define CAP_NODE_HH
 
+#include <cap/Token.hh>
+
 #include <memory>
 
 namespace cap
@@ -13,11 +15,22 @@ public:
 	enum class Type
 	{
 		Empty,
-		ScopeDefinition
+		ScopeDefinition,
+		Expression
 	};
+
+	/// Helper function to convert a node to another node type.
+	///
+	/// \return The same node as the new type.
+	template <typename T>
+	std::shared_ptr <T> as()
+	{
+		return std::static_pointer_cast <T> (shared_from_this());
+	}
 
 	Node();
 	Node(Type type);
+	Node(Type type, Token token);
 
 	std::shared_ptr <Node> findLast();
 	void adopt(std::shared_ptr <Node> node);
@@ -28,6 +41,9 @@ public:
 
 	/// The type of the node.
 	const Type type;
+
+	/// The associated token.
+	const Token token;
 
 private:
 	std::shared_ptr <Node> next;

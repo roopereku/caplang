@@ -5,6 +5,8 @@
 #include <cap/Tokenizer.hh>
 #include <cap/EventEmitter.hh>
 
+#include <cap/node/Expression.hh>
+
 #include <stack>
 
 namespace cap
@@ -14,30 +16,43 @@ namespace cap
 class Parser
 {
 public:
-	Parser(Tokenizer& tokens);
+	Parser(EventEmitter& events);
 
 	/// Parses the tokens into an AST starting at root.
 	///
-	/// \param events The EventEmitter to pass events into.
+	/// \param tokens The tokens to parse an AST from.
 	/// \param root The root of the new AST.
 	/// \return True if parsing was succesful.
-	bool parse(EventEmitter& events, std::shared_ptr <Node> root);
+	bool parse(Tokenizer& tokens, std::shared_ptr <Node> root);
+
+	void setCurrentNode(std::shared_ptr <Node> node);
+	std::shared_ptr <Node> getCurrentNode();
+
+	EventEmitter& events;
 
 private:
 	void addNode(std::shared_ptr <Node>&& node);
 
-	bool parseNextToken(EventEmitter& events);
-	bool todo(std::string&& msg, EventEmitter& events);
+	bool parseNextToken(Tokenizer& tokens);
+	bool todo(std::string&& msg);
 
-	bool handleBracket(Token& token, EventEmitter& events);
+	bool handleExpressionToken(Token& token);
+	bool handleBracketToken(Token& token);
 
-	bool parseType(Token& token, EventEmitter& events);
-	bool parseFunction(Token& token, EventEmitter& events);
-	bool parseVariable(Token& token, EventEmitter& events);
+	bool parseType(Token& token, Tokenizer& tokens);
+	bool parseFunction(Token& token, Tokenizer& tokens);
+	bool parseVariable(Token& token, Tokenizer& tokens);
 
-	Tokenizer& tokens;
+	void beginExpression(Token& at);
+	void endExpression(Token& at);
+
+	bool isPreviousTokenValue = false;
+	unsigned expressionBraceDepth = 0;
+	size_t expressionBeginLine = 0;
+	bool inExpression = false;
+
 	std::stack <Token> openingBrackets;
-
+	std::shared_ptr <Expression> cachedValue;
 	std::shared_ptr <Node> currentNode;
 };
 

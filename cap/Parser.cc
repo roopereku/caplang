@@ -5,6 +5,9 @@
 
 #include <cap/node/FunctionDefinition.hh>
 #include <cap/node/TypeDefinition.hh>
+#include <cap/node/OneSidedOperator.hh>
+#include <cap/node/TwoSidedOperator.hh>
+#include <cap/node/Value.hh>
 
 #include <cassert>
 
@@ -18,11 +21,11 @@ static bool isBracket(Token& token)
 			token == Token::Type::SquareBracket;
 }
 
-Parser::Parser(Tokenizer& tokens) : tokens(tokens)
+Parser::Parser(EventEmitter& events) : events(events)
 {
 }
 
-bool Parser::parse(EventEmitter& events, std::shared_ptr <Node> root)
+bool Parser::parse(Tokenizer& tokens, std::shared_ptr <Node> root)
 {
 	tokens.reset();
 	currentNode = root;
@@ -30,7 +33,7 @@ bool Parser::parse(EventEmitter& events, std::shared_ptr <Node> root)
 	// Iterate through the tokens.
 	while(!tokens.empty())
 	{
-		if(!parseNextToken(events))
+		if(!parseNextToken(tokens))
 		{
 			return false;
 		}
@@ -48,52 +51,75 @@ bool Parser::parse(EventEmitter& events, std::shared_ptr <Node> root)
 	return true;
 }
 
-bool Parser::parseNextToken(EventEmitter& events)
+bool Parser::parseNextToken(Tokenizer& tokens)
 {
 	Token token = tokens.next();
 	events.emit(DebugMessage("Token: " + token.getString(), token));
 
-	// Handle brackets.
-	if(isBracket(token) && !handleBracket(token, events))
+	// If an expression that's outside brackets is active and the current token
+	// is not on the same line where the expression began, end the expression.
+	if(inExpression && expressionBraceDepth == 0 && token.getRow() > expressionBeginLine)
 	{
-		return false;
+		endExpression(token);
+	}
+
+	// Handle brackets.
+	if(isBracket(token))
+	{
+		if(!handleBracketToken(token))
+		{
+			return false;
+		}
 	}
 
 	// Handle type definitions.
-	else if(token == "type" && !parseType(token, events))
+	else if(token == "type")
 	{
-		return false;
+		if(!parseType(token, tokens))
+		{
+			return false;
+		}
 	}
 
 	// Handle function definitions.
-	else if(token == "func" && !parseFunction(token, events))
+	else if(token == "func")
 	{
-		return false;
+		if(!parseFunction(token, tokens))
+		{
+			return false;
+		}
 	}
 
 	// Handle variable definitions.
-	else if(token == "var" && !parseVariable(token, events))
+	else if(token == "var")
 	{
-		return false;
+		if(!parseVariable(token, tokens))
+		{
+			return false;
+		}
 	}
 
 	// TODO: Add statements.
 
 	// Anything else should be an expression.
-	else
+	else if(!handleExpressionToken(token))
 	{
+		return false;
 	}
 	
 	return true;
 }
 
-bool Parser::handleBracket(Token& token, EventEmitter& events)
+bool Parser::handleBracketToken(Token& token)
 {
 	switch(token[0])
 	{
 		// Handle opening brackets.
 		case '{': case '(': case '[':
 		{
+			// If an expression is active, keep track of the brace depth;
+			expressionBraceDepth += inExpression;
+
 			openingBrackets.push(token);
 			break;
 		}
@@ -113,6 +139,17 @@ bool Parser::handleBracket(Token& token, EventEmitter& events)
 				return false;
 			}
 
+			// If an expression is active, keep track of the brace depth;
+			expressionBraceDepth -= inExpression;
+
+			// If the last brace was closed, the expression can now be terminated with
+			// a line change. Update the beginning line so that the expression
+			// can continue until such an event happens.
+			if(inExpression && expressionBraceDepth == 0)
+			{
+				expressionBeginLine = token.getRow();
+			}
+
 			// Close the innermost opener bracket.
 			openingBrackets.pop();
 
@@ -130,7 +167,7 @@ bool Parser::handleBracket(Token& token, EventEmitter& events)
 	return true;
 }
 
-bool Parser::parseType(Token& token, EventEmitter& events)
+bool Parser::parseType(Token& token, Tokenizer& tokens)
 {
 	// An identifier is expected after "type".
 	auto name = tokens.next();
@@ -146,7 +183,7 @@ bool Parser::parseType(Token& token, EventEmitter& events)
 	return true;
 }
 
-bool Parser::parseFunction(Token& token, EventEmitter& events)
+bool Parser::parseFunction(Token& token, Tokenizer& tokens)
 {
 	// An identifier is expected after "func".
 	auto name = tokens.next();
@@ -167,7 +204,7 @@ bool Parser::parseFunction(Token& token, EventEmitter& events)
 	size_t oldOpeners = openingBrackets.size();
 
 	// Make sure that the opening bracket is valid.
-	if(!handleBracket(opener, events))
+	if(!handleBracketToken(opener))
 	{
 		return false;
 	}
@@ -178,7 +215,7 @@ bool Parser::parseFunction(Token& token, EventEmitter& events)
 	// While the parameter parenthesis are open, parse the parameters.
 	while(openingBrackets.size() > oldOpeners && !tokens.empty())
 	{
-		if(!parseNextToken(events))
+		if(!parseNextToken(tokens))
 		{
 			return false;
 		}
@@ -187,12 +224,29 @@ bool Parser::parseFunction(Token& token, EventEmitter& events)
 	return true;
 }
 
-bool Parser::parseVariable(Token& token, EventEmitter& events)
+bool Parser::parseVariable(Token& token, Tokenizer& tokens)
 {
-	return todo("\"var\" keyword", events);
+	return todo("\"var\" keyword");
 }
 
-bool Parser::todo(std::string&& msg, EventEmitter& events)
+void Parser::beginExpression(Token& at)
+{
+	assert(!inExpression);
+
+	events.emit(DebugMessage("Begin an expression", at));
+	expressionBeginLine = at.getRow();
+	inExpression = true;
+}
+
+void Parser::endExpression(Token& at)
+{
+	assert(inExpression);
+
+	events.emit(DebugMessage("End an expression", at));
+	inExpression = false;
+}
+
+bool Parser::todo(std::string&& msg)
 {
 	events.emit(ErrorMessage("TODO: " + std::move(msg), Token::createInvalid()));
 	return false;
@@ -238,6 +292,92 @@ void Parser::addNode(std::shared_ptr <Node>&& node)
 	}
 
 	currentNode = currentNode->getNext();
+}
+
+bool Parser::handleExpressionToken(Token& token)
+{
+	bool addRoot = currentNode->type != Node::Type::Expression;
+	std::shared_ptr <Expression> expr;
+
+	if(!inExpression)
+	{
+		beginExpression(token);
+	}
+
+	if(token.getType() == Token::Type::Operator)
+	{
+		// If the previous token wasn't a value, assume this to be an unary operator.
+		if(!isPreviousTokenValue)
+		{
+			expr = OneSidedOperator::parseToken(token);
+		}
+
+		// This is not an unary operator.
+		else
+		{
+			expr = TwoSidedOperator::parseToken(token);
+		}
+
+		if(!expr)
+		{
+			events.emit(ErrorMessage("Invalid operator " + token.getString(), token));
+			return false;
+		}
+
+		if(cachedValue)
+		{
+			events.emit(DebugMessage("Apply cached value", token));
+			expr->as <Operator> ()->applyCachedValue(std::move(cachedValue));
+		}
+
+		isPreviousTokenValue = false;
+	}
+
+	// The token is a value.
+	else
+	{
+		isPreviousTokenValue = true;
+		expr = std::make_shared <Value> (token);
+
+		// If the value node would become the expression root, cache it instead.
+		if(addRoot)
+		{
+			events.emit(DebugMessage("Cache value " + token.getString(), token));
+
+			cachedValue = std::move(expr);
+			addRoot = false;
+		}
+	}
+
+	// If a root node for the expression should be added, use addNode.
+	if(addRoot)
+	{
+		events.emit(DebugMessage("Add expression root", token));
+		addNode(std::move(expr));
+	}
+
+	// If a the root node of an expression already exists, let the
+	// current expression node manipulate the hierarchy of the expression nodes.
+	else if(currentNode->type == Node::Type::Expression)
+	{
+		events.emit(DebugMessage("Call handleExpressionNode", token));
+		if(!currentNode->as <Expression> ()->handleExpressionNode(expr, *this))
+		{
+			return false;
+		}
+	}
+
+	return true;
+}
+
+void Parser::setCurrentNode(std::shared_ptr <Node> node)
+{
+	currentNode = std::move(node);
+}
+
+std::shared_ptr <Node> Parser::getCurrentNode()
+{
+	return currentNode;
 }
 
 }

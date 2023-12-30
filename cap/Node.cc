@@ -3,11 +3,15 @@
 namespace cap
 {
 
-Node::Node() : type(Type::Empty)
+Node::Node() : Node(Type::Empty)
 {
 }
 
-Node::Node(Type type) : type(type)
+Node::Node(Type type) : Node(type, Token::createInvalid())
+{
+}
+
+Node::Node(Type type, Token token) : type(type), token(token)
 {
 }
 
