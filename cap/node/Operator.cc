@@ -1,4 +1,6 @@
 #include <cap/node/Operator.hh>
+#include <cap/node/TwoSidedOperator.hh>
+#include <cap/node/OneSidedOperator.hh>
 
 #include <cap/event/DebugMessage.hh>
 
@@ -17,7 +19,7 @@ bool Operator::handleExpressionNode(std::shared_ptr <Expression> node, Parser& p
 
 	if(node->type == Expression::Type::Value)
 	{
-		if(!handleValue(node))
+		if(!handleValue(std::move(node)))
 		{
 			return false;
 		}
@@ -32,7 +34,7 @@ bool Operator::handleExpressionNode(std::shared_ptr <Expression> node, Parser& p
 		// highest priority, therefore highest precedence.
 		if(op->getPrecedence() < getPrecedence())
 		{
-			//printf("NEW OPERATOR HAS HIGHER PRECEDENCE\n");
+			parser.events.emit(DebugMessage("New operator has higher precedence", token));
 			if(!handleHigherPrecedence(op))
 			{
 				return false;
@@ -44,14 +46,33 @@ bool Operator::handleExpressionNode(std::shared_ptr <Expression> node, Parser& p
 			// If the precedence is not the same, make the parent the current node and try again.
 			if(op->getPrecedence() != getPrecedence())
 			{
-				// TODO: Don't go to parent if outside brackets.
-				parser.setCurrentNode(getParent().lock());
-				return getParent().lock()->as <Expression> ()->handleExpressionNode(node, parser);
+				parser.events.emit(DebugMessage("New operator has lower precedence", token));
+
+				// If there is no parent, the new operator node adopts the current node.
+				if(getParent().expired())
+				{
+					op->adopt(shared_from_this());
+					op->handleValue(shared_from_this()->as <Expression> ());	
+				}
+
+				// If there is a parent, switch to it.
+				else
+				{
+					assert(getParent().lock()->type == Node::Type::Expression);
+
+					parser.setCurrentNode(getParent().lock());
+					return parser.getCurrentNode()->as <Expression> ()->handleExpressionNode(node, parser);
+				}
 			}
 
-			if(!handleSamePrecedence(op))
+			// The precedence is the same.
+			else
 			{
-				return false;
+				parser.events.emit(DebugMessage("New operator has same precedence", token));
+				if(!handleSamePrecedence(op))
+				{
+					return false;
+				}
 			}
 		}
 			
@@ -65,6 +86,50 @@ bool Operator::handleExpressionNode(std::shared_ptr <Expression> node, Parser& p
 
 	return true;
 }
+
+bool Operator::handleSamePrecedence(std::shared_ptr <Operator> op)
+{
+	if(op->type == Operator::Type::TwoSided)
+	{
+		// Make this operator the lhs of the new operator.
+		auto twoSided = op->as <TwoSidedOperator> ();
+		twoSided->setLeft(shared_from_this()->as <Expression> ());
+
+		if(!getParent().expired())
+		{
+			auto parentExpr = getParent().lock()->as <Expression> ();
+
+			// Replace this operator with the new two sided operator.
+			parentExpr->adopt(twoSided);
+			if(!parentExpr->replaceExpression(twoSided))
+				return false;
+		}
+
+		twoSided->adopt(twoSided->getLeft());
+	}
+
+	else if(op->type == Operator::Type::OneSided)
+	{
+		// Make this the expression of the new operator.
+		auto oneSided = op->as <OneSidedOperator> ();
+		oneSided->setExpression(shared_from_this()->as <Expression> ());
+
+		if(!getParent().expired())
+		{
+			auto parentExpr = getParent().lock()->as <Expression> ();
+
+			// Replace this operator with the new one sided operator.
+			parentExpr->adopt(oneSided);
+			if(!parentExpr->replaceExpression(oneSided))
+				return false;
+		}
+
+		oneSided->adopt(oneSided->getExpression());
+	}
+
+	return true;
+}
+
 
 
 }

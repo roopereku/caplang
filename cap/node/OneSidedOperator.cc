@@ -32,16 +32,6 @@ std::shared_ptr <Operator> OneSidedOperator::parseToken(Token& token)
 	return nullptr;
 }
 
-bool OneSidedOperator::applyCachedValue(std::shared_ptr <Expression>&& cached)
-{
-	assert(!expression);
-
-	expression = std::move(cached);
-	adopt(expression);
-
-	return true;
-}
-
 const char* OneSidedOperator::getTypeString()
 {
 	switch(type)
@@ -99,41 +89,6 @@ bool OneSidedOperator::replaceExpression(std::shared_ptr <Expression> node)
 	return true;
 }
 
-bool OneSidedOperator::handleSamePrecedence(std::shared_ptr <Operator> op)
-{
-	auto parentExpr = getParent().lock()->as <Expression> ();
-
-	if(op->type == Operator::Type::TwoSided)
-	{
-		// Make this operator the lhs of the new operator.
-		auto twoSided = op->as <TwoSidedOperator> ();
-		twoSided->left = shared_from_this()->as <Expression> ();
-
-		// Replace this operator with the new two sided operator.
-		parentExpr->adopt(twoSided);
-		if(!parentExpr->replaceExpression(twoSided))
-			return false;
-
-		twoSided->adopt(twoSided->left);
-	}
-
-	else if(op->type == Operator::Type::OneSided)
-	{
-		// Make this the expression of the new operator.
-		auto oneSided = op->as <OneSidedOperator> ();
-		oneSided->expression = shared_from_this()->as <Expression> ();
-
-		// Replace this operator with the new one sided operator.
-		parentExpr->adopt(oneSided);
-		if(!parentExpr->replaceExpression(oneSided))
-			return false;
-
-		oneSided->adopt(oneSided->expression);
-	}
-
-	return true;
-}
-
 bool OneSidedOperator::handleHigherPrecedence(std::shared_ptr <Operator> op)
 {
 	if(op->type == Operator::Type::TwoSided)
@@ -167,8 +122,10 @@ bool OneSidedOperator::handleHigherPrecedence(std::shared_ptr <Operator> op)
 
 }
 
-bool OneSidedOperator::handleValue(std::shared_ptr <Expression> value)
+bool OneSidedOperator::handleValue(std::shared_ptr <Expression>&& value)
 {
+	assert(!expression);
+
 	expression = std::move(value);
 	return true;
 }

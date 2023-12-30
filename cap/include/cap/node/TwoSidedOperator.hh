@@ -41,8 +41,6 @@ public:
 	{
 	}
 
-	bool applyCachedValue(std::shared_ptr <Expression>&& cached) override;
-
 	const char* getTypeString() override;
 	unsigned getPrecedence() override;
 
@@ -66,6 +64,8 @@ public:
 		return right;
 	}
 
+	bool handleValue(std::shared_ptr <Expression>&& value) override;
+
 	/// Parses a two sided operator from the given token.
 	///
 	/// \param token The token to parse a two sided operator from.
@@ -81,8 +81,6 @@ protected:
 	bool replaceExpression(std::shared_ptr <Expression> node) override;
 
 	bool handleHigherPrecedence(std::shared_ptr <Operator> op) override;
-	bool handleSamePrecedence(std::shared_ptr <Operator> op) override;
-	bool handleValue(std::shared_ptr <Expression> value) override;
 
 	std::shared_ptr <Expression> left;
 	std::shared_ptr <Expression> right;

@@ -35,7 +35,25 @@ public:
 	/// \return True if handling succeeded.
 	virtual bool handleExpressionNode(std::shared_ptr <Expression> node, Parser& parser);
 
+	/// Sets the brace depth.
+	///
+	/// \param depth The brace depth.
+	void setBraceDepth(size_t depth);
+
+	/// Checks whether two expression nodes are on the same level (i.e. have the same brace depth)
+	///
+	/// \return True If the expressions are on the same level.
+	bool isOnSameLevel(std::shared_ptr <Expression> expr);
+
+	size_t getBraceDepth()
+	{
+		return braceDepth;
+	}
+
 	const Type type;
+
+private:
+	size_t braceDepth = 0;
 };
 
 }

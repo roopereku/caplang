@@ -26,4 +26,14 @@ bool Expression::handleExpressionNode(std::shared_ptr <Expression> node, Parser&
 //	return Type::getInvalid();
 //}
 
+void Expression::setBraceDepth(size_t depth)
+{
+	braceDepth = depth;
+}
+
+bool Expression::isOnSameLevel(std::shared_ptr <Expression> expr)
+{
+	return braceDepth == expr->braceDepth;
+}
+
 }

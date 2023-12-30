@@ -25,9 +25,17 @@ public:
 	/// \return True if parsing was succesful.
 	bool parse(Tokenizer& tokens, std::shared_ptr <Node> root);
 
+	/// Sets the current node.
+	///
+	/// \param node The node to set as current.
 	void setCurrentNode(std::shared_ptr <Node> node);
+
+	/// Gets the current node.
+	///
+	/// \return The current node.
 	std::shared_ptr <Node> getCurrentNode();
 
+	/// The EventEmitter associated with this parser.
 	EventEmitter& events;
 
 private:
@@ -37,7 +45,7 @@ private:
 	bool todo(std::string&& msg);
 
 	bool handleExpressionToken(Token& token);
-	bool handleBracketToken(Token& token);
+	bool handleBracketToken(Token& token, Tokenizer& tokens);
 
 	bool parseType(Token& token, Tokenizer& tokens);
 	bool parseFunction(Token& token, Tokenizer& tokens);

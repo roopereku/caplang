@@ -22,10 +22,10 @@ public:
 	{
 	}
 
-	virtual bool applyCachedValue(std::shared_ptr <Expression>&& cached) = 0;
-
 	virtual const char* getTypeString() = 0;
 	virtual unsigned getPrecedence() = 0;
+
+	virtual bool handleValue(std::shared_ptr <Expression>&& value) = 0;
 
 	//TypeDefinition& getResultType() override
 	//{
@@ -43,8 +43,7 @@ public:
 
 protected:
 	virtual bool handleHigherPrecedence(std::shared_ptr <Operator> op) = 0;
-	virtual bool handleSamePrecedence(std::shared_ptr <Operator> op) = 0;
-	virtual bool handleValue(std::shared_ptr <Expression> value) = 0;
+	bool handleSamePrecedence(std::shared_ptr <Operator> op);
 
 	//Type* resultType = nullptr;
 };

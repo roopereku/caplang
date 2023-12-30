@@ -56,7 +56,7 @@ private:
 
 	void generateOperator(std::shared_ptr <cap::Operator> node, unsigned depth)
 	{
-		file << indent(depth) << "Operator: " << node->getTypeString() << '\n';
+		file << indent(depth) << "Operator: " << node->getTypeString() << " " << node->getBraceDepth() << '\n';
 
 		switch(node->type)
 		{

@@ -50,56 +50,6 @@ std::shared_ptr <Operator> TwoSidedOperator::parseToken(Token& token)
 	return nullptr;
 }
 
-bool TwoSidedOperator::handleSamePrecedence(std::shared_ptr <Operator> op)
-{
-	// Move the rhs of the current node to the lhs of the new node.
-	if(op->type == Operator::Type::TwoSided)
-	{
-		assert(getParent().lock()->type == Node::Type::Expression);
-
-		// Make this operator the lhs of the new operator.
-		auto twoSided = op->as <TwoSidedOperator> ();
-		twoSided->left = shared_from_this()->as <Expression> ();
-
-		if(getParent().lock()->type == Node::Type::Expression)
-		{
-			auto parentExpr = getParent().lock()->as <Expression> ();
-
-			// Replace this operator with the new two sided operator.
-			parentExpr->adopt(twoSided);
-			if(!parentExpr->replaceExpression(twoSided))
-				return false;
-
-			twoSided->adopt(twoSided->left);
-		}
-	}
-
-	else if(op->type == Operator::Type::OneSided)
-	{
-		auto oneSided = op->as <OneSidedOperator> ();
-
-		// Make this the expression of the new operator.
-		auto parentExpr = getParent().lock()->as <Expression> ();
-		oneSided->expression = shared_from_this()->as <Expression> ();
-
-		// Replace this operator with the new one sided operator.
-		parentExpr->adopt(oneSided);
-		if(!parentExpr->replaceExpression(oneSided))
-			return false;
-
-		oneSided->adopt(oneSided->expression);
-
-		return true;
-	}
-
-	else
-	{
-		assert(false && "Weird operator type");
-	}
-
-	return true;
-}
-
 bool TwoSidedOperator::handleHigherPrecedence(std::shared_ptr <Operator> op)
 {
 	if(op->type == Operator::Type::TwoSided)
@@ -132,20 +82,22 @@ bool TwoSidedOperator::handleHigherPrecedence(std::shared_ptr <Operator> op)
 	return true;
 }
 
-bool TwoSidedOperator::handleValue(std::shared_ptr <Expression> value)
+bool TwoSidedOperator::handleValue(std::shared_ptr <Expression>&& value)
 {
-	assert(left);
-	right = std::move(value);
+	if(!left)
+	{
+		left = std::move(value);
+	}
 
-	return true;
-}
+	else if(!right)
+	{
+		right = std::move(value);
+	}
 
-bool TwoSidedOperator::applyCachedValue(std::shared_ptr <Expression>&& cached)
-{
-	assert(!left);
-
-	left = std::move(cached);
-	adopt(left);
+	else
+	{
+		assert(false);
+	}
 
 	return true;
 }
