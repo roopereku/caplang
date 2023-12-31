@@ -5,6 +5,7 @@
 #include <cap/node/Expression.hh>
 #include <cap/node/OneSidedOperator.hh>
 #include <cap/node/TwoSidedOperator.hh>
+#include <cap/node/ExpressionRoot.hh>
 
 #include <iostream>
 #include <fstream>
@@ -94,6 +95,7 @@ private:
 			case cap::Expression::Type::Root:
 			{
 				file << indent(depth) << "Expression Root" << '\n';
+				generateExpression(node->as <cap::ExpressionRoot> ()->getRoot(), depth + 1);
 				break;
 			}
 		}

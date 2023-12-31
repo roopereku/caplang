@@ -12,6 +12,11 @@ public:
 	FunctionDefinition(Token name) : ScopeDefinition(Type::FunctionDefinition, name)
 	{
 	}
+
+	const char* getTypeString() override
+	{
+		return "FunctionDefinition";
+	}
 };
 
 }

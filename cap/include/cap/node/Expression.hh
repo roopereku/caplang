@@ -23,7 +23,7 @@ public:
 
 	//virtual TypeDefinition& getResultType();
 
-	/// Custom handler for when an operator should replace what's currently stored.
+	/// Custom handler for when an expression should replace what's currently stored.
 	///
 	/// \param The node that will replace the currently stored node.
 	/// \return True if replacing succeeded.
@@ -35,6 +35,8 @@ public:
 	/// \param parser The parser holding a state.
 	/// \return True if handling succeeded.
 	virtual bool handleExpressionNode(std::shared_ptr <Expression> node, Parser& parser);
+
+	virtual const char* getTypeString() override = 0;
 
 	const Type type;
 };

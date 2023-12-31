@@ -39,6 +39,8 @@ public:
 	std::shared_ptr <Node> getNext() const;
 	void setNext(std::shared_ptr <Node>&& node);
 
+	virtual const char* getTypeString();
+
 	/// The type of the node.
 	const Type type;
 

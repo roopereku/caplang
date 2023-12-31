@@ -22,7 +22,7 @@ public:
 	{
 	}
 
-	virtual const char* getTypeString() = 0;
+	virtual const char* getTypeString() override = 0;
 	virtual unsigned getPrecedence() = 0;
 
 	virtual bool handleValue(std::shared_ptr <Expression>&& value) = 0;

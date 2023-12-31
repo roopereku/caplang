@@ -12,6 +12,11 @@ public:
 	Value(Token token) : Expression(Expression::Type::Value, token)
 	{
 	}
+
+	const char* getTypeString() override
+	{
+		return "Value";
+	}
 };
 
 }

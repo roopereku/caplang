@@ -1,0 +1,43 @@
+#ifndef CAP_NODE_EXPRESSION_ROOT_HH
+#define CAP_NODE_EXPRESSION_ROOT_HH
+
+#include <cap/node/Expression.hh>
+
+namespace cap
+{
+
+/// ExpressionRoot is an expression node that begins an expression.
+class ExpressionRoot : public Expression
+{
+public:
+	ExpressionRoot() : Expression(Expression::Type::Root, Token::createInvalid())
+	{
+	}
+
+	/// Gets the root expression node.
+	///
+	/// \return The root expression node.
+	std::shared_ptr <Expression> getRoot();
+
+	/// Sets the given expression node as the root node and makes it the current node.
+	///
+	/// \param node The node to set as the expression root.
+	/// \parser The current parser.
+	/// \return True if succesful.
+	bool handleExpressionNode(std::shared_ptr <Expression> node, Parser& parser) override;
+
+	/// Replaces the expression root with the given node.
+	///
+	/// \param node The node to replace root with.
+	/// \return True if succesful.
+	bool replaceExpression(std::shared_ptr <Expression> node) override;
+
+	const char* getTypeString() override;
+
+private:
+	std::shared_ptr <Expression> root;
+};
+
+}
+
+#endif

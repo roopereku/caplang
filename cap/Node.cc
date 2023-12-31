@@ -47,4 +47,9 @@ void Node::setNext(std::shared_ptr <Node>&& node)
 	next = std::move(node);
 }
 
+const char* Node::getTypeString()
+{
+	return "???";
+}
+
 }

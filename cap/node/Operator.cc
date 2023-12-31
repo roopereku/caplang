@@ -48,20 +48,49 @@ bool Operator::handleExpressionNode(std::shared_ptr <Expression> node, Parser& p
 			{
 				parser.events.emit(DebugMessage("New operator has lower precedence", token));
 
-				// If there is no parent, the new operator node adopts the current node.
-				if(getParent().expired() || getParent().lock()->type != Node::Type::Expression)
+				// If there is no parent, the new node takes control of the current node.
+				if(getParent().expired())
 				{
-					parser.events.emit(DebugMessage(op->token.getString() + " adopts " + token.getString(), token));
+					// Adopt the current node.
+					op->adopt(parser.getCurrentNode());
 
-					op->adopt(shared_from_this());
-					op->handleValue(shared_from_this()->as <Expression> ());	
+					if(!op->handleValue(parser.getCurrentNode()->as <Expression> ()))
+					{
+						return false;
+					}
+
+					parser.setCurrentNode(op);
 				}
 
-				// If there is a parent that's an expression, switch to it.
 				else
 				{
-					parser.setCurrentNode(getParent().lock());
-					return parser.getCurrentNode()->as <Expression> ()->handleExpressionNode(node, parser);
+					// The parent node has to be an expression.
+					assert(getParent().lock()->type == Node::Type::Expression);
+					auto parentExpr = getParent().lock()->as <Expression> ();
+
+					// If the parent expression is the root, make the new node adopt the current
+					// one and set the new node as the expression root.
+					if(parentExpr->type == Expression::Type::Root)
+					{
+						op->adopt(parser.getCurrentNode());
+						if(!op->handleValue(parser.getCurrentNode()->as <Expression> ()))
+						{
+							return false;
+						}
+
+						parentExpr->replaceExpression(op);
+					}
+
+					// If the parent isn't the root, switch to it.
+					else
+					{
+						parser.setCurrentNode(parentExpr);
+
+						if(!parentExpr->handleExpressionNode(op, parser))
+						{
+							return false;
+						}
+					}
 				}
 			}
 

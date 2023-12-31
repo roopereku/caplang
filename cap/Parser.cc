@@ -3,10 +3,11 @@
 #include <cap/event/DebugMessage.hh>
 #include <cap/event/ErrorMessage.hh>
 
-#include <cap/node/FunctionDefinition.hh>
 #include <cap/node/TypeDefinition.hh>
+#include <cap/node/FunctionDefinition.hh>
 #include <cap/node/OneSidedOperator.hh>
 #include <cap/node/TwoSidedOperator.hh>
+#include <cap/node/ExpressionRoot.hh>
 #include <cap/node/Value.hh>
 
 #include <cassert>
@@ -305,6 +306,8 @@ void Parser::beginExpression(Token& at)
 {
 	assert(!inExpression);
 
+	addNode(std::make_shared <ExpressionRoot> ());
+
 	events.emit(DebugMessage("Begin an expression", at));
 	expressionBeginLine = at.getRow();
 	inExpression = true;
@@ -375,14 +378,14 @@ void Parser::addNode(std::shared_ptr <Node>&& node)
 
 bool Parser::handleExpressionToken(Token& token)
 {
-	bool addRoot = currentNode->type != Node::Type::Expression;
-	bool cacheValue = false;
-	std::shared_ptr <Expression> expr;
-
 	if(!inExpression)
 	{
 		beginExpression(token);
 	}
+
+	bool addRoot = currentNode->type != Node::Type::Expression;
+	bool cacheValue = false;
+	std::shared_ptr <Expression> expr;
 
 	if(token.getType() == Token::Type::Operator)
 	{
@@ -420,10 +423,9 @@ bool Parser::handleExpressionToken(Token& token)
 		expr = std::make_shared <Value> (token);
 
 		// If the value node would become the expression root, cache it instead.
-		if(addRoot)
+		if(addRoot || currentNode->as <Expression> ()->type == Expression::Type::Root)
 		{
 			cacheValue = true;
-			addRoot = false;
 		}
 	}
 
@@ -437,7 +439,7 @@ bool Parser::handleExpressionToken(Token& token)
 	// If a root node for the expression should be added, use addNode. "expr" should never be a value.
 	else if(addRoot)
 	{
-		events.emit(DebugMessage("Add expression root", token));
+		events.emit(DebugMessage("Call addNode for expression node", token));
 		addNode(std::move(expr));
 	}
 
