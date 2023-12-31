@@ -33,7 +33,8 @@ bool Parser::parse(Tokenizer& tokens, std::shared_ptr <Node> root)
 	// Iterate through the tokens.
 	while(!tokens.empty())
 	{
-		if(!parseNextToken(tokens))
+		Token token = tokens.next();
+		if(!parseToken(token, tokens, true))
 		{
 			return false;
 		}
@@ -51,14 +52,13 @@ bool Parser::parse(Tokenizer& tokens, std::shared_ptr <Node> root)
 	return true;
 }
 
-bool Parser::parseNextToken(Tokenizer& tokens)
+bool Parser::parseToken(Token& token, Tokenizer& tokens, bool breakExpressionOnNewline)
 {
-	Token token = tokens.next();
 	events.emit(DebugMessage("Token: " + token.getString(), token));
 
 	// If an expression that's outside brackets is active and the current token
 	// is not on the same line where the expression began, end the expression.
-	if(inExpression && expressionBraceDepth == 0 && token.getRow() > expressionBeginLine)
+	if(inExpression && breakExpressionOnNewline && token.getRow() > expressionBeginLine)
 	{
 		endExpression(token);
 	}
@@ -123,38 +123,44 @@ bool Parser::handleBracketToken(Token& token, Tokenizer& tokens)
 			// If an expression is active, an opening bracket indicates a subexpression.
 			if(inExpression)
 			{
-				// If an expression is active, keep track of the brace depth;
-				expressionBraceDepth++;
-				events.emit(DebugMessage("expressionBraceDepth++ -> " + std::to_string(expressionBraceDepth), token));
-
 				events.emit(DebugMessage("Start a subexpression", token));
-				events.emit(DebugMessage("Current is " + currentNode->token.getString(), token));
 
 				// Store the old current node and create a temporary one for the subexpression.
 				auto oldCurrent = currentNode;
 				currentNode = std::make_shared <Node> ();
 
+				Token::IndexType currentRow;
+
 				// While the brackets are unterminated, parse tokens.
 				while(openingBrackets.size() > oldOpeners && !tokens.empty())
 				{
-					if(!parseNextToken(tokens))
+					Token token = tokens.next();
+					currentRow = token.getRow();
+
+					if(!parseToken(token, tokens, false))
 					{
 						return false;
 					}
 				}
 
-				// If the temporary node is still empty with no cached value, there was nothing inside the brackets.
+				// In order to continue the expression outside brackets, update the beginning line.
+				expressionBeginLine = currentRow;
+				events.emit(DebugMessage("End a subexpression. Expression can continue on line " + std::to_string(expressionBeginLine), token));
+
+				bool handleCachedInOld = false;
+
 				if(currentNode->type == Node::Type::Empty)
 				{
-					// If there was a cached value, give it to the previous current operator.
 					if(cachedValue)
 					{
-						// In nested brackets there could be a case where oldCurrent doesn't point to a
-						// real node. In such a case retain the cached value. Example: a = ((5))
-						if(oldCurrent->type != Node::Type::Empty)
+						// Only if the previous current node was an expression, apply the cached value.
+						// Otherwise the cached value is retained for further use.
+						//
+						// In a case such as "a = ((5))" the previous current node would be an empty node
+						// when the inner subexpression exits.
+						if(oldCurrent->type == Node::Type::Expression)
 						{
-							events.emit(ErrorMessage("Save cached value from brackets", cachedValue->token));
-							oldCurrent->as <Operator> ()->handleValue(std::move(cachedValue));
+							handleCachedInOld = true;
 						}
 					}
 
@@ -165,16 +171,32 @@ bool Parser::handleBracketToken(Token& token, Tokenizer& tokens)
 					}
 				}
 
-				// If the temporary node isn't empty, it's an expression.
-				else
+				else if(currentNode->type == Node::Type::Expression)
 				{
-					assert(currentNode->type == Node::Type::Expression);
-					assert(oldCurrent->as <Expression> ()->type == Expression::Type::Operator);
+					// There should be no cached value at this point.
+					assert(!cachedValue);
 
-					// Treat the subexpression as a value and give it to the outer expression.
-					oldCurrent->as <Operator> ()->handleValue(std::move(currentNode->as <Expression> ()));
+					// In order to use the current expression in outer expressions, cache it.
+					events.emit(DebugMessage("Cache the current expression", token));
+					cachedValue = std::move(currentNode->as <Expression> ());
+
+					// If the previous current node is an expression, try to give it the cached value.
+					if(oldCurrent->type == Node::Type::Expression)
+					{
+						handleCachedInOld = true;
+					}
 				}
 
+				if(handleCachedInOld)
+				{
+					// When applying the cached value, the old current node has to be an operator.
+					assert(oldCurrent->as <Expression> ()->type == Expression::Type::Operator);
+
+					events.emit(DebugMessage("Apply the cached value from a subexpression", token));
+					oldCurrent->as <Operator> ()->handleValue(std::move(cachedValue));
+				}
+
+				// Switch back to the previous current node.
 				currentNode = std::move(oldCurrent);
 			}
 
@@ -194,29 +216,6 @@ bool Parser::handleBracketToken(Token& token, Tokenizer& tokens)
 				);
 
 				return false;
-			}
-
-			// If an expression is active, keep track of the brace depth;
-			if(inExpression)
-			{
-				// Only if the expression brace depth is known decrement it.
-				// It might be unknown if something like (3) - ((8) + 3) is passed
-				// as the expression starts at the first occurence of "3".
-				if(expressionBraceDepth > 0)
-				{
-					// TODO: Somehow tell the appropriate expression node the correct depth.
-
-					expressionBraceDepth -= inExpression;
-					events.emit(DebugMessage("expressionBraceDepth-- -> " + std::to_string(expressionBraceDepth), token));
-				}
-			}
-
-			// If the last brace was closed, the expression can now be terminated with
-			// a line change. Update the beginning line so that the expression
-			// can continue until such an event happens.
-			if(inExpression && expressionBraceDepth == 0)
-			{
-				expressionBeginLine = token.getRow();
 			}
 
 			// Close the innermost opener bracket.
@@ -284,7 +283,8 @@ bool Parser::parseFunction(Token& token, Tokenizer& tokens)
 	// While the parameter parenthesis are open, parse the parameters.
 	while(openingBrackets.size() > oldOpeners && !tokens.empty())
 	{
-		if(!parseNextToken(tokens))
+		Token token = tokens.next();
+		if(!parseToken(token, tokens, false))
 		{
 			return false;
 		}
@@ -310,10 +310,19 @@ void Parser::beginExpression(Token& at)
 void Parser::endExpression(Token& at)
 {
 	assert(inExpression);
-
-	// TODO: Check if cachedValue exists.
-
 	events.emit(DebugMessage("End an expression", at));
+
+	// If there still is a cached value, apply it.
+	if(cachedValue)
+	{
+		events.emit(DebugMessage("Apply the cached value before ending expresion", at));
+
+		assert(currentNode->type == Node::Type::Expression);
+		assert(currentNode->as <Expression> ()->type == Expression::Type::Operator);
+
+		currentNode->as <Operator> ()->handleValue(std::move(cachedValue));
+	}
+
 	inExpression = false;
 }
 
@@ -396,8 +405,6 @@ bool Parser::handleExpressionToken(Token& token)
 			return false;
 		}
 
-		expr->setBraceDepth(expressionBraceDepth);
-
 		if(cachedValue)
 		{
 			events.emit(DebugMessage("Apply cached value", token));
@@ -412,7 +419,6 @@ bool Parser::handleExpressionToken(Token& token)
 	{
 		isPreviousTokenValue = true;
 		expr = std::make_shared <Value> (token);
-		expr->setBraceDepth(expressionBraceDepth);
 
 		// If the value node would become the expression root, cache it instead.
 		if(addRoot)

@@ -56,7 +56,7 @@ private:
 
 	void generateOperator(std::shared_ptr <cap::Operator> node, unsigned depth)
 	{
-		file << indent(depth) << "Operator: " << node->getTypeString() << " " << node->getBraceDepth() << '\n';
+		file << indent(depth) << "Operator: " << node->getTypeString() << '\n';
 
 		switch(node->type)
 		{
@@ -88,6 +88,12 @@ private:
 			case cap::Expression::Type::Value:
 			{
 				file << indent(depth) << "Value: " << node->token.getString() << '\n';
+				break;
+			}
+
+			case cap::Expression::Type::Root:
+			{
+				file << indent(depth) << "Expression Root" << '\n';
 				break;
 			}
 		}

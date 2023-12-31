@@ -49,17 +49,17 @@ bool Operator::handleExpressionNode(std::shared_ptr <Expression> node, Parser& p
 				parser.events.emit(DebugMessage("New operator has lower precedence", token));
 
 				// If there is no parent, the new operator node adopts the current node.
-				if(getParent().expired())
+				if(getParent().expired() || getParent().lock()->type != Node::Type::Expression)
 				{
+					parser.events.emit(DebugMessage(op->token.getString() + " adopts " + token.getString(), token));
+
 					op->adopt(shared_from_this());
 					op->handleValue(shared_from_this()->as <Expression> ());	
 				}
 
-				// If there is a parent, switch to it.
+				// If there is a parent that's an expression, switch to it.
 				else
 				{
-					assert(getParent().lock()->type == Node::Type::Expression);
-
 					parser.setCurrentNode(getParent().lock());
 					return parser.getCurrentNode()->as <Expression> ()->handleExpressionNode(node, parser);
 				}

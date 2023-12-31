@@ -41,7 +41,7 @@ public:
 private:
 	void addNode(std::shared_ptr <Node>&& node);
 
-	bool parseNextToken(Tokenizer& tokens);
+	bool parseToken(Token& token, Tokenizer& tokens, bool breakExpressionOnNewline);
 	bool todo(std::string&& msg);
 
 	bool handleExpressionToken(Token& token);
@@ -55,8 +55,7 @@ private:
 	void endExpression(Token& at);
 
 	bool isPreviousTokenValue = false;
-	unsigned expressionBraceDepth = 0;
-	size_t expressionBeginLine = 0;
+	Token::IndexType expressionBeginLine = 0;
 	bool inExpression = false;
 
 	std::stack <Token> openingBrackets;
