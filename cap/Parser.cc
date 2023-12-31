@@ -60,7 +60,10 @@ bool Parser::parseToken(Token& token, Tokenizer& tokens, bool breakExpressionOnN
 	// is not on the same line where the expression began, end the expression.
 	if(inExpression && breakExpressionOnNewline && token.getRow() > expressionBeginLine)
 	{
-		endExpression(token);
+		if(!endExpression(token))
+		{
+			return false;
+		}
 	}
 
 	// Handle brackets.
@@ -307,7 +310,7 @@ void Parser::beginExpression(Token& at)
 	inExpression = true;
 }
 
-void Parser::endExpression(Token& at)
+bool Parser::endExpression(Token& at)
 {
 	assert(inExpression);
 	events.emit(DebugMessage("End an expression", at));
@@ -315,15 +318,11 @@ void Parser::endExpression(Token& at)
 	// If there still is a cached value, apply it.
 	if(cachedValue)
 	{
-		events.emit(DebugMessage("Apply the cached value before ending expresion", at));
-
-		assert(currentNode->type == Node::Type::Expression);
-		assert(currentNode->as <Expression> ()->type == Expression::Type::Operator);
-
-		currentNode->as <Operator> ()->handleValue(std::move(cachedValue));
+		return todo("Handle cachedValue before ending the expression");
 	}
 
 	inExpression = false;
+	return true;
 }
 
 bool Parser::todo(std::string&& msg)

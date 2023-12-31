@@ -52,7 +52,7 @@ private:
 	bool parseVariable(Token& token, Tokenizer& tokens);
 
 	void beginExpression(Token& at);
-	void endExpression(Token& at);
+	bool endExpression(Token& at);
 
 	bool isPreviousTokenValue = false;
 	Token::IndexType expressionBeginLine = 0;
