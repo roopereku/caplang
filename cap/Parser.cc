@@ -225,13 +225,23 @@ bool Parser::handleBracketToken(Token& token, Tokenizer& tokens)
 			// Close the innermost opener bracket.
 			openingBrackets.pop();
 
-			// When a scope ends, switch to the parent of the current node.
+			// When a scope ends, switch to the parent scope.
 			if(token[0] == '}')
 			{
+				// Make sure that the current node is the current scope.
+				if(currentNode->type != Node::Type::ScopeDefinition)
+				{
+					currentNode = currentNode->getParent().lock();
+					assert(currentNode->type == Node::Type::ScopeDefinition);
+				}
+
 				assert(currentNode);
 				assert(!currentNode->getParent().expired());
 
 				currentNode = currentNode->getParent().lock();
+				assert(currentNode->type == Node::Type::ScopeDefinition);
+
+				events.emit(DebugMessage("Switch to outer scope " + currentNode->as <ScopeDefinition> ()->name.getString(), token));
 			}
 		}
 	}
@@ -324,6 +334,14 @@ bool Parser::endExpression(Token& at)
 		return todo("Handle cachedValue before ending the expression");
 	}
 
+	// Backtrack until the expression root is found.
+	while(currentNode->as <Expression> ()->type != Expression::Type::Root)
+	{
+		currentNode = currentNode->getParent().lock();
+	}
+
+	events.emit(DebugMessage(std::string("Stopped at ") + currentNode->getTypeString(), at));
+
 	inExpression = false;
 	return true;
 }
@@ -336,6 +354,8 @@ bool Parser::todo(std::string&& msg)
 
 void Parser::addNode(std::shared_ptr <Node>&& node)
 {
+	currentNode->adopt(node);
+
 	switch(currentNode->type)
 	{
 		// If the current node is a scope, add the new node under it.
@@ -343,7 +363,6 @@ void Parser::addNode(std::shared_ptr <Node>&& node)
 		{
 			// Make sure that the current scope node is the parent of the new node.
 			auto scope = std::static_pointer_cast <ScopeDefinition> (currentNode);
-			currentNode->adopt(node);
 
 			// If not scope root is set, initialize it.
 			if(!scope->getRoot())

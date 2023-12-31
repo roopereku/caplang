@@ -1,4 +1,14 @@
+type Test
+{
+	func init()
+	{
+		a = 1 + 2 * 3
+	}
+
+	someMember = a * -(2 << 3)
+}
+
 func main()
 {
-	(5) ** 4 + ((8) ** 2 - 23)
+	Test.init
 }
