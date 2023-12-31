@@ -20,6 +20,7 @@ static OperatorEntry operatorLookup[]
 	{ "*", TwoSidedOperator::Type::Multiplication },
 	{ "/", TwoSidedOperator::Type::Division },
 	{ "%", TwoSidedOperator::Type::Modulus },
+	{ "**", TwoSidedOperator::Type::Exponent },
 	{ ".", TwoSidedOperator::Type::Access },
 	{ ",", TwoSidedOperator::Type::Comma },
 	{ ">", TwoSidedOperator::Type::GreaterThan },
@@ -112,6 +113,7 @@ const char* TwoSidedOperator::getTypeString()
 		case Type::Multiplication: return "Multiplication";
 		case Type::Division: return "Division";
 		case Type::Modulus: return "Modulus";
+		case Type::Exponent: return "Exponent";
 		case Type::Access: return "Access";
 		case Type::Comma: return "Comma";
 
@@ -145,6 +147,7 @@ unsigned TwoSidedOperator::getPrecedence()
 		case Type::Multiplication: return 5;
 		case Type::Division: return 5;
 		case Type::Modulus: return 5;
+		case Type::Exponent: return 4;
 		case Type::Access: return 2;
 		case Type::Comma: return 17;
 

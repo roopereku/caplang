@@ -16,6 +16,7 @@ public:
 		Subtraction,
 		Multiplication,
 		Division,
+		Exponent,
 		Modulus,
 		Access,
 		Comma,
