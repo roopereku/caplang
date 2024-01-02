@@ -1,14 +1,4 @@
-type Test
-{
-	func init()
-	{
-		a = 1 + 2 * 3
-	}
-
-	someMember = a * -(2 << 3)
-}
-
 func main()
 {
-	Test.init
+	var a = 12
 }

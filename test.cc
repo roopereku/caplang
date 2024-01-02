@@ -76,6 +76,26 @@ private:
 		}
 	}
 
+	void generateExpressionRoot(std::shared_ptr <cap::ExpressionRoot> node, unsigned depth)
+	{
+		switch(node->type)
+		{
+			case cap::ExpressionRoot::Type::Expression:
+			{
+				file << indent(depth) << "Expression" << '\n';
+				break;
+			}
+
+			case cap::ExpressionRoot::Type::VariableDefinition:
+			{
+				file << indent(depth) << "Variable" << '\n';
+				break;
+			}
+		}
+
+		generateNode(node->getRoot(), depth + 1);
+	}
+
 	void generateExpression(std::shared_ptr <cap::Expression> node, unsigned depth)
 	{
 		switch(node->type)
@@ -94,8 +114,7 @@ private:
 
 			case cap::Expression::Type::Root:
 			{
-				file << indent(depth) << "Expression Root" << '\n';
-				generateExpression(node->as <cap::ExpressionRoot> ()->getRoot(), depth + 1);
+				generateExpressionRoot(node->as <cap::ExpressionRoot> (), depth);
 				break;
 			}
 		}

@@ -51,7 +51,7 @@ private:
 	bool parseFunction(Token& token, Tokenizer& tokens);
 	bool parseVariable(Token& token, Tokenizer& tokens);
 
-	void beginExpression(Token& at);
+	void beginExpression(std::shared_ptr <Expression>&& root);
 	bool endExpression(Token& at);
 
 	bool isPreviousTokenValue = false;

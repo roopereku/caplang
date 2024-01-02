@@ -10,7 +10,19 @@ namespace cap
 class ExpressionRoot : public Expression
 {
 public:
-	ExpressionRoot() : Expression(Expression::Type::Root, Token::createInvalid())
+	enum class Type
+	{
+		VariableDefinition,
+		Expression
+	};
+
+	ExpressionRoot(Type type, Token& token)
+		: Expression(Expression::Type::Root, token), type(type)
+	{
+	}
+
+	ExpressionRoot(Token& token)
+		: Expression(Expression::Type::Root, token), type(Type::Expression)
 	{
 	}
 
@@ -33,6 +45,8 @@ public:
 	bool replaceExpression(std::shared_ptr <Expression> node) override;
 
 	const char* getTypeString() override;
+
+	const Type type;
 
 private:
 	std::shared_ptr <Expression> root;

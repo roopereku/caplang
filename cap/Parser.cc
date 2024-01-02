@@ -5,6 +5,7 @@
 
 #include <cap/node/TypeDefinition.hh>
 #include <cap/node/FunctionDefinition.hh>
+#include <cap/node/VariableDefinition.hh>
 #include <cap/node/OneSidedOperator.hh>
 #include <cap/node/TwoSidedOperator.hh>
 #include <cap/node/ExpressionRoot.hh>
@@ -123,6 +124,8 @@ bool Parser::handleBracketToken(Token& token, Tokenizer& tokens)
 		{
 			size_t oldOpeners = openingBrackets.size();
 			openingBrackets.push(token);
+
+			// TODO: If '(' or '[' is encountered, start an expression.
 
 			// If an expression is active, an opening bracket indicates a subexpression.
 			if(inExpression)
@@ -309,18 +312,19 @@ bool Parser::parseFunction(Token& token, Tokenizer& tokens)
 
 bool Parser::parseVariable(Token& token, Tokenizer& tokens)
 {
-	return todo("\"var\" keyword");
+	beginExpression(std::make_shared <VariableDefinition> (token));
+	return true;
 }
 
-void Parser::beginExpression(Token& at)
+void Parser::beginExpression(std::shared_ptr <Expression>&& root)
 {
 	assert(!inExpression);
 
-	addNode(std::make_shared <ExpressionRoot> ());
-
-	events.emit(DebugMessage("Begin an expression", at));
-	expressionBeginLine = at.getRow();
+	events.emit(DebugMessage("Begin an expression", root->token));
+	expressionBeginLine = root->token.getRow();
 	inExpression = true;
+
+	addNode(std::move(root));
 }
 
 bool Parser::endExpression(Token& at)
@@ -399,7 +403,7 @@ bool Parser::handleExpressionToken(Token& token)
 {
 	if(!inExpression)
 	{
-		beginExpression(token);
+		beginExpression(std::make_shared <ExpressionRoot> (token));
 	}
 
 	bool addRoot = currentNode->type != Node::Type::Expression;
