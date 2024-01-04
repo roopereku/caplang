@@ -405,15 +405,15 @@ bool Parser::todo(std::string&& msg)
 
 void Parser::addNode(std::shared_ptr <Node>&& node)
 {
-	currentNode->adopt(node);
-
 	switch(currentNode->type)
 	{
 		// If the current node is a scope, add the new node under it.
 		case Node::Type::ScopeDefinition:
 		{
 			// Make sure that the current scope node is the parent of the new node.
-			auto scope = std::static_pointer_cast <ScopeDefinition> (currentNode);
+			auto scope = currentNode-> as <ScopeDefinition> ();
+
+			scope->adopt(node);
 
 			// If not scope root is set, initialize it.
 			if(!scope->getRoot())
@@ -439,6 +439,9 @@ void Parser::addNode(std::shared_ptr <Node>&& node)
 
 		default:
 		{
+			assert(!currentNode->getParent().expired());
+			currentNode->getParent().lock()->adopt(node);
+
 			currentNode->setNext(std::move(node));
 		}
 	}
