@@ -27,25 +27,11 @@ public:
 
 	virtual bool handleValue(std::shared_ptr <Expression>&& value) = 0;
 
-	//TypeDefinition& getResultType() override
-	//{
-	//	return resultType ? *resultType : Expression::getResultType();
-	//}
-
-	//void setResultType(Type& type)
-	//{
-	//	resultType = &type;
-	//}
-
-	bool handleExpressionNode(std::shared_ptr <Expression> node, Parser& parser) override;
+	bool handleExpressionNode(std::shared_ptr <Expression> node, Parser& parser) final override;
 
 	const Type type;
 
 protected:
-	virtual bool handleHigherPrecedence(std::shared_ptr <Operator> op) = 0;
-	bool handleSamePrecedence(std::shared_ptr <Operator> op);
-
-	//Type* resultType = nullptr;
 };
 
 }

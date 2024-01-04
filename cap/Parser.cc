@@ -134,8 +134,9 @@ bool Parser::handleBracketToken(Token& token, Tokenizer& tokens)
 
 				// Store the old current node and create a temporary one for the subexpression.
 				auto oldCurrent = currentNode;
-				currentNode = std::make_shared <Node> ();
+				auto expr = std::make_shared <ExpressionRoot> (token);
 
+				currentNode = expr;
 				Token::IndexType currentRow;
 
 				// While the brackets are unterminated, parse tokens.
@@ -155,9 +156,12 @@ bool Parser::handleBracketToken(Token& token, Tokenizer& tokens)
 				events.emit(DebugMessage("End a subexpression. Expression can continue on line " + std::to_string(expressionBeginLine), token));
 
 				bool handleCachedInOld = false;
+				assert(currentNode->type == Node::Type::Expression);
 
-				if(currentNode->type == Node::Type::Empty)
+				// If the current node is still a root, the brackets could be empty.
+				if(currentNode->as <Expression> ()->type == Expression::Type::Root)
 				{
+					// If there is a cached value, the brackets aren't empty.
 					if(cachedValue)
 					{
 						// Only if the previous current node was an expression, apply the cached value.
@@ -178,33 +182,39 @@ bool Parser::handleBracketToken(Token& token, Tokenizer& tokens)
 					}
 				}
 
-				else if(currentNode->type == Node::Type::Expression)
+				// If there is no cached value, cache the expression.
+				if(!cachedValue)
 				{
-					// There should be no cached value at this point.
-					assert(!cachedValue);
-
 					// In order to use the current expression in outer expressions, cache it.
 					events.emit(DebugMessage("Cache the current expression", token));
 					cachedValue = std::move(currentNode->as <Expression> ());
-
-					// If the previous current node is an expression, try to give it the cached value.
-					if(oldCurrent->type == Node::Type::Expression)
-					{
-						handleCachedInOld = true;
-					}
 				}
 
+				// If the previous current node is an expression, try to give it the cached value.
+				if(oldCurrent->type == Node::Type::Expression)
+				{
+					handleCachedInOld = true;
+				}
+
+				// Should the cached value be handled in the old current node.
 				if(handleCachedInOld)
 				{
-					// When applying the cached value, the old current node has to be an operator.
-					assert(oldCurrent->as <Expression> ()->type == Expression::Type::Operator);
+					// If the old current node isn't a root, it should be an operator which
+					// can handle the cached value.
+					if(oldCurrent->as <Expression> ()->type != Expression::Type::Root)
+					{
+						assert(oldCurrent->as <Expression> ()->type == Expression::Type::Operator);
 
-					events.emit(DebugMessage("Apply the cached value from a subexpression", token));
-					oldCurrent->as <Operator> ()->handleValue(std::move(cachedValue));
+						events.emit(DebugMessage("Apply the cached value from a subexpression", token));
+						oldCurrent->as <Operator> ()->handleValue(std::move(cachedValue));
+					}
 				}
 
 				// Switch back to the previous current node.
 				currentNode = std::move(oldCurrent);
+
+				// Braces are treated as values.
+				isPreviousTokenValue = true;
 			}
 
 			break;
@@ -401,14 +411,12 @@ void Parser::addNode(std::shared_ptr <Node>&& node)
 
 bool Parser::handleExpressionToken(Token& token)
 {
+	std::shared_ptr <Expression> expr;
+
 	if(!inExpression)
 	{
 		beginExpression(std::make_shared <ExpressionRoot> (token));
 	}
-
-	bool addRoot = currentNode->type != Node::Type::Expression;
-	bool cacheValue = false;
-	std::shared_ptr <Expression> expr;
 
 	if(token.getType() == Token::Type::Operator)
 	{
@@ -424,6 +432,8 @@ bool Parser::handleExpressionToken(Token& token)
 			expr = TwoSidedOperator::parseToken(token);
 		}
 
+		isPreviousTokenValue = false;
+
 		if(!expr)
 		{
 			events.emit(ErrorMessage("Invalid operator " + token.getString(), token));
@@ -435,8 +445,6 @@ bool Parser::handleExpressionToken(Token& token)
 			events.emit(DebugMessage("Apply cached value", token));
 			expr->as <Operator> ()->handleValue(std::move(cachedValue));
 		}
-
-		isPreviousTokenValue = false;
 	}
 
 	// The token is a value.
@@ -445,36 +453,33 @@ bool Parser::handleExpressionToken(Token& token)
 		isPreviousTokenValue = true;
 		expr = std::make_shared <Value> (token);
 
-		// If the value node would become the expression root, cache it instead.
-		if(addRoot || currentNode->as <Expression> ()->type == Expression::Type::Root)
+		// If the value node would become the expression root node, cache it instead.
+		if(currentNode->as <Expression> ()->type == Expression::Type::Root)
 		{
-			cacheValue = true;
+			events.emit(DebugMessage("Cache value " + token.getString(), token));
+			cachedValue = std::move(expr);
 		}
-	}
 
-	// Should the expression value be cached.
-	if(cacheValue)
-	{
-		events.emit(DebugMessage("Cache value " + token.getString(), token));
-		cachedValue = std::move(expr);
-	}
-
-	// If a root node for the expression should be added, use addNode. "expr" should never be a value.
-	else if(addRoot)
-	{
-		events.emit(DebugMessage("Call addNode for expression node", token));
-		addNode(std::move(expr));
-	}
-
-	// If a the root node of an expression already exists, let the
-	// current expression node manipulate the hierarchy of the expression nodes.
-	else if(currentNode->type == Node::Type::Expression)
-	{
-		events.emit(DebugMessage("Call handleExpressionNode", token));
-		if(!currentNode->as <Expression> ()->handleExpressionNode(expr, *this))
+		// The current node isn't the root and should be able to handle the value.
+		else
 		{
-			return false;
+			events.emit(DebugMessage("Handle value " + token.getString() + " in " + currentNode->getTypeString(), token));
+
+			assert(currentNode->as <Expression> ()->type == Expression::Type::Operator);
+			if(!currentNode->as <Operator> ()->handleValue(std::move(expr)))
+			{
+				return false;
+			}
 		}
+
+		return true;
+	}
+
+	// Let the current expression node manipulate the hierarchy of the expression nodes.
+	events.emit(DebugMessage("Call handleExpressionNode", token));
+	if(!currentNode->as <Expression> ()->handleExpressionNode(expr, *this))
+	{
+		return false;
 	}
 
 	return true;

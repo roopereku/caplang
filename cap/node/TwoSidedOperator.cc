@@ -51,48 +51,18 @@ std::shared_ptr <Operator> TwoSidedOperator::parseToken(Token& token)
 	return nullptr;
 }
 
-bool TwoSidedOperator::handleHigherPrecedence(std::shared_ptr <Operator> op)
-{
-	if(op->type == Operator::Type::TwoSided)
-	{
-		auto twoSided = op->as <TwoSidedOperator> ();
-
-		// Move the rhs of the current node to the lhs of the new node.
-		twoSided->adopt(right);
-		twoSided->left = std::move(right);
-	}
-
-	else if(op->type == Operator::Type::OneSided)
-	{
-		auto oneSided = op->as <OneSidedOperator> ();
-
-		// If the new one sided operator affects the previous value (For an example abc[]),
-		// make the one sided operator steal the rhs value of this operator. The new one
-		// sided operator will become the new rhs value of this operator.
-		if(oneSided->affectsPreviousValue())
-		{
-			oneSided->expression = right;
-			oneSided->adopt(right);
-		}
-	}
-
-	// The rhs of current becomes the new node.
-	right = std::move(op);
-	adopt(right);
-
-	return true;
-}
-
 bool TwoSidedOperator::handleValue(std::shared_ptr <Expression>&& value)
 {
 	if(!left)
 	{
 		left = std::move(value);
+		adopt(left);
 	}
 
 	else if(!right)
 	{
 		right = std::move(value);
+		adopt(right);
 	}
 
 	else
@@ -170,12 +140,23 @@ unsigned TwoSidedOperator::getPrecedence()
 	return -1;
 }
 
-bool TwoSidedOperator::replaceExpression(std::shared_ptr <Expression> node)
+std::shared_ptr <Expression> TwoSidedOperator::stealMostRecentValue()
 {
-	right = std::move(node);
-	adopt(right);
+	std::shared_ptr <Expression> expr;
 
-	return true;
+	// If right exists, steal it.
+	if(right)
+	{
+		expr = std::move(right);
+	}
+
+	// If right doesn't exist but left does, steal it.
+	else if(left)
+	{
+		expr = std::move(left);
+	}
+
+	return expr;
 }
 
 }

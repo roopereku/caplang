@@ -73,16 +73,16 @@ public:
 	/// \returns New two sided operator or nullptr if the token has an invalid operator.
 	static std::shared_ptr <Operator> parseToken(Token& token);
 
+	/// Steals the most recently added value.
+	///
+	/// \return The most recently added value.
+	std::shared_ptr <Expression> stealMostRecentValue() override;
+
 	const Type type;
 
 	friend class OneSidedOperator;
 
 protected:
-	/// Replaces the rhs node with the given operator.
-	bool replaceExpression(std::shared_ptr <Expression> node) override;
-
-	bool handleHigherPrecedence(std::shared_ptr <Operator> op) override;
-
 	std::shared_ptr <Expression> left;
 	std::shared_ptr <Expression> right;
 };

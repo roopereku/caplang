@@ -38,17 +38,13 @@ public:
 	/// \return True if succesful.
 	bool handleExpressionNode(std::shared_ptr <Expression> node, Parser& parser) override;
 
-	/// Replaces the expression root with the given node.
-	///
-	/// \param node The node to replace root with.
-	/// \return True if succesful.
-	bool replaceExpression(std::shared_ptr <Expression> node) override;
-
 	const char* getTypeString() override;
 
 	const Type type;
 
 private:
+	void setRoot(std::shared_ptr <Expression>&& node, Parser& parser);
+
 	std::shared_ptr <Expression> root;
 };
 

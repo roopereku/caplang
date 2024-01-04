@@ -10,14 +10,14 @@ Expression::Expression(Type type, Token token)
 {
 }
 
-bool Expression::replaceExpression(std::shared_ptr <Expression> node)
-{
-	assert(false && "called Expression::replaceExpression");
-}
-
 bool Expression::handleExpressionNode(std::shared_ptr <Expression> node, Parser& parser)
 {
 	assert(false && "called Expression::handleExpressionNode");
+}
+
+std::shared_ptr <Expression> Expression::stealMostRecentValue()
+{
+	assert(false && "called Expression::stealMostRecentValue");
 }
 
 //TypeDefinition& Expression::getResultType()

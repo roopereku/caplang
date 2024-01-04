@@ -81,53 +81,20 @@ bool OneSidedOperator::affectsNextValue()
 	return !affectsPreviousValue();
 }
 
-bool OneSidedOperator::replaceExpression(std::shared_ptr <Expression> node)
-{
-	expression = node;
-	adopt(expression);
-
-	return true;
-}
-
-bool OneSidedOperator::handleHigherPrecedence(std::shared_ptr <Operator> op)
-{
-	if(op->type == Operator::Type::TwoSided)
-	{
-		auto twoSided = op->as <TwoSidedOperator> ();
-
-		// Move the expression of the current node to the lhs of the new node.
-		twoSided->adopt(expression);
-		twoSided->left = std::move(expression);
-	}
-
-	else if(op->type == Operator::Type::OneSided)
-	{
-		auto oneSided = op->as <OneSidedOperator> ();
-
-		// If the new one sided operator affects the previous value (For an example abc[]),
-		// make the one sided operator steal the expression of this operator. The new one
-		// sided operator will become the new expression of this operator.
-		if(oneSided->affectsPreviousValue())
-		{
-			oneSided->expression = expression;
-			oneSided->adopt(oneSided->expression);
-		}
-	}
-
-	// The rhs of current becomes the new node.
-	expression = std::move(op);
-	adopt(expression);
-
-	return true;
-
-}
-
 bool OneSidedOperator::handleValue(std::shared_ptr <Expression>&& value)
 {
 	assert(!expression);
 
 	expression = std::move(value);
+	adopt(expression);
+
 	return true;
+}
+
+std::shared_ptr <Expression> OneSidedOperator::stealMostRecentValue()
+{
+	auto expr = std::move(expression);
+	return expr;
 }
 
 }

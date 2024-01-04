@@ -17,95 +17,86 @@ bool Operator::handleExpressionNode(std::shared_ptr <Expression> node, Parser& p
 	// Adopt the expression node.
 	adopt(node);
 
-	if(node->type == Expression::Type::Value)
-	{
-		if(!handleValue(std::move(node)))
-		{
-			return false;
-		}
-	}
+	// Value nodes should be handled by handleValue().
+	assert(node->type != Expression::Type::Value);
 
 	// Is the new node an operator.
-	else if(node->type == Expression::Type::Operator)
+	if(node->type == Expression::Type::Operator)
 	{
 		auto op = node->as <Operator> ();
+		bool switchToParent = false;
 
-		// The concept of high and low is inverted here as 0 is the
-		// highest priority, therefore highest precedence.
-		if(op->getPrecedence() < getPrecedence())
+		parser.events.emit(DebugMessage(std::string("Handle new operator ") + op->getTypeString(), node->token));
+
+		switch(op->type)
 		{
-			parser.events.emit(DebugMessage("New operator has higher precedence", token));
-			if(!handleHigherPrecedence(op))
+			case Type::TwoSided:
 			{
-				return false;
-			}
-		}
+				parser.events.emit(DebugMessage("Two sided", node->token));
 
-		else
-		{
-			// If the precedence is not the same, make the parent the current node and try again.
-			if(op->getPrecedence() != getPrecedence())
-			{
-				parser.events.emit(DebugMessage("New operator has lower precedence", token));
-
-				// If there is no parent, the new node takes control of the current node.
-				if(getParent().expired())
+				// Is the precedence of the new operator higher than the current.
+				if(node->as <Operator> ()->getPrecedence() < getPrecedence())
 				{
-					// Adopt the current node.
-					op->adopt(parser.getCurrentNode());
+					auto value = stealMostRecentValue();
+					op->handleValue(std::move(value));
 
-					if(!op->handleValue(parser.getCurrentNode()->as <Expression> ()))
-					{
-						return false;
-					}
-
-					parser.setCurrentNode(op);
+					parser.setCurrentNode(node);
+					handleValue(std::move(node));
 				}
 
+				// The precedence is lower or the same.
 				else
 				{
-					// The parent node has to be an expression.
-					assert(getParent().lock()->type == Node::Type::Expression);
-					auto parentExpr = getParent().lock()->as <Expression> ();
-
-					// If the parent expression is the root, make the new node adopt the current
-					// one and set the new node as the expression root.
-					if(parentExpr->type == Expression::Type::Root)
-					{
-						op->adopt(parser.getCurrentNode());
-						if(!op->handleValue(parser.getCurrentNode()->as <Expression> ()))
-						{
-							return false;
-						}
-
-						parentExpr->replaceExpression(op);
-					}
-
-					// If the parent isn't the root, switch to it.
-					else
-					{
-						parser.setCurrentNode(parentExpr);
-
-						if(!parentExpr->handleExpressionNode(op, parser))
-						{
-							return false;
-						}
-					}
+					switchToParent = true;
 				}
+
+				break;
 			}
 
-			// The precedence is the same.
-			else
+			case Type::OneSided:
 			{
-				parser.events.emit(DebugMessage("New operator has same precedence", token));
-				if(!handleSamePrecedence(op))
+				parser.events.emit(DebugMessage("One sided", node->token));
+
+				// Is the precedence of the new operator same as the current.
+				if(node->as <Operator> ()->getPrecedence() == getPrecedence())
 				{
-					return false;
+					switchToParent = true;
 				}
+
+				// Precedence is higher or lower, let the current node handle the
+				// new operator as a value and set the new operator as the current node.
+				else
+				{
+					// Is the precedence of the new operator higher than the current one sided operator.
+					if(type == Type::OneSided && node->as <Operator> ()->getPrecedence() < getPrecedence())
+					{
+						// The new one sided operator steals the most recent value of the current node.
+						auto value = stealMostRecentValue();
+						op->handleValue(std::move(value));
+
+						parser.events.emit(DebugMessage(std::string("New one sided operator steals the most recent value of ") + getTypeString(), node->token));
+					}
+
+					parser.events.emit(DebugMessage(std::string("New one sided operator treated as value by ") + getTypeString(), node->token));
+
+					parser.setCurrentNode(node);
+					handleValue(std::move(node));
+				}
+
+				break;
 			}
 		}
-			
-		parser.setCurrentNode(node);
+
+		if(switchToParent)
+		{
+			parser.events.emit(DebugMessage(std::string("Switching to parent of ") + parser.getCurrentNode()->getTypeString(), node->token));
+			assert(!getParent().expired());
+			parser.setCurrentNode(getParent().lock());
+
+			parser.events.emit(DebugMessage(std::string("Switch to parent ") + parser.getCurrentNode()->getTypeString(), node->token));
+			assert(parser.getCurrentNode()->type == Node::Type::Expression);
+			parser.getCurrentNode()->as <Expression> ()->handleExpressionNode(node, parser);
+		}
 	}
 
 	else
@@ -115,50 +106,5 @@ bool Operator::handleExpressionNode(std::shared_ptr <Expression> node, Parser& p
 
 	return true;
 }
-
-bool Operator::handleSamePrecedence(std::shared_ptr <Operator> op)
-{
-	if(op->type == Operator::Type::TwoSided)
-	{
-		// Make this operator the lhs of the new operator.
-		auto twoSided = op->as <TwoSidedOperator> ();
-		twoSided->setLeft(shared_from_this()->as <Expression> ());
-
-		if(!getParent().expired())
-		{
-			auto parentExpr = getParent().lock()->as <Expression> ();
-
-			// Replace this operator with the new two sided operator.
-			parentExpr->adopt(twoSided);
-			if(!parentExpr->replaceExpression(twoSided))
-				return false;
-		}
-
-		twoSided->adopt(twoSided->getLeft());
-	}
-
-	else if(op->type == Operator::Type::OneSided)
-	{
-		// Make this the expression of the new operator.
-		auto oneSided = op->as <OneSidedOperator> ();
-		oneSided->setExpression(shared_from_this()->as <Expression> ());
-
-		if(!getParent().expired())
-		{
-			auto parentExpr = getParent().lock()->as <Expression> ();
-
-			// Replace this operator with the new one sided operator.
-			parentExpr->adopt(oneSided);
-			if(!parentExpr->replaceExpression(oneSided))
-				return false;
-		}
-
-		oneSided->adopt(oneSided->getExpression());
-	}
-
-	return true;
-}
-
-
 
 }
