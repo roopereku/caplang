@@ -65,7 +65,11 @@ public:
 		return right;
 	}
 
-	bool handleValue(std::shared_ptr <Expression>&& value) override;
+	/// Sets the left and right expressions.
+	///
+	/// \param node The expression node to set as left or right.
+	/// \return True if succesful.
+	bool handleValue(std::shared_ptr <Expression>&& node) override;
 
 	/// Parses a two sided operator from the given token.
 	///
@@ -77,6 +81,11 @@ public:
 	///
 	/// \return The most recently added value.
 	std::shared_ptr <Expression> stealMostRecentValue() override;
+
+	/// Checks if left and right are set.
+	///
+	/// \return True if left and right are set.
+	bool isComplete() override;
 
 	const Type type;
 

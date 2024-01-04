@@ -36,7 +36,7 @@ const char* OneSidedOperator::getTypeString()
 {
 	switch(type)
 	{
-		case Type::FunctionCall: return "Function call";
+		case Type::Call: return "Call";
 		case Type::Subscript: return "Subscript";
 
 		case Type::Not: return "Not";
@@ -52,7 +52,7 @@ unsigned OneSidedOperator::getPrecedence()
 	// Values from https://en.cppreference.com/w/cpp/language/operator_precedence
 	switch(type)
 	{
-		case Type::FunctionCall: return 2;
+		case Type::Call: return 2;
 		case Type::Subscript: return 2;
 
 		case Type::Not: return 3;
@@ -67,7 +67,7 @@ bool OneSidedOperator::affectsPreviousValue()
 {
 	switch(type)
 	{
-		case Type::FunctionCall:
+		case Type::Call:
 		case Type::Subscript:
 			return true;
 
@@ -81,11 +81,11 @@ bool OneSidedOperator::affectsNextValue()
 	return !affectsPreviousValue();
 }
 
-bool OneSidedOperator::handleValue(std::shared_ptr <Expression>&& value)
+bool OneSidedOperator::handleValue(std::shared_ptr <Expression>&& node)
 {
 	assert(!expression);
 
-	expression = std::move(value);
+	expression = std::move(node);
 	adopt(expression);
 
 	return true;
@@ -95,6 +95,11 @@ std::shared_ptr <Expression> OneSidedOperator::stealMostRecentValue()
 {
 	auto expr = std::move(expression);
 	return expr;
+}
+
+bool OneSidedOperator::isComplete()
+{
+	return static_cast <bool> (expression);
 }
 
 }

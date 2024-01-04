@@ -11,7 +11,7 @@ class OneSidedOperator : public Operator
 public:
 	enum class Type
 	{
-		FunctionCall,
+		Call,
 		Subscript,
 
 		Not,
@@ -40,12 +40,8 @@ public:
 		expression = std::move(value);
 	}
 
-	bool handleValue(std::shared_ptr <Expression>&& value) override;
-
-	//Type getType()
-	//{
-	//	return type;
-	//}
+	/// Saves the given expression node as the expression.
+	bool handleValue(std::shared_ptr <Expression>&& node) override;
 
 	/// Parses a one sided operator from the given token.
 	///
@@ -57,6 +53,11 @@ public:
 	///
 	/// \return The held expression.
 	std::shared_ptr <Expression> stealMostRecentValue() override;
+
+	/// Checks if the expression is set.
+	///
+	/// \return True if the expression is set.
+	bool isComplete() override;
 
 	const Type type;
 

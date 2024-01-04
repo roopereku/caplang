@@ -2,10 +2,10 @@
 #include <cap/event/Message.hh>
 
 #include <cap/node/ScopeDefinition.hh>
-#include <cap/node/Expression.hh>
 #include <cap/node/OneSidedOperator.hh>
 #include <cap/node/TwoSidedOperator.hh>
 #include <cap/node/ExpressionRoot.hh>
+#include <cap/node/CallOperator.hh>
 
 #include <iostream>
 #include <fstream>
@@ -55,15 +55,25 @@ private:
 		generateNode(node->getRoot(), depth + 1);
 	}
 
+	void generateOneSidedOperator(std::shared_ptr <cap::OneSidedOperator> node, unsigned depth)
+	{
+		if(node->type == cap::OneSidedOperator::Type::Call)
+		{
+			generateNode(node->as <cap::CallOperator> ()->getTarget(), depth + 1);
+		}
+
+		generateNode(node->getExpression(), depth + 1);
+	}
+
 	void generateOperator(std::shared_ptr <cap::Operator> node, unsigned depth)
 	{
-		file << indent(depth) << "Operator: " << node->getTypeString() << '\n';
+		file << indent(depth) << node->getTypeString() << '\n';
 
 		switch(node->type)
 		{
 			case cap::Operator::Type::OneSided:
 			{
-				generateNode(node->as <cap::OneSidedOperator> ()->getExpression(), depth + 1);
+				generateOneSidedOperator(node->as <cap::OneSidedOperator> (), depth);
 				break;
 			}
 

@@ -25,9 +25,23 @@ public:
 	virtual const char* getTypeString() override = 0;
 	virtual unsigned getPrecedence() = 0;
 
-	virtual bool handleValue(std::shared_ptr <Expression>&& value) = 0;
+	/// Handles a value.
+	///
+	/// \param node The expression node to handle.
+	/// \return True if succesful.
+	virtual bool handleValue(std::shared_ptr <Expression>&& node) = 0;
 
+	/// Manipulates AST hierarchy depending on operator precedence.
+	///
+	/// \param node The new expression node to add.
+	/// \param parser The current parser.
+	/// \return True if succesful.
 	bool handleExpressionNode(std::shared_ptr <Expression> node, Parser& parser) final override;
+
+	/// Determines if the operator is complete.
+	///
+	/// \return True if the operator is complete.
+	virtual bool isComplete() = 0;
 
 	const Type type;
 

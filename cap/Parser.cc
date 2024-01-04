@@ -9,6 +9,7 @@
 #include <cap/node/OneSidedOperator.hh>
 #include <cap/node/TwoSidedOperator.hh>
 #include <cap/node/ExpressionRoot.hh>
+#include <cap/node/CallOperator.hh>
 #include <cap/node/Value.hh>
 
 #include <cassert>
@@ -130,6 +131,42 @@ bool Parser::handleBracketToken(Token& token, Tokenizer& tokens)
 			// If an expression is active, an opening bracket indicates a subexpression.
 			if(inExpression)
 			{
+				// If the previous token was a value, brackets have a difference meaning.
+				if(isPreviousTokenValue)
+				{
+					switch(token[0])
+					{
+						// "(" indicates a function call.
+						case '(':
+						{
+							auto call = std::make_shared <CallOperator> (token);
+
+							events.emit(DebugMessage(std::string(currentNode->getTypeString()) + " handles call operator", token));
+							if(!currentNode->as <Expression> ()->handleExpressionNode(call, *this))
+							{
+								return false;
+							}
+
+							// The call target is the cached value or the expression of the call operator
+							// that became the current node after a call to handleExpressionNode().
+							auto target = cachedValue ? cachedValue : currentNode->as <OneSidedOperator> ()->stealMostRecentValue();
+
+							call->setTarget(std::move(target));
+							assert(call->getTarget());
+
+							break;
+						}
+
+						default:
+						{
+							return todo("Implement brace " + token.getString() + " after a value");
+						}
+					}
+
+					// The subexpression might get confused if the previous token is a value.
+					isPreviousTokenValue = false;
+				}
+
 				events.emit(DebugMessage("Start a subexpression", token));
 
 				// Store the old current node and create a temporary one for the subexpression.

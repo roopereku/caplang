@@ -67,10 +67,9 @@ bool Operator::handleExpressionNode(std::shared_ptr <Expression> node, Parser& p
 				// new operator as a value and set the new operator as the current node.
 				else
 				{
-					// Is the precedence of the new operator higher than the current one sided operator.
-					if(type == Type::OneSided && node->as <Operator> ()->getPrecedence() < getPrecedence())
+					// If the operator is complete, the new operator steals the most recent value.
+					if(isComplete())
 					{
-						// The new one sided operator steals the most recent value of the current node.
 						auto value = stealMostRecentValue();
 						op->handleValue(std::move(value));
 

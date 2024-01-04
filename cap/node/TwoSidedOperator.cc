@@ -51,17 +51,17 @@ std::shared_ptr <Operator> TwoSidedOperator::parseToken(Token& token)
 	return nullptr;
 }
 
-bool TwoSidedOperator::handleValue(std::shared_ptr <Expression>&& value)
+bool TwoSidedOperator::handleValue(std::shared_ptr <Expression>&& node)
 {
 	if(!left)
 	{
-		left = std::move(value);
+		left = std::move(node);
 		adopt(left);
 	}
 
 	else if(!right)
 	{
-		right = std::move(value);
+		right = std::move(node);
 		adopt(right);
 	}
 
@@ -157,6 +157,11 @@ std::shared_ptr <Expression> TwoSidedOperator::stealMostRecentValue()
 	}
 
 	return expr;
+}
+
+bool TwoSidedOperator::isComplete()
+{
+	return left && right;
 }
 
 }
