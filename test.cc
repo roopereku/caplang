@@ -118,7 +118,7 @@ private:
 
 			case cap::Expression::Type::Value:
 			{
-				file << indent(depth) << "Value: " << node->token.getString() << '\n';
+				file << indent(depth) << node->token.getTypeString() << ": " << node->token.getString() << '\n';
 				break;
 			}
 

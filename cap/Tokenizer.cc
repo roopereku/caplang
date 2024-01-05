@@ -42,7 +42,7 @@ Token Tokenizer::next()
 		return Token::createInvalid();
 	}
 
-	const size_t origin = index;
+	origin = index;
 	const char ch = data[index];
 
 	const size_t originRow = currentRow;
@@ -85,21 +85,22 @@ Token Tokenizer::next()
 
 	else
 	{
-		printf("??? Weird character '%c'\n", ch);
+		error = Error::InvalidCharacter;
+	}
+
+	size_t end = index;
+	if(ignoreLastCharacter)
+	{
+		end--;
+		ignoreLastCharacter = false;
 	}
 
 	// Save the string representing the token.
-	std::string_view str(&data[origin], index - origin);
+	std::string_view str(&data[origin], end - origin);
 
 	// Skip trailing whitespace after the token.
 	while(index < data.length() && isspace(data[index]))
 		nextCharacter();
-
-	if(tokenType == Token::Type::Invalid)
-	{
-		printf("Invalid token\n");
-		std::quick_exit(1);
-	}
 
 	return Token(tokenType, std::move(str), originRow, originColumn);
 }
@@ -155,8 +156,6 @@ Token::Type Tokenizer::parseOperator()
 
 Token::Type Tokenizer::parseNumber()
 {
-	unsigned dots = 0;
-
 	// If the first character is 0, the token could be octal, hexadecimal or binary.
 	if(data[index] == '0')
 	{
@@ -164,61 +163,178 @@ Token::Type Tokenizer::parseNumber()
 
 		// If there's no next character, 0 is our token.
 		if(!nextCharacter())
+		{
 			return Token::Type::Integer;
+		}
 
 		// If the next character is whitespace, stop parsing.
 		if(isspace(data[index]))
-			return Token::Type::Integer;
-
-		// The token isn't a float if the next character isn't a dot.
-		if(data[index] != '.')
 		{
-			printf("Unimplemented: Octal, Hex or binary\n");
-			return Token::Type::Invalid;
+			return Token::Type::Integer;
+		}
+
+		switch(data[index])
+		{
+			// "0x" indicates hexadecimal.
+			case 'x': case 'X':
+			{
+				if(!nextCharacter())
+				{
+					return junkAfterNumber();
+				}
+
+				return parseHexadecimal();
+			}
+
+			// "0b" indicates hexadecimal.
+			case 'b': case 'B':
+			{
+				if(!nextCharacter())
+				{
+					return junkAfterNumber();
+				}
+
+				return parseBinary();
+			}
+		}
+	}
+
+	return parseIntegerOrFloat();
+}
+
+Token::Type Tokenizer::parseHexadecimal()
+{
+	// Skip "0x".
+	size_t beforePrefix = origin;
+	origin = index;
+
+	while(!empty())
+	{
+		// If whitespace or an operator is encountered, stop parsing.
+		if(isspace(data[index]) || isOperatorCharacter(data[index]) || isBracket(data[index]))
+		{
+			break;
 		}
 
 		else
 		{
-			if(!nextCharacter())
-			{
-				printf("Number ends after a dot\n");
-				return Token::Type::Invalid;
-			}
+			// If the character is something other than a hex character, throw an error.
+			char ch = tolower(data[index]);
+			bool hexChar = (ch >= 'a' && ch <= 'f') || (ch >= '0' && ch <= '9');
 
-			dots++;
+			if(!hexChar)
+			{
+				origin = beforePrefix;
+				return junkAfterNumber();
+			}
 		}
+
+		nextCharacter();
 	}
+
+	// If no hexadecimal characters were processed, throw an error.
+	if(index == origin)
+	{
+		origin = beforePrefix;
+		return junkAfterNumber();
+	}
+
+	return Token::Type::Hexadecimal;
+}
+
+Token::Type Tokenizer::parseBinary()
+{
+	// Skip "0b".
+	size_t beforePrefix = origin;
+	origin = index;
+
+	while(!empty())
+	{
+		// If whitespace or an operator is encountered, stop parsing.
+		if(isspace(data[index]) || isOperatorCharacter(data[index]) || isBracket(data[index]))
+		{
+			break;
+		}
+
+		else
+		{
+			// If the character is something other than a binary character, throw an error.
+			bool binaryChar = data[index] == '0' || data[index] == '1';
+
+			if(!binaryChar)
+			{
+				origin = beforePrefix;
+				return junkAfterNumber();
+			}
+		}
+
+		nextCharacter();
+	}
+
+	// If no binary characters were processed, throw an error.
+	if(index == origin)
+	{
+		origin = beforePrefix;
+		return junkAfterNumber();
+	}
+
+	return Token::Type::Binary;
+}
+
+Token::Type Tokenizer::parseIntegerOrFloat()
+{
+	unsigned dots = 0;
+	bool isFloat = false;
 
 	while(!empty())
 	{
 		// Dots are allowed in numbers
 		if(data[index] == '.')
+		{
 			dots++;
+		}
 
 		// If whitespace or an operator is encountered, stop parsing.
 		else if(isspace(data[index]) || isOperatorCharacter(data[index]) || isBracket(data[index]))
+		{
 			break;
+		}
 
-		// If the character is something else, throw an error.
+		// If the character is something other than a number, throw an error.
 		else if(!isdigit(data[index]))
+		{
+			// If the last character is "f", force the usage of float.
+			if(tolower(data[index] == 'f'))
+			{
+				isFloat = true;
+				nextCharacter();
+				ignoreLastCharacter = true;
+				break;
+			}
+
 			return junkAfterNumber();
+		}
 
 		nextCharacter();
 	}
 
 	if(dots > 1)
 	{
-		printf("Too many dots\n");
+		error = Error::TooManyDots;
 		return Token::Type::Invalid;
 	}
 
-	// If there are dots, the number is a float.
-	return dots > 0 ? Token::Type::Float : Token::Type::Integer;
+	if(dots > 0 || isFloat)
+	{
+		return isFloat ? Token::Type::Float : Token::Type::Double;
+	}
+
+	return Token::Type::Integer;
 }
 
 Token::Type Tokenizer::junkAfterNumber()
 {
-	printf("Junk after number\n");
+	error = Error::JunkAfterNumber;
 	return Token::Type::Invalid;
 }
 
@@ -227,6 +343,24 @@ void Tokenizer::reset()
 	index = 0;
 	currentRow = 1;
 	currentColumn = 1;
+}
+
+Tokenizer::Error Tokenizer::getError()
+{
+	return error;
+}
+
+std::string_view Tokenizer::getErrorString()
+{
+	switch(error)
+	{
+		case Error::InvalidCharacter: return "Invalid character";
+		case Error::JunkAfterNumber: return "Junk after a number";
+		case Error::TooManyDots: return "Too many dots";
+		case Error::None: return "None";
+	}
+
+	return "???";
 }
 
 }

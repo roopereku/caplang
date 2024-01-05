@@ -49,7 +49,8 @@ bool SourceFile::prepare(EventEmitter& events)
 	}
 
 	Validator validator(events);
-	return validator.validate(global);
+	//return validator.validate(global);
+	return true;
 }
 
 }

@@ -37,6 +37,14 @@ bool Parser::parse(Tokenizer& tokens, std::shared_ptr <Node> root)
 	while(!tokens.empty())
 	{
 		Token token = tokens.next();
+
+		// Make sure that the token is valid.
+		if(token == Token::Type::Invalid)
+		{
+			events.emit(ErrorMessage("Error in '" + token.getString() + "': " + std::string(tokens.getErrorString()), token));
+			return false;
+		}
+
 		if(!parseToken(token, tokens, true))
 		{
 			return false;

@@ -38,10 +38,13 @@ const char* Token::getTypeString() const
 		case Type::String: return "String";
 		case Type::CurlyBrace: return "Curly brace";
 		case Type::Parenthesis: return "Parenthesis";
-		case Type::SquareBracket: return "Square bracker";
+		case Type::SquareBracket: return "Square bracket";
 		case Type::Invalid: return "Invalid";
+		case Type::Binary: return "Binary";
 		case Type::Float: return "Float";
+		case Type::Double: return "Double";
 		case Type::Integer: return "Integer";
+		case Type::Hexadecimal: return "Hexadecimal";
 	}
 
 	return "???";

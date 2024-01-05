@@ -18,9 +18,12 @@ public:
 		Identifier,
 		Operator,
 
+		Hexadecimal,
 		Character,
-		String,
 		Integer,
+		String,
+		Binary,
+		Double,
 		Float,
 
 		CurlyBrace,

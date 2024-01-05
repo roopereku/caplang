@@ -3,6 +3,7 @@
 
 #include <cap/Token.hh>
 
+#include <string_view>
 #include <string>
 
 namespace cap
@@ -11,6 +12,14 @@ namespace cap
 class Tokenizer
 {
 public:
+	enum class Error
+	{
+		InvalidCharacter,
+		JunkAfterNumber,
+		TooManyDots,
+		None
+	};
+
 	Tokenizer(std::string& data);
 
 	/// Consumes the next token.
@@ -24,6 +33,16 @@ public:
 	/// Resets the state of the Tokenizer.
 	void reset();
 
+	/// Gets the error if a token was invalid.
+	///
+	/// \return The error reason.
+	Error getError();
+
+	/// Gets the error string if a token was invalid.
+	///
+	/// \return The error as a string if present.
+	std::string_view getErrorString();
+
 private:
 	bool nextCharacter();
 	void updateCursorPosition();
@@ -31,13 +50,20 @@ private:
 	Token::Type parseIdentifier();
 	Token::Type parseOperator();
 	Token::Type parseNumber();
+	Token::Type parseBinary();
+	Token::Type parseHexadecimal();
+	Token::Type parseIntegerOrFloat();
 	Token::Type junkAfterNumber();
 
 	std::string& data;
 	size_t index;
+	size_t origin;
 
 	Token::IndexType currentRow;
 	Token::IndexType currentColumn;
+
+	bool ignoreLastCharacter = false;
+	Error error = Error::None;
 };
 
 }
