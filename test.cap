@@ -1,4 +1,4 @@
 func main()
 {
-	1 /* comment 1 / + /* comment 2*/  2 * (/**/ 10 -3) // End of line.
+	var a = 2 + 3, b = 5
 }

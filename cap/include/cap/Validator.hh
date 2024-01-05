@@ -5,6 +5,7 @@
 #include <cap/EventEmitter.hh>
 
 #include <cap/node/Operator.hh>
+#include <cap/node/ExpressionRoot.hh>
 #include <cap/node/ScopeDefinition.hh>
 
 namespace cap
@@ -21,8 +22,13 @@ public:
 private:
 	bool validateNode(std::shared_ptr <Node> node);
 	bool validateExpression(std::shared_ptr <Expression> node);
+	bool validateExpressionRoot(std::shared_ptr <ExpressionRoot> node);
 	bool validateOperator(std::shared_ptr <Operator> node);
 	bool validateScope(std::shared_ptr <ScopeDefinition> node);
+
+	bool validateVariableInit(std::shared_ptr <Expression> node);
+
+	std::shared_ptr <Expression> getLeftmostExpression(std::shared_ptr <Expression> node);
 
 	std::shared_ptr <Node> currentNode;
 
