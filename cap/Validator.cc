@@ -89,7 +89,20 @@ bool Validator::validateExpression(std::shared_ptr <Expression> node)
 
 		case Expression::Type::Value:
 		{
-			// TODO: Handle values.
+			// FIXME: Implement identifier lookup.
+			if(node->token == Token::Type::Identifier)
+			{
+				events.emit(ErrorMessage("Value lookup unimplemented", node->token));
+				return false;
+			}
+
+			// FIXME: Implement primitive type lookup.
+			else
+			{
+				events.emit(ErrorMessage(std::string("Primitive type lookup for ") + node->token.getTypeString() + " unimplemented", node->token));
+				return false;
+			}
+
 			break;
 		}
 
@@ -139,12 +152,47 @@ bool Validator::validateOperator(std::shared_ptr <Operator> node)
 		{
 			auto twoSided = node->as <TwoSidedOperator> ();
 
+			// The access operator has a special meaning.
+			if(twoSided->type == TwoSidedOperator::Type::Access)
+			{
+				// The left side of a dot has to be an identifier.
+				if(twoSided->getLeft()->token.getType() != Token::Type::Identifier)
+				{
+					events.emit(ErrorMessage("Expected an identifier before '.'", twoSided->getLeft()->token));
+					return false;
+				}
+
+				// TODO: Handle right value in the context of the left node.
+				events.emit(ErrorMessage("Validation of right node of '.' unimplemented", twoSided->getLeft()->token));
+				return false;
+
+				return true;
+			}
+
+			// Try to validate both nodes of the two sided operator.
+			if(!validateExpression(twoSided->getLeft()) ||
+				!validateExpression(twoSided->getRight()))
+			{
+				return false;
+			}
+
+			// TODO: Make sure that the left node supports the given operator.
+			// TODO: Make sure that the types of left and right are compatible.
+			// TODO: Use the type of left in this node.
+
 			break;
 		}
 
 		case Operator::Type::OneSided:
 		{
-			auto oneSided = node->as <OneSidedOperator> ();
+			// Validate the expression of the one sided operator.
+			if(!validateExpression(node->as <OneSidedOperator> ()->getExpression()))
+			{
+				return false;
+			}
+
+			// TODO: Make sure that the expression node supports the given operator.
+			// TODO: Use the type of expression in this node.
 
 			break;
 		}
@@ -253,6 +301,15 @@ std::shared_ptr <Expression> Validator::getLeftmostExpression(std::shared_ptr <E
 		case Operator::Type::OneSided:
 			return getLeftmostExpression(node->as <OneSidedOperator> ()->getExpression());
 	}
+
+	assert(false);
+	return nullptr;
+}
+
+std::shared_ptr <TypeDefinition> Validator::getPrimitiveType(Token token)
+{
+	// TODO: Get primitive type.
+	return nullptr;
 }
 
 }

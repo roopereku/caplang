@@ -7,6 +7,7 @@
 #include <cap/node/Operator.hh>
 #include <cap/node/ExpressionRoot.hh>
 #include <cap/node/ScopeDefinition.hh>
+#include <cap/node/TypeDefinition.hh>
 
 namespace cap
 {
@@ -29,6 +30,7 @@ private:
 	bool validateVariableInit(std::shared_ptr <Expression> node);
 
 	std::shared_ptr <Expression> getLeftmostExpression(std::shared_ptr <Expression> node);
+	std::shared_ptr <TypeDefinition> getPrimitiveType(Token token);
 
 	std::shared_ptr <Node> currentNode;
 
