@@ -12,6 +12,16 @@ public:
 	TypeDefinition(Token name) : ScopeDefinition(Type::TypeDefinition, name)
 	{
 	}
+
+	TypeDefinition(Token name, size_t size)
+		: ScopeDefinition(Type::TypeDefinition, name), size(size)
+	{
+	}
+
+	static std::shared_ptr <TypeDefinition> getPrimitive(Token token);
+
+private:
+	size_t size = 0;
 };
 
 }

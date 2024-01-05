@@ -35,7 +35,20 @@ public:
 
 	virtual const char* getTypeString() override = 0;
 
+	/// Sets the result type.
+	///
+	/// \param node The node containing the result type.
+	void setResultType(std::shared_ptr <TypeDefinition> node);
+
+	/// Gets the result type.
+	///
+	/// \return The result type.
+	std::weak_ptr <TypeDefinition> getResultType();
+
 	const Type type;
+
+private:
+	std::weak_ptr <TypeDefinition> resultType;
 };
 
 }

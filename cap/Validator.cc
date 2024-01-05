@@ -96,11 +96,18 @@ bool Validator::validateExpression(std::shared_ptr <Expression> node)
 				return false;
 			}
 
-			// FIXME: Implement primitive type lookup.
+			// The non-identifier token should be conversible to a primitive type.
 			else
 			{
-				events.emit(ErrorMessage(std::string("Primitive type lookup for ") + node->token.getTypeString() + " unimplemented", node->token));
-				return false;
+				auto primitiveType = TypeDefinition::getPrimitive(node->token);
+
+				if(!primitiveType)
+				{
+					events.emit(ErrorMessage(std::string("Unable to get primitive type from ") + node->token.getTypeString(), node->token));
+					return false;
+				}
+
+				node->setResultType(primitiveType);
 			}
 
 			break;
@@ -259,7 +266,12 @@ bool Validator::validateVariableInit(std::shared_ptr <Expression> node)
 					return false;
 				}
 
-				// TODO: Get the type from the leftmost node of the initialization.
+				// Get the result type of the initialization.
+				auto resultType = getLeftmostExpression(twoSided->getRight())->getResultType();
+				assert(!resultType.expired());
+
+				// Save the result type of the initialization to the variable name node.
+				twoSided->getLeft()->setResultType(resultType.lock());
 
 				break;
 			}
@@ -291,24 +303,24 @@ bool Validator::validateVariableInit(std::shared_ptr <Expression> node)
 
 std::shared_ptr <Expression> Validator::getLeftmostExpression(std::shared_ptr <Expression> node)
 {
-	assert(node->type == Expression::Type::Operator);
-
-	switch(node->as <Operator> ()->type)
+	if(node->type == Expression::Type::Value)
 	{
-		case Operator::Type::TwoSided:
-			return getLeftmostExpression(node->as <TwoSidedOperator> ()->getLeft());
+		return node;
+	}
 
-		case Operator::Type::OneSided:
-			return getLeftmostExpression(node->as <OneSidedOperator> ()->getExpression());
+	else if(node->type == Expression::Type::Operator)
+	{
+		switch(node->as <Operator> ()->type)
+		{
+			case Operator::Type::TwoSided:
+				return getLeftmostExpression(node->as <TwoSidedOperator> ()->getLeft());
+
+			case Operator::Type::OneSided:
+				return getLeftmostExpression(node->as <OneSidedOperator> ()->getExpression());
+		}
 	}
 
 	assert(false);
-	return nullptr;
-}
-
-std::shared_ptr <TypeDefinition> Validator::getPrimitiveType(Token token)
-{
-	// TODO: Get primitive type.
 	return nullptr;
 }
 

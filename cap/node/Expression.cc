@@ -20,10 +20,14 @@ std::shared_ptr <Expression> Expression::stealMostRecentValue()
 	assert(false && "called Expression::stealMostRecentValue");
 }
 
-//TypeDefinition& Expression::getResultType()
-//{
-//	printf("NOTE: Return invalid type from Expression::getResultType()\n");
-//	return Type::getInvalid();
-//}
+void Expression::setResultType(std::shared_ptr <TypeDefinition> node)
+{
+	resultType = node;
+}
+
+std::weak_ptr <TypeDefinition> Expression::getResultType()
+{
+	return resultType;
+}
 
 }

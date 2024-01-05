@@ -118,7 +118,18 @@ private:
 
 			case cap::Expression::Type::Value:
 			{
-				file << indent(depth) << node->token.getTypeString() << ": " << node->token.getString() << '\n';
+				if(node->getResultType().expired())
+				{
+					file << indent(depth) << node->token.getTypeString() << ": " << node->token.getString() <<
+							" (No type set)\n";
+				}
+
+				else
+				{
+					file << indent(depth) << node->token.getTypeString() << ": " << node->token.getString() <<
+							" (" << node->getResultType().lock()->name.getString() << ")\n";
+				}
+
 				break;
 			}
 
