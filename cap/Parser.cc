@@ -41,11 +41,11 @@ bool Parser::parse(Tokenizer& tokens, std::shared_ptr <Node> root)
 		// Make sure that the token is valid.
 		if(token == Token::Type::Invalid)
 		{
-			events.emit(ErrorMessage("Error in '" + token.getString() + "': " + std::string(tokens.getErrorString()), token));
+			events.emit(ErrorMessage(std::string(tokens.getErrorString()), token));
 			return false;
 		}
 
-		if(!parseToken(token, tokens, true))
+		else if(!parseToken(token, tokens, true))
 		{
 			return false;
 		}
@@ -65,6 +65,12 @@ bool Parser::parse(Tokenizer& tokens, std::shared_ptr <Node> root)
 
 bool Parser::parseToken(Token& token, Tokenizer& tokens, bool breakExpressionOnNewline)
 {
+	// Ignore comments.
+	if(token == Token::Type::Comment)
+	{
+		return true;
+	}
+
 	events.emit(DebugMessage("Token: " + token.getString(), token));
 
 	// If an expression that's outside brackets is active and the current token

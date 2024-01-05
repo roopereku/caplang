@@ -14,6 +14,7 @@ class Tokenizer
 public:
 	enum class Error
 	{
+		UnterminatedComment,
 		InvalidCharacter,
 		JunkAfterNumber,
 		TooManyDots,
@@ -51,6 +52,9 @@ private:
 	Token::Type parseOperator();
 	Token::Type parseNumber();
 	Token::Type parseBinary();
+	Token::Type parseComment();
+	Token::Type parseSingleLineComment();
+	Token::Type parseMultiLineComment();
 	Token::Type parseHexadecimal();
 	Token::Type parseIntegerOrFloat();
 	Token::Type junkAfterNumber();
@@ -62,6 +66,7 @@ private:
 	Token::IndexType currentRow;
 	Token::IndexType currentColumn;
 
+	bool nextIsComment = false;
 	bool ignoreLastCharacter = false;
 	Error error = Error::None;
 };

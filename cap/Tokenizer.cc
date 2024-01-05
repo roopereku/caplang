@@ -50,7 +50,17 @@ Token Tokenizer::next()
 
 	Token::Type tokenType = Token::Type::Invalid;
 
-	if(isIdentifierCharacter(ch))
+	if(nextIsComment)
+	{
+		// Skip the first comment slash.
+		nextCharacter();
+
+		// Parse a comment.
+		tokenType = parseComment();
+		nextIsComment = false;
+	}
+
+	else if(isIdentifierCharacter(ch))
 	{
 		tokenType = parseIdentifier();
 	}
@@ -136,7 +146,9 @@ Token::Type Tokenizer::parseIdentifier()
 	while(!empty())
 	{
 		if(!(isIdentifierCharacter(data[index]) || isdigit(data[index])))
+		{
 			break;
+		}
 
 		nextCharacter();
 	}
@@ -146,8 +158,45 @@ Token::Type Tokenizer::parseIdentifier()
 
 Token::Type Tokenizer::parseOperator()
 {
+	unsigned beforeSlash = 0;
+	bool previousWasSlash = false;
+
 	while(!empty() && isOperatorCharacter(data[index]))
 	{
+		if(previousWasSlash)
+		{
+			// If the next character of a slash is another slash or an asterisk,
+			// the next token is a comment.
+			if(data[index] == '/' || data[index] == '*')
+			{
+				// If there were no operators before the comment,
+				// parse the comment immediately.
+				if(beforeSlash == 0)
+				{
+					return parseComment();
+				}
+
+				nextIsComment = true;
+
+				// Return the preceding operator.
+				index--;
+				return Token::Type::Operator;
+			}
+		}
+
+		// If the previous token wasn't a slash, check if the current one is.
+		else if(data[index] == '/')
+		{
+			previousWasSlash = true;
+		}
+
+		// The previous nor the current token is a slash.
+		else
+		{
+			beforeSlash++;
+			previousWasSlash = false;
+		}
+
 		nextCharacter();
 	}
 
@@ -332,6 +381,71 @@ Token::Type Tokenizer::parseIntegerOrFloat()
 	return Token::Type::Integer;
 }
 
+Token::Type Tokenizer::parseComment()
+{
+	switch(data[index])
+	{
+		// Single line comment.
+		case '/': return parseSingleLineComment();
+
+		// Multiline comment.
+		case '*': return parseMultiLineComment();
+	}
+
+	return Token::Type::Invalid;
+}
+
+Token::Type Tokenizer::parseSingleLineComment()
+{
+	auto originRow = currentRow;
+
+	// Loop until the line changes.
+	while(!empty() && currentRow == originRow)
+	{
+		nextCharacter();
+	}
+
+	return Token::Type::Comment;
+}
+
+Token::Type Tokenizer::parseMultiLineComment()
+{
+	std::string_view match = "*/";
+	size_t progress = 0;
+	char previous = 0;
+
+	// While there are tokens, looks for comment closer.
+	while(!empty() && progress < match.size())
+	{
+		nextCharacter();
+
+		// If the current character is the next in the sequence, increment the progress.
+		if(data[index] == match[progress])
+		{
+			progress++;
+		}
+
+		// If there is matching progress but the current character doesn't follow
+		// the sequence, reset the progess. An exception is that if the current character
+		// matches the previous one, keep the progress. Such an event occurs in "/*/**/".
+		else if(progress > 0 && data[index] != previous)
+		{
+			progress = 0;
+		}
+
+		previous = data[index];
+	}
+
+	if(progress < match.size())
+	{
+		error = Error::UnterminatedComment;
+		return Token::Type::Invalid;
+	}
+
+	nextCharacter();
+	return Token::Type::Comment;
+}
+
 Token::Type Tokenizer::junkAfterNumber()
 {
 	error = Error::JunkAfterNumber;
@@ -354,6 +468,7 @@ std::string_view Tokenizer::getErrorString()
 {
 	switch(error)
 	{
+		case Error::UnterminatedComment: return "Unterminated comment";
 		case Error::InvalidCharacter: return "Invalid character";
 		case Error::JunkAfterNumber: return "Junk after a number";
 		case Error::TooManyDots: return "Too many dots";

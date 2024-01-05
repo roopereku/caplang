@@ -1,4 +1,4 @@
 func main()
 {
-	var a = 1 + 0b0101 * 0.2f << 0xABCDEF
+	1 /* comment 1 / + /* comment 2*/  2 * (/**/ 10 -3) // End of line.
 }
