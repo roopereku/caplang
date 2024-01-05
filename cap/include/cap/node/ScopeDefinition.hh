@@ -39,6 +39,11 @@ public:
 		}
 	}
 
+	const char* getTypeString() override
+	{
+		return "Scope";
+	}
+
 	const Type type;
 	const Token name;
 

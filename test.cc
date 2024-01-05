@@ -195,7 +195,7 @@ int main()
 	cap::SourceFile file("../test.cap");
 	EventLogger events;
 
-	if(!file.parse(events))
+	if(!file.prepare(events))
 	{
 		return 1;
 	}

@@ -1,5 +1,6 @@
 #include <cap/SourceFile.hh>
 #include <cap/Tokenizer.hh>
+#include <cap/Validator.hh>
 #include <cap/Parser.hh>
 
 #include <cap/event/DebugMessage.hh>
@@ -27,7 +28,7 @@ SourceFile::SourceFile(std::string_view path) : path(path)
 	file.close();
 }
 
-bool SourceFile::parse(EventEmitter& events)
+bool SourceFile::prepare(EventEmitter& events)
 {
 	// If the global scope node already exists, don't parse.
 	if(global)
@@ -42,7 +43,13 @@ bool SourceFile::parse(EventEmitter& events)
 	Parser parser(events);
 
 	global = std::make_shared <ScopeDefinition> ();
-	return parser.parse(tokens, global);
+	if(!parser.parse(tokens, global))
+	{
+		return false;
+	}
+
+	Validator validator(events);
+	return validator.validate(global);
 }
 
 }

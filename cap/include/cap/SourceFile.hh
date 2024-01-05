@@ -18,11 +18,11 @@ public:
 	/// \param path The path to a source file to load.
 	SourceFile(std::string_view path);
 
-	/// Parses the loaded source file.
+	/// Parses and validates the loaded source file.
 	///
 	/// \param events The EventEmitter to pass events to.
 	/// \return True if parsing was succesful.
-	bool parse(EventEmitter& events);
+	bool prepare(EventEmitter& events);
 
 	/// Retrives the global scope node of this source file.
 	/// \return The global scope node.
