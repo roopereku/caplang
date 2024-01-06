@@ -52,4 +52,9 @@ const char* Node::getTypeString()
 	return "???";
 }
 
+std::shared_ptr <Node> Node::isDefinition(Token name)
+{
+	return nullptr;
+}
+
 }

@@ -1,5 +1,6 @@
 #include <cap/Validator.hh>
 
+#include <cap/node/Value.hh>
 #include <cap/node/ExpressionRoot.hh>
 #include <cap/node/TwoSidedOperator.hh>
 #include <cap/node/OneSidedOperator.hh>
@@ -23,7 +24,11 @@ bool Validator::validate(std::shared_ptr <Node> root)
 
 bool Validator::validateNode(std::shared_ptr <Node> node)
 {
-	assert(node);
+	// TODO: Handle this in another way?
+	if(!node)
+	{
+		return true;
+	}
 
 	switch(node->type)
 	{
@@ -89,11 +94,51 @@ bool Validator::validateExpression(std::shared_ptr <Expression> node)
 
 		case Expression::Type::Value:
 		{
-			// FIXME: Implement identifier lookup.
 			if(node->token == Token::Type::Identifier)
 			{
-				events.emit(ErrorMessage("Value lookup unimplemented", node->token));
-				return false;
+				auto currentScope = getCurrentScope(node);
+				assert(currentScope);
+
+				// Try to find the definition in the current scope or one of its parents.
+				auto definition = currentScope->findDefinition(node->token);
+
+				if(!definition)
+				{
+					events.emit(ErrorMessage("Unknown identifier " + node->token.getString(), node->token));
+					return false;
+				}
+
+				switch(definition->type)
+				{
+					case Node::Type::ScopeDefinition:
+					{
+						events.emit(ErrorMessage("Unimplemented: Scope as a definition result", node->token));
+						return false;
+					}
+
+					case Node::Type::Expression:
+					{
+						// If the definition result is an expression, it should be a variable name node.
+						assert(definition->as <Expression> ()->type == Expression::Type::Value);
+
+						// If no type is set for the variable which is found, it is an incomplete variable.
+						if(definition->as <Value> ()->getResultType().expired())
+						{
+							events.emit(ErrorMessage("Unable to use an incomplete variable", node->token));
+							return false;
+						}
+
+						// Use the type of a variable
+						node->setResultType(definition->as <Value> ()->getResultType().lock());
+
+						break;
+					}
+
+					default:
+					{
+						assert(false);
+					}
+				}
 			}
 
 			// The non-identifier token should be conversible to a primitive type.
@@ -303,6 +348,8 @@ bool Validator::validateVariableInit(std::shared_ptr <Expression> node)
 
 std::shared_ptr <Expression> Validator::getLeftmostExpression(std::shared_ptr <Expression> node)
 {
+	// TODO: Remove recursion.
+
 	if(node->type == Expression::Type::Value)
 	{
 		return node;
@@ -321,6 +368,26 @@ std::shared_ptr <Expression> Validator::getLeftmostExpression(std::shared_ptr <E
 	}
 
 	assert(false);
+	return nullptr;
+}
+
+std::shared_ptr <ScopeDefinition> Validator::getCurrentScope(std::shared_ptr <Node> root)
+{
+	assert(root);
+	auto current = root;
+
+	// While we're not in a scope definition and there is a parent, switch to the parent.
+	while(current->type != Node::Type::ScopeDefinition && !current->getParent().expired())
+	{
+		current = current->getParent().lock();
+	}
+
+	// If the current node is a scope definition, return it.
+	if(current->type == Node::Type::ScopeDefinition)
+	{
+		return current->as <ScopeDefinition> ();
+	}
+
 	return nullptr;
 }
 

@@ -17,32 +17,21 @@ public:
 		None
 	};
 
-	ScopeDefinition(Type type, Token name)
-		: Node(Node::Type::ScopeDefinition), type(type), name(name)
-	{
-	}
+	ScopeDefinition(Type type, Token name);
+	ScopeDefinition();
 
-	ScopeDefinition() : ScopeDefinition(Type::None, Token::createInvalid())
-	{
-	}
+	std::shared_ptr <Node> findDefinition(Token name);
 
-	std::shared_ptr <Node> getRoot() const
-	{
-		return root;
-	}
+	std::shared_ptr <Node> getRoot() const;
+	void initializeRoot(std::shared_ptr <Node>&& node);
 
-	void initializeRoot(std::shared_ptr <Node>&& node)
-	{
-		if(!root)
-		{
-			root = std::move(node);	
-		}
-	}
+	const char* getTypeString() override;
 
-	const char* getTypeString() override
-	{
-		return "Scope";
-	}
+	/// Checks if this scope has the given name.
+	///
+	/// \param name The name of the definition.
+	/// \return This scope.
+	std::shared_ptr <Node> isDefinition(Token name) override;
 
 	const Type type;
 	const Token name;

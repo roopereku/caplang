@@ -30,8 +30,7 @@ private:
 	bool validateVariableInit(std::shared_ptr <Expression> node);
 
 	std::shared_ptr <Expression> getLeftmostExpression(std::shared_ptr <Expression> node);
-
-	std::shared_ptr <Node> currentNode;
+	std::shared_ptr <ScopeDefinition> getCurrentScope(std::shared_ptr <Node> root);
 
 	EventEmitter& events;
 };
