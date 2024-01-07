@@ -67,7 +67,15 @@ private:
 
 	void generateOperator(std::shared_ptr <cap::Operator> node, unsigned depth)
 	{
-		file << indent(depth) << node->getTypeString() << '\n';
+		if(node->getResultType().expired())
+		{
+			file << indent(depth) << node->getTypeString() << '\n';
+		}
+
+		else
+		{
+			file << indent(depth) << node->getTypeString() << " (" << node->getResultType().lock()->name.getString() << ")\n";
+		}
 
 		switch(node->type)
 		{

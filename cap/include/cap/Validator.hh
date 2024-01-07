@@ -5,12 +5,15 @@
 #include <cap/EventEmitter.hh>
 
 #include <cap/node/Operator.hh>
+#include <cap/node/Value.hh>
 #include <cap/node/ExpressionRoot.hh>
 #include <cap/node/ScopeDefinition.hh>
 #include <cap/node/TypeDefinition.hh>
 
 namespace cap
 {
+
+class TwoSidedOperator;
 
 /// Validator validates an AST and fills in missing information.
 class Validator
@@ -29,8 +32,16 @@ private:
 
 	bool validateVariableInit(std::shared_ptr <Expression> node);
 
-	std::shared_ptr <Expression> getLeftmostExpression(std::shared_ptr <Expression> node);
+	/// Recursively resolves the result of an access operator.
+	std::shared_ptr <Node> resolveAccess(std::shared_ptr <TwoSidedOperator> node);
+
 	std::shared_ptr <ScopeDefinition> getCurrentScope(std::shared_ptr <Node> root);
+
+	/// Locates a definition within the given context with the name pointed at by a value node.
+	std::shared_ptr <Node> getDefinition(std::shared_ptr <Value> node,
+										std::shared_ptr <ScopeDefinition> context);
+
+	std::shared_ptr <TypeDefinition> getDefinitionType(std::shared_ptr <Node> definition);
 
 	EventEmitter& events;
 };

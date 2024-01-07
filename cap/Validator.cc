@@ -96,15 +96,9 @@ bool Validator::validateExpression(std::shared_ptr <Expression> node)
 		{
 			if(node->token == Token::Type::Identifier)
 			{
-				auto currentScope = getCurrentScope(node);
-				assert(currentScope);
-
-				// Try to find the definition in the current scope or one of its parents.
-				auto definition = currentScope->findDefinition(node->token);
-
+				auto definition = getDefinition(node->as <Value> (), getCurrentScope(node));
 				if(!definition)
 				{
-					events.emit(ErrorMessage("Unknown identifier " + node->token.getString(), node->token));
 					return false;
 				}
 
@@ -207,16 +201,15 @@ bool Validator::validateOperator(std::shared_ptr <Operator> node)
 			// The access operator has a special meaning.
 			if(twoSided->type == TwoSidedOperator::Type::Access)
 			{
-				// The left side of a dot has to be an identifier.
-				if(twoSided->getLeft()->token.getType() != Token::Type::Identifier)
+				auto resultDefinition = resolveAccess(twoSided);
+				if(!resultDefinition)
 				{
-					events.emit(ErrorMessage("Expected an identifier before '.'", twoSided->getLeft()->token));
 					return false;
 				}
 
-				// TODO: Handle right value in the context of the left node.
-				events.emit(ErrorMessage("Validation of right node of '.' unimplemented", twoSided->getLeft()->token));
-				return false;
+				// Use the type of the right node. This is because the rightmost node
+				// contains the final access location.
+				node->setResultType(twoSided->getRight()->getResultType().lock());
 
 				return true;
 			}
@@ -228,9 +221,11 @@ bool Validator::validateOperator(std::shared_ptr <Operator> node)
 				return false;
 			}
 
+			// Use the type of the left node.
+			node->setResultType(twoSided->getLeft()->getResultType().lock());
+
 			// TODO: Make sure that the left node supports the given operator.
 			// TODO: Make sure that the types of left and right are compatible.
-			// TODO: Use the type of left in this node.
 
 			break;
 		}
@@ -312,11 +307,14 @@ bool Validator::validateVariableInit(std::shared_ptr <Expression> node)
 				}
 
 				// Get the result type of the initialization.
-				auto resultType = getLeftmostExpression(twoSided->getRight())->getResultType();
-				assert(!resultType.expired());
+				auto resultType = twoSided->getRight()->getResultType();
+				//assert(!resultType.expired());
 
-				// Save the result type of the initialization to the variable name node.
-				twoSided->getLeft()->setResultType(resultType.lock());
+				if(!resultType.expired())
+				{
+					// Save the result type of the initialization to the variable name node.
+					twoSided->getLeft()->setResultType(resultType.lock());
+				}
 
 				break;
 			}
@@ -346,29 +344,84 @@ bool Validator::validateVariableInit(std::shared_ptr <Expression> node)
 	return true;
 }
 
-std::shared_ptr <Expression> Validator::getLeftmostExpression(std::shared_ptr <Expression> node)
+std::shared_ptr <Node> Validator::resolveAccess(std::shared_ptr <TwoSidedOperator> node)
 {
-	// TODO: Remove recursion.
+	assert(node->type == TwoSidedOperator::Type::Access);
+	std::shared_ptr <TypeDefinition> context;
 
-	if(node->type == Expression::Type::Value)
+	switch(node->getLeft()->type)
 	{
-		return node;
-	}
-
-	else if(node->type == Expression::Type::Operator)
-	{
-		switch(node->as <Operator> ()->type)
+		// If the left node is an operator the context becomes the result type of the operator.
+		case Expression::Type::Operator:
 		{
-			case Operator::Type::TwoSided:
-				return getLeftmostExpression(node->as <TwoSidedOperator> ()->getLeft());
+			// TODO: Allow things such as "(call()).something".
+			assert(node->getLeft()->as <Operator> ()->type == Operator::Type::TwoSided);
 
-			case Operator::Type::OneSided:
-				return getLeftmostExpression(node->as <OneSidedOperator> ()->getExpression());
+			auto leftDefinition = resolveAccess(node->getLeft()->as <TwoSidedOperator> ());
+			context = getDefinitionType(leftDefinition);
+
+			if(!context)
+			{
+				return nullptr;
+			}
+
+			break;
+		}
+
+		// If the left node is an identifier value, it's the very first access location.
+		case Expression::Type::Value:
+		{
+			if(node->getLeft()->token.getType() != Token::Type::Identifier)
+			{
+				events.emit(ErrorMessage("Expected an identifier before dot", node->getLeft()->token));
+				return nullptr;
+			}
+
+			// Current scope can be assumed as this value is the first access location.
+			auto leftDefinition = getDefinition(node->getLeft()->as <Value> (), getCurrentScope(node->getLeft()));
+			context = getDefinitionType(leftDefinition);
+
+			if(!context)
+			{
+				return nullptr;
+			}
+
+			break;
+		}
+
+		default:
+		{
+			assert(false);
 		}
 	}
 
-	assert(false);
-	return nullptr;
+	// The right side node of access has to be an identifier.
+	if(node->getRight()->type != Expression::Type::Value ||
+		node->getRight()->token.getType() != Token::Type::Identifier)
+	{
+		if(node->getRight()->token.getType() != Token::Type::Identifier)
+		{
+			events.emit(ErrorMessage("Expected an identifier after dot", node->getLeft()->token));
+			return nullptr;
+		}
+	}
+
+	assert(context);
+
+	node->setResultType(context->as <TypeDefinition> ());
+	node->getLeft()->setResultType(context);
+
+	// Now that the type pointed at by the left side is known, find the definition
+	// pointed at by the right side using the left side as the context.
+	auto rightDefinition = getDefinition(node->getRight()->as <Value> (), context);
+	node->getRight()->setResultType(getDefinitionType(rightDefinition));
+
+	if(!node->getRight())
+	{
+		return nullptr;
+	}
+
+	return rightDefinition;
 }
 
 std::shared_ptr <ScopeDefinition> Validator::getCurrentScope(std::shared_ptr <Node> root)
@@ -389,6 +442,48 @@ std::shared_ptr <ScopeDefinition> Validator::getCurrentScope(std::shared_ptr <No
 	}
 
 	return nullptr;
+}
+
+std::shared_ptr <Node> Validator::getDefinition(std::shared_ptr <Value> node,
+												std::shared_ptr <ScopeDefinition> context)
+{
+	assert(node->token.getType() == Token::Type::Identifier);
+	assert(context);
+
+	// Try to find the definition in the current scope or one of its parents.
+	auto definition = context->findDefinition(node->token);
+
+	if(!definition)
+	{
+		events.emit(ErrorMessage("Unknown identifier " + node->token.getString(), node->token));
+		return nullptr;
+	}
+
+	return definition;
+}
+
+std::shared_ptr <TypeDefinition> Validator::getDefinitionType(std::shared_ptr <Node> definition)
+{
+	if(!definition)
+	{
+		return nullptr;
+	}
+
+	// If the definition of left is a variable, use its type as the context.
+	if(definition->type == Node::Type::Expression)
+	{
+		assert(definition->as <Expression> ()->type == Expression::Type::Value);
+		assert(!definition->as <Expression> ()->getResultType().expired());
+
+		return definition->as <Expression> ()->getResultType().lock();
+	}
+
+	else if(definition->type == Node::Type::ScopeDefinition)
+	{
+		assert(definition->as <ScopeDefinition> ()->type == ScopeDefinition::Type::TypeDefinition);
+	}
+
+	return definition->as <TypeDefinition> ();
 }
 
 }
