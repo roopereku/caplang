@@ -8,6 +8,7 @@
 #include <cap/event/ErrorMessage.hh>
 #include <cap/event/DebugMessage.hh>
 
+#include <algorithm>
 #include <cassert>
 
 namespace cap
@@ -115,15 +116,15 @@ bool Validator::validateExpression(std::shared_ptr <Expression> node)
 						// If the definition result is an expression, it should be a variable name node.
 						assert(definition->as <Expression> ()->type == Expression::Type::Value);
 
-						// If no type is set for the variable which is found, it is an incomplete variable.
-						if(definition->as <Value> ()->getResultType().expired())
+						// Try to get the type of the variable.
+						auto definitionType = getDefinitionType(definition);
+						if(!definition)
 						{
-							events.emit(ErrorMessage("Unable to use an incomplete variable", node->token));
 							return false;
 						}
 
-						// Use the type of a variable
-						node->setResultType(definition->as <Value> ()->getResultType().lock());
+						// Use the type of a variable.
+						node->setResultType(definitionType);
 
 						break;
 					}
@@ -416,7 +417,7 @@ std::shared_ptr <Node> Validator::resolveAccess(std::shared_ptr <TwoSidedOperato
 	auto rightDefinition = getDefinition(node->getRight()->as <Value> (), context);
 	node->getRight()->setResultType(getDefinitionType(rightDefinition));
 
-	if(!node->getRight())
+	if(node->getRight()->getResultType().expired())
 	{
 		return nullptr;
 	}
@@ -473,7 +474,42 @@ std::shared_ptr <TypeDefinition> Validator::getDefinitionType(std::shared_ptr <N
 	if(definition->type == Node::Type::Expression)
 	{
 		assert(definition->as <Expression> ()->type == Expression::Type::Value);
-		assert(!definition->as <Expression> ()->getResultType().expired());
+
+		// If the variable node doesn't have a type yet, it isn't validated yet.
+		if(definition->as <Expression> ()->getResultType().expired())
+		{
+			// Find the variable definition root node.
+			auto current = definition->as <Expression> ();
+			while(current->type != Expression::Type::Root)
+			{
+				// Until the expression node is the root, there should be a parent.
+				assert(!current->getParent().expired());
+				current = current->getParent().lock()->as <Expression> ();
+			}
+
+			// When the loop exits, current should hold a variable definition root.
+			auto variableRoot = current->as <ExpressionRoot> ();
+			assert(variableRoot->type == ExpressionRoot::Type::VariableDefinition);
+
+			events.emit(DebugMessage("Validating later defined variable " + definition->token.getString(), definition->token));
+
+			if(isBeingValidated(definition))
+			{
+				// TODO: Show the location properly.
+				events.emit(ErrorMessage("Unable to recursively use " + definition->token.getString(), definition->token));
+				return nullptr;
+			}
+
+			unvalidatedDefinitions.push_back(definition);
+
+			if(!validateExpressionRoot(variableRoot))
+			{
+				return nullptr;
+			}
+
+			// The definition should now be validated.
+			unvalidatedDefinitions.pop_back();
+		}
 
 		return definition->as <Expression> ()->getResultType().lock();
 	}
@@ -484,6 +520,12 @@ std::shared_ptr <TypeDefinition> Validator::getDefinitionType(std::shared_ptr <N
 	}
 
 	return definition->as <TypeDefinition> ();
+}
+
+bool Validator::isBeingValidated(std::shared_ptr <Node> definition)
+{
+	auto it = std::find(unvalidatedDefinitions.begin(), unvalidatedDefinitions.end(), definition);
+	return it != unvalidatedDefinitions.end();
 }
 
 }

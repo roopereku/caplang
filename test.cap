@@ -1,17 +1,17 @@
+func main()
+{
+	var b = Test.Foo.Baz.xyz
+}
+
 type Test
 {
 	type Foo
 	{
-		var bar = 1 + 2
+		var bar = Baz.xyz
 
 		type Baz
 		{
-			var xyz = bar
+			var xyz = 20
 		}
 	}
-}
-
-func main()
-{
-	var b = Test.Foo.Baz.xyz
 }

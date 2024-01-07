@@ -10,6 +10,8 @@
 #include <cap/node/ScopeDefinition.hh>
 #include <cap/node/TypeDefinition.hh>
 
+#include <deque>
+
 namespace cap
 {
 
@@ -43,6 +45,11 @@ private:
 
 	std::shared_ptr <TypeDefinition> getDefinitionType(std::shared_ptr <Node> definition);
 
+	/// Determines if an unvalidated definition is being validdated
+	bool isBeingValidated(std::shared_ptr <Node> definition);
+
+	/// Holds unvalidated definitions that are being used in an expression.
+	std::deque <std::shared_ptr <Node>> unvalidatedDefinitions;
 	EventEmitter& events;
 };
 
