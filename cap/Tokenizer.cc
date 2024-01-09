@@ -50,6 +50,13 @@ Token Tokenizer::next()
 
 	Token::Type tokenType = Token::Type::Invalid;
 
+	// Skip whitespace.
+	if(isspace(ch))
+	{
+		nextCharacter();
+		return next();
+	}
+
 	if(nextIsComment)
 	{
 		// Skip the first comment slash.

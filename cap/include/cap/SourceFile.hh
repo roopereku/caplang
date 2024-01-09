@@ -18,6 +18,11 @@ public:
 	/// \param path The path to a source file to load.
 	SourceFile(std::string_view path);
 
+	/// SourceFile constructor.
+	///
+	/// \param data The source code.
+	SourceFile(std::string& data);
+
 	/// Parses and validates the loaded source file.
 	///
 	/// \param events The EventEmitter to pass events to.

@@ -28,6 +28,10 @@ SourceFile::SourceFile(std::string_view path) : path(path)
 	file.close();
 }
 
+SourceFile::SourceFile(std::string& data) : data(data)
+{
+}
+
 bool SourceFile::prepare(EventEmitter& events)
 {
 	// If the global scope node already exists, don't parse.
