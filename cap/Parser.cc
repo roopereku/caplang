@@ -33,10 +33,12 @@ bool Parser::parse(Tokenizer& tokens, std::shared_ptr <Node> root)
 	tokens.reset();
 	currentNode = root;
 
+	auto token = Token::createInvalid();
+
 	// Iterate through the tokens.
 	while(!tokens.empty())
 	{
-		Token token = tokens.next();
+		token = tokens.next();
 
 		// Make sure that the token is valid.
 		if(token == Token::Type::Invalid)
@@ -57,6 +59,12 @@ bool Parser::parse(Tokenizer& tokens, std::shared_ptr <Node> root)
 		auto& at = openingBrackets.top();
 		events.emit(ErrorMessage(std::string("Unterminated opening bracket ") + at.getString(), at));
 
+		return false;
+	}
+
+	// If there's an unfinished expression, finish it.
+	if(inExpression && !endExpression(token))
+	{
 		return false;
 	}
 
@@ -406,6 +414,7 @@ bool Parser::endExpression(Token& at)
 	}
 
 	events.emit(DebugMessage(std::string("Stopped at ") + currentNode->getTypeString(), at));
+	isPreviousTokenValue = false;
 	inExpression = false;
 
 	auto root = currentNode->as <ExpressionRoot> ();

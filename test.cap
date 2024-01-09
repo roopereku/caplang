@@ -1,3 +1,5 @@
+var pi = 3
+
 func main()
 {
 	var a = int64
