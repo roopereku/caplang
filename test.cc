@@ -115,7 +115,7 @@ private:
 			{
 				if(node->getResultType().expired())
 				{
-					file << indent(depth) << "Variable: " << node->as <cap::VariableDefinition> ()->name->token.getString();
+					file << indent(depth) << "Variable: " << node->as <cap::VariableDefinition> ()->name->token.getString() << '\n';
 				}
 
 				else

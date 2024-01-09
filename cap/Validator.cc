@@ -121,7 +121,7 @@ bool Validator::validateExpression(std::shared_ptr <Expression> node)
 
 						// Try to get the type of the variable.
 						auto definitionType = getDefinitionType(definition);
-						if(!definition)
+						if(!definitionType)
 						{
 							return false;
 						}
@@ -243,14 +243,18 @@ bool Validator::validateOperator(std::shared_ptr <Operator> node)
 
 		case Operator::Type::OneSided:
 		{
+			auto oneSided = node->as <OneSidedOperator> ();
+
 			// Validate the expression of the one sided operator.
-			if(!validateExpression(node->as <OneSidedOperator> ()->getExpression()))
+			if(!validateExpression(oneSided->getExpression()))
 			{
 				return false;
 			}
 
+			// Use the type of the expression node.
+			node->setResultType(oneSided->getExpression()->getResultType().lock());
+
 			// TODO: Make sure that the expression node supports the given operator.
-			// TODO: Use the type of expression in this node.
 
 			break;
 		}
@@ -266,7 +270,6 @@ bool Validator::validateScope(std::shared_ptr <ScopeDefinition> node)
 		return false;
 	}
 
-	events.emit(DebugMessage("Scope " + node->name.getString() + " is now validated", node->token));
 	node->complete();
 
 	return true;
@@ -405,10 +408,10 @@ std::shared_ptr <TypeDefinition> Validator::getDefinitionType(std::shared_ptr <N
 		assert(definition->as <Expression> ()->type == Expression::Type::Root);
 		assert(definition->as <ExpressionRoot> ()->type == ExpressionRoot::Type::VariableDefinition);
 
+		bool recursiveUsage = false;
+
 		if(definition->as <VariableDefinition> ()->getResultType().expired())
 		{
-			events.emit(DebugMessage("Validating later defined variable " + definition->token.getString(), definition->token));
-
 			inValidation.push_back(definition);
 
 			// Count how many times the definition has started validation.
@@ -417,23 +420,29 @@ std::shared_ptr <TypeDefinition> Validator::getDefinitionType(std::shared_ptr <N
 			// If there's more than one active validation, recursive initializations are being done.
 			if(occurences > 1)
 			{
-				// TODO: Show the location properly.
-				events.emit(ErrorMessage("Unable to recursively use " + definition->token.getString(), definition->token));
-				return nullptr;
+				recursiveUsage = true;
 			}
 
-			if(!validateExpressionRoot(definition->as <VariableDefinition> ()))
+			else
 			{
-				return nullptr;
+				// Try to validate the referenced variable.
+				if(!validateExpressionRoot(definition->as <VariableDefinition> ()))
+				{
+					return nullptr;
+				}
+
+				// The definition should now be validated.
+				inValidation.pop_back();
 			}
-
-			events.emit(DebugMessage("Validated later defined variable " + definition->token.getString(), definition->token));
-
-			// The definition should now be validated.
-			inValidation.pop_back();
 		}
 
-		assert(!definition->as <Expression> ()->getResultType().expired());
+		// If recursive initialization is being done, show an error.
+		if(recursiveUsage || definition->as <Expression> ()->getResultType().expired())
+		{
+			events.emit(ErrorMessage("Unable to recursively use " + definition->token.getString(), definition->token));
+			return nullptr;
+		}
+
 		return definition->as <Expression> ()->getResultType().lock();
 	}
 

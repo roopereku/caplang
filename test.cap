@@ -1,11 +1,11 @@
 type T1
 {
-	var a = 0
-	a = T2.b
+	var a = T2.x
 }
 
 type T2
 {
+	var x = -(0xFFFF & 0xF0F0)
 	var b = T3.c
 }
 

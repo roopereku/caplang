@@ -21,9 +21,6 @@ public:
 	const char* getTypeString() override;
 
 	const std::shared_ptr <Value> name;
-
-private:
-	std::shared_ptr <Node> referencedDefinition;
 };
 
 }
