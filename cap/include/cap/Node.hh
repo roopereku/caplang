@@ -39,11 +39,13 @@ public:
 	std::shared_ptr <Node> getNext() const;
 	void setNext(std::shared_ptr <Node>&& node);
 
+	virtual void removeChildNode(std::shared_ptr <Node> node);
+
 	/// Determines if this node is a definition of the given name.
 	///
 	/// \param name The name of the definition.
-	/// \return The specific node of the definition.
-	virtual std::shared_ptr <Node> isDefinition(Token name);
+	/// \return True if this node is the desired definition.
+	virtual bool isDefinition(Token name);
 
 	virtual const char* getTypeString();
 

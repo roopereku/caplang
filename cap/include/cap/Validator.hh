@@ -9,6 +9,8 @@
 #include <cap/node/ExpressionRoot.hh>
 #include <cap/node/ScopeDefinition.hh>
 #include <cap/node/TypeDefinition.hh>
+#include <cap/node/InitializationRoot.hh>
+#include <cap/node/VariableDefinition.hh>
 
 #include <deque>
 
@@ -32,8 +34,6 @@ private:
 	bool validateOperator(std::shared_ptr <Operator> node);
 	bool validateScope(std::shared_ptr <ScopeDefinition> node);
 
-	bool validateVariableInit(std::shared_ptr <Expression> node);
-
 	/// Recursively resolves the result of an access operator.
 	std::shared_ptr <Node> resolveAccess(std::shared_ptr <TwoSidedOperator> node);
 
@@ -45,11 +45,8 @@ private:
 
 	std::shared_ptr <TypeDefinition> getDefinitionType(std::shared_ptr <Node> definition);
 
-	/// Determines if an unvalidated definition is being validdated
-	bool isBeingValidated(std::shared_ptr <Node> definition);
-
 	/// Holds unvalidated definitions that are being used in an expression.
-	std::deque <std::shared_ptr <Node>> unvalidatedDefinitions;
+	std::deque <std::shared_ptr <Node>> inValidation;
 	EventEmitter& events;
 };
 

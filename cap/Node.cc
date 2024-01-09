@@ -1,5 +1,7 @@
 #include <cap/Node.hh>
 
+#include <cassert>
+
 namespace cap
 {
 
@@ -47,14 +49,19 @@ void Node::setNext(std::shared_ptr <Node>&& node)
 	next = std::move(node);
 }
 
+void Node::removeChildNode(std::shared_ptr <Node> node)
+{
+	assert(false);
+}
+
 const char* Node::getTypeString()
 {
 	return "???";
 }
 
-std::shared_ptr <Node> Node::isDefinition(Token name)
+bool Node::isDefinition(Token name)
 {
-	return nullptr;
+	return false;
 }
 
 }

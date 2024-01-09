@@ -25,18 +25,29 @@ public:
 	std::shared_ptr <Node> getRoot() const;
 	void initializeRoot(std::shared_ptr <Node>&& node);
 
+	void removeChildNode(std::shared_ptr <Node> node) override;
+
 	const char* getTypeString() override;
 
 	/// Checks if this scope has the given name.
 	///
 	/// \param name The name of the definition.
-	/// \return This scope.
-	std::shared_ptr <Node> isDefinition(Token name) override;
+	/// \return True if the name of this scope matches the given name.
+	bool isDefinition(Token name) override;
+
+	/// Checks if this scope is validated.
+	///
+	/// \returns True if validation is done.
+	bool isValidationComplete();
+
+	/// Makes isValidationComplete() return true.
+	void complete();
 
 	const Type type;
 	const Token name;
 
 private:
+	bool validationComplete = false;
 	std::shared_ptr <Node> root;
 };
 

@@ -5,7 +5,7 @@
 
 #include <cap/node/TypeDefinition.hh>
 #include <cap/node/FunctionDefinition.hh>
-#include <cap/node/VariableDefinition.hh>
+#include <cap/node/InitializationRoot.hh>
 #include <cap/node/OneSidedOperator.hh>
 #include <cap/node/TwoSidedOperator.hh>
 #include <cap/node/ExpressionRoot.hh>
@@ -110,10 +110,10 @@ bool Parser::parseToken(Token& token, Tokenizer& tokens, bool breakExpressionOnN
 		}
 	}
 
-	// Handle variable definitions.
-	else if(token == "var")
+	// Handle initializations.
+	else if(token == "var" || token == "alias")
 	{
-		if(!parseVariable(token, tokens))
+		if(!parseInitialization(token, tokens))
 		{
 			return false;
 		}
@@ -371,9 +371,9 @@ bool Parser::parseFunction(Token& token, Tokenizer& tokens)
 	return true;
 }
 
-bool Parser::parseVariable(Token& token, Tokenizer& tokens)
+bool Parser::parseInitialization(Token& token, Tokenizer& tokens)
 {
-	beginExpression(std::make_shared <VariableDefinition> (token));
+	beginExpression(std::make_shared <InitializationRoot> (token));
 	return true;
 }
 
@@ -406,8 +406,99 @@ bool Parser::endExpression(Token& at)
 	}
 
 	events.emit(DebugMessage(std::string("Stopped at ") + currentNode->getTypeString(), at));
-
 	inExpression = false;
+
+	auto root = currentNode->as <ExpressionRoot> ();
+
+	// If the expression is an initialization, ensure that the syntax is correct.
+	// The initialization will be split into separate nodes such as variable definitions.
+	if(root->type == ExpressionRoot::Type::InitializationRoot)
+	{
+		if(!ensureInitSyntax(root->getRoot(), root->as <InitializationRoot> ()))
+		{
+			return false;
+		}
+
+		// Remove the initialization root node. Current node should still reference
+		// it but it will disappear from the parent scope.
+		root->getParent().lock()->removeChildNode(root);
+	}
+
+	return true;
+}
+
+bool Parser::ensureInitSyntax(std::shared_ptr <Expression> node,
+							std::shared_ptr <InitializationRoot> root)
+{
+	assert(node->type == Expression::Type::Operator);
+	bool noAssignment = false;
+
+	// The given operator node should be two sided.
+	if(node->as <Operator> ()->type == Operator::Type::TwoSided)
+	{
+		auto twoSided = node->as <TwoSidedOperator> ();
+
+		switch(twoSided->type)
+		{
+			// Comma is allowed as it splits multiple definitions.
+			case TwoSidedOperator::Type::Comma:
+			{
+				// Both sides of the comma have to initialize something.
+				if(!ensureInitSyntax(twoSided->getLeft(), root) ||
+					!ensureInitSyntax(twoSided->getRight(), root))
+				{
+					return false;
+				}
+
+				break;
+			}
+
+			// Assignment indicates initialization.
+			case TwoSidedOperator::Type::Assignment:
+			{
+				// The name has to be a value.
+				if(twoSided->getLeft()->type != Expression::Type::Value)
+				{
+					events.emit(ErrorMessage("Cannot apply operators to a name", twoSided->getLeft()->token));
+					return false;
+				}
+
+				// The name has to be an identifier.
+				else if(twoSided->getLeft()->token.getType() != Token::Type::Identifier)
+				{
+					events.emit(ErrorMessage("Expected an identifier as the name", twoSided->getLeft()->token));
+					return false;
+				}
+
+				addNode(root->createDefinition(
+					twoSided->getLeft()->as <Value> (),
+					twoSided->getRight()
+				));
+
+				break;
+			}
+
+			// Any other operator is forbidden as the first node in an initialization.
+			default:
+			{
+				noAssignment = true;
+			}
+		}
+	}
+
+	// The given node isn't a two sided operator.
+	else
+	{
+		noAssignment = true;
+	}
+
+	// If there current node doesn't initialize anything, throw an error.
+	if(noAssignment)
+	{
+		events.emit(ErrorMessage("Expected '=' after a name", node->token));
+		return false;
+	}
+
 	return true;
 }
 

@@ -6,6 +6,7 @@
 #include <cap/EventEmitter.hh>
 
 #include <cap/node/Expression.hh>
+#include <cap/node/InitializationRoot.hh>
 
 #include <stack>
 
@@ -49,7 +50,10 @@ private:
 
 	bool parseType(Token& token, Tokenizer& tokens);
 	bool parseFunction(Token& token, Tokenizer& tokens);
-	bool parseVariable(Token& token, Tokenizer& tokens);
+	bool parseInitialization(Token& token, Tokenizer& tokens);
+
+	bool ensureInitSyntax(std::shared_ptr <Expression> node,
+						std::shared_ptr <InitializationRoot> root);
 
 	void beginExpression(std::shared_ptr <Expression>&& root);
 	bool endExpression(Token& at);

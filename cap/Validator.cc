@@ -4,6 +4,7 @@
 #include <cap/node/ExpressionRoot.hh>
 #include <cap/node/TwoSidedOperator.hh>
 #include <cap/node/OneSidedOperator.hh>
+#include <cap/node/VariableDefinition.hh>
 
 #include <cap/event/ErrorMessage.hh>
 #include <cap/event/DebugMessage.hh>
@@ -97,6 +98,8 @@ bool Validator::validateExpression(std::shared_ptr <Expression> node)
 		{
 			if(node->token == Token::Type::Identifier)
 			{
+				events.emit(DebugMessage("Find definition of value " + node->token.getString(), node->token));
+
 				auto definition = getDefinition(node->as <Value> (), getCurrentScope(node));
 				if(!definition)
 				{
@@ -113,8 +116,8 @@ bool Validator::validateExpression(std::shared_ptr <Expression> node)
 
 					case Node::Type::Expression:
 					{
-						// If the definition result is an expression, it should be a variable name node.
-						assert(definition->as <Expression> ()->type == Expression::Type::Value);
+						assert(definition->as <Expression> ()->type == Expression::Type::Root);
+						assert(definition->as <ExpressionRoot> ()->type == ExpressionRoot::Type::VariableDefinition);
 
 						// Try to get the type of the variable.
 						auto definitionType = getDefinitionType(definition);
@@ -179,12 +182,19 @@ bool Validator::validateExpressionRoot(std::shared_ptr <ExpressionRoot> node)
 
 		case ExpressionRoot::Type::VariableDefinition:
 		{
-			if(!validateVariableInit(node->getRoot()))
+			events.emit(DebugMessage("Validate variable " + node->as <VariableDefinition> ()->name->token.getString(), node->token));
+			if(!validateExpression(node->getRoot()))
 			{
 				return false;
 			}
 
+			node->setResultType(node->getRoot()->getResultType().lock());
+
 			break;
+		}
+
+		default:
+		{
 		}
 	}
 
@@ -256,91 +266,8 @@ bool Validator::validateScope(std::shared_ptr <ScopeDefinition> node)
 		return false;
 	}
 
-	return true;
-}
-
-bool Validator::validateVariableInit(std::shared_ptr <Expression> node)
-{
-	assert(node->type == Expression::Type::Operator);
-	bool noAssignment = false;
-
-	// The given operator node should be two sided.
-	if(node->as <Operator> ()->type == Operator::Type::TwoSided)
-	{
-		auto twoSided = node->as <TwoSidedOperator> ();
-
-		switch(twoSided->type)
-		{
-			// Comma is allowed as it splits multiple variable definitions.
-			case TwoSidedOperator::Type::Comma:
-			{
-				// Both sides of the comma have to initialize a variable.
-				if(!validateVariableInit(twoSided->getLeft()) ||
-					!validateVariableInit(twoSided->getRight()))
-				{
-					return false;
-				}
-
-				break;
-			}
-
-			// Assignment indicates variable initialization.
-			case TwoSidedOperator::Type::Assignment:
-			{
-				// The variable name has to be a value.
-				if(twoSided->getLeft()->type != Expression::Type::Value)
-				{
-					events.emit(ErrorMessage("Cannot apply operators to a variable name", twoSided->getLeft()->token));
-					return false;
-				}
-
-				// The variable name has to be an identifier.
-				else if(twoSided->getLeft()->token.getType() != Token::Type::Identifier)
-				{
-					events.emit(ErrorMessage("Expected an identifier as a variable name", twoSided->getLeft()->token));
-					return false;
-				}
-
-				// Validate the initialization.
-				if(!validateExpression(twoSided->getRight()))
-				{
-					return false;
-				}
-
-				// Get the result type of the initialization.
-				auto resultType = twoSided->getRight()->getResultType();
-				//assert(!resultType.expired());
-
-				if(!resultType.expired())
-				{
-					// Save the result type of the initialization to the variable name node.
-					twoSided->getLeft()->setResultType(resultType.lock());
-				}
-
-				break;
-			}
-
-			// Any other operator type is forbidden as the
-			// first node in variable initialization.
-			default:
-			{
-				noAssignment = true;
-			}
-		}
-	}
-
-	// The given node isn't a two sided operator.
-	else
-	{
-		noAssignment = true;
-	}
-
-	// If there current node doesn't initialize a variable, throw an error.
-	if(noAssignment)
-	{
-		events.emit(ErrorMessage("Expected '=' after variable name", node->token));
-		return false;
-	}
+	events.emit(DebugMessage("Scope " + node->name.getString() + " is now validated", node->token));
+	node->complete();
 
 	return true;
 }
@@ -451,6 +378,8 @@ std::shared_ptr <Node> Validator::getDefinition(std::shared_ptr <Value> node,
 	assert(node->token.getType() == Token::Type::Identifier);
 	assert(context);
 
+	events.emit(DebugMessage("Find definition " + node->token.getString() + " from " + context->name.getString(), context->token));
+
 	// Try to find the definition in the current scope or one of its parents.
 	auto definition = context->findDefinition(node->token);
 
@@ -473,44 +402,38 @@ std::shared_ptr <TypeDefinition> Validator::getDefinitionType(std::shared_ptr <N
 	// If the definition of left is a variable, use its type as the context.
 	if(definition->type == Node::Type::Expression)
 	{
-		assert(definition->as <Expression> ()->type == Expression::Type::Value);
+		assert(definition->as <Expression> ()->type == Expression::Type::Root);
+		assert(definition->as <ExpressionRoot> ()->type == ExpressionRoot::Type::VariableDefinition);
 
-		// If the variable node doesn't have a type yet, it isn't validated yet.
-		if(definition->as <Expression> ()->getResultType().expired())
+		if(definition->as <VariableDefinition> ()->getResultType().expired())
 		{
-			// Find the variable definition root node.
-			auto current = definition->as <Expression> ();
-			while(current->type != Expression::Type::Root)
-			{
-				// Until the expression node is the root, there should be a parent.
-				assert(!current->getParent().expired());
-				current = current->getParent().lock()->as <Expression> ();
-			}
-
-			// When the loop exits, current should hold a variable definition root.
-			auto variableRoot = current->as <ExpressionRoot> ();
-			assert(variableRoot->type == ExpressionRoot::Type::VariableDefinition);
-
 			events.emit(DebugMessage("Validating later defined variable " + definition->token.getString(), definition->token));
 
-			if(isBeingValidated(definition))
+			inValidation.push_back(definition);
+
+			// Count how many times the definition has started validation.
+			size_t occurences = std::count(inValidation.begin(), inValidation.end(), definition);
+
+			// If there's more than one active validation, recursive initializations are being done.
+			if(occurences > 1)
 			{
 				// TODO: Show the location properly.
 				events.emit(ErrorMessage("Unable to recursively use " + definition->token.getString(), definition->token));
 				return nullptr;
 			}
 
-			unvalidatedDefinitions.push_back(definition);
-
-			if(!validateExpressionRoot(variableRoot))
+			if(!validateExpressionRoot(definition->as <VariableDefinition> ()))
 			{
 				return nullptr;
 			}
 
+			events.emit(DebugMessage("Validated later defined variable " + definition->token.getString(), definition->token));
+
 			// The definition should now be validated.
-			unvalidatedDefinitions.pop_back();
+			inValidation.pop_back();
 		}
 
+		assert(!definition->as <Expression> ()->getResultType().expired());
 		return definition->as <Expression> ()->getResultType().lock();
 	}
 
@@ -520,12 +443,6 @@ std::shared_ptr <TypeDefinition> Validator::getDefinitionType(std::shared_ptr <N
 	}
 
 	return definition->as <TypeDefinition> ();
-}
-
-bool Validator::isBeingValidated(std::shared_ptr <Node> definition)
-{
-	auto it = std::find(unvalidatedDefinitions.begin(), unvalidatedDefinitions.end(), definition);
-	return it != unvalidatedDefinitions.end();
 }
 
 }

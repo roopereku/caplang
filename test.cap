@@ -1,17 +1,15 @@
-func main()
+type T1
 {
-	var b = Test.Foo.Baz.xyz
+	var a = 0
+	a = T2.b
 }
 
-type Test
+type T2
 {
-	type Foo
-	{
-		var bar = Baz.xyz
+	var b = T3.c
+}
 
-		type Baz
-		{
-			var xyz = 20
-		}
-	}
+type T3
+{
+	var c = T1.a
 }

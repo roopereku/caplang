@@ -38,10 +38,9 @@ std::shared_ptr <Node> ScopeDefinition::findDefinition(Token name)
 	// Iterate through each node in this scope.
 	while(current)
 	{
-		auto definition = current->isDefinition(name);
-		if(definition)
+		if(current->isDefinition(name))
 		{
-			return definition;
+			return current;
 		}
 
 		current = current->getNext();
@@ -56,9 +55,53 @@ std::shared_ptr <Node> ScopeDefinition::findDefinition(Token name)
 	return nullptr;
 }
 
-std::shared_ptr <Node> ScopeDefinition::isDefinition(Token name)
+bool ScopeDefinition::isDefinition(Token name)
 {
-	return this->name == name ? shared_from_this() : nullptr;
+	return this->name == name;
+}
+
+void ScopeDefinition::removeChildNode(std::shared_ptr <Node> node)
+{
+	std::shared_ptr <Node> previous;
+	auto current = root;
+
+	// Iterate all direct child nodes within this scope.
+	while(current->getNext())
+	{
+		// If the node is found, stop iterating.
+		if(current == node)
+		{
+			break;
+		}
+
+		previous = current;
+		current = current->getNext();
+	}
+
+	// If iteration stopped at the desire node, make the next node of the current node
+	// the next node of previous node. This leaves the current node out.
+	if(current == node)
+	{
+		// If no previous node is set, iteration stopped at the root.
+		// To remove the current root, assign it to the next of root.
+		if(!previous)
+		{
+			root = root->getNext();
+			return;
+		}
+
+		previous->setNext(current->getNext());
+	}
+}
+
+bool ScopeDefinition::isValidationComplete()
+{
+	return validationComplete;
+}
+
+void ScopeDefinition::complete()
+{
+	validationComplete = true;
 }
 
 }

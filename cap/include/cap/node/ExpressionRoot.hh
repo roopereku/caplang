@@ -12,11 +12,17 @@ class ExpressionRoot : public Expression
 public:
 	enum class Type
 	{
+		InitializationRoot,
 		VariableDefinition,
 		Expression
 	};
 
-	ExpressionRoot(Type type, Token& token)
+	ExpressionRoot(Type type, const Token& token, std::shared_ptr <Expression> root)
+		: Expression(Expression::Type::Root, token), type(type), root(root)
+	{
+	}
+
+	ExpressionRoot(Type type, const Token& token)
 		: Expression(Expression::Type::Root, token), type(type)
 	{
 	}

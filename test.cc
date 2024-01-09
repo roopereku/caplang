@@ -4,6 +4,7 @@
 #include <cap/node/ScopeDefinition.hh>
 #include <cap/node/OneSidedOperator.hh>
 #include <cap/node/TwoSidedOperator.hh>
+#include <cap/node/VariableDefinition.hh>
 #include <cap/node/ExpressionRoot.hh>
 #include <cap/node/CallOperator.hh>
 
@@ -104,9 +105,25 @@ private:
 				break;
 			}
 
+			case cap::ExpressionRoot::Type::InitializationRoot:
+			{
+				file << indent(depth) << "Initialization: " << node->token.getString() << '\n';
+				break;
+			}
+
 			case cap::ExpressionRoot::Type::VariableDefinition:
 			{
-				file << indent(depth) << "Variable" << '\n';
+				if(node->getResultType().expired())
+				{
+					file << indent(depth) << "Variable: " << node->as <cap::VariableDefinition> ()->name->token.getString();
+				}
+
+				else
+				{
+					file << indent(depth) << "Variable: " << node->as <cap::VariableDefinition> ()->name->token.getString()
+						<< " (" << node->getResultType().lock()->name.getString() << ")\n";
+				}
+
 				break;
 			}
 		}
