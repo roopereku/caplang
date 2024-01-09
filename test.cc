@@ -5,6 +5,7 @@
 #include <cap/node/OneSidedOperator.hh>
 #include <cap/node/TwoSidedOperator.hh>
 #include <cap/node/VariableDefinition.hh>
+#include <cap/node/ParameterDefinition.hh>
 #include <cap/node/ExpressionRoot.hh>
 #include <cap/node/CallOperator.hh>
 
@@ -121,6 +122,22 @@ private:
 				else
 				{
 					file << indent(depth) << "Variable: " << node->as <cap::VariableDefinition> ()->name->token.getString()
+						<< " (" << node->getResultType().lock()->name.getString() << ")\n";
+				}
+
+				break;
+			}
+
+			case cap::ExpressionRoot::Type::ParameterDefinition:
+			{
+				if(node->getResultType().expired())
+				{
+					file << indent(depth) << "Parameter: " << node->as <cap::ParameterDefinition> ()->name->token.getString() << '\n';
+				}
+
+				else
+				{
+					file << indent(depth) << "Parameter: " << node->as <cap::ParameterDefinition> ()->name->token.getString()
 						<< " (" << node->getResultType().lock()->name.getString() << ")\n";
 				}
 

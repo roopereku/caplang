@@ -14,6 +14,7 @@ public:
 	{
 		InitializationRoot,
 		VariableDefinition,
+		ParameterDefinition,
 		Expression
 	};
 

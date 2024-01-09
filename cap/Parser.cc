@@ -366,6 +366,9 @@ bool Parser::parseFunction(Token& token, Tokenizer& tokens)
 	// Create a function definition node.
 	addNode(std::make_shared <FunctionDefinition> (name));
 
+	// Begin the parameter initialization expression.
+	beginExpression(std::make_shared <InitializationRoot> (opener, InitializationRoot::Type::Parameter));
+
 	// While the parameter parenthesis are open, parse the parameters.
 	while(openingBrackets.size() > oldOpeners && !tokens.empty())
 	{
@@ -375,6 +378,20 @@ bool Parser::parseFunction(Token& token, Tokenizer& tokens)
 			return false;
 		}
 	}
+
+	// End the parameter initialization expression.
+	if(!endExpression(token))
+	{
+		return false;
+	}
+
+	// Make sure that the parent node is the previously added function definition.
+	assert(!currentNode->getParent().expired());
+	assert(currentNode->getParent().lock()->type == Node::Type::ScopeDefinition);
+	assert(currentNode->getParent().lock()->as <ScopeDefinition> ()->type == ScopeDefinition::Type::FunctionDefinition);
+
+	// Switch back to the function definition.
+	currentNode = currentNode->getParent().lock();
 
 	return true;
 }
@@ -417,13 +434,22 @@ bool Parser::endExpression(Token& at)
 	isPreviousTokenValue = false;
 	inExpression = false;
 
-	auto root = currentNode->as <ExpressionRoot> ();
-
 	// If the expression is an initialization, ensure that the syntax is correct.
 	// The initialization will be split into separate nodes such as variable definitions.
-	if(root->type == ExpressionRoot::Type::InitializationRoot)
+	if(currentNode->as <ExpressionRoot> ()->type == ExpressionRoot::Type::InitializationRoot)
 	{
-		if(!ensureInitSyntax(root->getRoot(), root->as <InitializationRoot> ()))
+		auto root = currentNode->as <InitializationRoot> ();
+
+		// If the empty initialization isn't a parameter, throw an error.
+		if(root->type != InitializationRoot::Type::Parameter && !root->getRoot())
+		{
+			events.emit(ErrorMessage("Expected an expression after " + root->token.getString(), root->token));
+			return false;
+		}
+
+		// If there is an expression within the initialization,
+		// try to split it into multiple definition nodes.
+		if(root->getRoot() && !ensureInitSyntax(root->getRoot(), root->as <InitializationRoot> ()))
 		{
 			return false;
 		}

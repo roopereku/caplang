@@ -1,5 +1,6 @@
 #include <cap/node/InitializationRoot.hh>
 #include <cap/node/VariableDefinition.hh>
+#include <cap/node/ParameterDefinition.hh>
 
 #include <cassert>
 
@@ -8,6 +9,11 @@ namespace cap
 
 InitializationRoot::InitializationRoot(Token& token)
 	: ExpressionRoot(ExpressionRoot::Type::InitializationRoot, token), type(getType(token))
+{
+}
+
+InitializationRoot::InitializationRoot(Token& token, Type type)
+	: ExpressionRoot(ExpressionRoot::Type::InitializationRoot, token), type(type)
 {
 }
 
@@ -38,6 +44,12 @@ std::shared_ptr <ExpressionRoot> InitializationRoot::createDefinition(std::share
 		case Type::Variable:
 		{
 			definition = std::make_shared <VariableDefinition> (name, initialization);
+			break;
+		}
+
+		case Type::Parameter:
+		{
+			definition = std::make_shared <ParameterDefinition> (name, initialization);
 			break;
 		}
 

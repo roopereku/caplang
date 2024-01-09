@@ -15,10 +15,12 @@ public:
 	enum class Type
 	{
 		Alias,
-		Variable
+		Variable,
+		Parameter,
 	};
 
 	InitializationRoot(Token& token);
+	InitializationRoot(Token& token, Type type);
 
 	/// Gets the initialization root type from a token.
 	///

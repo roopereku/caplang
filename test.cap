@@ -1,6 +1,10 @@
 var pi = 3
 
-func main()
+type StringList
+{
+}
+
+func main(argc = int64, argv = StringList)
 {
 	var a = int64
 }
