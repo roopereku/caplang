@@ -595,6 +595,12 @@ bool Parser::handleExpressionToken(Token& token)
 	// The token is a value.
 	else
 	{
+		if(isPreviousTokenValue)
+		{
+			events.emit(ErrorMessage("Consecutive values not allowed", token));
+			return false;
+		}
+
 		isPreviousTokenValue = true;
 		expr = std::make_shared <Value> (token);
 
