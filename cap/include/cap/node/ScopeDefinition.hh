@@ -43,6 +43,11 @@ public:
 	/// Makes isValidationComplete() return true.
 	void complete();
 
+	/// Gets the shared scope.
+	///
+	/// \return The shared scope.
+	static std::shared_ptr <ScopeDefinition> getShared();
+
 	const Type type;
 	const Token name;
 

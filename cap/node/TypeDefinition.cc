@@ -22,4 +22,32 @@ std::shared_ptr <TypeDefinition> TypeDefinition::getPrimitive(Token token)
 	}
 }
 
+void TypeDefinition::ensurePrimitivesAdopted()
+{
+	auto adoptPrimitive = [](std::shared_ptr <TypeDefinition> node)
+	{
+		auto sharedScope = getShared();
+		sharedScope->adopt(node);
+
+		if(sharedScope->getRoot())
+		{
+			sharedScope->getRoot()->findLast()->setNext(node);
+		}
+
+		else
+		{
+			sharedScope->initializeRoot(std::move(node));
+		}
+	};
+
+	static bool adopted = false;
+
+	if(!adopted)
+	{
+		adoptPrimitive(int64);
+
+		adopted = true;
+	}
+}
+
 }

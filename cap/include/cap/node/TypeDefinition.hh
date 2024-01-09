@@ -20,6 +20,9 @@ public:
 
 	static std::shared_ptr <TypeDefinition> getPrimitive(Token token);
 
+	/// Ensures that primitive types are adopted by the shared scope.
+	static void ensurePrimitivesAdopted();
+
 private:
 	size_t size = 0;
 };

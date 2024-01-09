@@ -46,7 +46,13 @@ bool SourceFile::prepare(EventEmitter& events)
 	Tokenizer tokens(data);
 	Parser parser(events);
 
+	// Make sure that the primitive types are adopted by the shared scope.
+	TypeDefinition::ensurePrimitivesAdopted();
+
+	// Create the global scope for this source file and attach it to the shared scope.
 	global = std::make_shared <ScopeDefinition> ();
+	ScopeDefinition::getShared()->adopt(global);
+
 	if(!parser.parse(tokens, global))
 	{
 		return false;

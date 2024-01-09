@@ -1,15 +1,4 @@
-type T1
+func main()
 {
-	var a = T2.x
-}
-
-type T2
-{
-	var x = -(0xFFFF & 0xF0F0)
-	var b = T3.c
-}
-
-type T3
-{
-	var c = T1.a
+	var a = int64
 }

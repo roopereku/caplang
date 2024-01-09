@@ -104,4 +104,10 @@ void ScopeDefinition::complete()
 	validationComplete = true;
 }
 
+std::shared_ptr <ScopeDefinition> ScopeDefinition::getShared()
+{
+	static std::shared_ptr <ScopeDefinition> sharedScope = std::make_shared <ScopeDefinition> ();
+	return sharedScope;
+}
+
 }
