@@ -110,8 +110,11 @@ bool Validator::validateExpression(std::shared_ptr <Expression> node)
 				{
 					case Node::Type::ScopeDefinition:
 					{
-						events.emit(ErrorMessage("Unimplemented: Scope as a definition result", node->token));
-						return false;
+						assert(definition->as <ScopeDefinition> ()->type == ScopeDefinition::Type::TypeDefinition);
+
+						// Use the type definition as the result type.
+						node->setResultType(definition->as <TypeDefinition> ());
+						break;
 					}
 
 					case Node::Type::Expression:
@@ -168,36 +171,14 @@ bool Validator::validateExpression(std::shared_ptr <Expression> node)
 
 bool Validator::validateExpressionRoot(std::shared_ptr <ExpressionRoot> node)
 {
-	switch(node->type)
+	// Validate the root expression node.
+	if(!validateExpression(node->getRoot()))
 	{
-		case ExpressionRoot::Type::Expression:
-		{
-			if(!validateExpression(node->getRoot()))
-			{
-				return false;
-			}
-
-			break;
-		}
-
-		case ExpressionRoot::Type::VariableDefinition:
-		{
-			events.emit(DebugMessage("Validate variable " + node->as <VariableDefinition> ()->name->token.getString(), node->token));
-			if(!validateExpression(node->getRoot()))
-			{
-				return false;
-			}
-
-			node->setResultType(node->getRoot()->getResultType().lock());
-
-			break;
-		}
-
-		default:
-		{
-		}
+		return false;
 	}
 
+	// Set the result type of the expression root.
+	node->setResultType(node->getRoot()->getResultType().lock());
 	return true;
 }
 
