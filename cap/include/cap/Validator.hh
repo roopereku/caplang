@@ -34,6 +34,9 @@ private:
 	bool validateOperator(std::shared_ptr <Operator> node);
 	bool validateScope(std::shared_ptr <ScopeDefinition> node);
 
+	/// Resolves a definition pointed at by node. Calls resolveAccess or getDefinition.
+	std::shared_ptr <Node> resolveDefinition(std::shared_ptr <Expression> node);
+
 	/// Recursively resolves the result of an access operator.
 	std::shared_ptr <Node> resolveAccess(std::shared_ptr <TwoSidedOperator> node);
 

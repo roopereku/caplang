@@ -2,6 +2,7 @@
 
 #include <cap/node/Value.hh>
 #include <cap/node/ExpressionRoot.hh>
+#include <cap/node/CallOperator.hh>
 #include <cap/node/TwoSidedOperator.hh>
 #include <cap/node/OneSidedOperator.hh>
 #include <cap/node/VariableDefinition.hh>
@@ -203,6 +204,7 @@ bool Validator::validateOperator(std::shared_ptr <Operator> node)
 			// The access operator has a special meaning.
 			if(twoSided->type == TwoSidedOperator::Type::Access)
 			{
+				events.emit(ErrorMessage("Resolve access operator", node->token));
 				auto resultDefinition = resolveAccess(twoSided);
 				if(!resultDefinition)
 				{
@@ -236,6 +238,23 @@ bool Validator::validateOperator(std::shared_ptr <Operator> node)
 		{
 			auto oneSided = node->as <OneSidedOperator> ();
 
+			// If this is a call operator, get the call target.
+			if(oneSided->type == OneSidedOperator::Type::Call)
+			{
+				events.emit(ErrorMessage("Resolve target of call operator", node->token));
+				// If there is a target to resolve, resolve it.
+				auto definition = resolveDefinition(oneSided->as <CallOperator> ()->getTarget());
+				if(!definition)
+				{
+					return false;
+				}
+			}
+
+			else if(oneSided->type == OneSidedOperator::Type::Subscript)
+			{
+				assert(false && "Subscript not implemented");
+			}
+
 			// Validate the expression of the one sided operator.
 			if(!validateExpression(oneSided->getExpression()))
 			{
@@ -264,6 +283,34 @@ bool Validator::validateScope(std::shared_ptr <ScopeDefinition> node)
 	node->complete();
 
 	return true;
+}
+
+std::shared_ptr <Node> Validator::resolveDefinition(std::shared_ptr <Expression> node)
+{
+	switch(node->type)
+	{
+		// Resolving a definition from an operator should only happen when the operator is an access.
+		case Expression::Type::Operator:
+		{
+			assert(node->as <Operator> ()->type == Operator::Type::TwoSided);
+			assert(node->as <TwoSidedOperator> ()->type == TwoSidedOperator::Type::Access);
+
+			return resolveAccess(node->as <TwoSidedOperator> ());
+		}
+
+		// If the node is a value, try to find a definition from the current scope.
+		case Expression::Type::Value:
+		{
+			return getDefinition(node->as <Value> (), getCurrentScope(node));
+		}
+
+		default:
+		{
+			assert(false);
+		}
+	}
+
+	return nullptr;
 }
 
 std::shared_ptr <Node> Validator::resolveAccess(std::shared_ptr <TwoSidedOperator> node)
@@ -336,8 +383,8 @@ std::shared_ptr <Node> Validator::resolveAccess(std::shared_ptr <TwoSidedOperato
 	// Now that the type pointed at by the left side is known, find the definition
 	// pointed at by the right side using the left side as the context.
 	auto rightDefinition = getDefinition(node->getRight()->as <Value> (), context);
-	node->getRight()->setResultType(getDefinitionType(rightDefinition));
 
+	node->getRight()->setResultType(getDefinitionType(rightDefinition));
 	if(node->getRight()->getResultType().expired())
 	{
 		return nullptr;
@@ -372,16 +419,17 @@ std::shared_ptr <Node> Validator::getDefinition(std::shared_ptr <Value> node,
 	assert(node->token.getType() == Token::Type::Identifier);
 	assert(context);
 
-	events.emit(DebugMessage("Find definition " + node->token.getString() + " from " + context->name.getString(), context->token));
+	events.emit(DebugMessage("Find definition " + node->token.getString() + " from " + context->name.getString(), node->token));
 
 	// Try to find the definition in the current scope or one of its parents.
 	auto definition = context->findDefinition(node->token);
-
 	if(!definition)
 	{
 		events.emit(ErrorMessage("Unknown identifier " + node->token.getString(), node->token));
 		return nullptr;
 	}
+
+	events.emit(DebugMessage("Found definition " + node->token.getString() + " from " + getCurrentScope(definition->getParent().lock())->name.getString(), context->token));
 
 	return definition;
 }
@@ -443,7 +491,13 @@ std::shared_ptr <TypeDefinition> Validator::getDefinitionType(std::shared_ptr <N
 
 	else if(definition->type == Node::Type::ScopeDefinition)
 	{
-		assert(definition->as <ScopeDefinition> ()->type == ScopeDefinition::Type::TypeDefinition);
+		// For functions use the return type.
+		if(definition->as <ScopeDefinition> ()->type == ScopeDefinition::Type::FunctionDefinition)
+		{
+			// FIXME: Return an actual type instead of an int.
+			events.emit(ErrorMessage("NOTE: Defaulting function type to int ", definition->token));
+			return TypeDefinition::getPrimitive(Token(Token::Type::Integer, "", 0, 0));
+		}
 	}
 
 	return definition->as <TypeDefinition> ();

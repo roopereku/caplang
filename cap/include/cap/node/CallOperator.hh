@@ -14,15 +14,15 @@ public:
 	{
 	}
 
-	void setTarget(std::shared_ptr <Expression>&& node)
-	{
-		target = std::move(node);
-	}
+	/// Sets the call target node.
+	///
+	/// \param The expression node to set as call target.
+	void setTarget(std::shared_ptr <Expression>&& node);
 
-	std::shared_ptr <Expression> getTarget()
-	{
-		return target;
-	}
+	/// Gets the call target node.
+	///
+	/// \return The call target node.
+	std::shared_ptr <Expression> getTarget();
 
 private:
 	std::shared_ptr <Expression> target;

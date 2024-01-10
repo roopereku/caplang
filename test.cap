@@ -1,10 +1,18 @@
 var pi = 3
 
+func foo()
+{
+	var result = StringList.get(0)
+}
+
 type StringList
 {
+	func get(index = int64)
+	{
+	}
 }
 
 func main(argc = int64, argv = StringList)
 {
-	var a = foo(1 -)
+	var a = argv.get(1)
 }
