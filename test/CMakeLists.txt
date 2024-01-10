@@ -15,4 +15,6 @@ add_subdirectory(../cap cap)
 
 file(GLOB Sources *.cc)
 add_executable(captests ${Sources})
+
 target_link_libraries(captests gtest_main cap)
+target_include_directories(captests PUBLIC include)
