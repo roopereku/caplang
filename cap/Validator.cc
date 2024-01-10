@@ -120,7 +120,11 @@ bool Validator::validateExpression(std::shared_ptr <Expression> node)
 					case Node::Type::Expression:
 					{
 						assert(definition->as <Expression> ()->type == Expression::Type::Root);
-						assert(definition->as <ExpressionRoot> ()->type == ExpressionRoot::Type::VariableDefinition);
+
+						assert(
+							definition->as <ExpressionRoot> ()->type == ExpressionRoot::Type::VariableDefinition ||
+							definition->as <ExpressionRoot> ()->type == ExpressionRoot::Type::ParameterDefinition
+						);
 
 						// Try to get the type of the variable.
 						auto definitionType = getDefinitionType(definition);
@@ -389,11 +393,14 @@ std::shared_ptr <TypeDefinition> Validator::getDefinitionType(std::shared_ptr <N
 		return nullptr;
 	}
 
-	// If the definition of left is a variable, use its type as the context.
+	// If the definition of left is an expression, make sure that it's a definition.
 	if(definition->type == Node::Type::Expression)
 	{
 		assert(definition->as <Expression> ()->type == Expression::Type::Root);
-		assert(definition->as <ExpressionRoot> ()->type == ExpressionRoot::Type::VariableDefinition);
+		assert(
+			definition->as <ExpressionRoot> ()->type == ExpressionRoot::Type::VariableDefinition ||
+			definition->as <ExpressionRoot> ()->type == ExpressionRoot::Type::ParameterDefinition
+		);
 
 		bool recursiveUsage = false;
 
@@ -430,6 +437,7 @@ std::shared_ptr <TypeDefinition> Validator::getDefinitionType(std::shared_ptr <N
 			return nullptr;
 		}
 
+		// Return the type of the definition.
 		return definition->as <Expression> ()->getResultType().lock();
 	}
 
