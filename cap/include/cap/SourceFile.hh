@@ -18,10 +18,17 @@ public:
 	/// \param path The path to a source file to load.
 	SourceFile(std::string_view path);
 
-	/// SourceFile constructor.
+	/// Loads a source file from the given path.
 	///
-	/// \param data The source code.
-	SourceFile(std::string& data);
+	/// \param path The path to load a source file from.
+	/// \return The created source file.
+	static SourceFile fromPath(std::string_view path);
+
+	/// Creates a source file with the given source code.
+	///
+	/// \param source The source code to use.
+	/// \return The created source file.
+	static SourceFile fromSource(std::string_view source);
 
 	/// Parses and validates the loaded source file.
 	///
@@ -40,8 +47,9 @@ public:
 	const std::string_view path;
 
 private:
-	std::string data;
+	SourceFile();
 
+	std::string data;
 	std::shared_ptr <ScopeDefinition> global;
 };
 

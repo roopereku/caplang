@@ -10,6 +10,10 @@
 namespace cap
 {
 
+SourceFile::SourceFile()
+{
+}
+
 SourceFile::SourceFile(std::string_view path) : path(path)
 {
 	std::ifstream file(path.data());
@@ -28,8 +32,18 @@ SourceFile::SourceFile(std::string_view path) : path(path)
 	file.close();
 }
 
-SourceFile::SourceFile(std::string& data) : data(data)
+SourceFile SourceFile::fromPath(std::string_view path)
 {
+	SourceFile sourceFile(path);
+	return sourceFile;
+}
+
+SourceFile SourceFile::fromSource(std::string_view source)
+{
+	SourceFile sourceFile;
+	sourceFile.data = source;
+
+	return sourceFile;
 }
 
 bool SourceFile::prepare(EventEmitter& events)
