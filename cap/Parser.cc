@@ -505,6 +505,13 @@ bool Parser::ensureInitSyntax(std::shared_ptr <Expression> node,
 					return false;
 				}
 
+				// Make sure that the initialization exists.
+				else if(!twoSided->getRight())
+				{
+					events.emit(ErrorMessage("Expected an initialization after '='", twoSided->token));
+					return false;
+				}
+
 				addNode(root->createDefinition(
 					twoSided->getLeft()->as <Value> (),
 					twoSided->getRight()

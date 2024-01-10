@@ -184,6 +184,12 @@ bool Validator::validateExpressionRoot(std::shared_ptr <ExpressionRoot> node)
 
 bool Validator::validateOperator(std::shared_ptr <Operator> node)
 {
+	if(!node->isComplete())
+	{
+		events.emit(ErrorMessage("Incomplete operator " + node->token.getString(), node->token));
+		return false;
+	}
+
 	switch(node->type)
 	{
 		case Operator::Type::TwoSided:
