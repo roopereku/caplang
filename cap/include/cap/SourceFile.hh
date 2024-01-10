@@ -36,8 +36,10 @@ public:
 		return global;
 	}
 
-private:
+	/// The path of this source file.
 	const std::string_view path;
+
+private:
 	std::string data;
 
 	std::shared_ptr <ScopeDefinition> global;
