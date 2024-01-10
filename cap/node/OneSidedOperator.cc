@@ -63,24 +63,6 @@ unsigned OneSidedOperator::getPrecedence()
 	return -1;
 }
 
-bool OneSidedOperator::affectsPreviousValue()
-{
-	switch(type)
-	{
-		case Type::Call:
-		case Type::Subscript:
-			return true;
-
-		default:
-			return false;
-	}
-}
-
-bool OneSidedOperator::affectsNextValue()
-{
-	return !affectsPreviousValue();
-}
-
 bool OneSidedOperator::handleValue(std::shared_ptr <Expression>&& node)
 {
 	assert(!expression);

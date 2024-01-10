@@ -27,9 +27,6 @@ public:
 	const char* getTypeString() override;
 	unsigned getPrecedence() override;
 
-	bool affectsPreviousValue();
-	bool affectsNextValue();
-
 	std::shared_ptr <Expression> getExpression()
 	{
 		return expression;
@@ -60,8 +57,6 @@ public:
 	bool isComplete() override;
 
 	const Type type;
-
-	friend class TwoSidedOperator;
 
 protected:
 	std::shared_ptr <Expression> expression;

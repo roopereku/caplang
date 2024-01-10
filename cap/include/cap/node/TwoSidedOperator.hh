@@ -89,8 +89,6 @@ public:
 
 	const Type type;
 
-	friend class OneSidedOperator;
-
 protected:
 	std::shared_ptr <Expression> left;
 	std::shared_ptr <Expression> right;
