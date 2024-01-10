@@ -184,6 +184,20 @@ bool Validator::validateExpressionRoot(std::shared_ptr <ExpressionRoot> node)
 
 	// Set the result type of the expression root.
 	node->setResultType(node->getRoot()->getResultType().lock());
+
+	// If the node is an explicit return type, attach the return type to the associated function.
+	if(node->type == ExpressionRoot::Type::ExplicitReturnType)
+	{
+		auto scope = getCurrentScope(node);
+		assert(scope->type == ScopeDefinition::Type::FunctionDefinition);
+
+		events.emit(ErrorMessage("Unimplemented: associate explicit return type with function", node->token));
+		return false;
+
+		// TODO: After setting the return type, remove the explicit return type node
+		// from the parent function so that it won't appear in the final AST.
+	}
+
 	return true;
 }
 

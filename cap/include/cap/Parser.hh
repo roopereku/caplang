@@ -40,6 +40,9 @@ public:
 	EventEmitter& events;
 
 private:
+	/// Ignores comments and handles invalid tokens.
+	bool getNextToken(Tokenizer& tokens, Token& result);
+
 	void addNode(std::shared_ptr <Node>&& node);
 
 	bool parseToken(Token& token, Tokenizer& tokens, bool breakExpressionOnNewline);

@@ -112,6 +112,13 @@ private:
 				break;
 			}
 
+			case cap::ExpressionRoot::Type::ExplicitReturnType:
+			{
+				file << indent(depth) << "Explicit return type"
+					<< " (" << node->getResultType().lock()->name.getString() << ")\n";
+				break;
+			}
+
 			case cap::ExpressionRoot::Type::VariableDefinition:
 			{
 				if(node->getResultType().expired())

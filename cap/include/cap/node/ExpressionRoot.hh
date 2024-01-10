@@ -15,6 +15,7 @@ public:
 		InitializationRoot,
 		VariableDefinition,
 		ParameterDefinition,
+		ExplicitReturnType,
 		Expression
 	};
 
