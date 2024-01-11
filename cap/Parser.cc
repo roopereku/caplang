@@ -257,8 +257,25 @@ bool Parser::handleBracketToken(Token& token, Tokenizer& tokens)
 
 					else
 					{
-						events.emit(ErrorMessage("Empty brackets", token));
-						return false;
+						bool isError = true;
+
+						// Some expressions support empty brackets.
+						if(oldCurrent->type == Node::Type::Expression)
+						{
+							// Call operator supports empty brackets.
+							if(oldCurrent->as <Expression> ()->type == Expression::Type::Operator &&
+								oldCurrent->as <Operator> ()->type == Operator::Type::OneSided &&
+								oldCurrent->as <OneSidedOperator> ()->type == OneSidedOperator::Type::Call)
+							{
+								isError = false;
+							}
+						}
+
+						if(isError)
+						{
+							events.emit(ErrorMessage("Empty brackets", token));
+							return false;
+						}
 					}
 				}
 

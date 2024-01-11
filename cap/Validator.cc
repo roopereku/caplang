@@ -179,6 +179,12 @@ bool Validator::validateExpression(std::shared_ptr <Expression> node)
 
 bool Validator::validateExpressionRoot(std::shared_ptr <ExpressionRoot> node)
 {
+	// If there's no expression, do nothing
+	if(!node->getRoot())
+	{
+		return true;
+	}
+
 	// Validate the root expression node.
 	if(!validateExpression(node->getRoot()))
 	{
