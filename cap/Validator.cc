@@ -114,10 +114,13 @@ bool Validator::validateExpression(std::shared_ptr <Expression> node)
 				{
 					case Node::Type::ScopeDefinition:
 					{
-						assert(definition->as <ScopeDefinition> ()->type == ScopeDefinition::Type::TypeDefinition);
+						auto definitionType = getDefinitionType(definition);
+						if(!definitionType)
+						{
+							return false;
+						}
 
-						// Use the type definition as the result type.
-						node->setResultType(definition->as <TypeDefinition> ());
+						node->setResultType(definitionType);
 						break;
 					}
 
@@ -268,9 +271,13 @@ bool Validator::validateOperator(std::shared_ptr <Operator> node)
 					return false;
 				}
 
-				// Get the return type and set it as the call operator result type.
-				auto returnType = definition->as <FunctionDefinition> ()->getSignature()->getReturnType();
+				// getDefinitionType returns a function signature when given a function.
+				auto signature = getDefinitionType(definition)->as <FunctionSignature> ();
+
+				// The result type of the call operator becomes the return value of the function.
+				auto returnType = signature->getReturnType();
 				node->setResultType(returnType);
+
 				resultFromExpression = false;
 			}
 
@@ -279,10 +286,15 @@ bool Validator::validateOperator(std::shared_ptr <Operator> node)
 				assert(false && "Subscript not implemented");
 			}
 
-			// Validate the expression of the one sided operator.
-			if(!validateExpression(oneSided->getExpression()))
+			// Only if there is an expression, validate it. In case such as
+			// CallOperator there might be no expression due to empty brackets.
+			if(oneSided->getExpression())
 			{
-				return false;
+				// Validate the expression of the one sided operator.
+				if(!validateExpression(oneSided->getExpression()))
+				{
+					return false;
+				}
 			}
 
 			// Use the type of the expression node.
@@ -455,7 +467,7 @@ std::shared_ptr <Node> Validator::getDefinition(std::shared_ptr <Value> node,
 		return nullptr;
 	}
 
-	events.emit(DebugMessage("Found definition " + node->token.getString() + " from " + getCurrentScope(definition->getParent().lock())->name.getString(), context->token));
+	events.emit(DebugMessage("Found definition " + node->token.getString() + + " " + definition->getTypeString() + " from " + getCurrentScope(definition->getParent().lock())->name.getString(), context->token));
 
 	return definition;
 }
@@ -520,8 +532,9 @@ std::shared_ptr <TypeDefinition> Validator::getDefinitionType(std::shared_ptr <N
 		// For functions return the signature.
 		if(definition->as <ScopeDefinition> ()->type == ScopeDefinition::Type::FunctionDefinition)
 		{
-			auto function = definition-> as <FunctionDefinition> ();
+			auto function = definition->as <FunctionDefinition> ();
 
+			// If no signature exists, try to initialize it.
 			if(!function->getSignature() && !function->initializeSignature(*this))
 			{
 				return nullptr;

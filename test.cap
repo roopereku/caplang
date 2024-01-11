@@ -1,5 +1,9 @@
 type string {}
 
+func typeof() string
+{
+}
+
 type StringList
 {
 	func get(index = int64) typeof()
