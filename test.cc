@@ -114,8 +114,17 @@ private:
 
 			case cap::ExpressionRoot::Type::ExplicitReturnType:
 			{
-				file << indent(depth) << "Explicit return type"
-					<< " (" << node->getResultType().lock()->name.getString() << ")\n";
+				if(node->getResultType().expired())
+				{
+					file << indent(depth) << "Explicit return type\n";
+				}
+
+				else
+				{
+					file << indent(depth) << "Explicit return type"
+						<< " (" << node->getResultType().lock()->name.getString() << ")\n";
+				}
+
 				break;
 			}
 

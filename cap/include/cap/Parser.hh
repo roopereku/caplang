@@ -61,6 +61,8 @@ private:
 	void beginExpression(std::shared_ptr <Expression>&& root);
 	bool endExpression(Token& at);
 
+	bool unterminatedBracket(Token at);
+
 	bool isPreviousTokenValue = false;
 	Token::IndexType expressionBeginLine = 0;
 	bool inExpression = false;

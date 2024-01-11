@@ -73,10 +73,7 @@ bool Parser::parse(Tokenizer& tokens, std::shared_ptr <Node> root)
 	// If there is still unterminated opening brackets, show an error.
 	if(!openingBrackets.empty())
 	{
-		auto& at = openingBrackets.top();
-		events.emit(ErrorMessage(std::string("Unterminated opening bracket ") + at.getString(), at));
-
-		return false;
+		return unterminatedBracket(openingBrackets.top());
 	}
 
 	// If there's an unfinished expression, finish it.
@@ -90,8 +87,6 @@ bool Parser::parse(Tokenizer& tokens, std::shared_ptr <Node> root)
 
 bool Parser::parseToken(Token& token, Tokenizer& tokens, bool breakExpressionOnNewline)
 {
-	events.emit(DebugMessage("Token: " + token.getString(), token));
-
 	// If an expression that's outside brackets is active and the current token
 	// is not on the same line where the expression began, end the expression.
 	if(inExpression && breakExpressionOnNewline && token.getRow() > expressionBeginLine)
@@ -173,8 +168,6 @@ bool Parser::handleBracketToken(Token& token, Tokenizer& tokens)
 						case '(':
 						{
 							auto call = std::make_shared <CallOperator> (token);
-
-							events.emit(DebugMessage(std::string(currentNode->getTypeString()) + " handles call operator", token));
 							if(!currentNode->as <Expression> ()->handleExpressionNode(call, *this))
 							{
 								return false;
@@ -182,7 +175,7 @@ bool Parser::handleBracketToken(Token& token, Tokenizer& tokens)
 
 							// The call target is the cached value or the expression of the call operator
 							// that became the current node after a call to handleExpressionNode().
-							auto target = cachedValue ? cachedValue : currentNode->as <OneSidedOperator> ()->stealMostRecentValue();
+							auto target = cachedValue ? std::move(cachedValue) : currentNode->as <OneSidedOperator> ()->stealMostRecentValue();
 
 							call->setTarget(std::move(target));
 							assert(call->getTarget());
@@ -200,7 +193,13 @@ bool Parser::handleBracketToken(Token& token, Tokenizer& tokens)
 					isPreviousTokenValue = false;
 				}
 
-				events.emit(DebugMessage("Start a subexpression", token));
+				events.emit(DebugMessage("Begin a subexpression", token));
+
+				// TODO: Handle "{" inside an expression. It could define a tuple.
+				if(token[0] == '{')
+				{
+					return todo("Curly braces inside expressions");
+				}
 
 				// Store the old current node and create a temporary one for the subexpression.
 				auto oldCurrent = currentNode;
@@ -223,6 +222,13 @@ bool Parser::handleBracketToken(Token& token, Tokenizer& tokens)
 					{
 						return false;
 					}
+				}
+
+				// If there are still more opening brackets than at the beginning of the
+				// subexpression, show an error message and exit.
+				if(openingBrackets.size() > oldOpeners)
+				{
+					return unterminatedBracket(openingBrackets.top());
 				}
 
 				// In order to continue the expression outside brackets, update the beginning line.
@@ -312,8 +318,9 @@ bool Parser::handleBracketToken(Token& token, Tokenizer& tokens)
 			// Close the innermost opener bracket.
 			openingBrackets.pop();
 
-			// When a scope ends, switch to the parent scope.
-			if(token[0] == '}')
+			// When a closing curly brace is found and an expression is not active,
+			// it indicates a scope closing indicating that the current node should switch to the parent.
+			if(!inExpression && token[0] == '}')
 			{
 				// Make sure that the current node is the current scope.
 				if(currentNode->type != Node::Type::ScopeDefinition)
@@ -370,7 +377,8 @@ bool Parser::parseFunction(Token& token, Tokenizer& tokens)
 		return false;
 	}
 
-	Token name = token;
+	// Create a function definition node.
+	addNode(std::make_shared <FunctionDefinition> (token));
 
 	if(!getNextToken(tokens, token))
 	{
@@ -392,10 +400,8 @@ bool Parser::parseFunction(Token& token, Tokenizer& tokens)
 		return false;
 	}
 
-	// Create a function definition node.
-	addNode(std::make_shared <FunctionDefinition> (name));
-
-	// Begin the parameter initialization expression.
+	// After opening the bracket, begin an initialization root for parameters.
+	// The order is this in order to prevent erroring out on empty brackets.
 	beginExpression(std::make_shared <InitializationRoot> (token, InitializationRoot::Type::Parameter));
 
 	// While the parameter parenthesis are open, parse the parameters.
@@ -455,6 +461,7 @@ bool Parser::parseFunction(Token& token, Tokenizer& tokens)
 			// If no expression is active, begin one.
 			if(!inExpression)
 			{
+				events.emit(DebugMessage("Initialize an expression for an explicit return type", token));
 				beginExpression(std::make_shared <ExplicitReturnType> (token));
 			}
 
@@ -759,6 +766,12 @@ bool Parser::handleExpressionToken(Token& token)
 	}
 
 	return true;
+}
+
+bool Parser::unterminatedBracket(Token at)
+{
+	events.emit(ErrorMessage(std::string("Unterminated bracket ") + at.getString(), at));
+	return false;
 }
 
 void Parser::setCurrentNode(std::shared_ptr <Node> node)

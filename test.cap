@@ -1,16 +1,8 @@
-var pi = 3
-
-type string
-{
-	type nested
-	{
-		var a = 564837
-	}
-}
+type string {}
 
 type StringList
 {
-	func get(index = int64) string.nested.a
+	func get(index = int64) typeof()
 	{
 	}
 }
