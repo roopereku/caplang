@@ -25,17 +25,28 @@ class Validator
 public:
 	Validator(EventEmitter& events);
 
+	// TODO: Make this take a SourceFile parameter instead of a node.
 	bool validate(std::shared_ptr <Node> root);
 
-private:
+	/// Resolves a definition pointed at by node.
+	///
+	/// \param node The expression pointing to a definition.
+	/// \return The resolved definition or nullptr.
+	std::shared_ptr <Node> resolveDefinition(std::shared_ptr <Expression> node);
+
+	EventEmitter& events;
+
+	// Validates the given node.
+	//
+	// \param The node to validate.
+	// \return True if succesful.
 	bool validateNode(std::shared_ptr <Node> node);
+
+private:
 	bool validateExpression(std::shared_ptr <Expression> node);
 	bool validateExpressionRoot(std::shared_ptr <ExpressionRoot> node);
 	bool validateOperator(std::shared_ptr <Operator> node);
 	bool validateScope(std::shared_ptr <ScopeDefinition> node);
-
-	/// Resolves a definition pointed at by node. Calls resolveAccess or getDefinition.
-	std::shared_ptr <Node> resolveDefinition(std::shared_ptr <Expression> node);
 
 	/// Recursively resolves the result of an access operator.
 	std::shared_ptr <Node> resolveAccess(std::shared_ptr <TwoSidedOperator> node);
@@ -50,7 +61,6 @@ private:
 
 	/// Holds unvalidated definitions that are being used in an expression.
 	std::deque <std::shared_ptr <Node>> inValidation;
-	EventEmitter& events;
 };
 
 }

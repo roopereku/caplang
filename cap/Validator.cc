@@ -6,6 +6,9 @@
 #include <cap/node/TwoSidedOperator.hh>
 #include <cap/node/OneSidedOperator.hh>
 #include <cap/node/VariableDefinition.hh>
+#include <cap/node/FunctionDefinition.hh>
+#include <cap/node/FunctionSignature.hh>
+#include <cap/node/PrimitiveType.hh>
 
 #include <cap/event/ErrorMessage.hh>
 #include <cap/event/DebugMessage.hh>
@@ -150,7 +153,7 @@ bool Validator::validateExpression(std::shared_ptr <Expression> node)
 			// The non-identifier token should be conversible to a primitive type.
 			else
 			{
-				auto primitiveType = TypeDefinition::getPrimitive(node->token);
+				auto primitiveType = PrimitiveType::fromToken(node->token);
 
 				if(!primitiveType)
 				{
@@ -184,20 +187,6 @@ bool Validator::validateExpressionRoot(std::shared_ptr <ExpressionRoot> node)
 
 	// Set the result type of the expression root.
 	node->setResultType(node->getRoot()->getResultType().lock());
-
-	// If the node is an explicit return type, attach the return type to the associated function.
-	if(node->type == ExpressionRoot::Type::ExplicitReturnType)
-	{
-		auto scope = getCurrentScope(node);
-		assert(scope->type == ScopeDefinition::Type::FunctionDefinition);
-
-		events.emit(ErrorMessage("Unimplemented: associate explicit return type with function", node->token));
-		return false;
-
-		// TODO: After setting the return type, remove the explicit return type node
-		// from the parent function so that it won't appear in the final AST.
-	}
-
 	return true;
 }
 
@@ -251,8 +240,10 @@ bool Validator::validateOperator(std::shared_ptr <Operator> node)
 		case Operator::Type::OneSided:
 		{
 			auto oneSided = node->as <OneSidedOperator> ();
+			bool resultFromExpression = true;
 
-			// If this is a call operator, get the call target.
+			// If this is a call operator, resolve the call target and use the
+			// function return type as the result type of this operator node.
 			if(oneSided->type == OneSidedOperator::Type::Call)
 			{
 				events.emit(ErrorMessage("Resolve target of call operator", node->token));
@@ -262,6 +253,19 @@ bool Validator::validateOperator(std::shared_ptr <Operator> node)
 				{
 					return false;
 				}
+
+				// TODO: Support other callables.
+				if(definition->type != Node::Type::ScopeDefinition ||
+					definition->as <ScopeDefinition> ()->type != ScopeDefinition::Type::FunctionDefinition)
+				{
+					events.emit(ErrorMessage("Unable to call non-function", node->token));
+					return false;
+				}
+
+				// Get the return type and set it as the call operator result type.
+				auto returnType = definition->as <FunctionDefinition> ()->getSignature()->getReturnType();
+				node->setResultType(returnType);
+				resultFromExpression = false;
 			}
 
 			else if(oneSided->type == OneSidedOperator::Type::Subscript)
@@ -276,10 +280,12 @@ bool Validator::validateOperator(std::shared_ptr <Operator> node)
 			}
 
 			// Use the type of the expression node.
-			node->setResultType(oneSided->getExpression()->getResultType().lock());
+			if(resultFromExpression)
+			{
+				node->setResultType(oneSided->getExpression()->getResultType().lock());
+			}
 
 			// TODO: Make sure that the expression node supports the given operator.
-
 			break;
 		}
 	}
@@ -390,19 +396,19 @@ std::shared_ptr <Node> Validator::resolveAccess(std::shared_ptr <TwoSidedOperato
 	}
 
 	assert(context);
-
-	node->setResultType(context->as <TypeDefinition> ());
 	node->getLeft()->setResultType(context);
 
 	// Now that the type pointed at by the left side is known, find the definition
 	// pointed at by the right side using the left side as the context.
 	auto rightDefinition = getDefinition(node->getRight()->as <Value> (), context);
-
 	node->getRight()->setResultType(getDefinitionType(rightDefinition));
+
 	if(node->getRight()->getResultType().expired())
 	{
 		return nullptr;
 	}
+
+	node->setResultType(node->getRight()->getResultType().lock());
 
 	return rightDefinition;
 }
@@ -505,12 +511,18 @@ std::shared_ptr <TypeDefinition> Validator::getDefinitionType(std::shared_ptr <N
 
 	else if(definition->type == Node::Type::ScopeDefinition)
 	{
-		// For functions use the return type.
+		// For functions return the signature.
 		if(definition->as <ScopeDefinition> ()->type == ScopeDefinition::Type::FunctionDefinition)
 		{
-			// FIXME: Return an actual type instead of an int.
-			events.emit(ErrorMessage("NOTE: Defaulting function type to int ", definition->token));
-			return TypeDefinition::getPrimitive(Token(Token::Type::Integer, "", 0, 0));
+			auto function = definition-> as <FunctionDefinition> ();
+
+			if(!function->getSignature() && !function->initializeSignature(*this))
+			{
+				return nullptr;
+			}
+
+			events.emit(DebugMessage("Return a function signature", definition->token));
+			return function->getSignature();
 		}
 	}
 

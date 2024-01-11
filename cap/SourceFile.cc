@@ -3,6 +3,8 @@
 #include <cap/Validator.hh>
 #include <cap/Parser.hh>
 
+#include <cap/node/PrimitiveType.hh>
+
 #include <cap/event/DebugMessage.hh>
 
 #include <fstream>
@@ -61,7 +63,7 @@ bool SourceFile::prepare(EventEmitter& events)
 	Parser parser(events);
 
 	// Make sure that the primitive types are adopted by the shared scope.
-	TypeDefinition::ensurePrimitivesAdopted();
+	PrimitiveType::ensurePrimitivesRegistered();
 
 	// Create the global scope for this source file and attach it to the shared scope.
 	global = std::make_shared <ScopeDefinition> ();

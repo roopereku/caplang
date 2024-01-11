@@ -9,22 +9,31 @@ namespace cap
 class TypeDefinition : public ScopeDefinition
 {
 public:
-	TypeDefinition(Token name) : ScopeDefinition(Type::TypeDefinition, name)
+	enum class Type
+	{
+		FunctionSignature,
+		PrimitiveType,
+		CustomType
+	};
+
+	/// Initializes a TypeDefinition with the given type.
+	/// \param name The type name.
+	/// \param type The type definition type.
+	TypeDefinition(Token name, Type type)
+		: ScopeDefinition(ScopeDefinition::Type::TypeDefinition, name), type(type)
 	{
 	}
 
-	TypeDefinition(Token name, size_t size)
-		: ScopeDefinition(Type::TypeDefinition, name), size(size)
+	/// Initializes a TypeDefinition using CustomType.
+	/// \param name The type name.
+	/// \param type The type definition type.
+	TypeDefinition(Token name)
+		: ScopeDefinition(ScopeDefinition::Type::TypeDefinition, name), type(Type::CustomType)
 	{
 	}
-
-	static std::shared_ptr <TypeDefinition> getPrimitive(Token token);
-
-	/// Ensures that primitive types are adopted by the shared scope.
-	static void ensurePrimitivesAdopted();
 
 private:
-	size_t size = 0;
+	Type type;
 };
 
 }

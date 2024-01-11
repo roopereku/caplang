@@ -1,13 +1,18 @@
-#include <cap/node/TypeDefinition.hh>
+#include <cap/node/PrimitiveType.hh>
 
 namespace cap
 {
 
-static std::shared_ptr <TypeDefinition> int64 = std::make_shared <TypeDefinition> (
+static std::shared_ptr <PrimitiveType> int64 = std::make_shared <PrimitiveType> (
 	Token(Token::Type::Identifier, "int64", 0, 0), 8
 );
 
-std::shared_ptr <TypeDefinition> TypeDefinition::getPrimitive(Token token)
+PrimitiveType::PrimitiveType(Token name, size_t size)
+	: TypeDefinition(name, TypeDefinition::Type::PrimitiveType)
+{
+}
+
+std::shared_ptr <TypeDefinition> PrimitiveType::fromToken(const Token& token)
 {
 	switch(token.getType())
 	{
@@ -22,7 +27,7 @@ std::shared_ptr <TypeDefinition> TypeDefinition::getPrimitive(Token token)
 	}
 }
 
-void TypeDefinition::ensurePrimitivesAdopted()
+void PrimitiveType::ensurePrimitivesRegistered()
 {
 	auto adoptPrimitive = [](std::shared_ptr <TypeDefinition> node)
 	{
