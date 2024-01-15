@@ -7,6 +7,10 @@ static std::shared_ptr <PrimitiveType> int64 = std::make_shared <PrimitiveType> 
 	Token(Token::Type::Identifier, "int64", 0, 0), 8
 );
 
+static std::shared_ptr <PrimitiveType> voidType = std::make_shared <PrimitiveType> (
+	Token(Token::Type::Identifier, "void", 0, 0), 0
+);
+
 PrimitiveType::PrimitiveType(Token name, size_t size)
 	: TypeDefinition(name, TypeDefinition::Type::PrimitiveType)
 {
@@ -25,6 +29,11 @@ std::shared_ptr <TypeDefinition> PrimitiveType::fromToken(const Token& token)
 
 		default: return nullptr;
 	}
+}
+
+std::shared_ptr <TypeDefinition> PrimitiveType::getVoid()
+{
+	return voidType;
 }
 
 void PrimitiveType::ensurePrimitivesRegistered()
@@ -50,6 +59,7 @@ void PrimitiveType::ensurePrimitivesRegistered()
 	if(!adopted)
 	{
 		adoptPrimitive(int64);
+		adoptPrimitive(voidType);
 
 		adopted = true;
 	}

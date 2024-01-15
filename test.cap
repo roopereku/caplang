@@ -1,41 +1,8 @@
-/* Beginning */
-// Start validating foo -> No recursion so don't track it yet.
-
-/* In foo */
-// See return call of bar.
-// Recursively start validating bar -> track it in inValidation.
-
-/* In Bar */
-// See return call of foo
-// Recursively start validating foo -> track it in inValidation
-
-/* In foo */
-// See return call of bar -> bar is already being validated so it can be skipped.
-// See return of 10 -> Set return type to int64
-// Exit foo validation
-
-/* In Bar */
-// Foo returns int64 -> Set return type to int64
-// Exit bar validation
-
-/* In foo */
-// Bar returns int64 -> Return type is int64 from previous validation -> ensure consistency
-// See return of 10 -> Return type is int64 from previous validation -> ensure consistency
-// Exit foo validation
-
-type string
-{
+// Implicitly void
+func foo() {
+	foo()
 }
 
-func foo()
-{
-	return 100
-
+func bar() {
 	return bar()
 }
-
-func bar()
-{
-	return foo()
-}
-

@@ -20,12 +20,19 @@ public:
 	/// Sets the the return type of this signature.
 	///
 	/// \param node The return type.
-	void setReturnType(std::shared_ptr <TypeDefinition> node);
+	/// \param isExplicit Indicates whether the return type is explicit.
+	void setReturnType(std::shared_ptr <TypeDefinition> node, bool isExplicit = false);
+
+	/// Checks whether the return type is explicit.
+	///
+	/// \return True if the return type is explicit.
+	bool isReturnTypeExplicit();
 
 	friend class FunctionDefinition;
 
 private:
 	std::shared_ptr <TypeDefinition> returnType;
+	bool returnTypeExplicit = false;
 };
 
 }

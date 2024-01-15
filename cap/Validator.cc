@@ -215,11 +215,22 @@ bool Validator::validateExpressionRoot(std::shared_ptr <ExpressionRoot> node)
 			auto signature = scope->as <FunctionDefinition> ()->getSignature();
 			auto resultType = node->getResultType().lock();
 
-			// Make sure that the result type matches the current return type if any.
-			if(signature->getReturnType() && signature->getReturnType() != resultType)
+			// Disallow returning a void type.
+			if(resultType == PrimitiveType::getVoid())
 			{
-				events.emit(ErrorMessage("Mismatching return type", node->token));
+				events.emit(ErrorMessage("Void used with return", node->token));
 				return false;
+			}
+
+			// Only if the return type is explicitly set and isn't an implicit void, ensure the type matches.
+			if(signature->isReturnTypeExplicit() || signature->getReturnType() != PrimitiveType::getVoid())
+			{
+				// Make sure that the result type matches the current return type if any.
+				if(signature->getReturnType() && signature->getReturnType() != resultType)
+				{
+					events.emit(ErrorMessage("Mismatching return type", node->token));
+					return false;
+				}
 			}
 
 			// Set or update the return type.
@@ -240,7 +251,7 @@ bool Validator::validateExpressionRoot(std::shared_ptr <ExpressionRoot> node)
 
 		// Set the function return type to the type of the explicit return type.
 		auto signature = scope->as <FunctionDefinition> ()->getSignature();
-		signature->setReturnType(node->getResultType().lock());
+		signature->setReturnType(node->getResultType().lock(), true);
 	}
 
 	return true;

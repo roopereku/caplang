@@ -17,6 +17,11 @@ public:
 	/// \return The primitive type or nullptr.
 	static std::shared_ptr <TypeDefinition> fromToken(const Token& token);
 
+	/// Retrives the void type.
+	///
+	/// \return The void type.
+	static std::shared_ptr <TypeDefinition> getVoid();
+
 	/// Ensures that primitive types are adopted by the shared scope.
 	static void ensurePrimitivesRegistered();
 
