@@ -17,6 +17,11 @@ public:
 	/// \return The return type specified in this signature.
 	std::shared_ptr <TypeDefinition> getReturnType();
 
+	/// Sets the the return type of this signature.
+	///
+	/// \param node The return type.
+	void setReturnType(std::shared_ptr <TypeDefinition> node);
+
 	friend class FunctionDefinition;
 
 private:

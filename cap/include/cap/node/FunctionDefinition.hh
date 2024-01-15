@@ -16,7 +16,7 @@ public:
 	FunctionDefinition(Token name);
 
 	std::shared_ptr <FunctionSignature> getSignature();
-	bool initializeSignature(Validator& validator);
+	bool validate(Validator& validator);
 
 	const char* getTypeString() override
 	{

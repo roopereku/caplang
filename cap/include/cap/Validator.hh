@@ -53,6 +53,8 @@ private:
 
 	std::shared_ptr <ScopeDefinition> getCurrentScope(std::shared_ptr <Node> root);
 
+	std::shared_ptr <ScopeDefinition> getCurrentNamedScope(std::shared_ptr <Node> root);
+
 	/// Locates a definition within the given context with the name pointed at by a value node.
 	std::shared_ptr <Node> getDefinition(std::shared_ptr <Value> node,
 										std::shared_ptr <ScopeDefinition> context);

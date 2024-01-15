@@ -196,6 +196,53 @@ bool Validator::validateExpressionRoot(std::shared_ptr <ExpressionRoot> node)
 
 	// Set the result type of the expression root.
 	node->setResultType(node->getRoot()->getResultType().lock());
+
+	// Return statements might initialize a function return type.
+	if(node->type == ExpressionRoot::Type::ReturnStatement)
+	{
+		// The current named scope has to be a function for return statements.
+		auto scope = getCurrentNamedScope(node);
+		if(scope->type != ScopeDefinition::Type::FunctionDefinition)
+		{
+			events.emit(ErrorMessage("Return statement outside a function", node->token));
+			return false;
+		}
+
+		// If the expression of the return doesn't return any type, don't do checks.
+		// Such could happen when an incomplete function is called.
+		if(!node->getResultType().expired())
+		{
+			auto signature = scope->as <FunctionDefinition> ()->getSignature();
+			auto resultType = node->getResultType().lock();
+
+			// Make sure that the result type matches the current return type if any.
+			if(signature->getReturnType() && signature->getReturnType() != resultType)
+			{
+				events.emit(ErrorMessage("Mismatching return type", node->token));
+				return false;
+			}
+
+			// Set or update the return type.
+			signature->setReturnType(resultType);
+		}
+	}
+
+	// Explicit return types define the required the return type.
+	else if(node->type == ExpressionRoot::Type::ExplicitReturnType)
+	{
+		// The current named scope has to be a function for explicit return types.
+		auto scope = getCurrentNamedScope(node);
+		if(scope->type != ScopeDefinition::Type::FunctionDefinition)
+		{
+			events.emit(ErrorMessage("BUG: Explicit return type in a non-function", node->token));
+			return false;
+		}
+
+		// Set the function return type to the type of the explicit return type.
+		auto signature = scope->as <FunctionDefinition> ()->getSignature();
+		signature->setReturnType(node->getResultType().lock());
+	}
+
 	return true;
 }
 
@@ -271,11 +318,14 @@ bool Validator::validateOperator(std::shared_ptr <Operator> node)
 					return false;
 				}
 
-				// getDefinitionType returns a function signature when given a function.
-				auto signature = getDefinitionType(definition)->as <FunctionSignature> ();
+				auto signature = getDefinitionType(definition);
+				if(!signature)
+				{
+					return false;
+				}
 
 				// The result type of the call operator becomes the return value of the function.
-				auto returnType = signature->getReturnType();
+				auto returnType = signature->as <FunctionSignature> ()->getReturnType();
 				node->setResultType(returnType);
 
 				resultFromExpression = false;
@@ -313,12 +363,35 @@ bool Validator::validateOperator(std::shared_ptr <Operator> node)
 
 bool Validator::validateScope(std::shared_ptr <ScopeDefinition> node)
 {
-	if(!validateNode(node->getRoot()))
+	// If the scope is a function, do special validation.
+	if(node->type == ScopeDefinition::Type::FunctionDefinition)
 	{
-		return false;
+		auto function = node->as <FunctionDefinition> ();
+
+		// First validate the function.
+		if(!function->validate(*this))
+		{
+			return false;
+		}
+
+		// When the function validation is done, the return type should be set.
+		if(!function->getSignature()->getReturnType())
+		{
+			events.emit(ErrorMessage("Return value couldn't be deduced", node->name));
+			return false;
+		}
 	}
 
-	node->complete();
+	// For anything else just validate the root.
+	else
+	{
+		if(!validateNode(node->getRoot()))
+		{
+			return false;
+		}
+
+		node->complete();
+	}
 
 	return true;
 }
@@ -451,6 +524,19 @@ std::shared_ptr <ScopeDefinition> Validator::getCurrentScope(std::shared_ptr <No
 	return nullptr;
 }
 
+std::shared_ptr <ScopeDefinition> Validator::getCurrentNamedScope(std::shared_ptr <Node> root)
+{
+	auto scope = getCurrentScope(root);
+
+	while(scope->name == "")
+	{
+		assert(!scope->getParent().expired());
+		scope = getCurrentScope(scope->getParent().lock());
+	}
+
+	return scope;
+}
+
 std::shared_ptr <Node> Validator::getDefinition(std::shared_ptr <Value> node,
 												std::shared_ptr <ScopeDefinition> context)
 {
@@ -534,10 +620,23 @@ std::shared_ptr <TypeDefinition> Validator::getDefinitionType(std::shared_ptr <N
 		{
 			auto function = definition->as <FunctionDefinition> ();
 
-			// If no signature exists, try to initialize it.
-			if(!function->getSignature() && !function->initializeSignature(*this))
+			// If no signature exists or no return type is initialize, maybe validate the function.
+			if(!function->getSignature() || !function->getSignature()->getReturnType())
 			{
-				return nullptr;
+				auto it = std::find(inValidation.begin(), inValidation.end(), function);
+				bool isBeingValidated = it != inValidation.end();
+
+				// Only if the function isn't already in validation, try to validate it.
+				if(!isBeingValidated)
+				{
+					inValidation.emplace_back(function);
+					if(!function->validate(*this))
+					{
+						return nullptr;
+					}
+
+					inValidation.pop_back();
+				}
 			}
 
 			events.emit(DebugMessage("Return a function signature", definition->token));

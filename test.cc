@@ -108,7 +108,8 @@ private:
 
 			case cap::ExpressionRoot::Type::ReturnStatement:
 			{
-				file << indent(depth) << "Return" << '\n';
+				file << indent(depth) << "Return"
+					<< " (" << node->getResultType().lock()->name.getString() << ")\n";
 				break;
 			}
 

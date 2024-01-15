@@ -23,12 +23,15 @@
 // See return of 10 -> Return type is int64 from previous validation -> ensure consistency
 // Exit foo validation
 
+type string
+{
+}
+
 func foo()
 {
-	//if true
-		bar()
+	return 100
 
-	return 10
+	return bar()
 }
 
 func bar()

@@ -13,4 +13,9 @@ std::shared_ptr <TypeDefinition> FunctionSignature::getReturnType()
 	return returnType;
 }
 
+void FunctionSignature::setReturnType(std::shared_ptr <TypeDefinition> node)
+{
+	returnType = node;
+}
+
 }
