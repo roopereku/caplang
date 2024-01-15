@@ -127,7 +127,7 @@ bool Parser::parseToken(Token& token, Tokenizer& tokens, bool breakExpressionOnN
 	// Handle initializations.
 	else if(token == "var" || token == "alias")
 	{
-		if(!parseInitialization(token, tokens))
+		if(!parseInitialization(token))
 		{
 			return false;
 		}
@@ -136,7 +136,7 @@ bool Parser::parseToken(Token& token, Tokenizer& tokens, bool breakExpressionOnN
 	// Handle return statements.
 	else if(token == "return")
 	{
-		if(!parseReturn(token, tokens))
+		if(!parseReturn(token))
 		{
 			return false;
 		}
@@ -508,13 +508,13 @@ bool Parser::parseFunction(Token& token, Tokenizer& tokens)
 	return true;
 }
 
-bool Parser::parseInitialization(Token& token, Tokenizer& tokens)
+bool Parser::parseInitialization(Token& token)
 {
 	beginExpression(std::make_shared <InitializationRoot> (token));
 	return true;
 }
 
-bool Parser::parseReturn(Token& token, Tokenizer& tokens)
+bool Parser::parseReturn(Token& token)
 {
 	beginExpression(std::make_shared <ReturnStatement> (token));
 	return true;

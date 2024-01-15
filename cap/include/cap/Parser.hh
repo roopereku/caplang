@@ -53,8 +53,8 @@ private:
 
 	bool parseType(Token& token, Tokenizer& tokens);
 	bool parseFunction(Token& token, Tokenizer& tokens);
-	bool parseInitialization(Token& token, Tokenizer& tokens);
-	bool parseReturn(Token& token, Tokenizer& tokens);
+	bool parseInitialization(Token& token);
+	bool parseReturn(Token& token);
 
 	bool ensureInitSyntax(std::shared_ptr <Expression> node,
 						std::shared_ptr <InitializationRoot> root);
