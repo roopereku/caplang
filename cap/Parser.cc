@@ -9,7 +9,7 @@
 #include <cap/node/ExplicitReturnType.hh>
 #include <cap/node/OneSidedOperator.hh>
 #include <cap/node/TwoSidedOperator.hh>
-#include <cap/node/ExpressionRoot.hh>
+#include <cap/node/ReturnStatement.hh>
 #include <cap/node/CallOperator.hh>
 #include <cap/node/Value.hh>
 
@@ -133,7 +133,16 @@ bool Parser::parseToken(Token& token, Tokenizer& tokens, bool breakExpressionOnN
 		}
 	}
 
-	// TODO: Add statements.
+	// Handle return statements.
+	else if(token == "return")
+	{
+		if(!parseReturn(token, tokens))
+		{
+			return false;
+		}
+	}
+
+	// TODO: Add more statements.
 
 	// Anything else should be an expression.
 	else if(!handleExpressionToken(token))
@@ -502,6 +511,12 @@ bool Parser::parseFunction(Token& token, Tokenizer& tokens)
 bool Parser::parseInitialization(Token& token, Tokenizer& tokens)
 {
 	beginExpression(std::make_shared <InitializationRoot> (token));
+	return true;
+}
+
+bool Parser::parseReturn(Token& token, Tokenizer& tokens)
+{
+	beginExpression(std::make_shared <ReturnStatement> (token));
 	return true;
 }
 

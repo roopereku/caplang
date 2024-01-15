@@ -16,6 +16,7 @@ public:
 		VariableDefinition,
 		ParameterDefinition,
 		ExplicitReturnType,
+		ReturnStatement,
 		Expression
 	};
 

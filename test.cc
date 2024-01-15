@@ -6,7 +6,7 @@
 #include <cap/node/TwoSidedOperator.hh>
 #include <cap/node/VariableDefinition.hh>
 #include <cap/node/ParameterDefinition.hh>
-#include <cap/node/ExpressionRoot.hh>
+#include <cap/node/ReturnStatement.hh>
 #include <cap/node/CallOperator.hh>
 
 #include <iostream>
@@ -103,6 +103,12 @@ private:
 			case cap::ExpressionRoot::Type::Expression:
 			{
 				file << indent(depth) << "Expression" << '\n';
+				break;
+			}
+
+			case cap::ExpressionRoot::Type::ReturnStatement:
+			{
+				file << indent(depth) << "Return" << '\n';
 				break;
 			}
 
