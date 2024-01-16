@@ -6,6 +6,7 @@
 #include <cap/node/TwoSidedOperator.hh>
 #include <cap/node/VariableDefinition.hh>
 #include <cap/node/ParameterDefinition.hh>
+#include <cap/node/GenericInstantiation.hh>
 #include <cap/node/ReturnStatement.hh>
 #include <cap/node/CallOperator.hh>
 
@@ -183,7 +184,15 @@ private:
 
 			case cap::Expression::Type::Value:
 			{
-				if(node->getResultType().expired())
+				if(node->as <cap::Value> ()->isGeneric())
+				{
+					file << indent(depth) << "Generic value\n";
+
+					generateExpression(node->as <cap::GenericInstantiation> ()->target, depth + 1);
+					generateExpression(node->as <cap::GenericInstantiation> ()->argument, depth + 1);
+				}
+
+				else if(node->getResultType().expired())
 				{
 					file << indent(depth) << node->token.getTypeString() << ": " << node->token.getString() <<
 							" (No type set)\n";

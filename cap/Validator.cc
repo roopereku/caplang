@@ -100,6 +100,12 @@ bool Validator::validateExpression(std::shared_ptr <Expression> node)
 
 		case Expression::Type::Value:
 		{
+			if(node->as <Value> ()->isGeneric())
+			{
+				events.emit(DebugMessage("Unimplemented: Validation of generic values", node->token));
+				return false;
+			}
+
 			if(node->token == Token::Type::Identifier)
 			{
 				events.emit(DebugMessage("Find definition of value " + node->token.getString(), node->token));

@@ -17,6 +17,11 @@ public:
 	{
 		return "Value";
 	}
+
+	virtual bool isGeneric()
+	{
+		return false;
+	}
 };
 
 }

@@ -1,8 +1,13 @@
-// Implicitly void
-func foo() {
-	foo()
+type Nii
+{
+	var abc = 20
 }
 
-func bar() {
-	return bar()
+func GetFactorial()
+{
+}
+
+func main()
+{
+	var a = GetFactorial <Nii.abc>
 }
