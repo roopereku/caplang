@@ -229,6 +229,21 @@ bool Validator::validateExpressionRoot(std::shared_ptr <ExpressionRoot> node)
 		signature->setReturnType(node->getResultType().lock(), true);
 	}
 
+	// Make sure that there aren't multiple initilizations of the same name in the same scope.
+	else if(node->type == ExpressionRoot::Type::VariableDefinition ||
+			node->type == ExpressionRoot::Type::ParameterDefinition)
+	{
+		// If there's a definition of the same name as node, other than node
+		// that's in the same scope as node, there's a colliding initialization.
+		auto definition = getDefinition(node->token, getCurrentScope(node));
+		if(definition && definition.getReferred() != node &&
+			getCurrentScope(node) == getCurrentScope(definition.getReferred()))
+		{
+			events.emit(ErrorMessage("Colliding initialization", node->token));
+			return false;
+		}
+	}
+
 	return true;
 }
 
