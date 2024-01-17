@@ -16,7 +16,7 @@ public:
 	/// 
 	/// \param name The name of the variable definition.
 	/// \return True if the given name matches this variable.
-	bool isDefinition(Token name) override;
+	bool isDefinition(std::string_view name) override;
 
 	const char* getTypeString() override;
 

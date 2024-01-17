@@ -33,7 +33,7 @@ const char* ScopeDefinition::getTypeString()
 	return "Scope";
 }
 
-Reference ScopeDefinition::findDefinition(Token name)
+Reference ScopeDefinition::findDefinition(std::string_view name)
 {
 	auto current = root;
 
@@ -57,7 +57,7 @@ Reference ScopeDefinition::findDefinition(Token name)
 	return Reference();
 }
 
-bool ScopeDefinition::isDefinition(Token name)
+bool ScopeDefinition::isDefinition(std::string_view name)
 {
 	return this->name == name;
 }

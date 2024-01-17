@@ -45,7 +45,7 @@ public:
 	///
 	/// \param name The name of the definition.
 	/// \return True if this node is the desired definition.
-	virtual bool isDefinition(Token name);
+	virtual bool isDefinition(std::string_view name);
 
 	virtual const char* getTypeString();
 

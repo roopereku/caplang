@@ -11,7 +11,7 @@ ParameterDefinition::ParameterDefinition(std::shared_ptr <Value> name, std::shar
 {
 }
 
-bool ParameterDefinition::isDefinition(Token name)
+bool ParameterDefinition::isDefinition(std::string_view name)
 {
 	return this->name->token == name;
 }

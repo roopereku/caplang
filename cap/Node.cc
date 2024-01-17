@@ -59,7 +59,7 @@ const char* Node::getTypeString()
 	return "???";
 }
 
-bool Node::isDefinition(Token name)
+bool Node::isDefinition(std::string_view)
 {
 	return false;
 }

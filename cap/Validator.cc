@@ -110,7 +110,7 @@ bool Validator::validateExpression(std::shared_ptr <Expression> node)
 			{
 				events.emit(DebugMessage("Find definition of value " + node->token.getString(), node->token));
 
-				auto definition = getDefinition(node->as <Value> (), getCurrentScope(node));
+				auto definition = getDefinition(node->token, getCurrentScope(node));
 				if(!definition)
 				{
 					return false;
@@ -397,7 +397,7 @@ Reference Validator::resolveDefinition(std::shared_ptr <Expression> node)
 		// If the node is a value, try to find a definition from the current scope.
 		case Expression::Type::Value:
 		{
-			return getDefinition(node->as <Value> (), getCurrentScope(node));
+			return getDefinition(node->token, getCurrentScope(node));
 		}
 
 		default:
@@ -443,7 +443,7 @@ Reference Validator::resolveAccess(std::shared_ptr <TwoSidedOperator> node)
 			}
 
 			// Current scope can be assumed as this value is the first access location.
-			auto leftDefinition = getDefinition(node->getLeft()->as <Value> (), getCurrentScope(node->getLeft()));
+			auto leftDefinition = getDefinition(node->getLeft()->token, getCurrentScope(node->getLeft()));
 			context = getDefinitionType(leftDefinition);
 
 			if(!context)
@@ -476,7 +476,7 @@ Reference Validator::resolveAccess(std::shared_ptr <TwoSidedOperator> node)
 
 	// Now that the type pointed at by the left side is known, find the definition
 	// pointed at by the right side using the left side as the context.
-	auto rightDefinition = getDefinition(node->getRight()->as <Value> (), context);
+	auto rightDefinition = getDefinition(node->getRight()->token, context);
 	node->getRight()->setResultType(getDefinitionType(rightDefinition));
 
 	if(node->getRight()->getResultType().expired())
@@ -522,23 +522,22 @@ std::shared_ptr <ScopeDefinition> Validator::getCurrentNamedScope(std::shared_pt
 	return scope;
 }
 
-Reference Validator::getDefinition(std::shared_ptr <Value> node,
-												std::shared_ptr <ScopeDefinition> context)
+Reference Validator::getDefinition(Token name, std::shared_ptr <ScopeDefinition> context)
 {
-	assert(node->token.getType() == Token::Type::Identifier);
+	assert(name.getType() == Token::Type::Identifier);
 	assert(context);
 
-	events.emit(DebugMessage("Find definition " + node->token.getString() + " from " + context->name.getString(), node->token));
+	events.emit(DebugMessage("Find definition " + name.getString() + " from " + context->name.getString(), name));
 
 	// Try to find the definition in the current scope or one of its parents.
-	auto definition = context->findDefinition(node->token);
+	auto definition = context->findDefinition(name.getStringView());
 	if(!definition)
 	{
-		events.emit(ErrorMessage("Unknown identifier " + node->token.getString(), node->token));
+		events.emit(ErrorMessage("Unknown identifier " + name.getString(), name));
 		return Reference();
 	}
 
-	events.emit(DebugMessage("Found definition " + node->token.getString() + + " " + definition.getTypeString(), node->token));
+	events.emit(DebugMessage("Found definition " + name.getString() + + " " + definition.getTypeString(), name));
 	return Reference(definition);
 }
 

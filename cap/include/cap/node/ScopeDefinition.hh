@@ -22,7 +22,7 @@ public:
 	ScopeDefinition(Type type, Token name);
 	ScopeDefinition();
 
-	Reference findDefinition(Token name);
+	Reference findDefinition(std::string_view name);
 
 	std::shared_ptr <Node> getRoot() const;
 	void initializeRoot(std::shared_ptr <Node>&& node);
@@ -35,7 +35,7 @@ public:
 	///
 	/// \param name The name of the definition.
 	/// \return True if the name of this scope matches the given name.
-	bool isDefinition(Token name) override;
+	bool isDefinition(std::string_view name) override;
 
 	/// Checks if this scope is validated.
 	///

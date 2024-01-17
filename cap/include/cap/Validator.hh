@@ -57,8 +57,7 @@ private:
 	std::shared_ptr <ScopeDefinition> getCurrentNamedScope(std::shared_ptr <Node> root);
 
 	/// Locates a definition within the given context with the name pointed at by a value node.
-	Reference getDefinition(std::shared_ptr <Value> node,
-										std::shared_ptr <ScopeDefinition> context);
+	Reference getDefinition(Token name, std::shared_ptr <ScopeDefinition> context);
 
 	std::shared_ptr <TypeDefinition> getDefinitionType(Reference reference);
 

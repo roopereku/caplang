@@ -11,7 +11,7 @@ VariableDefinition::VariableDefinition(std::shared_ptr <Value> name, std::shared
 {
 }
 
-bool VariableDefinition::isDefinition(Token name)
+bool VariableDefinition::isDefinition(std::string_view name)
 {
 	return this->name->token == name;
 }
