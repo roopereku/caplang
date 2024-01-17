@@ -43,6 +43,11 @@ public:
 	/// \return The referred node.
 	std::shared_ptr <Node> getReferred();
 
+	/// Gets the name of the referred node if any.
+	///
+	/// \return The name of the referred node or an invalid token.
+	Token getReferredName();
+
 	/// Gets the reference type.
 	///
 	/// \return The reference type.

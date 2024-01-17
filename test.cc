@@ -38,19 +38,19 @@ private:
 		{
 			case cap::ScopeDefinition::Type::FunctionDefinition:
 			{
-				file << indent(depth) << "Function: " << node->name.getString() << '\n';
+				file << indent(depth, node) << "Function: " << node->name.getString() << '\n';
 				break;
 			}
 
 			case cap::ScopeDefinition::Type::TypeDefinition:
 			{
-				file << indent(depth) << "Type: " << node->name.getString() << '\n';
+				file << indent(depth, node) << "Type: " << node->name.getString() << '\n';
 				break;
 			}
 
 			case cap::ScopeDefinition::Type::None:
 			{
-				file << indent(depth) << "Scope\n";
+				file << indent(depth, node) << "Scope\n";
 				break;
 			}
 		}
@@ -70,15 +70,7 @@ private:
 
 	void generateOperator(std::shared_ptr <cap::Operator> node, unsigned depth)
 	{
-		if(node->getResultType().expired())
-		{
-			file << indent(depth) << node->getTypeString() << '\n';
-		}
-
-		else
-		{
-			file << indent(depth) << node->getTypeString() << " (" << node->getResultType().lock()->name.getString() << ")\n";
-		}
+		file << indent(depth, node) << node->getTypeString() << detailString(node);
 
 		switch(node->type)
 		{
@@ -103,67 +95,39 @@ private:
 		{
 			case cap::ExpressionRoot::Type::Expression:
 			{
-				file << indent(depth) << "Expression" << '\n';
+				file << indent(depth, node) << "Expression " << detailString(node);
 				break;
 			}
 
 			case cap::ExpressionRoot::Type::ReturnStatement:
 			{
-				file << indent(depth) << "Return"
-					<< " (" << node->getResultType().lock()->name.getString() << ")\n";
+				file << indent(depth, node) << "Return " << detailString(node);
 				break;
 			}
 
 			case cap::ExpressionRoot::Type::InitializationRoot:
 			{
-				file << indent(depth) << "Initialization: " << node->token.getString() << '\n';
+				file << indent(depth, node) << "Initialization: " << node->token.getString() << '\n';
 				break;
 			}
 
 			case cap::ExpressionRoot::Type::ExplicitReturnType:
 			{
-				if(node->getResultType().expired())
-				{
-					file << indent(depth) << "Explicit return type\n";
-				}
-
-				else
-				{
-					file << indent(depth) << "Explicit return type"
-						<< " (" << node->getResultType().lock()->name.getString() << ")\n";
-				}
-
+				file << indent(depth, node) << "Explicit return type " << detailString(node);
 				break;
 			}
 
 			case cap::ExpressionRoot::Type::VariableDefinition:
 			{
-				if(node->getResultType().expired())
-				{
-					file << indent(depth) << "Variable: " << node->as <cap::VariableDefinition> ()->name->token.getString() << '\n';
-				}
-
-				else
-				{
-					file << indent(depth) << "Variable: " << node->as <cap::VariableDefinition> ()->name->token.getString()
-						<< " (" << node->getResultType().lock()->name.getString() << ")\n";
-				}
-
+				file << indent(depth, node) << "Variable: " << node->as <cap::VariableDefinition> ()->name->token.getString()
+					<< ' ' << detailString(node);
 				break;
 			}
 
 			case cap::ExpressionRoot::Type::ParameterDefinition:
 			{
-				if(node->getResultType().expired())
-				{
-					file << indent(depth) << "Parameter: " << node->as <cap::ParameterDefinition> ()->name->token.getString() << '\n';
-				}
-
-				else
-				{
-					file << indent(depth) << "Parameter: " << node->as <cap::ParameterDefinition> ()->name->token.getString()
-						<< " (" << node->getResultType().lock()->name.getString() << ")\n";
-				}
+				file << indent(depth, node) << "Parameter: " << node->as <cap::ParameterDefinition> ()->name->token.getString()
+					<< ' ' << detailString(node);
 
 				break;
 			}
@@ -186,23 +150,14 @@ private:
 			{
 				if(node->as <cap::Value> ()->isGeneric())
 				{
-					file << indent(depth) << "Generic value\n";
+					file << indent(depth, node) << "Generic value\n";
 
 					generateNode(node->as <cap::GenericInstantiation> ()->target, depth + 1);
 					generateNode(node->as <cap::GenericInstantiation> ()->getArguments(), depth + 1);
 				}
 
-				else if(node->getResultType().expired())
-				{
-					file << indent(depth) << node->token.getTypeString() << ": " << node->token.getString() <<
-							" (No type set)\n";
-				}
-
-				else
-				{
-					file << indent(depth) << node->token.getTypeString() << ": " << node->token.getString() <<
-							" (" << node->getResultType().lock()->name.getString() << ")\n";
-				}
+				file << indent(depth, node) << node->token.getTypeString() << ": " << node->token.getString()
+					<< ' ' << detailString(node);
 
 				break;
 			}
@@ -226,7 +181,7 @@ private:
 		{
 			case cap::Node::Type::Empty:
 			{
-				file << indent(depth) << "Empty node\n";
+				file << indent(depth, node) << "Empty node\n";
 				break;
 			}
 
@@ -246,9 +201,43 @@ private:
 		generateNode(node->getNext(), depth);
 	}
 
-	std::string indent(unsigned depth)
+	std::string indent(unsigned depth, std::shared_ptr <cap::Node> node)
 	{
-		return std::string(depth, '*') + ' ';
+		auto indent = std::string(depth, '*');
+
+		if(node->type == cap::Node::Type::Expression &&
+			node->as <cap::Expression> ()->getReference().getReferredName().getType() != cap::Token::Type::Invalid)
+		{
+			indent += ':';
+		}
+
+		return indent + ' ';
+	}
+
+	std::string resultTypeString(std::shared_ptr <cap::Expression> node)
+	{
+		if(node->getResultType().expired())
+		{
+			return "";
+		}
+
+		return "(" + node->getResultType().lock()->name.getString() + ")";
+	}
+
+	std::string detailString(std::shared_ptr <cap::Expression> node)
+	{
+		auto detail = resultTypeString(node) + '\n';
+
+		if(node->getReference())
+		{
+			auto name = node->getReference().getReferredName();
+			if(name.getType() != cap::Token::Type::Invalid)
+			{
+				detail += "Refers to " + name.getString() + ";\n";
+			}
+		}
+
+		return detail;
 	}
 
 	std::ofstream file;

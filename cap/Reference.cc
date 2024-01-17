@@ -9,7 +9,7 @@
 namespace cap
 {
 
-Reference::Reference()
+Reference::Reference() : type(Type::None)
 {
 }
 
@@ -108,6 +108,31 @@ std::shared_ptr <TypeDefinition> Reference::getAssociatedType()
 std::shared_ptr <Node> Reference::getReferred()
 {
 	return referred;
+}
+
+Token Reference::getReferredName()
+{
+	if(referred)
+	{
+		switch(type)
+		{
+			case Type::FunctionDefinition:
+			case Type::TypeDefinition:
+			{
+				return referred->as <ScopeDefinition> ()->name;
+			}
+
+			case Type::Parameter:
+			case Type::Variable:
+			{
+				return referred->as <ExpressionRoot> ()->token;
+			}
+
+			default: {}
+		}
+	}
+
+	return Token::createInvalid();
 }
 
 Reference::Type Reference::getType()

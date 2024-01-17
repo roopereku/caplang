@@ -1,3 +1,7 @@
+type t
+{
+}
+
 func main() int64
 {
 	var a = t
