@@ -60,7 +60,7 @@ public:
 	const char* getTypeString();
 
 private:
-	std::shared_ptr <Node> referred;
+	std::weak_ptr <Node> referred;
 	Type type;
 };
 

@@ -78,7 +78,9 @@ Reference::operator bool()
 
 std::shared_ptr <TypeDefinition> Reference::getAssociatedType()
 {
-	if(!referred)
+	auto node = getReferred();
+
+	if(!node)
 	{
 		return nullptr;
 	}
@@ -89,22 +91,22 @@ std::shared_ptr <TypeDefinition> Reference::getAssociatedType()
 		case Type::Variable:
 		case Type::Alias:
 		{
-			if(referred->as <Expression> ()->getResultType().expired())
+			if(node->as <Expression> ()->getResultType().expired())
 			{
 				return nullptr;
 			}
 
-			return referred->as <ExpressionRoot> ()->getResultType().lock();
+			return node->as <ExpressionRoot> ()->getResultType().lock();
 		}
 
 		case Type::FunctionDefinition:
 		{
-			return referred->as <FunctionDefinition> ()->getSignature();
+			return node->as <FunctionDefinition> ()->getSignature();
 		}
 
 		case Type::TypeDefinition:
 		{
-			return referred->as <TypeDefinition> ();
+			return node->as <TypeDefinition> ();
 		}
 
 		case Type::None: {}
@@ -115,26 +117,27 @@ std::shared_ptr <TypeDefinition> Reference::getAssociatedType()
 
 std::shared_ptr <Node> Reference::getReferred()
 {
-	return referred;
+	return referred.expired() ? nullptr : referred.lock();
 }
 
 Token Reference::getReferredName()
 {
-	if(referred)
+	auto node = getReferred();
+	if(node)
 	{
 		switch(type)
 		{
 			case Type::FunctionDefinition:
 			case Type::TypeDefinition:
 			{
-				return referred->as <ScopeDefinition> ()->name;
+				return node->as <ScopeDefinition> ()->name;
 			}
 
 			case Type::Parameter:
 			case Type::Variable:
 			case Type::Alias:
 			{
-				return referred->as <ExpressionRoot> ()->token;
+				return node->as <ExpressionRoot> ()->token;
 			}
 
 			default: {}
