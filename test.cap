@@ -2,5 +2,5 @@ alias pi = 3
 
 func main()
 {
-	var a = pi
+	var a = pi * 380 / 180
 }

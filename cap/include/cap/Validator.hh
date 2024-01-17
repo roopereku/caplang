@@ -35,6 +35,12 @@ public:
 	/// \return The resolved definition.
 	Reference resolveDefinition(std::shared_ptr <Expression> node);
 
+	/// Gets the type of a definition.
+	///
+	/// \param reference The definition.
+	/// \return The type of the given definition if any.
+	std::shared_ptr <TypeDefinition> getDefinitionType(Reference reference);
+
 	EventEmitter& events;
 
 	// Validates the given node.
@@ -60,8 +66,6 @@ private:
 
 	/// Locates a definition within the given context with the name pointed at by a value node.
 	Reference getDefinition(Token name, std::shared_ptr <ScopeDefinition> context);
-
-	std::shared_ptr <TypeDefinition> getDefinitionType(Reference reference);
 
 	/// Holds unvalidated definitions that are being used in an expression.
 	std::deque <std::shared_ptr <Node>> inValidation;

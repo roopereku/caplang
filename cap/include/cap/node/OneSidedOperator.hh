@@ -27,6 +27,11 @@ public:
 	const char* getTypeString() override;
 	unsigned getPrecedence() override;
 
+	/// Validates this one sided operator.
+	///
+	/// \param validator The validator to use.
+	bool validate(Validator& validator) override;
+
 	std::shared_ptr <Expression> getExpression()
 	{
 		return expression;

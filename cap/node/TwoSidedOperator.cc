@@ -1,6 +1,10 @@
 #include <cap/node/OneSidedOperator.hh>
 #include <cap/node/TwoSidedOperator.hh>
 
+#include <cap/event/ErrorMessage.hh>
+
+#include <cap/Validator.hh>
+
 #include <cassert>
 
 namespace cap
@@ -162,6 +166,41 @@ std::shared_ptr <Expression> TwoSidedOperator::stealMostRecentValue()
 bool TwoSidedOperator::isComplete()
 {
 	return left && right;
+}
+
+bool TwoSidedOperator::validate(Validator& validator)
+{
+	// The access operator has a special meaning.
+	if(type == TwoSidedOperator::Type::Access)
+	{
+		validator.events.emit(ErrorMessage("Resolve access operator", token));
+		auto resultDefinition = validator.resolveDefinition(shared_from_this()->as <Expression> ());
+		if(!resultDefinition)
+		{
+			return false;
+		}
+
+		// Use the type of the right node. This is because the rightmost node
+		// contains the final access location.
+		setResultType(right->getResultType().lock());
+
+		return true;
+	}
+
+	// Try to validate both nodes of the two sided operator.
+	if(!validator.validateNode(left) ||
+		!validator.validateNode(right))
+	{
+		return false;
+	}
+
+	// Use the type of the left node.
+	setResultType(left->getResultType().lock());
+
+	// TODO: Make sure that the left node supports the given operator.
+	// TODO: Make sure that the types of left and right are compatible.
+
+	return true;
 }
 
 }

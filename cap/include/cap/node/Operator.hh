@@ -8,6 +8,8 @@
 namespace cap
 {
 
+class Validator;
+
 class Operator : public Expression
 {
 public:
@@ -24,6 +26,11 @@ public:
 
 	virtual const char* getTypeString() override = 0;
 	virtual unsigned getPrecedence() = 0;
+
+	/// Validates this operator.
+	///
+	/// \param validator The validator to use.
+	virtual bool validate(Validator& validator) = 0;
 
 	/// Handles a value.
 	///

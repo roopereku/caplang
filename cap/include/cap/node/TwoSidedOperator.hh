@@ -45,6 +45,11 @@ public:
 	const char* getTypeString() override;
 	unsigned getPrecedence() override;
 
+	/// Validates this two sided operator.
+	///
+	/// \param validator The validator to use.
+	bool validate(Validator& validator) override;
+
 	void setLeft(std::shared_ptr <Expression> value)
 	{
 		left = std::move(value);
