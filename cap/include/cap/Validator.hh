@@ -49,11 +49,13 @@ private:
 	bool validateOperator(std::shared_ptr <Operator> node);
 	bool validateScope(std::shared_ptr <ScopeDefinition> node);
 
+	bool checkNameCollision(Token name, std::shared_ptr <Node> context);
+
 	/// Recursively resolves the result of an access operator.
 	Reference resolveAccess(std::shared_ptr <TwoSidedOperator> node);
 
 	std::shared_ptr <ScopeDefinition> getCurrentScope(std::shared_ptr <Node> root);
-
+	std::shared_ptr <ScopeDefinition> getParentScope(std::shared_ptr <Node> root);
 	std::shared_ptr <ScopeDefinition> getCurrentNamedScope(std::shared_ptr <Node> root);
 
 	/// Locates a definition within the given context with the name pointed at by a value node.

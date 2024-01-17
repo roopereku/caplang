@@ -22,6 +22,7 @@ public:
 	ScopeDefinition(Type type, Token name);
 	ScopeDefinition();
 
+	Reference findDefinition(std::string_view name, std::shared_ptr <Node> exclusion);
 	Reference findDefinition(std::string_view name);
 
 	std::shared_ptr <Node> getRoot() const;

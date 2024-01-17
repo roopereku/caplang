@@ -35,12 +35,18 @@ const char* ScopeDefinition::getTypeString()
 
 Reference ScopeDefinition::findDefinition(std::string_view name)
 {
+	return findDefinition(name, nullptr);
+}
+
+Reference ScopeDefinition::findDefinition(std::string_view name, std::shared_ptr <Node> exclusion)
+{
 	auto current = root;
 
 	// Iterate through each node in this scope.
 	while(current)
 	{
-		if(current->isDefinition(name))
+		// If the current node isn't the exclusion, check if it's the definition.
+		if(exclusion != current && current->isDefinition(name))
 		{
 			return Reference(current);
 		}
@@ -51,7 +57,7 @@ Reference ScopeDefinition::findDefinition(std::string_view name)
 	// If a parent exists, check if the definition exists there.
 	if(!getParent().expired() && getParent().lock()->type == Node::Type::ScopeDefinition)
 	{
-		return getParent().lock()->as <ScopeDefinition> ()->findDefinition(name);
+		return getParent().lock()->as <ScopeDefinition> ()->findDefinition(name, exclusion);
 	}
 
 	return Reference();

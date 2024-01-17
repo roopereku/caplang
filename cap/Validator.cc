@@ -235,11 +235,8 @@ bool Validator::validateExpressionRoot(std::shared_ptr <ExpressionRoot> node)
 	{
 		// If there's a definition of the same name as node, other than node
 		// that's in the same scope as node, there's a colliding initialization.
-		auto definition = getDefinition(node->token, getCurrentScope(node));
-		if(definition && definition.getReferred() != node &&
-			getCurrentScope(node) == getCurrentScope(definition.getReferred()))
+		if(!checkNameCollision(node->token, node))
 		{
-			events.emit(ErrorMessage("Colliding initialization", node->token));
 			return false;
 		}
 	}
@@ -363,6 +360,12 @@ bool Validator::validateOperator(std::shared_ptr <Operator> node)
 
 bool Validator::validateScope(std::shared_ptr <ScopeDefinition> node)
 {
+	// Make sure that the name of the scope doesn't collide with anything.
+	if(node->name.getType() != Token::Type::Invalid && !checkNameCollision(node->name, node))
+	{
+		return false;
+	}
+
 	// If the scope is a function, do special validation.
 	if(node->type == ScopeDefinition::Type::FunctionDefinition)
 	{
@@ -524,6 +527,19 @@ std::shared_ptr <ScopeDefinition> Validator::getCurrentScope(std::shared_ptr <No
 	return nullptr;
 }
 
+std::shared_ptr <ScopeDefinition> Validator::getParentScope(std::shared_ptr <Node> root)
+{
+	auto scope = getCurrentScope(root);
+
+	// Until getCurrentScope returns something than the given root, get the scope of parent.
+	while(scope == root)
+	{
+		scope = getCurrentScope(scope->getParent().lock());
+	}
+
+	return scope;
+}
+
 std::shared_ptr <ScopeDefinition> Validator::getCurrentNamedScope(std::shared_ptr <Node> root)
 {
 	auto scope = getCurrentScope(root);
@@ -553,7 +569,7 @@ Reference Validator::getDefinition(Token name, std::shared_ptr <ScopeDefinition>
 	}
 
 	events.emit(DebugMessage("Found definition " + name.getString() + + " " + definition.getTypeString(), name));
-	return Reference(definition);
+	return definition;
 }
 
 std::shared_ptr <TypeDefinition> Validator::getDefinitionType(Reference reference)
@@ -642,6 +658,24 @@ std::shared_ptr <TypeDefinition> Validator::getDefinitionType(Reference referenc
 	}
 
 	return nullptr;
+}
+
+bool Validator::checkNameCollision(Token name, std::shared_ptr <Node> context)
+{
+	// Get the parent scope of context and check if another entity of the same name
+	// exists. The given context node is excluded so that it won't match.
+	auto containingScope = getParentScope(context);
+	auto definition = containingScope->findDefinition(name.getStringView(), context);
+
+	// If there was a match and it has the same parent scope as the
+	// context node, there are colliding initialization names.
+	if(definition && containingScope == getParentScope(definition.getReferred()))
+	{
+		events.emit(ErrorMessage("Colliding names", definition.getReferredName()));
+		return false;
+	}
+
+	return true;
 }
 
 }
