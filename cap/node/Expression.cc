@@ -31,6 +31,11 @@ void Expression::setReference(Reference ref)
 	setResultType(reference.getAssociatedType());
 }
 
+Reference Expression::getReference()
+{
+	return reference;
+}
+
 void Expression::setResultType(std::shared_ptr <TypeDefinition> node)
 {
 	resultType = node;

@@ -161,6 +161,7 @@ bool Validator::validateExpressionRoot(std::shared_ptr <ExpressionRoot> node)
 	}
 
 	// Set the result type of the expression root.
+	node->setReference(node->getRoot()->getReference());
 	node->setResultType(node->getRoot()->getResultType().lock());
 
 	// Return statements might initialize a function return type.
@@ -212,6 +213,14 @@ bool Validator::validateExpressionRoot(std::shared_ptr <ExpressionRoot> node)
 		if(scope->type != ScopeDefinition::Type::FunctionDefinition)
 		{
 			events.emit(ErrorMessage("BUG: Explicit return type in a non-function", node->token));
+			return false;
+		}
+
+		// Only allow types as an explicit return type.
+		auto referred = node->getReference();
+		if(referred.getType() != Reference::Type::TypeDefinition)
+		{
+			events.emit(ErrorMessage("Non-type used as explicit return type", node->token));
 			return false;
 		}
 

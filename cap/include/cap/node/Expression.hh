@@ -46,6 +46,11 @@ public:
 	/// \param reference What to refer to.
 	void setReference(Reference ref);
 
+	/// Gets the entity that this node refers to.
+	///
+	/// \return The entity that this node refers to.
+	Reference getReference();
+
 	/// Sets the result type.
 	///
 	/// \param node The node containing the result type.
