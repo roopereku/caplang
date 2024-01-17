@@ -1,6 +1,7 @@
 #include <cap/node/InitializationRoot.hh>
-#include <cap/node/VariableDefinition.hh>
 #include <cap/node/ParameterDefinition.hh>
+#include <cap/node/VariableDefinition.hh>
+#include <cap/node/AliasDefinition.hh>
 
 #include <cassert>
 
@@ -55,7 +56,7 @@ std::shared_ptr <ExpressionRoot> InitializationRoot::createDefinition(std::share
 
 		case Type::Alias:
 		{
-			assert(false && "Aliases not implemented");
+			definition = std::make_shared <AliasDefinition> (name, initialization);
 			break;
 		}
 	}

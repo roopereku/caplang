@@ -13,6 +13,7 @@ public:
 	enum class Type
 	{
 		InitializationRoot,
+		AliasDefinition,
 		VariableDefinition,
 		ParameterDefinition,
 		ExplicitReturnType,

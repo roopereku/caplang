@@ -1,3 +1,6 @@
-var t = 13
+alias pi = 3
 
-type t {}
+func main()
+{
+	var a = pi
+}

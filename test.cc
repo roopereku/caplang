@@ -5,6 +5,7 @@
 #include <cap/node/OneSidedOperator.hh>
 #include <cap/node/TwoSidedOperator.hh>
 #include <cap/node/VariableDefinition.hh>
+#include <cap/node/AliasDefinition.hh>
 #include <cap/node/ParameterDefinition.hh>
 #include <cap/node/GenericInstantiation.hh>
 #include <cap/node/ReturnStatement.hh>
@@ -128,7 +129,13 @@ private:
 			{
 				file << indent(depth, node) << "Parameter: " << node->as <cap::ParameterDefinition> ()->name->token.getString()
 					<< ' ' << detailString(node);
+				break;
+			}
 
+			case cap::ExpressionRoot::Type::AliasDefinition:
+			{
+				file << indent(depth, node) << "Alias: " << node->as <cap::ParameterDefinition> ()->name->token.getString()
+					<< ' ' << detailString(node);
 				break;
 			}
 		}

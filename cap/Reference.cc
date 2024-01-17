@@ -59,6 +59,13 @@ Reference::Reference(std::shared_ptr <Node> node)
 				break;
 			}
 
+			case ExpressionRoot::Type::AliasDefinition:
+			{
+				type = Type::Alias;
+				break;
+			}
+
+
 			default: {}
 		}
 	}
@@ -80,6 +87,7 @@ std::shared_ptr <TypeDefinition> Reference::getAssociatedType()
 	{
 		case Type::Parameter:
 		case Type::Variable:
+		case Type::Alias:
 		{
 			if(referred->as <Expression> ()->getResultType().expired())
 			{
@@ -124,6 +132,7 @@ Token Reference::getReferredName()
 
 			case Type::Parameter:
 			case Type::Variable:
+			case Type::Alias:
 			{
 				return referred->as <ExpressionRoot> ()->token;
 			}
@@ -148,6 +157,7 @@ const char* Reference::getTypeString()
 		case Type::TypeDefinition: return "Type";
 		case Type::Parameter: return "Parameter";
 		case Type::Variable: return "Variable";
+		case Type::Alias: return "Alias";
 		case Type::None: return "None";
 	}
 

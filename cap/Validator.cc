@@ -231,7 +231,8 @@ bool Validator::validateExpressionRoot(std::shared_ptr <ExpressionRoot> node)
 
 	// Make sure that there aren't multiple initilizations of the same name in the same scope.
 	else if(node->type == ExpressionRoot::Type::VariableDefinition ||
-			node->type == ExpressionRoot::Type::ParameterDefinition)
+			node->type == ExpressionRoot::Type::ParameterDefinition ||
+			node->type == ExpressionRoot::Type::AliasDefinition)
 	{
 		// If there's a definition of the same name as node, other than node
 		// that's in the same scope as node, there's a colliding initialization.
@@ -583,6 +584,7 @@ std::shared_ptr <TypeDefinition> Validator::getDefinitionType(Reference referenc
 	{
 		case Reference::Type::Parameter:
 		case Reference::Type::Variable:
+		case Reference::Type::Alias:
 		{
 			bool recursiveUsage = false;
 

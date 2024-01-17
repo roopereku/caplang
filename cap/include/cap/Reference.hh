@@ -17,6 +17,7 @@ public:
 	{
 		Variable,
 		Parameter,
+		Alias,
 
 		TypeDefinition,
 		FunctionDefinition,
