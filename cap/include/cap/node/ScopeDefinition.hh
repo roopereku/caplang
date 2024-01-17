@@ -7,6 +7,8 @@
 namespace cap
 {
 
+class Reference;
+
 class ScopeDefinition : public Node
 {
 public:
@@ -20,7 +22,7 @@ public:
 	ScopeDefinition(Type type, Token name);
 	ScopeDefinition();
 
-	std::shared_ptr <Node> findDefinition(Token name);
+	Reference findDefinition(Token name);
 
 	std::shared_ptr <Node> getRoot() const;
 	void initializeRoot(std::shared_ptr <Node>&& node);

@@ -102,7 +102,7 @@ bool Validator::validateExpression(std::shared_ptr <Expression> node)
 		{
 			if(node->as <Value> ()->isGeneric())
 			{
-				events.emit(DebugMessage("Unimplemented: Validation of generic values", node->token));
+				events.emit(ErrorMessage("Unimplemented: Validation of generic values", node->token));
 				return false;
 			}
 
@@ -116,47 +116,7 @@ bool Validator::validateExpression(std::shared_ptr <Expression> node)
 					return false;
 				}
 
-				switch(definition->type)
-				{
-					case Node::Type::ScopeDefinition:
-					{
-						auto definitionType = getDefinitionType(definition);
-						if(!definitionType)
-						{
-							return false;
-						}
-
-						node->setResultType(definitionType);
-						break;
-					}
-
-					case Node::Type::Expression:
-					{
-						assert(definition->as <Expression> ()->type == Expression::Type::Root);
-
-						assert(
-							definition->as <ExpressionRoot> ()->type == ExpressionRoot::Type::VariableDefinition ||
-							definition->as <ExpressionRoot> ()->type == ExpressionRoot::Type::ParameterDefinition
-						);
-
-						// Try to get the type of the variable.
-						auto definitionType = getDefinitionType(definition);
-						if(!definitionType)
-						{
-							return false;
-						}
-
-						// Use the type of a variable.
-						node->setResultType(definitionType);
-
-						break;
-					}
-
-					default:
-					{
-						assert(false);
-					}
-				}
+				node->setReference(definition);
 			}
 
 			// The non-identifier token should be conversible to a primitive type.
@@ -328,8 +288,7 @@ bool Validator::validateOperator(std::shared_ptr <Operator> node)
 				}
 
 				// TODO: Support other callables.
-				if(definition->type != Node::Type::ScopeDefinition ||
-					definition->as <ScopeDefinition> ()->type != ScopeDefinition::Type::FunctionDefinition)
+				if(definition.getType() != Reference::Type::FunctionDefinition)
 				{
 					events.emit(ErrorMessage("Unable to call non-function", node->token));
 					return false;
@@ -413,7 +372,7 @@ bool Validator::validateScope(std::shared_ptr <ScopeDefinition> node)
 	return true;
 }
 
-std::shared_ptr <Node> Validator::resolveDefinition(std::shared_ptr <Expression> node)
+Reference Validator::resolveDefinition(std::shared_ptr <Expression> node)
 {
 	switch(node->type)
 	{
@@ -423,7 +382,7 @@ std::shared_ptr <Node> Validator::resolveDefinition(std::shared_ptr <Expression>
 			assert(node->as <Operator> ()->type == Operator::Type::TwoSided);
 			assert(node->as <TwoSidedOperator> ()->type == TwoSidedOperator::Type::Access);
 
-			return resolveAccess(node->as <TwoSidedOperator> ());
+			return Reference(resolveAccess(node->as <TwoSidedOperator> ()));
 		}
 
 		// If the node is a value, try to find a definition from the current scope.
@@ -438,10 +397,10 @@ std::shared_ptr <Node> Validator::resolveDefinition(std::shared_ptr <Expression>
 		}
 	}
 
-	return nullptr;
+	return Reference();
 }
 
-std::shared_ptr <Node> Validator::resolveAccess(std::shared_ptr <TwoSidedOperator> node)
+Reference Validator::resolveAccess(std::shared_ptr <TwoSidedOperator> node)
 {
 	assert(node->type == TwoSidedOperator::Type::Access);
 	std::shared_ptr <TypeDefinition> context;
@@ -459,7 +418,7 @@ std::shared_ptr <Node> Validator::resolveAccess(std::shared_ptr <TwoSidedOperato
 
 			if(!context)
 			{
-				return nullptr;
+				return Reference();
 			}
 
 			break;
@@ -471,7 +430,7 @@ std::shared_ptr <Node> Validator::resolveAccess(std::shared_ptr <TwoSidedOperato
 			if(node->getLeft()->token.getType() != Token::Type::Identifier)
 			{
 				events.emit(ErrorMessage("Expected an identifier before dot", node->getLeft()->token));
-				return nullptr;
+				return Reference();
 			}
 
 			// Current scope can be assumed as this value is the first access location.
@@ -480,7 +439,7 @@ std::shared_ptr <Node> Validator::resolveAccess(std::shared_ptr <TwoSidedOperato
 
 			if(!context)
 			{
-				return nullptr;
+				return Reference();
 			}
 
 			break;
@@ -499,7 +458,7 @@ std::shared_ptr <Node> Validator::resolveAccess(std::shared_ptr <TwoSidedOperato
 		if(node->getRight()->token.getType() != Token::Type::Identifier)
 		{
 			events.emit(ErrorMessage("Expected an identifier after dot", node->getLeft()->token));
-			return nullptr;
+			return Reference();
 		}
 	}
 
@@ -513,7 +472,7 @@ std::shared_ptr <Node> Validator::resolveAccess(std::shared_ptr <TwoSidedOperato
 
 	if(node->getRight()->getResultType().expired())
 	{
-		return nullptr;
+		return Reference();
 	}
 
 	node->setResultType(node->getRight()->getResultType().lock());
@@ -554,7 +513,7 @@ std::shared_ptr <ScopeDefinition> Validator::getCurrentNamedScope(std::shared_pt
 	return scope;
 }
 
-std::shared_ptr <Node> Validator::getDefinition(std::shared_ptr <Value> node,
+Reference Validator::getDefinition(std::shared_ptr <Value> node,
 												std::shared_ptr <ScopeDefinition> context)
 {
 	assert(node->token.getType() == Token::Type::Identifier);
@@ -567,75 +526,67 @@ std::shared_ptr <Node> Validator::getDefinition(std::shared_ptr <Value> node,
 	if(!definition)
 	{
 		events.emit(ErrorMessage("Unknown identifier " + node->token.getString(), node->token));
-		return nullptr;
+		return Reference();
 	}
 
-	events.emit(DebugMessage("Found definition " + node->token.getString() + + " " + definition->getTypeString() + " from " + getCurrentScope(definition->getParent().lock())->name.getString(), context->token));
-
-	return definition;
+	events.emit(DebugMessage("Found definition " + node->token.getString() + + " " + definition.getTypeString(), node->token));
+	return Reference(definition);
 }
 
-std::shared_ptr <TypeDefinition> Validator::getDefinitionType(std::shared_ptr <Node> definition)
+std::shared_ptr <TypeDefinition> Validator::getDefinitionType(Reference reference)
 {
-	if(!definition)
+	if(!reference)
 	{
 		return nullptr;
 	}
 
-	// If the definition of left is an expression, make sure that it's a definition.
-	if(definition->type == Node::Type::Expression)
+	switch(reference.getType())
 	{
-		assert(definition->as <Expression> ()->type == Expression::Type::Root);
-		assert(
-			definition->as <ExpressionRoot> ()->type == ExpressionRoot::Type::VariableDefinition ||
-			definition->as <ExpressionRoot> ()->type == ExpressionRoot::Type::ParameterDefinition
-		);
-
-		bool recursiveUsage = false;
-
-		if(definition->as <VariableDefinition> ()->getResultType().expired())
+		case Reference::Type::Parameter:
+		case Reference::Type::Variable:
 		{
-			inValidation.push_back(definition);
+			bool recursiveUsage = false;
 
-			// Count how many times the definition has started validation.
-			size_t occurences = std::count(inValidation.begin(), inValidation.end(), definition);
-
-			// If there's more than one active validation, recursive initializations are being done.
-			if(occurences > 1)
+			if(!reference.getAssociatedType())
 			{
-				recursiveUsage = true;
-			}
+				inValidation.push_back(reference.getReferred());
 
-			else
-			{
-				// Try to validate the referenced variable.
-				if(!validateExpressionRoot(definition->as <VariableDefinition> ()))
+				// Count how many times the definition has started validation.
+				size_t occurences = std::count(inValidation.begin(), inValidation.end(), reference.getReferred());
+
+				// If there's more than one active validation, recursive initializations are being done.
+				if(occurences > 1)
 				{
-					return nullptr;
+					recursiveUsage = true;
 				}
 
-				// The definition should now be validated.
-				inValidation.pop_back();
+				else
+				{
+					// Try to validate the referenced initialization.
+					if(!validateExpressionRoot(reference.getReferred()->as <ExpressionRoot> ()))
+					{
+						return nullptr;
+					}
+
+					// The definition should now be validated.
+					inValidation.pop_back();
+				}
 			}
+
+			// If recursive initialization is being done, show an error.
+			if(recursiveUsage || !reference.getAssociatedType())
+			{
+				events.emit(ErrorMessage("Unable to recursively use " + reference.getReferred()->token.getString(), reference.getReferred()->token));
+				return nullptr;
+			}
+
+			// Return the type of the definition.
+			return reference.getAssociatedType();
 		}
 
-		// If recursive initialization is being done, show an error.
-		if(recursiveUsage || definition->as <Expression> ()->getResultType().expired())
+		case Reference::Type::FunctionDefinition:
 		{
-			events.emit(ErrorMessage("Unable to recursively use " + definition->token.getString(), definition->token));
-			return nullptr;
-		}
-
-		// Return the type of the definition.
-		return definition->as <Expression> ()->getResultType().lock();
-	}
-
-	else if(definition->type == Node::Type::ScopeDefinition)
-	{
-		// For functions return the signature.
-		if(definition->as <ScopeDefinition> ()->type == ScopeDefinition::Type::FunctionDefinition)
-		{
-			auto function = definition->as <FunctionDefinition> ();
+			auto function = reference.getReferred()->as <FunctionDefinition> ();
 
 			// If no signature exists or no return type is initialize, maybe validate the function.
 			if(!function->getSignature() || !function->getSignature()->getReturnType())
@@ -656,12 +607,18 @@ std::shared_ptr <TypeDefinition> Validator::getDefinitionType(std::shared_ptr <N
 				}
 			}
 
-			events.emit(DebugMessage("Return a function signature", definition->token));
 			return function->getSignature();
 		}
+
+		case Reference::Type::TypeDefinition:
+		{
+			return reference.getAssociatedType();
+		}
+
+		case Reference::Type::None: {}
 	}
 
-	return definition->as <TypeDefinition> ();
+	return nullptr;
 }
 
 }

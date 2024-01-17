@@ -798,8 +798,7 @@ bool Parser::handleExpressionToken(Token& token)
 		return false;
 	}
 
-	// Finally try to parse a generic instantiation from the current expression.
-	return GenericInstantiation::parse(*this);
+	return true;
 }
 
 bool Parser::unterminatedBracket(Token at)

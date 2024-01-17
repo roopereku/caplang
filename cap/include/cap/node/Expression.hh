@@ -2,6 +2,7 @@
 #define CAP_NODE_EXPRESSION_HH
 
 #include <cap/Node.hh>
+#include <cap/Reference.hh>
 #include <cap/node/TypeDefinition.hh>
 
 namespace cap
@@ -40,6 +41,11 @@ public:
 
 	virtual const char* getTypeString() override = 0;
 
+	/// Sets the reference of this expression node.
+	///
+	/// \param reference What to refer to.
+	void setReference(Reference ref);
+
 	/// Sets the result type.
 	///
 	/// \param node The node containing the result type.
@@ -54,6 +60,7 @@ public:
 
 private:
 	std::weak_ptr <TypeDefinition> resultType;
+	Reference reference;
 };
 
 }

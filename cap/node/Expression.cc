@@ -25,6 +25,12 @@ void Expression::replaceMostRecentValue(std::shared_ptr <Expression> node)
 	assert(false && "called Expression::replaceMostRecentValue");
 }
 
+void Expression::setReference(Reference ref)
+{
+	reference = ref;
+	setResultType(reference.getAssociatedType());
+}
+
 void Expression::setResultType(std::shared_ptr <TypeDefinition> node)
 {
 	resultType = node;

@@ -2,6 +2,7 @@
 #define CAP_VALIDATOR_HH
 
 #include <cap/Node.hh>
+#include <cap/Reference.hh>
 #include <cap/EventEmitter.hh>
 
 #include <cap/node/Operator.hh>
@@ -31,8 +32,8 @@ public:
 	/// Resolves a definition pointed at by node.
 	///
 	/// \param node The expression pointing to a definition.
-	/// \return The resolved definition or nullptr.
-	std::shared_ptr <Node> resolveDefinition(std::shared_ptr <Expression> node);
+	/// \return The resolved definition.
+	Reference resolveDefinition(std::shared_ptr <Expression> node);
 
 	EventEmitter& events;
 
@@ -49,17 +50,17 @@ private:
 	bool validateScope(std::shared_ptr <ScopeDefinition> node);
 
 	/// Recursively resolves the result of an access operator.
-	std::shared_ptr <Node> resolveAccess(std::shared_ptr <TwoSidedOperator> node);
+	Reference resolveAccess(std::shared_ptr <TwoSidedOperator> node);
 
 	std::shared_ptr <ScopeDefinition> getCurrentScope(std::shared_ptr <Node> root);
 
 	std::shared_ptr <ScopeDefinition> getCurrentNamedScope(std::shared_ptr <Node> root);
 
 	/// Locates a definition within the given context with the name pointed at by a value node.
-	std::shared_ptr <Node> getDefinition(std::shared_ptr <Value> node,
+	Reference getDefinition(std::shared_ptr <Value> node,
 										std::shared_ptr <ScopeDefinition> context);
 
-	std::shared_ptr <TypeDefinition> getDefinitionType(std::shared_ptr <Node> definition);
+	std::shared_ptr <TypeDefinition> getDefinitionType(Reference reference);
 
 	/// Holds unvalidated definitions that are being used in an expression.
 	std::deque <std::shared_ptr <Node>> inValidation;

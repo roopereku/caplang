@@ -1,5 +1,7 @@
 #include <cap/node/ScopeDefinition.hh>
 
+#include <cap/Reference.hh>
+
 namespace cap
 {
 
@@ -31,7 +33,7 @@ const char* ScopeDefinition::getTypeString()
 	return "Scope";
 }
 
-std::shared_ptr <Node> ScopeDefinition::findDefinition(Token name)
+Reference ScopeDefinition::findDefinition(Token name)
 {
 	auto current = root;
 
@@ -40,7 +42,7 @@ std::shared_ptr <Node> ScopeDefinition::findDefinition(Token name)
 	{
 		if(current->isDefinition(name))
 		{
-			return current;
+			return Reference(current);
 		}
 
 		current = current->getNext();
@@ -52,7 +54,7 @@ std::shared_ptr <Node> ScopeDefinition::findDefinition(Token name)
 		return getParent().lock()->as <ScopeDefinition> ()->findDefinition(name);
 	}
 
-	return nullptr;
+	return Reference();
 }
 
 bool ScopeDefinition::isDefinition(Token name)

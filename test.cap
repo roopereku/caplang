@@ -1,15 +1,14 @@
-type Nii
+type Foo
 {
-	var abc = 20
+	var a = 100 * Bar.a
 }
 
-func GetFactorial()
+type Bar
 {
+	var a = 50
 }
 
 func main()
 {
-	//a = 1 + GetFactorial <Nii.abc> * 2
-	var a = GetFactorial <1, 2, 3, 4>
-	var b = GetFactorial <1> * 10
+	var a = t
 }
