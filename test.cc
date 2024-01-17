@@ -188,8 +188,8 @@ private:
 				{
 					file << indent(depth) << "Generic value\n";
 
-					generateExpression(node->as <cap::GenericInstantiation> ()->target, depth + 1);
-					generateExpression(node->as <cap::GenericInstantiation> ()->argument, depth + 1);
+					generateNode(node->as <cap::GenericInstantiation> ()->target, depth + 1);
+					generateNode(node->as <cap::GenericInstantiation> ()->getArguments(), depth + 1);
 				}
 
 				else if(node->getResultType().expired())

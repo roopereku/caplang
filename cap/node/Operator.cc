@@ -106,4 +106,10 @@ bool Operator::handleExpressionNode(std::shared_ptr <Expression> node, Parser& p
 	return true;
 }
 
+void Operator::replaceMostRecentValue(std::shared_ptr <Expression> node)
+{
+	stealMostRecentValue();
+	handleValue(std::move(node));
+}
+
 }

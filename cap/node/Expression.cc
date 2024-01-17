@@ -20,6 +20,11 @@ std::shared_ptr <Expression> Expression::stealMostRecentValue()
 	assert(false && "called Expression::stealMostRecentValue");
 }
 
+void Expression::replaceMostRecentValue(std::shared_ptr <Expression> node)
+{
+	assert(false && "called Expression::replaceMostRecentValue");
+}
+
 void Expression::setResultType(std::shared_ptr <TypeDefinition> node)
 {
 	resultType = node;

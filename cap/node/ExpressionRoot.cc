@@ -53,4 +53,10 @@ bool ExpressionRoot::handleExpressionNode(std::shared_ptr <Expression> node, Par
 	return true;
 }
 
+void ExpressionRoot::replaceMostRecentValue(std::shared_ptr <Expression> node)
+{
+	root = std::move(node);
+	adopt(root);
+}
+
 }

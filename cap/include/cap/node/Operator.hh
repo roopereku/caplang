@@ -38,6 +38,11 @@ public:
 	/// \return True if succesful.
 	bool handleExpressionNode(std::shared_ptr <Expression> node, Parser& parser) final override;
 
+	/// Steals the most recent value and calls handleValue with the given node.
+	///
+	/// \param node The node to pass into handleValue.
+	void replaceMostRecentValue(std::shared_ptr <Expression> node) override;
+
 	/// Determines if the operator is complete.
 	///
 	/// \return True if the operator is complete.

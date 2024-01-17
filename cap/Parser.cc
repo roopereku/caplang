@@ -798,57 +798,8 @@ bool Parser::handleExpressionToken(Token& token)
 		return false;
 	}
 
-	const auto getTwoSided = [](std::shared_ptr <Node> node)
-	{
-		if(node->type == Node::Type::Expression &&
-			node->as <Expression> ()->type == Expression::Type::Operator &&
-			node->as <Operator> ()->type == Operator::Type::TwoSided)
-		{
-			return node->as <TwoSidedOperator> ();
-		}
-
-		return std::shared_ptr <TwoSidedOperator> (nullptr);
-	};
-
-	// If the current operator is ">", there's a chance that it's a generic instantiation.
-	auto genericCloser = getTwoSided(currentNode->as <Expression> ());
-	if(genericCloser && genericCloser->type == TwoSidedOperator::Type::GreaterThan)
-	{
-		// If the left hand side operator of ">" is "<", there is a generic instantiation.
-		// TODO: See if braces can trick this check.
-		auto genericOpener = getTwoSided(genericCloser->getLeft());
-		if(genericOpener && genericOpener->type == TwoSidedOperator::Type::LessThan)
-		{
-			// The ">" shouldn't have a right side yet.
-			assert(!genericCloser->getRight());
-
-			// There should be no cached value at this point.
-			assert(!cachedValue);
-
-			assert(genericOpener->getLeft());
-			assert(genericOpener->getRight());
-
-			// Create the instantiation and treat it as a value.
-			isPreviousTokenValue = true;
-			auto instantiation = std::make_shared <GenericInstantiation> (
-				genericOpener->getLeft(), genericOpener->getRight()
-			);
-
-			// Switch to the parent and remove ">" from the AST.
-			currentNode = currentNode->getParent().lock();
-			currentNode->as <Expression> ()->stealMostRecentValue();
-
-			// Handle the generic instantiation as a value.
-			// TODO: Handle the case of currentNode being an expression root?
-			assert(currentNode->as <Expression> ()->type == Expression::Type::Operator);
-			if(!currentNode->as <Operator> ()->handleValue(std::move(instantiation)))
-			{
-				return false;
-			}
-		}
-	}
-
-	return true;
+	// Finally try to parse a generic instantiation from the current expression.
+	return GenericInstantiation::parse(*this);
 }
 
 bool Parser::unterminatedBracket(Token at)
@@ -865,6 +816,11 @@ void Parser::setCurrentNode(std::shared_ptr <Node> node)
 std::shared_ptr <Node> Parser::getCurrentNode()
 {
 	return currentNode;
+}
+
+void Parser::previousWasValue()
+{
+	isPreviousTokenValue = true;
 }
 
 }

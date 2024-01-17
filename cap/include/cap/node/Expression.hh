@@ -33,6 +33,11 @@ public:
 	/// \return The most recent value stolen.
 	virtual std::shared_ptr <Expression> stealMostRecentValue();
 
+	/// Replaces the most recently added value.
+	///
+	/// \param The node to replace the most recent value with.
+	virtual void replaceMostRecentValue(std::shared_ptr <Expression> node);
+
 	virtual const char* getTypeString() override = 0;
 
 	/// Sets the result type.

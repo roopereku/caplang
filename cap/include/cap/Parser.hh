@@ -36,6 +36,9 @@ public:
 	/// \return The current node.
 	std::shared_ptr <Node> getCurrentNode();
 
+	/// Tells the parser that what was previously parsed is a value.
+	void previousWasValue();
+
 	/// The EventEmitter associated with this parser.
 	EventEmitter& events;
 

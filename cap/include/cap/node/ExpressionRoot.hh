@@ -47,6 +47,11 @@ public:
 	/// \return True if succesful.
 	bool handleExpressionNode(std::shared_ptr <Expression> node, Parser& parser) override;
 
+	/// Replaces the root node with the given node.
+	///
+	/// \param node The node to replace the root expression node with.
+	void replaceMostRecentValue(std::shared_ptr <Expression> node) override;
+
 	const char* getTypeString() override;
 
 	const Type type;
