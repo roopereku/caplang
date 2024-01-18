@@ -53,6 +53,10 @@ TEST(CapTest, SimpleProgram) {
 			var foo = 12 * 50
 			doSomething(foo, argc)
 		}	
+
+		func doSomething(arg1 = int64, arg2 = int64)
+		{
+		}
 	)");
 
 	// Make sure that the program compiles.
@@ -101,4 +105,21 @@ TEST(CapTest, SimpleProgram) {
 	// Make sure that foo and argc are passed to the function.
 	ASSERT_TRUE(cap::test::isIdentifier("foo", paramSeparator->getLeft()));
 	ASSERT_TRUE(cap::test::isIdentifier("argc", paramSeparator->getRight()));
+
+	// Make sure that doSomething comes after main.
+	auto doSomethingFunction = cap::test::expectFunction(mainFunction->getNext());
+	ASSERT_TRUE(doSomethingFunction);
+	ASSERT_TRUE(doSomethingFunction->name == "doSomething");
+
+	// Make sure that the arg1 parameter exists and is correct.
+	auto parameterArg1 = cap::test::expectParameter(doSomethingFunction->getRoot());
+	ASSERT_TRUE(parameterArg1);
+	ASSERT_TRUE(parameterArg1->name->token == "arg1");
+	ASSERT_TRUE(parameterArg1->getResultType().lock()->name == "int64");
+
+	// Make sure that the arg2 parameter exists and is correct.
+	auto parameterArg2 = cap::test::expectParameter(parameterArg1->getNext());
+	ASSERT_TRUE(parameterArg2);
+	ASSERT_TRUE(parameterArg2->name->token == "arg2");
+	ASSERT_TRUE(parameterArg2->getResultType().lock()->name == "int64");
 }
