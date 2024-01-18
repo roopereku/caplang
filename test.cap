@@ -5,4 +5,5 @@ func foo()
 
 func main()
 {
+	var a = foo()
 }

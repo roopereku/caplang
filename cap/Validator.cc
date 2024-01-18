@@ -215,6 +215,18 @@ bool Validator::validateExpressionRoot(std::shared_ptr <ExpressionRoot> node)
 		{
 			return false;
 		}
+
+		// Forbid assignment of void to variables and parameters.
+		if(!node->getResultType().expired() &&
+			node->getResultType().lock() == PrimitiveType::getVoid())
+		{
+			if(node->type == ExpressionRoot::Type::VariableDefinition ||
+				node->type == ExpressionRoot::Type::ParameterDefinition)
+			{
+				events.emit(ErrorMessage("Unable to initialize with void", node->token));
+				return false;
+			}
+		}
 	}
 
 	return true;
