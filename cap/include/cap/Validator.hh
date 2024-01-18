@@ -10,6 +10,7 @@
 #include <cap/node/ExpressionRoot.hh>
 #include <cap/node/ScopeDefinition.hh>
 #include <cap/node/TypeDefinition.hh>
+#include <cap/node/ReturnStatement.hh>
 #include <cap/node/InitializationRoot.hh>
 #include <cap/node/VariableDefinition.hh>
 
@@ -52,6 +53,7 @@ public:
 private:
 	bool validateExpression(std::shared_ptr <Expression> node);
 	bool validateExpressionRoot(std::shared_ptr <ExpressionRoot> node);
+	bool validateReturn(std::shared_ptr <ReturnStatement> node, bool allowVoid);
 	bool validateOperator(std::shared_ptr <Operator> node);
 	bool validateScope(std::shared_ptr <ScopeDefinition> node);
 

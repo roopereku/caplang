@@ -7,6 +7,8 @@
 namespace cap
 {
 
+class Validator;
+
 class FunctionSignature : public TypeDefinition
 {
 public:
@@ -20,19 +22,15 @@ public:
 	/// Sets the the return type of this signature.
 	///
 	/// \param node The return type.
-	/// \param isExplicit Indicates whether the return type is explicit.
-	void setReturnType(std::shared_ptr <TypeDefinition> node, bool isExplicit = false);
-
-	/// Checks whether the return type is explicit.
-	///
-	/// \return True if the return type is explicit.
-	bool isReturnTypeExplicit();
+	/// \param validator The current validator.
+	/// \return True if the return type was set succesfully.
+	bool setReturnType(std::shared_ptr <TypeDefinition> node, Validator& validator);
 
 	friend class FunctionDefinition;
 
 private:
 	std::shared_ptr <TypeDefinition> returnType;
-	bool returnTypeExplicit = false;
+	bool returnTypeIsDefault = true;
 };
 
 }

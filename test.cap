@@ -1,6 +1,8 @@
-alias pi = 3
+func foo()
+{
+	return
+}
 
 func main()
 {
-	var a = pi * 380 / 180
 }

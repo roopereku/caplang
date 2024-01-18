@@ -148,9 +148,16 @@ bool Validator::validateExpression(std::shared_ptr <Expression> node)
 
 bool Validator::validateExpressionRoot(std::shared_ptr <ExpressionRoot> node)
 {
-	// If there's no expression, do nothing
+	// If there's no root, do no validation on it.
 	if(!node->getRoot())
 	{
+		// Return with no following expression indicates an implicit void return type.
+		if(node->type == ExpressionRoot::Type::ReturnStatement)
+		{
+			node->setReference(Reference(PrimitiveType::getVoid()));
+			return validateReturn(node->as <ReturnStatement> (), true);
+		}
+
 		return true;
 	}
 
@@ -164,45 +171,10 @@ bool Validator::validateExpressionRoot(std::shared_ptr <ExpressionRoot> node)
 	node->setReference(node->getRoot()->getReference());
 	node->setResultType(node->getRoot()->getResultType().lock());
 
-	// Return statements might initialize a function return type.
+	// Handle return statements that precede a root. In this case void as a type is disallowed.
 	if(node->type == ExpressionRoot::Type::ReturnStatement)
 	{
-		// The current named scope has to be a function for return statements.
-		auto scope = getCurrentNamedScope(node);
-		if(scope->type != ScopeDefinition::Type::FunctionDefinition)
-		{
-			events.emit(ErrorMessage("Return statement outside a function", node->token));
-			return false;
-		}
-
-		// If the expression of the return doesn't return any type, don't do checks.
-		// Such could happen when an incomplete function is called.
-		if(!node->getResultType().expired())
-		{
-			auto signature = scope->as <FunctionDefinition> ()->getSignature();
-			auto resultType = node->getResultType().lock();
-
-			// Disallow returning a void type.
-			if(resultType == PrimitiveType::getVoid())
-			{
-				events.emit(ErrorMessage("Void used with return", node->token));
-				return false;
-			}
-
-			// Only if the return type is explicitly set and isn't an implicit void, ensure the type matches.
-			if(signature->isReturnTypeExplicit() || signature->getReturnType() != PrimitiveType::getVoid())
-			{
-				// Make sure that the result type matches the current return type if any.
-				if(signature->getReturnType() && signature->getReturnType() != resultType)
-				{
-					events.emit(ErrorMessage("Mismatching return type", node->token));
-					return false;
-				}
-			}
-
-			// Set or update the return type.
-			signature->setReturnType(resultType);
-		}
+		return validateReturn(node->as <ReturnStatement> (), false);
 	}
 
 	// Explicit return types define the required the return type.
@@ -226,7 +198,10 @@ bool Validator::validateExpressionRoot(std::shared_ptr <ExpressionRoot> node)
 
 		// Set the function return type to the type of the explicit return type.
 		auto signature = scope->as <FunctionDefinition> ()->getSignature();
-		signature->setReturnType(node->getResultType().lock(), true);
+		if(!signature->setReturnType(node->getResultType().lock(), *this))
+		{
+			return false;
+		}
 	}
 
 	// Make sure that there aren't multiple initilizations of the same name in the same scope.
@@ -237,6 +212,40 @@ bool Validator::validateExpressionRoot(std::shared_ptr <ExpressionRoot> node)
 		// If there's a definition of the same name as node, other than node
 		// that's in the same scope as node, there's a colliding initialization.
 		if(!checkNameCollision(node->token, node))
+		{
+			return false;
+		}
+	}
+
+	return true;
+}
+
+bool Validator::validateReturn(std::shared_ptr <ReturnStatement> node, bool allowVoid)
+{
+	// The current named scope has to be a function for return statements.
+	auto scope = getCurrentNamedScope(node);
+	if(scope->type != ScopeDefinition::Type::FunctionDefinition)
+	{
+		events.emit(ErrorMessage("Return statement outside a function", node->token));
+		return false;
+	}
+
+	// If the expression of the return doesn't return any type, don't do checks.
+	// Such could happen when an incomplete function is called.
+	if(!node->getResultType().expired())
+	{
+		auto signature = scope->as <FunctionDefinition> ()->getSignature();
+		auto resultType = node->getResultType().lock();
+
+		// Disallow returning a void type unless said otherwise.
+		if(!allowVoid && resultType == PrimitiveType::getVoid())
+		{
+			events.emit(ErrorMessage("Void used with return", node->token));
+			return false;
+		}
+
+		// Set or update the return type.
+		if(!signature->setReturnType(resultType, *this))
 		{
 			return false;
 		}
