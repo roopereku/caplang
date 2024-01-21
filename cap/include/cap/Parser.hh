@@ -39,16 +39,44 @@ public:
 	/// Tells the parser that what was previously parsed is a value.
 	void previousWasValue();
 
+	/// Begins an expression and sets the desired root as the current node.
+	///
+	/// \param root The desired root node for the expression.
+	void beginExpression(std::shared_ptr <Expression>&& root);
+
+	/// Begins an expression. Assumes that the current node is the root.
+	void beginExpression();
+
+	/// Ends an expression.
+	///
+	/// \param at The token where the expression enddd.
+	/// \return True if succesful.
+	bool endExpression(Token& at);
+
+	/// Checks if the parser is currently inside an expression.
+	///
+	/// \return True if an expression is active.
+	bool isInExpression();
+
+	/// Gets the next token excluding comments.
+	///
+	/// \param tokens The tokens to get the token from.
+	/// \result The output token.
+	bool getNextToken(Tokenizer& tokens, Token& result);
+
+	/// Parses the given token.
+	///
+	/// \param token The token to parse.
+	/// \param tokens The tokenizer to get more tokens from.
+	/// \param breakExpressionOnNewLine If true, an active expression is ended upon a newline.
+	bool parseToken(Token& token, Tokenizer& tokens, bool breakExpressionOnNewline);
+	
 	/// The EventEmitter associated with this parser.
 	EventEmitter& events;
 
 private:
-	/// Ignores comments and handles invalid tokens.
-	bool getNextToken(Tokenizer& tokens, Token& result);
-
 	void addNode(std::shared_ptr <Node>&& node);
 
-	bool parseToken(Token& token, Tokenizer& tokens, bool breakExpressionOnNewline);
 	bool todo(std::string&& msg);
 
 	bool handleExpressionToken(Token& token);
@@ -61,9 +89,6 @@ private:
 
 	bool ensureInitSyntax(std::shared_ptr <Expression> node,
 						std::shared_ptr <InitializationRoot> root);
-
-	void beginExpression(std::shared_ptr <Expression>&& root);
-	bool endExpression(Token& at);
 
 	bool unterminatedBracket(Token at);
 

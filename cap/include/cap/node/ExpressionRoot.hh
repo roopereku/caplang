@@ -17,6 +17,7 @@ public:
 		VariableDefinition,
 		ParameterDefinition,
 		ExplicitReturnType,
+		ImportStatement,
 		ReturnStatement,
 		Expression
 	};

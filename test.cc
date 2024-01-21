@@ -9,6 +9,7 @@
 #include <cap/node/ParameterDefinition.hh>
 #include <cap/node/GenericInstantiation.hh>
 #include <cap/node/ReturnStatement.hh>
+#include <cap/node/ImportStatement.hh>
 #include <cap/node/CallOperator.hh>
 
 #include <iostream>
@@ -103,6 +104,19 @@ private:
 			case cap::ExpressionRoot::Type::ReturnStatement:
 			{
 				file << indent(depth, node) << "Return " << detailString(node);
+				break;
+			}
+
+			case cap::ExpressionRoot::Type::ImportStatement:
+			{
+				file << indent(depth, node) << "Import " << detailString(node);
+
+				if(node->as <cap::ImportStatement> ()->getFrom())
+				{
+					file << indent(depth + 1, node) << "From " << detailString(node);
+					generateNode(node->as <cap::ImportStatement> ()->getFrom(), depth + 2);
+				}
+
 				break;
 			}
 

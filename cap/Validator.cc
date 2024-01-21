@@ -148,6 +148,12 @@ bool Validator::validateExpression(std::shared_ptr <Expression> node)
 
 bool Validator::validateExpressionRoot(std::shared_ptr <ExpressionRoot> node)
 {
+	if(node->type == ExpressionRoot::Type::ImportStatement)
+	{
+		events.emit(ErrorMessage(std::string("Validation unimplemented for imports"), node->token));
+		return false;
+	}
+
 	// If there's no root, do no validation on it.
 	if(!node->getRoot())
 	{

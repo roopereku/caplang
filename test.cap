@@ -1,9 +1,6 @@
-func foo()
-{
-	return
-}
+import a from b
 
 func main()
 {
-	var a = foo()
+	var foo = std.a
 }

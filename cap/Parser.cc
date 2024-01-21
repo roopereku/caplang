@@ -11,6 +11,7 @@
 #include <cap/node/OneSidedOperator.hh>
 #include <cap/node/TwoSidedOperator.hh>
 #include <cap/node/ReturnStatement.hh>
+#include <cap/node/ImportStatement.hh>
 #include <cap/node/CallOperator.hh>
 #include <cap/node/Value.hh>
 
@@ -138,6 +139,15 @@ bool Parser::parseToken(Token& token, Tokenizer& tokens, bool breakExpressionOnN
 	else if(token == "return")
 	{
 		if(!parseReturn(token))
+		{
+			return false;
+		}
+	}
+
+	// Handle import statements.
+	else if(token == "import")
+	{
+		if(!ImportStatement::parse(token, tokens, *this))
 		{
 			return false;
 		}
@@ -523,13 +533,17 @@ bool Parser::parseReturn(Token& token)
 
 void Parser::beginExpression(std::shared_ptr <Expression>&& root)
 {
+	addNode(std::move(root));
+	beginExpression();
+}
+
+void Parser::beginExpression()
+{
 	assert(!inExpression);
 
-	events.emit(DebugMessage("Begin an expression", root->token));
-	expressionBeginLine = root->token.getRow();
+	events.emit(DebugMessage("Begin an expression", currentNode->token));
+	expressionBeginLine = currentNode->token.getRow();
 	inExpression = true;
-
-	addNode(std::move(root));
 }
 
 bool Parser::endExpression(Token& at)
@@ -548,7 +562,7 @@ bool Parser::endExpression(Token& at)
 	}
 
 	// Backtrack until the expression root is found.
-	while(currentNode->as <Expression> ()->type != Expression::Type::Root)
+	while(currentNode->getParent().lock()->type == Node::Type::Expression)
 	{
 		currentNode = currentNode->getParent().lock();
 	}
@@ -820,6 +834,11 @@ std::shared_ptr <Node> Parser::getCurrentNode()
 void Parser::previousWasValue()
 {
 	isPreviousTokenValue = true;
+}
+
+bool Parser::isInExpression()
+{
+	return inExpression;
 }
 
 }
