@@ -222,6 +222,14 @@ bool Validator::validateExpressionRoot(std::shared_ptr <ExpressionRoot> node)
 			return false;
 		}
 
+		// TODO: Improve the check.
+		// If the result type isn't set, there probably is usage of an uninitialized definition.
+		if(node->getResultType().expired())
+		{
+			events.emit(ErrorMessage("Unable to initialize with a later defined definition", node->getRoot()->token));
+			return false;
+		}
+
 		// Forbid assignment of void to variables and parameters.
 		if(!node->getResultType().expired() &&
 			node->getResultType().lock() == PrimitiveType::getVoid())

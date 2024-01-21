@@ -1,6 +1,23 @@
-import a from b
+/*
+type T1
+{
+	var b = a
+	var c = T2.a
+	var a = 1
+}
+
+type T2
+{
+	var a = T1.a
+}
+*/
 
 func main()
 {
-	var foo = std.a
+	var a = b
+	var b = T
+}
+
+type T
+{
 }
