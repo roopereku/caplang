@@ -173,7 +173,6 @@ bool TwoSidedOperator::validate(Validator& validator)
 	// The access operator has a special meaning.
 	if(type == TwoSidedOperator::Type::Access)
 	{
-		validator.events.emit(ErrorMessage("Resolve access operator", token));
 		auto resultDefinition = validator.resolveDefinition(shared_from_this()->as <Expression> ());
 		if(!resultDefinition)
 		{
@@ -183,7 +182,6 @@ bool TwoSidedOperator::validate(Validator& validator)
 		// Use the type of the right node. This is because the rightmost node
 		// contains the final access location.
 		setResultType(right->getResultType().lock());
-
 		return true;
 	}
 

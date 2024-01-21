@@ -1,9 +1,4 @@
 #include <cap/node/OneSidedOperator.hh>
-#include <cap/node/TwoSidedOperator.hh>
-#include <cap/node/CallOperator.hh>
-#include <cap/node/FunctionSignature.hh>
-
-#include <cap/event/ErrorMessage.hh>
 
 #include <cap/Validator.hh>
 
@@ -92,41 +87,7 @@ bool OneSidedOperator::isComplete()
 
 bool OneSidedOperator::validate(Validator& validator)
 {
-	bool resultFromExpression = true;
-
-	// If this is a call operator, resolve the call target and use the
-	// function return type as the result type of this operator node.
-	if(type == OneSidedOperator::Type::Call)
-	{
-		validator.events.emit(ErrorMessage("Resolve target of call operator", token));
-		// If there is a target to resolve, resolve it.
-		auto definition = validator.resolveDefinition(shared_from_this()->as <CallOperator> ()->getTarget());
-		if(!definition)
-		{
-			return false;
-		}
-
-		// TODO: Support other callables.
-		if(definition.getType() != Reference::Type::FunctionDefinition)
-		{
-			validator.events.emit(ErrorMessage("Unable to call non-function", token));
-			return false;
-		}
-
-		auto signature = validator.getDefinitionType(definition);
-		if(!signature)
-		{
-			return false;
-		}
-
-		// The result type of the call operator becomes the return value of the function.
-		auto returnType = signature->as <FunctionSignature> ()->getReturnType();
-		setResultType(returnType);
-
-		resultFromExpression = false;
-	}
-
-	else if(type == OneSidedOperator::Type::Subscript)
+	if(type == OneSidedOperator::Type::Subscript)
 	{
 		assert(false && "Subscript not implemented");
 	}
@@ -143,10 +104,7 @@ bool OneSidedOperator::validate(Validator& validator)
 	}
 
 	// Use the type of the expression node.
-	if(resultFromExpression)
-	{
-		setResultType(expression->getResultType().lock());
-	}
+	setResultType(expression->getResultType().lock());
 
 	// TODO: Make sure that the expression node supports the given operator.
 	return true;

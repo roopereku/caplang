@@ -6,6 +6,8 @@
 namespace cap
 {
 
+class Validator;
+
 class CallOperator : public OneSidedOperator
 {
 public:
@@ -13,6 +15,12 @@ public:
 		: OneSidedOperator(token, OneSidedOperator::Type::Call)
 	{
 	}
+
+	/// Validates the call target and parameters.
+	///
+	/// \param validator The validator to use.
+	/// \return True if validation was succesful.
+	bool validate(Validator& validator) override;
 
 	/// Sets the call target node.
 	///
