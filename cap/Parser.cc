@@ -304,7 +304,7 @@ bool Parser::handleBracketToken(Token& token, Tokenizer& tokens)
 				{
 					// In order to use the current expression in outer expressions, cache it.
 					events.emit(DebugMessage("Cache the current expression", token));
-					cachedValue = std::move(currentNode->as <Expression> ());
+					cachedValue = std::move(expr);
 				}
 
 				// If the previous current node is an expression, try to give it the cached value.

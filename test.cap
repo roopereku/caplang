@@ -1,23 +1,5 @@
-/*
-type T1
-{
-	var b = a
-	var c = T2.a
-	var a = 1
-}
-
-type T2
-{
-	var a = T1.a
-}
-*/
-
 func main()
 {
-	var a = b
-	var b = T
-}
-
-type T
-{
+	var a = (1 + 2)
+	var b = a * (5 + 4 - (10 * 10))
 }
