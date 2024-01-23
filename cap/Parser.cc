@@ -264,15 +264,8 @@ bool Parser::handleBracketToken(Token& token, Tokenizer& tokens)
 					// If there is a cached value, the brackets aren't empty.
 					if(cachedValue)
 					{
-						// Only if the previous current node was an expression, apply the cached value.
-						// Otherwise the cached value is retained for further use.
-						//
-						// In a case such as "a = ((5))" the previous current node would be an empty node
-						// when the inner subexpression exits.
-						if(oldCurrent->type == Node::Type::Expression)
-						{
-							handleCachedInOld = true;
-						}
+						// Make the cached value the root expression node.
+						currentNode->as <ExpressionRoot> ()->replaceMostRecentValue(std::move(cachedValue));
 					}
 
 					else
@@ -321,8 +314,6 @@ bool Parser::handleBracketToken(Token& token, Tokenizer& tokens)
 					if(oldCurrent->as <Expression> ()->type != Expression::Type::Root)
 					{
 						assert(oldCurrent->as <Expression> ()->type == Expression::Type::Operator);
-
-						events.emit(DebugMessage("Apply the cached value from a subexpression", token));
 						oldCurrent->as <Operator> ()->handleValue(std::move(cachedValue));
 					}
 				}
