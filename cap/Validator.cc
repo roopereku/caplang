@@ -194,6 +194,13 @@ bool Validator::validateExpressionRoot(std::shared_ptr <ExpressionRoot> node)
 			return false;
 		}
 
+		// Explicit return type can't be used for constructors.
+		if(scope->as <FunctionDefinition> ()->isConstructor())
+		{
+			events.emit(ErrorMessage("Explicit return type cannot be defined for a constructor", node->token));
+			return false;
+		}
+
 		// Only allow types as an explicit return type.
 		auto referred = node->getReference();
 		if(referred.getType() != Reference::Type::TypeDefinition)
@@ -253,6 +260,13 @@ bool Validator::validateReturn(std::shared_ptr <ReturnStatement> node, bool allo
 	if(scope->type != ScopeDefinition::Type::FunctionDefinition)
 	{
 		events.emit(ErrorMessage("Return statement outside a function", node->token));
+		return false;
+	}
+
+	// Return statements within constuctors cannot return with an expression.
+	if(!allowVoid && scope->as <FunctionDefinition> ()->isConstructor())
+	{
+		events.emit(ErrorMessage("Constructor shouldn't return a value", node->token));
 		return false;
 	}
 

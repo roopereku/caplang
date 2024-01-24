@@ -22,8 +22,6 @@ std::shared_ptr <FunctionSignature> FunctionDefinition::getSignature()
 
 bool FunctionDefinition::validate(Validator& validator)
 {
-	validator.events.emit(DebugMessage("VALIDATING FUNCTION " + name.getString(), token));
-
 	// Ensure the signature exists.
 	if(!signature)
 	{
@@ -31,9 +29,20 @@ bool FunctionDefinition::validate(Validator& validator)
 		adopt(signature);
 	}
 
+	// Validate the function contents.
 	if(!validator.validateNode(getRoot()))
 	{
 		return false;
+	}
+
+	// If this function is a constructor, return the parent class type.
+	if(isConstructor())
+	{
+		auto parentClass = getParent().lock();
+		assert(parentClass->type == Node::Type::ScopeDefinition);
+		assert(parentClass->as <ScopeDefinition> ()->type == ScopeDefinition::Type::TypeDefinition);
+
+		signature->returnType = parentClass->as <TypeDefinition> ();
 	}
 
 	complete();
