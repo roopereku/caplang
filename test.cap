@@ -1,4 +1,10 @@
-func foo(a = int64(20), b = int64)
+type Foo
 {
+	constructor()
+	{
+	}
 }
 
+func main(argc = int64)
+{
+}

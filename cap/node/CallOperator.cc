@@ -51,6 +51,25 @@ bool CallOperator::validate(Validator& validator)
 	auto definition = validator.resolveDefinition(target);
 	while(definition)
 	{
+		// If target is a type, check for constructor calls.
+		if(definition.getType() == Reference::Type::TypeDefinition)
+		{
+			// TODO: Implement type casting here.
+
+			// Try to find the first instance of a constructor from the type.
+			auto constructor = definition.getReferred()->as <TypeDefinition> ()->findDefinitionHere("constructor");
+
+			// If there's no constructors, error out.
+			// TODO: Maybe change this if implicit constructors become a thing?
+			if(!constructor || constructor.getType() != Reference::Type::FunctionDefinition)
+			{
+				validator.events.emit(ErrorMessage("No constructor found for " + definition.getReferredName().getString(), token));
+				return false;
+			}
+
+			definition = constructor;
+		}
+
 		// If the found definition is a function, check if the parameters match.
 		if(definition.getType() == Reference::Type::FunctionDefinition)
 		{
@@ -127,13 +146,6 @@ bool CallOperator::validate(Validator& validator)
 					break;
 				}
 			}
-		}
-
-		// If target is a type, check for constructor or type casting.
-		else if(definition.getType() == Reference::Type::TypeDefinition)
-		{
-			validator.events.emit(ErrorMessage("Unimplemented: Constructors and typecasting", token));
-			return false;
 		}
 
 		// Find the next definition that matches the call target.

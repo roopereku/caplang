@@ -82,8 +82,11 @@ private:
 	bool handleExpressionToken(Token& token);
 	bool handleBracketToken(Token& token, Tokenizer& tokens);
 
-	bool parseType(Token& token, Tokenizer& tokens);
 	bool parseFunction(Token& token, Tokenizer& tokens);
+	bool parseConstructor(Token& token, Tokenizer& tokens);
+	bool parseFunctionDefinition(Tokenizer& tokens);
+
+	bool parseType(Token& token, Tokenizer& tokens);
 	bool parseInitialization(Token& token);
 	bool parseReturn(Token& token);
 

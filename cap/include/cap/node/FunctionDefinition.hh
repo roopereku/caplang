@@ -18,6 +18,11 @@ public:
 	std::shared_ptr <FunctionSignature> getSignature();
 	bool validate(Validator& validator);
 
+	virtual bool isConstructor()
+	{
+		return false;
+	}
+
 	const char* getTypeString() override
 	{
 		return "FunctionDefinition";

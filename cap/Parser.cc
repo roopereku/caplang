@@ -5,6 +5,7 @@
 
 #include <cap/node/TypeDefinition.hh>
 #include <cap/node/FunctionDefinition.hh>
+#include <cap/node/ConstructorDefinition.hh>
 #include <cap/node/InitializationRoot.hh>
 #include <cap/node/ExplicitReturnType.hh>
 #include <cap/node/GenericInstantiation.hh>
@@ -121,6 +122,15 @@ bool Parser::parseToken(Token& token, Tokenizer& tokens, bool breakExpressionOnN
 	else if(token == "func")
 	{
 		if(!parseFunction(token, tokens))
+		{
+			return false;
+		}
+	}
+
+	// Handle constructor definitions.
+	else if(token == "constructor")
+	{
+		if(!parseConstructor(token, tokens))
 		{
 			return false;
 		}
@@ -407,7 +417,19 @@ bool Parser::parseFunction(Token& token, Tokenizer& tokens)
 
 	// Create a function definition node.
 	addNode(std::make_shared <FunctionDefinition> (token));
+	return parseFunctionDefinition(tokens);
+}
 
+bool Parser::parseConstructor(Token& token, Tokenizer& tokens)
+{
+	// Create a constructor definition node.
+	addNode(std::make_shared <ConstructorDefinition> (token));
+	return parseFunctionDefinition(tokens);
+}
+
+bool Parser::parseFunctionDefinition(Tokenizer& tokens)
+{
+	auto token = Token::createInvalid();
 	if(!getNextToken(tokens, token))
 	{
 		return false;

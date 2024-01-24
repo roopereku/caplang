@@ -33,12 +33,25 @@ const char* ScopeDefinition::getTypeString()
 	return "Scope";
 }
 
-Reference ScopeDefinition::findDefinition(std::string_view name)
+Reference ScopeDefinition::findDefinition(std::string_view name, std::shared_ptr <Node> exclusion)
 {
-	return findDefinition(name, nullptr);
+	// First try to find the definition from this scope.
+	auto result = findDefinitionHere(name, exclusion);
+	if(result)
+	{
+		return result;
+	}
+
+	// If a parent exists, check if the definition exists there.
+	if(!getParent().expired() && getParent().lock()->type == Node::Type::ScopeDefinition)
+	{
+		return getParent().lock()->as <ScopeDefinition> ()->findDefinition(name, exclusion);
+	}
+	
+	return Reference();
 }
 
-Reference ScopeDefinition::findDefinition(std::string_view name, std::shared_ptr <Node> exclusion)
+Reference ScopeDefinition::findDefinitionHere(std::string_view name, std::shared_ptr <Node> exclusion)
 {
 	auto current = root;
 
@@ -52,12 +65,6 @@ Reference ScopeDefinition::findDefinition(std::string_view name, std::shared_ptr
 		}
 
 		current = current->getNext();
-	}
-
-	// If a parent exists, check if the definition exists there.
-	if(!getParent().expired() && getParent().lock()->type == Node::Type::ScopeDefinition)
-	{
-		return getParent().lock()->as <ScopeDefinition> ()->findDefinition(name, exclusion);
 	}
 
 	return Reference();
