@@ -293,12 +293,6 @@ bool Validator::validateOperator(std::shared_ptr <Operator> node)
 
 bool Validator::validateScope(std::shared_ptr <ScopeDefinition> node)
 {
-	// Make sure that the name of the scope doesn't collide with anything.
-	if(node->name.getType() != Token::Type::Invalid && !checkNameCollision(node->name, node))
-	{
-		return false;
-	}
-
 	// If the scope is a function, do special validation.
 	if(node->type == ScopeDefinition::Type::FunctionDefinition)
 	{
@@ -321,6 +315,12 @@ bool Validator::validateScope(std::shared_ptr <ScopeDefinition> node)
 	// For anything else just validate the root.
 	else
 	{
+		// Make sure that the name of the scope doesn't collide with anything.
+		if(node->name.getType() != Token::Type::Invalid && !checkNameCollision(node->name, node))
+		{
+			return false;
+		}
+
 		if(!validateNode(node->getRoot()))
 		{
 			return false;
@@ -562,7 +562,7 @@ std::shared_ptr <TypeDefinition> Validator::getDefinitionType(Reference referenc
 			auto function = reference.getReferred()->as <FunctionDefinition> ();
 
 			// If no signature exists or no return type is initialize, maybe validate the function.
-			if(!function->getSignature() || !function->getSignature()->getReturnType())
+			if(!function->isValidationComplete())
 			{
 				auto it = std::find(inValidation.begin(), inValidation.end(), function);
 				bool isBeingValidated = it != inValidation.end();

@@ -8,6 +8,8 @@
 namespace cap
 {
 
+class Reference;
+
 /// Node is a part of an abstract syntax tree.
 class Node : public std::enable_shared_from_this <Node>
 {
@@ -46,6 +48,12 @@ public:
 	/// \param name The name of the definition.
 	/// \return True if this node is the desired definition.
 	virtual bool isDefinition(std::string_view name);
+
+	/// Finds the given definition that comes after this node.
+	/// 
+	/// \param name The name of the definition.
+	/// \return Reference to the definition if any.
+	Reference findNextDefinition(std::string_view name);
 
 	virtual const char* getTypeString();
 

@@ -1,5 +1,12 @@
+func foo(a = int64)
+{
+}
+
+func foo(a = int64, b = int64)
+{
+}
+
 func main()
 {
-	var a = (1 + 2)
-	var b = a * (5 + 4 - (10 * 10))
+	foo(1, 2)
 }

@@ -1,4 +1,5 @@
 #include <cap/Node.hh>
+#include <cap/Reference.hh>
 
 #include <cassert>
 
@@ -62,6 +63,22 @@ const char* Node::getTypeString()
 bool Node::isDefinition(std::string_view)
 {
 	return false;
+}
+
+Reference Node::findNextDefinition(std::string_view name)
+{
+	auto current = next;
+	while(current)
+	{
+		if(current->isDefinition(name))
+		{
+			return current;
+		}
+
+		current = current->getNext();
+	}
+
+	return Reference();
 }
 
 }

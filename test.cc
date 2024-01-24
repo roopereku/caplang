@@ -8,6 +8,8 @@
 #include <cap/node/AliasDefinition.hh>
 #include <cap/node/ParameterDefinition.hh>
 #include <cap/node/GenericInstantiation.hh>
+#include <cap/node/FunctionDefinition.hh>
+#include <cap/node/FunctionSignature.hh>
 #include <cap/node/ReturnStatement.hh>
 #include <cap/node/ImportStatement.hh>
 #include <cap/node/CallOperator.hh>
@@ -254,7 +256,30 @@ private:
 			auto name = node->getReference().getReferredName();
 			if(name.getType() != cap::Token::Type::Invalid)
 			{
-				detail += "Refers to " + name.getString() + ";\n";
+				if(node->getReference().getType() == cap::Reference::Type::FunctionDefinition)
+				{
+					std::string params;
+					auto function = node->getReference().getReferred()->as <cap::FunctionDefinition> ();
+					auto signature = function->getSignature();
+
+					for(unsigned i = 0; i < signature->getParameterCount(); i++)
+					{
+						auto param = signature->getParameter(i);
+						params += param->getReference().getReferredName().getString();
+
+						if(i < signature->getParameterCount() - 1)
+						{
+							params += ',';
+						}
+					}
+
+					detail += "Refers to " + name.getString() + "(" + params + ");\n";
+				}
+
+				else
+				{
+					detail += "Refers to " + name.getString() + ";\n";
+				}
 			}
 		}
 
