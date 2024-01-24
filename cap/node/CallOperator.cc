@@ -129,6 +129,13 @@ bool CallOperator::validate(Validator& validator)
 			}
 		}
 
+		// If target is a type, check for constructor or type casting.
+		else if(definition.getType() == Reference::Type::TypeDefinition)
+		{
+			validator.events.emit(ErrorMessage("Unimplemented: Constructors and typecasting", token));
+			return false;
+		}
+
 		// Find the next definition that matches the call target.
 		auto name = definition.getReferredName().getStringView();
 		definition = definition.getReferred()->findNextDefinition(name);

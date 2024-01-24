@@ -1,12 +1,4 @@
-func foo(a = int64)
+func foo(a = int64(20), b = int64)
 {
 }
 
-func foo(a = int64, b = int64)
-{
-}
-
-func main()
-{
-	foo(1, 2)
-}
