@@ -51,14 +51,9 @@ std::weak_ptr <Node> Scope::handleToken(ParserContext& ctx, Token& token)
 std::weak_ptr <Node> Scope::appendNested(std::shared_ptr <Node>&& node)
 {
 	adopt(node);
+	nested.emplace_back(std::move(node));
 
-	if(!nested)
-	{
-		nested = std::move(node);
-		return nested->weak_from_this();
-	}
-
-	return nested->appendNext(std::move(node));
+	return nested.back();
 }
 
 }

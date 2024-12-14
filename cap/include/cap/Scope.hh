@@ -4,6 +4,7 @@
 #include <cap/Node.hh>
 
 #include <string>
+#include <vector>
 
 namespace cap
 {
@@ -35,7 +36,7 @@ protected:
 	std::weak_ptr <Node> appendNested(std::shared_ptr <Node>&& node);
 
 	std::wstring name;
-	std::shared_ptr <Node> nested;
+	std::vector <std::shared_ptr <Node>> nested;
 
 	bool requiresBrackets;
 	bool onlyDeclarations;
