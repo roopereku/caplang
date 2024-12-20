@@ -1,6 +1,7 @@
 #include <cap/Source.hh>
 
 #include <string>
+#include <cassert>
 
 namespace cap
 {
@@ -32,6 +33,7 @@ bool Source::parse(Client& client)
 		currentNode = currentNode.lock()->handleToken(nodeCtx, currentToken);
 		if(currentNode.expired())
 		{
+			printf("Failure\n");
 			return false;
 		}
 
@@ -51,6 +53,9 @@ bool Source::parse(Client& client)
 		prevNode = currentNode;
 		currentToken = Token::parseNext(tokenCtx, currentToken);
 	}
+
+	// The current node has to return to the root node.
+	assert(currentNode.lock() == root);
 
 	return true;
 }

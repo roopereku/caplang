@@ -49,6 +49,8 @@ public:
 
 	bool canBeValue() const;
 
+	bool isBeforeNewline(cap::ParserContext& ctx);
+
 	static Token parseFirst(ParserContext& ctx);
 	static Token parseNext(ParserContext& ctx, Token token);
 

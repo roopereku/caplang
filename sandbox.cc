@@ -50,8 +50,9 @@ int main()
 
 	SourceString entry(LR"SRC(
 		
-		func main(args: list)
+		func main()
 		{
+			1 + 2 * 3
 		}
 
 	)SRC");

@@ -97,9 +97,30 @@ bool Token::canBeValue() const
 		type == Type::Float ||
 		type == Type::Hexadecimal ||
 		type == Type::Binary ||
-		type == Type::Octal ||
-		type == Type::OpeningBracket
+		type == Type::Octal
 	);
+}
+
+bool Token::isBeforeNewline(cap::ParserContext& ctx)
+{
+	size_t i = index + length;
+	while(true)
+	{
+		// TODO: Handle windows linebreaks.
+		if(ctx.source[i] == '\n')
+		{
+			return true;
+		}
+
+		else if(!isspace(ctx.source[i]))
+		{
+			break;
+		}
+
+		i++;
+	}
+
+	return false;
 }
 
 Token Token::parseFirst(ParserContext& ctx)
