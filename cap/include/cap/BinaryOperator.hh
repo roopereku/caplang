@@ -11,14 +11,34 @@ class BinaryOperator : public Expression
 public:
 	enum class Type
 	{
+		Assign,
+		Access,
+
 		Add,
 		Subtract,
 		Multiply,
-		Divide
+		Divide,
+		Modulus,
+		Exponent,
+
+		Or,
+		And,
+		Less,
+		Greater,
+		LessEqual,
+		GreaterEqual,
+		Equal,
+		Inequal,
+
+		BitwiseShiftLeft,
+		BitwiseShiftRight,
+		BitwiseAnd,
+		BitwiseOr,
+		BitwiseXor
 	};
 
-	BinaryOperator(Type type)
-		: Expression(Expression::Type::BinaryOperator), type(type)
+	BinaryOperator(Type type, bool compound = false)
+		: Expression(Expression::Type::BinaryOperator), type(type), compound(compound)
 	{
 	}
 
@@ -57,6 +77,7 @@ private:
 	std::shared_ptr <Expression> right;
 
 	Type type;
+	bool compound;
 };
 
 }

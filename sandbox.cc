@@ -60,7 +60,7 @@ public:
 		file.close();
 
 	// NOTE: Enable this for visualization if you have plantuml and sxiv in your PATH.
-#if 0
+#if 1
 	system("plantuml ast.puml");
 	system("sxiv ast.png");
 #endif
@@ -157,7 +157,7 @@ int main()
 
 		func main()
 		{
-			1 + 2 * 3 - 4 / 5
+			a = display.vga.offset >> 7 & 0xFFFF == b
 		}
 
 	)SRC");

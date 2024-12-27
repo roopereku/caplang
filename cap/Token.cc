@@ -247,10 +247,11 @@ Token::ParseResult Token::parseIdentifier(ParserContext& ctx, size_t& i)
 
 Token::ParseResult Token::parseOperator(ParserContext& ctx, size_t& i)
 {
-	static std::array <wchar_t, 6> opChars
+	static std::array <wchar_t, 15> opChars
 	{
-		'+', '-', '/', '*',
-		':', '.'
+		'+', '-', '*', '/', '%', '*',
+		'<', '>', '&', '|', '^',
+		'=', '!', '.'
 	};
 
 	while(std::find(opChars.begin(), opChars.end(), ctx.source[i]) != opChars.end())
