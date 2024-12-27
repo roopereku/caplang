@@ -44,8 +44,10 @@ public:
 	/// \return Value above 0 depending on the type.
 	unsigned getPrecedence() override;
 
-	// TODO: Override handleToken here if operator tokens are made single character.
-	// This way operators can also slowly decide what they want to be.
+	std::shared_ptr <Expression> getLeft();
+	std::shared_ptr <Expression> getRight();
+
+	const char* getTypeString();
 
 protected:
 	std::shared_ptr <Expression> stealLatestValue() override;

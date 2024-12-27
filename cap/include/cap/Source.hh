@@ -16,6 +16,11 @@ class Source
 public:
 	bool parse(Client& client);
 
+	/// Gets the global scope of this source.
+	///
+	/// \return The global scope.
+	std::shared_ptr <Scope> getGlobal();
+
 	virtual wchar_t operator[](size_t index) const = 0;
 	virtual std::wstring getString(Token token) const = 0;
 	virtual bool match(Token token, std::wstring_view value) const = 0;
@@ -26,7 +31,7 @@ protected:
 	virtual bool canParse(Client& client);
 
 private:
-	std::shared_ptr <Scope> root;
+	std::shared_ptr <Scope> global;
 };
 
 class SourceLocation

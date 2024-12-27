@@ -43,6 +43,11 @@ public:
 	/// \return The precedence of this expression node.
 	virtual unsigned getPrecedence();
 
+	/// Gets the type of this expression node.
+	///
+	/// \return The type of this expression node.
+	Type getType();
+
 	static const char* getTypeString(Type type);
 	const char* getTypeString();
 
@@ -78,6 +83,11 @@ public:
 	///
 	// \return True.
 	bool isRoot() const override;
+
+	/// Gets the first node of this expression.
+	///
+	/// \return The first node of this expression.
+	std::shared_ptr <Expression> getFirst();
 
 protected:
 	std::shared_ptr <Expression> stealLatestValue() override;

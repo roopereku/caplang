@@ -9,7 +9,7 @@ namespace cap
 {
 
 Function::Function()
-	: Scope(false)
+	: Scope(Type::Function, false)
 {
 }
 

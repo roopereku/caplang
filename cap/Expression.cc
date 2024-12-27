@@ -31,7 +31,7 @@ std::weak_ptr <Node> Expression::handleToken(Node::ParserContext& ctx, Token& to
 	// it's almost given that anything not operator can be a value.
 	else if(token.canBeValue())
 	{
-		newNode = std::make_shared <Value> ();
+		newNode = std::make_shared <Value> (ctx.source.getString(token));
 	}
 
 	// If this node isn't complete, handle the new node as a value.
@@ -82,6 +82,11 @@ unsigned Expression::getPrecedence()
 	return 0;
 }
 
+Expression::Type Expression::getType()
+{
+	return type;
+}
+
 const char* Expression::getTypeString(Type type)
 {
 	switch(type)
@@ -101,7 +106,7 @@ const char* Expression::getTypeString()
 }
 
 Expression::Expression(Type type)
-	: type(type)
+	: Node(Node::Type::Expression), type(type)
 {
 }
 
@@ -156,6 +161,11 @@ void Expression::Root::handleValue(std::shared_ptr <Expression> node)
 {
 	assert(!first);
 	first = std::move(node);
+}
+
+std::shared_ptr <Expression> Expression::Root::getFirst()
+{
+	return first;
 }
 
 std::shared_ptr <Expression> Expression::Root::stealLatestValue()

@@ -68,6 +68,29 @@ unsigned BinaryOperator::getPrecedence()
 	return -1;
 }
 
+std::shared_ptr <Expression> BinaryOperator::getLeft()
+{
+	return left;
+}
+
+std::shared_ptr <Expression> BinaryOperator::getRight()
+{
+	return right;
+}
+
+const char* BinaryOperator::getTypeString()
+{
+	switch(type)
+	{
+		case Type::Add: return "Add";
+		case Type::Subtract: return "Subtract";
+		case Type::Multiply: return "Multiply";
+		case Type::Divide: return "Divide";
+	}
+
+	return "(binaryop) ???";
+}
+
 std::shared_ptr <Expression> BinaryOperator::stealLatestValue()
 {
 	if(right)

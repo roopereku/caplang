@@ -9,12 +9,12 @@ namespace cap
 {
 
 Scope::Scope()
-	: requiresBrackets(false), onlyDeclarations(true)
+	: Node(Node::Type::Scope), type(Type::Standalone), requiresBrackets(false), onlyDeclarations(true)
 {
 }
 
-Scope::Scope(bool onlyDeclarations)
-	: requiresBrackets(true), onlyDeclarations(onlyDeclarations)
+Scope::Scope(Type type, bool onlyDeclarations)
+	: Node(Node::Type::Scope), type(type), requiresBrackets(true), onlyDeclarations(onlyDeclarations)
 {
 }
 
@@ -68,6 +68,34 @@ std::weak_ptr <Node> Scope::handleToken(ParserContext& ctx, Token& token)
 	}
 
 	return weak_from_this();
+}
+
+Scope::Type Scope::getType()
+{
+	return type;
+}
+
+const std::vector <std::shared_ptr <Node>>& Scope::getNested()
+{
+	return nested;
+}
+
+const std::wstring& Scope::getName()
+{
+	return name;
+}
+
+const char* Scope::getTypeString()
+{
+	switch(type)
+	{
+		case Type::Standalone: return "Standalone";
+		case Type::Function: return "Function";
+		case Type::ClassType: return "ClassType";
+		case Type::Custom: return "Custom";
+	}
+
+	return "???";
 }
 
 std::weak_ptr <Node> Scope::appendNested(std::shared_ptr <Node> node)

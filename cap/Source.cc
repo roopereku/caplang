@@ -7,7 +7,7 @@ namespace cap
 {
 
 Source::Source()
-	: root(std::make_shared <Scope> ())
+	: global(std::make_shared <Scope> ())
 {
 }
 
@@ -22,7 +22,7 @@ bool Source::parse(Client& client)
 	}
 
 	Token currentToken = Token::parseFirst(tokenCtx);
-	std::weak_ptr <Node> currentNode = root;
+	std::weak_ptr <Node> currentNode = global;
 	std::weak_ptr <Node> prevNode;
 
 	while(currentToken.isValid())
@@ -55,9 +55,14 @@ bool Source::parse(Client& client)
 	}
 
 	// The current node has to return to the root node.
-	assert(currentNode.lock() == root);
+	assert(currentNode.lock() == global);
 
 	return true;
+}
+
+std::shared_ptr <Scope> Source::getGlobal()
+{
+	return global;
 }
 
 bool Source::canParse(Client&)

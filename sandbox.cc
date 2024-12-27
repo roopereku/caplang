@@ -1,6 +1,12 @@
 #include <cap/Client.hh>
+#include <cap/Function.hh>
+#include <cap/Expression.hh>
+#include <cap/BinaryOperator.hh>
+#include <cap/Value.hh>
 
 #include <iostream>
+#include <fstream>
+#include <cassert>
 
 class SourceString : public cap::Source
 {
@@ -30,7 +36,6 @@ private:
 	std::wstring str;
 };
 
-
 class Sandbox : public cap::Client
 {
 public:
@@ -38,6 +43,106 @@ public:
 	{
 		printf("[%u:%u] Error in '%ls': %ls\n", at.getRow(), at.getColumn(), at.getString().c_str(), msg.c_str());
 	}
+};
+
+class ASTDumper : public cap::Node::Traverser
+{
+public:
+	ASTDumper(std::string&& path)
+		: file(path)
+	{
+		file << "@startmindmap\n";
+	}
+
+	~ASTDumper()
+	{
+		file << "@endmindmap\n";
+		file.close();
+
+	// NOTE: Enable this for visualization if you have plantuml and sxiv in your PATH.
+#if 0
+	system("plantuml ast.puml");
+	system("sxiv ast.png");
+#endif
+	}
+
+protected:
+	bool onFunction(std::shared_ptr <cap::Function> scope) override
+	{
+		depth++;
+		file << prefix() << scope->getTypeString();
+
+		if(!scope->getName().empty())
+		{
+			file << ": " << scope->getName();
+		}
+
+		file << '\n';
+
+		for(auto nested : scope->getNested())
+		{
+			// TODO: Check return value?
+			traverseNode(nested);
+		}
+
+		depth--;
+		return false;
+	}
+
+	void onExpression(std::shared_ptr <cap::Expression> expr) override
+	{
+		depth++;
+
+		switch(expr->getType())
+		{
+			case cap::Expression::Type::Root:
+			{
+				auto root = std::static_pointer_cast <cap::Expression::Root> (expr);
+				file << prefix() << root->getTypeString() << '\n';
+
+				traverseExpression(root->getFirst());
+				break;
+			}
+
+			case cap::Expression::Type::BinaryOperator:
+			{
+				auto op = std::static_pointer_cast <cap::BinaryOperator> (expr);
+				file << prefix() << op->getTypeString() << '\n';
+
+				assert(op->getLeft());
+				assert(op->getRight());
+
+				traverseExpression(op->getLeft());
+				traverseExpression(op->getRight());
+
+				break;
+			}
+
+			case cap::Expression::Type::UnaryOperator:
+			{
+				break;
+			}
+
+			case cap::Expression::Type::Value:
+			{
+				auto value = std::static_pointer_cast <cap::Value> (expr);
+				file << prefix() << "Value: " << value->getValue() << '\n';
+
+				break;
+			}
+		}
+
+		depth--;
+	}
+
+private:
+	std::wstring prefix()
+	{
+		return std::wstring(depth, '*') + L' ';
+	}
+
+	unsigned depth = 0;
+	std::wofstream file;
 };
 
 int main()
@@ -49,15 +154,18 @@ int main()
 	Sandbox client;
 
 	SourceString entry(LR"SRC(
-		
+
 		func main()
 		{
-			1 + 2 * 3
+			1 + 2 * 3 - 4 / 5
 		}
 
 	)SRC");
 
 	client.parse(entry);
+
+	ASTDumper dumper("ast.puml");
+	dumper.traverseNode(entry.getGlobal());
 
 	return 0;
 }

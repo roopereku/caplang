@@ -9,14 +9,18 @@ namespace cap
 class Value : public Expression
 {
 public:
-	Value() : Expression(Type::Value)
-	{
-	}
+	Value(std::wstring&& value);
 
 	/// Should never be called as values cannot be the "current node".
 	///
 	/// \return False.
 	bool isComplete() const override;
+
+	const std::wstring& getValue();
+
+private:
+	// TODO: Should this be a token?
+	std::wstring value;
 };
 
 }

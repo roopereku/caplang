@@ -6,13 +6,13 @@
 namespace cap
 {
 
-class TypeReference;
-
 /// Signature represents a combination of types used
 /// for things such as function parameters.
 class Signature : public Node
 {
 public:
+	Signature() : Node(Type::Custom) {}
+
 	/// Parses type references within parenthesis.
 	///
 	/// \param ctx The parser context.
@@ -21,7 +21,6 @@ public:
 	std::weak_ptr <Node> handleToken(ParserContext& ctx, Token& token) override;
 
 private:
-	std::shared_ptr <TypeReference> firstType;
 };
 
 }

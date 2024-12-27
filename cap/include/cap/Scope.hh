@@ -14,13 +14,21 @@ namespace cap
 class Scope : public Node
 {
 public:
+	enum class Type
+	{
+		Standalone,
+		Function,
+		ClassType,
+		Custom
+	};
+
 	/// Constructs a global scope.
 	Scope();
 
 	/// Constructs a non-global scope.
 	///
 	/// \param onlyDeclarations If true, only declarations are allowed.
-	Scope(bool onlyDeclarations);
+	Scope(Type type, bool onlyDeclarations);
 
 	/// Checks if the token represents a nested node
 	/// and constructs new nodes based on the input.
@@ -29,6 +37,23 @@ public:
 	/// \param token The token to handle.
 	/// \return This scope, a new nested node or the parent node.
 	virtual std::weak_ptr <Node> handleToken(ParserContext& ctx, Token& token) override;
+
+	/// Gets the type of this scope.
+	///
+	/// \return The type of this scope.
+	Type getType();
+
+	/// Gets the nested nodes within this scope.
+	///
+	/// \return The nested nodes.
+	const std::vector <std::shared_ptr <Node>>& getNested();
+
+	/// Gets the name of this scope.
+	///
+	/// \return The name of this scope.
+	const std::wstring& getName();
+
+	const char* getTypeString();
 
 protected:
 	/// If no nested nodes exist, the first is initialized. Otherwise the
@@ -40,6 +65,8 @@ protected:
 
 	bool requiresBrackets;
 	bool onlyDeclarations;
+
+	Type type;
 };
 
 }
