@@ -49,9 +49,14 @@ std::weak_ptr <Node> Scope::handleToken(ParserContext& ctx, Token& token)
 		return appendNested(std::make_shared <Function> ());
 	}
 
+	else if(token.isOpeningBracket(ctx, '{'))
+	{
+		// TODO: Implement scopes.
+	}
+
 	// TODO: When it's guaranteed that no comments can appear here,
 	// it's almost given that anything else relates to an expression.
-	else if(token.canBeValue() || token.getType() == Token::Type::Operator)
+	else if(token.canBeValue() || token.getType() == Token::Type::Operator || token.getType() == Token::Type::OpeningBracket)
 	{
 		if(onlyDeclarations)
 		{

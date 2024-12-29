@@ -64,6 +64,14 @@ public:
 	/// How many tokens have been processed since the node was
 	/// switched.
 	size_t tokensProcessed = 0;
+
+	/// How many nested subexpressions are there currently?
+	int subExpressionDepth = 0;
+
+	/// Used to stop the recursive openings of subexpressions.
+	/// Such could happen when a switch to the parent
+	/// expression node is made during handleToken.
+	bool canOpenSubexpression = true;
 };
 
 class Scope;

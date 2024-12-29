@@ -14,7 +14,8 @@ public:
 		Root,
 		Value,
 		UnaryOperator,
-		BinaryOperator
+		BinaryOperator,
+		BracketOperator
 	};
 
 	/// Parses an expression.
@@ -29,6 +30,9 @@ public:
 	/// \return True if this node is completed.
 	virtual bool isComplete() const = 0;
 
+	/// Implementation defined behaviour for how values are handled.
+	///
+	/// \param node The expression node to handle as a value.
 	virtual void handleValue(std::shared_ptr <Expression> node);
 
 	/// Checks whether this node is the root of an expression.
@@ -56,7 +60,7 @@ public:
 protected:
 	Expression(Type type);
 
-	std::weak_ptr <Node> exitCurrentExpression();
+	std::weak_ptr <Node> exitCurrentExpression(bool recursive);
 	std::weak_ptr <Node> adoptValue(std::shared_ptr <Expression> node);
 
 	virtual std::shared_ptr <Expression> stealLatestValue();
@@ -68,9 +72,7 @@ private:
 class Expression::Root : public Expression
 {
 public:
-	Root() : Expression(Type::Root)
-	{
-	}
+	Root();
 
 	/// Checks whether the first expression node exists.
 	///
@@ -78,11 +80,6 @@ public:
 	bool isComplete() const override;
 
 	void handleValue(std::shared_ptr <Expression> node) override;
-
-	/// Indicates that this node is an expression root.
-	///
-	// \return True.
-	bool isRoot() const override;
 
 	/// Gets the first node of this expression.
 	///
@@ -92,7 +89,6 @@ public:
 protected:
 	std::shared_ptr <Expression> stealLatestValue() override;
 
-private:
 	std::shared_ptr <Expression> first;
 };
 

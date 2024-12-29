@@ -2,6 +2,7 @@
 #include <cap/Function.hh>
 #include <cap/Expression.hh>
 #include <cap/BinaryOperator.hh>
+#include <cap/BracketOperator.hh>
 #include <cap/Value.hh>
 
 #include <iostream>
@@ -100,7 +101,11 @@ protected:
 				auto root = std::static_pointer_cast <cap::Expression::Root> (expr);
 				file << prefix() << root->getTypeString() << '\n';
 
-				traverseExpression(root->getFirst());
+				if(root->getFirst())
+				{
+					traverseExpression(root->getFirst());
+				}
+
 				break;
 			}
 
@@ -121,6 +126,24 @@ protected:
 			case cap::Expression::Type::UnaryOperator:
 			{
 				break;
+			}
+
+			case cap::Expression::Type::BracketOperator:
+			{
+				auto op = std::static_pointer_cast <cap::BracketOperator> (expr);
+				file << prefix() << op->getTypeString() << '\n';
+
+				assert(op->getContext());
+
+				traverseExpression(op->getContext());
+
+				if(op->getInnerRoot())
+				{
+					traverseExpression(op->getInnerRoot());
+				}
+
+				break;
+
 			}
 
 			case cap::Expression::Type::Value:
@@ -152,12 +175,11 @@ int main()
     std::wcout.imbue(std::locale());
 
 	Sandbox client;
-
 	SourceString entry(LR"SRC(
 
 		func main()
 		{
-			a = display.vga.offset >> 7 & 0xFFFF == b
+			a = ( 1 + 2 ) * foo(3 * 4)(5 - 9).cb(8 << 9 ** 2 ** (a.b.c + 20))[1]
 		}
 
 	)SRC");
