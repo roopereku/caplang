@@ -1,5 +1,4 @@
 #include <cap/Function.hh>
-#include <cap/Signature.hh>
 #include <cap/Source.hh>
 #include <cap/Client.hh>
 
@@ -27,12 +26,25 @@ std::weak_ptr <Node> Function::handleToken(ParserContext& ctx, Token& token)
 			return {};
 		}
 
-		// The signature has to come after the name.
 		name = ctx.source.getString(token);
-		signature = std::make_shared <Signature> ();
+		return weak_from_this();
+	}
+
+	else if(!signature)
+	{
+		if(!token.isOpeningBracket(ctx, '('))
+		{
+			// TODO: How about anonymous functions?
+			SourceLocation location(ctx.source, token);
+			ctx.client.sourceError(location, "Expected '(' after function name");
+			return {};
+		}
+
+		signature = std::make_shared <Expression::Root> ();
 		adopt(signature);
 
-		return signature;
+		// Delegate the opening bracket to the expression.
+		return signature->handleToken(ctx, token);
 	}
 
 	assert(signature);

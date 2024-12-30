@@ -2,6 +2,7 @@
 #define CAP_FUNCTION_HH
 
 #include <cap/Scope.hh>
+#include <cap/Expression.hh>
 
 namespace cap
 {
@@ -23,7 +24,7 @@ public:
 	std::weak_ptr <Node> handleToken(ParserContext& ctx, Token& token) override;
 
 private:
-	std::shared_ptr <Node> signature;
+	std::shared_ptr <Expression::Root> signature;
 };
 
 }
