@@ -18,6 +18,8 @@ public:
 
 	const std::wstring& getValue();
 
+	const char* getTypeString() override;
+
 private:
 	// TODO: Should this be a token?
 	std::wstring value;

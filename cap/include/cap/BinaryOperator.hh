@@ -67,7 +67,8 @@ public:
 	std::shared_ptr <Expression> getLeft();
 	std::shared_ptr <Expression> getRight();
 
-	const char* getTypeString();
+	static const char* getTypeString(Type type);
+	const char* getTypeString() override;
 
 protected:
 	std::shared_ptr <Expression> stealLatestValue() override;

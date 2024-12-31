@@ -53,7 +53,7 @@ public:
 	/// \return The name of this scope.
 	const std::wstring& getName();
 
-	const char* getTypeString();
+	const char* getTypeString() override;
 
 protected:
 	/// If no nested nodes exist, the first is initialized. Otherwise the

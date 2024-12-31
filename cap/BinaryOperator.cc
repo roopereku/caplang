@@ -108,7 +108,7 @@ std::shared_ptr <Expression> BinaryOperator::getRight()
 	return right;
 }
 
-const char* BinaryOperator::getTypeString()
+const char* BinaryOperator::getTypeString(Type type)
 {
 	switch(type)
 	{
@@ -136,6 +136,11 @@ const char* BinaryOperator::getTypeString()
 	}
 
 	return "(binaryop) ???";
+}
+
+const char* BinaryOperator::getTypeString()
+{
+	return getTypeString(type);
 }
 
 std::shared_ptr <Expression> BinaryOperator::stealLatestValue()

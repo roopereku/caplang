@@ -45,6 +45,8 @@ public:
 	/// \return The type of this node.
 	Type getType();
 
+	virtual const char* getTypeString() = 0;
+
 protected:
 	Node(Type type);
 

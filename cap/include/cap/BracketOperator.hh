@@ -44,7 +44,7 @@ public:
 	std::shared_ptr <Expression> getContext();
 	std::shared_ptr <Root> getInnerRoot();
 
-	const char* getTypeString();
+	const char* getTypeString() override;
 
 private:
 	std::shared_ptr <Expression> context;

@@ -21,4 +21,9 @@ const std::wstring& Value::getValue()
 	return value;
 }
 
+const char* Value::getTypeString()
+{
+	return "Value";
+}
+
 }

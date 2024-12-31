@@ -94,10 +94,10 @@ const char* Scope::getTypeString()
 {
 	switch(type)
 	{
-		case Type::Standalone: return "Standalone";
+		case Type::Standalone: return "Scope";
 		case Type::Function: return "Function";
 		case Type::ClassType: return "ClassType";
-		case Type::Custom: return "Custom";
+		case Type::Custom: return "Custom Scope";
 	}
 
 	return "???";
