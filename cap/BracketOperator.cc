@@ -49,11 +49,15 @@ void BracketOperator::handleValue(std::shared_ptr <Expression> node)
 
 bool BracketOperator::isComplete() const
 {
-	// This node is considered complete if no context has been set to
-	// make it steal a value immediately after the bracket operator has
-	// been created. After the context exists, the inner root expression
-	// determines the completeness.
-	return !context || innerRoot->isComplete();
+	// Bracket operators are always considered complete.
+	// When the context doesn't exist, this node is considered
+	// complete so a value will be immediately stolen for it.
+	//
+	// After the bracket operator has been created and assigned a
+	// context we switch to the inner root. In order to not append
+	// any further expression nodes for the inner root we still
+	// indicate that this node is complete.
+	return true;
 }
 
 unsigned BracketOperator::getPrecedence()
@@ -71,7 +75,7 @@ std::shared_ptr <Expression::Root> BracketOperator::getInnerRoot()
 	return innerRoot;
 }
 
-const char* BracketOperator::getTypeString()
+const char* BracketOperator::getTypeString(Type type)
 {
 	switch(type)
 	{
@@ -80,6 +84,11 @@ const char* BracketOperator::getTypeString()
 	}
 
 	return "(bracketop) ???";
+}
+
+const char* BracketOperator::getTypeString()
+{
+	return getTypeString(type);
 }
 
 }

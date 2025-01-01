@@ -174,12 +174,15 @@ int main()
 	std::locale::global(std::locale("C.UTF-8"));
     std::wcout.imbue(std::locale());
 
+	//foo()[]()[]
+
 	Sandbox client;
 	SourceString entry(LR"SRC(
 
 		func main()
 		{
-			a = ( 1 + 2 ) * foo(3 * 4)(5 - 9).cb(8 << 9 ** 2 ** (a.b.c + 20))[1]
+			foo(1)(2)(3)[4](5)[6][7]
+			foo()[]()[]()[]
 		}
 
 	)SRC");
