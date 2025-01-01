@@ -3,6 +3,7 @@
 
 #include <cap/Node.hh>
 #include <cap/BinaryOperator.hh>
+#include <cap/BracketOperator.hh>
 
 #include <vector>
 
@@ -15,6 +16,7 @@ public:
 	ExpectedNode(std::string_view nodeType, std::wstring&& context);
 	ExpectedNode(std::string_view nodeType);
 	ExpectedNode(cap::BinaryOperator::Type type);
+	ExpectedNode(cap::BracketOperator::Type type);
 
 	std::string_view nodeType;
 	std::wstring context;

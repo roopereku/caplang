@@ -25,6 +25,11 @@ ExpectedNode::ExpectedNode(cap::BinaryOperator::Type type)
 {
 }
 
+ExpectedNode::ExpectedNode(cap::BracketOperator::Type type)
+	: ExpectedNode(cap::BracketOperator::getTypeString(type))
+{
+}
+
 ExpectedNode Value(std::wstring&& value)
 {
 	return ExpectedNode("Value", std::move(value));
@@ -73,7 +78,11 @@ void NodeMatcher::onExpression(std::shared_ptr <cap::Expression> node)
 		case cap::Expression::Type::Root:
 		{
 			auto root = std::static_pointer_cast <cap::Expression::Root> (node);
-			traverseExpression(root->getFirst());
+
+			if(root->getFirst())
+			{
+				traverseExpression(root->getFirst());
+			}
 
 			break;
 		}
@@ -95,6 +104,8 @@ void NodeMatcher::onExpression(std::shared_ptr <cap::Expression> node)
 		case cap::Expression::Type::BracketOperator:
 		{
 			auto op = std::static_pointer_cast <cap::BracketOperator> (node);
+			EXPECT_TRUE(op->getContext());
+			EXPECT_TRUE(op->getInnerRoot());
 			traverseExpression(op->getContext());
 			traverseExpression(op->getInnerRoot());
 
