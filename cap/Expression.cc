@@ -1,6 +1,7 @@
 #include <cap/Expression.hh>
 #include <cap/BinaryOperator.hh>
 #include <cap/BracketOperator.hh>
+#include <cap/Declaration.hh>
 #include <cap/Source.hh>
 #include <cap/Value.hh>
 #include <cap/Client.hh>
@@ -70,7 +71,16 @@ std::weak_ptr <Node> Expression::handleToken(Node::ParserContext& ctx, Token& to
 	// it's almost given that anything not operator can be a value.
 	else if(token.canBeValue())
 	{
-		newNode = std::make_shared <Value> (ctx.source.getString(token));
+		if(ctx.source.match(token, L"let"))
+		{
+			printf("Create declaration\n");
+			newNode = std::make_shared <Declaration> ();
+		}
+
+		else
+		{
+			newNode = std::make_shared <Value> (ctx.source.getString(token));
+		}
 	}
 
 	// If this node isn't complete, handle the new node as a value.
@@ -136,6 +146,7 @@ const char* Expression::getTypeString(Type type)
 		case Type::UnaryOperator: return "UnaryOperator";
 		case Type::BinaryOperator: return "BinaryOperator";
 		case Type::BracketOperator: return "BracketOperator";
+		case Type::Declaration: return "Declaration";
 	}
 
 	return "???";
@@ -210,6 +221,11 @@ std::shared_ptr <Expression> Expression::stealLatestValue()
 
 Expression::Root::Root()
 	: Expression(Type::Root)
+{
+}
+
+Expression::Root::Root(Type type)
+	: Expression(type)
 {
 }
 

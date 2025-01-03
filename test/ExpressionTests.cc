@@ -232,3 +232,19 @@ TEST(ExpressionTests, ExpressionEnds)
 					Value(L"23")
 	});
 }
+
+TEST(ExpressionTests, Declarations)
+{
+	ExpressionTester tester;
+
+	tester.test(L"let a = 1 + 2",
+	{
+		Expression(),
+			Declaration(),
+				cap::BinaryOperator::Type::Assign,
+					Value(L"a"),
+					cap::BinaryOperator::Type::Add,
+						Value(L"1"),
+						Value(L"2"),
+	});
+}

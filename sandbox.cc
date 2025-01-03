@@ -3,6 +3,7 @@
 #include <cap/Expression.hh>
 #include <cap/BinaryOperator.hh>
 #include <cap/BracketOperator.hh>
+#include <cap/Declaration.hh>
 #include <cap/Value.hh>
 
 #include <iostream>
@@ -153,6 +154,17 @@ protected:
 
 				break;
 			}
+
+			case cap::Expression::Type::Declaration:
+			{
+				auto decl = std::static_pointer_cast <cap::Declaration> (expr);
+				file << prefix() << decl->getTypeString() << '\n';
+
+				if(decl->getFirst())
+				{
+					traverseExpression(decl->getFirst());
+				}
+			}
 		}
 
 		depth--;
@@ -174,15 +186,12 @@ int main()
 	std::locale::global(std::locale("C.UTF-8"));
     std::wcout.imbue(std::locale());
 
-	//foo()[]()[]
-
 	Sandbox client;
 	SourceString entry(LR"SRC(
 
 		func main()
 		{
-			foo(1)(2)(3)[4](5)[6][7]
-			foo()[]()[]()[]
+			let a = 1 + 2
 		}
 
 	)SRC");

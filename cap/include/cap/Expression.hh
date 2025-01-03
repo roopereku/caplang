@@ -15,7 +15,8 @@ public:
 		Value,
 		UnaryOperator,
 		BinaryOperator,
-		BracketOperator
+		BracketOperator,
+		Declaration
 	};
 
 	/// Parses an expression.
@@ -53,7 +54,7 @@ public:
 	Type getType();
 
 	static const char* getTypeString(Type type);
-	const char* getTypeString();
+	const char* getTypeString() override;
 
 	class Root;
 
@@ -87,6 +88,8 @@ public:
 	std::shared_ptr <Expression> getFirst();
 
 protected:
+	Root(Type type);
+
 	std::shared_ptr <Expression> stealLatestValue() override;
 
 	std::shared_ptr <Expression> first;

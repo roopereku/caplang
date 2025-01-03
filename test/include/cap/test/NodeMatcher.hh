@@ -26,6 +26,7 @@ ExpectedNode Value(std::wstring&& value);
 ExpectedNode Scope();
 ExpectedNode Function(std::wstring&& name);
 ExpectedNode Expression();
+ExpectedNode Declaration();
 
 class NodeMatcher : public cap::Node::Traverser
 {

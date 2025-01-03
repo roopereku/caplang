@@ -3,6 +3,7 @@
 #include <cap/Function.hh>
 #include <cap/ClassType.hh>
 #include <cap/BracketOperator.hh>
+#include <cap/Declaration.hh>
 #include <cap/Value.hh>
 
 #include <gtest/gtest.h>
@@ -48,6 +49,11 @@ ExpectedNode Function(std::wstring&& name)
 ExpectedNode Expression()
 {
 	return ExpectedNode("Root");
+}
+
+ExpectedNode Declaration()
+{
+	return ExpectedNode("Declaration");
 }
 
 NodeMatcher::NodeMatcher(std::vector <ExpectedNode>&& expectation)
@@ -118,6 +124,19 @@ void NodeMatcher::onExpression(std::shared_ptr <cap::Expression> node)
 			auto value = std::static_pointer_cast <cap::Value> (node);
 			EXPECT_STREQ(value->getValue().c_str(), current.context.c_str());
 			break;
+		}
+
+		case cap::Expression::Type::Declaration:
+		{
+			auto decl = std::static_pointer_cast <cap::Declaration> (node);
+
+			if(decl->getFirst())
+			{
+				traverseExpression(decl->getFirst());
+			}
+
+			break;
+
 		}
 	}
 }
