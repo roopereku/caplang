@@ -45,7 +45,8 @@ TEST(ExpressionTests, BinaryOperators)
 	{
 		Expression(),
 			cap::BinaryOperator::Type::Add,
-				Value(L"1"), Value(L"2")
+				Value(L"1"),
+				Value(L"2")
 	});
 
 	tester.test(L"1+2*3",

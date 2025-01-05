@@ -61,84 +61,57 @@ NodeMatcher::NodeMatcher(std::vector <ExpectedNode>&& expectation)
 {
 }
 
-bool NodeMatcher::onScope(std::shared_ptr <cap::Scope> node)
+Traverser::Result NodeMatcher::onScope(std::shared_ptr <cap::Scope> node)
 {
 	auto current = match(node);
-	return true;
+	return Traverser::Result::Continue;
 }
 
-bool NodeMatcher::onFunction(std::shared_ptr <cap::Function> node)
+Traverser::Result NodeMatcher::onFunction(std::shared_ptr <cap::Function> node)
 {
 	auto current = match(node);
 	EXPECT_STREQ(node->getName().c_str(), current.context.c_str());
-	return true;
+	return Traverser::Result::Continue;
 }
 
-void NodeMatcher::onExpression(std::shared_ptr <cap::Expression> node)
+Traverser::Result NodeMatcher::onExpressionRoot(std::shared_ptr <cap::Expression::Root> node)
+{
+	match(node);
+	return Traverser::Result::Continue;
+}
+
+Traverser::Result NodeMatcher::onDeclaration(std::shared_ptr <cap::Declaration> node)
+{
+	match(node);
+	return Traverser::Result::Continue;
+}
+
+Traverser::Result NodeMatcher::onBinaryOperator(std::shared_ptr <cap::BinaryOperator> node)
+{
+	match(node);
+
+	EXPECT_TRUE(node->getLeft());
+	EXPECT_TRUE(node->getRight());
+
+	return Traverser::Result::Continue;
+}
+
+Traverser::Result NodeMatcher::onBracketOperator(std::shared_ptr <cap::BracketOperator> node)
+{
+	match(node);
+
+	EXPECT_TRUE(node->getContext());
+	EXPECT_TRUE(node->getInnerRoot());
+
+	return Traverser::Result::Continue;
+}
+
+Traverser::Result NodeMatcher::onValue(std::shared_ptr <cap::Value> node)
 {
 	auto current = match(node);
+	EXPECT_STREQ(node->getValue().c_str(), current.context.c_str());
 
-	// TODO: This could be nicer with more specific traversal functions.
-	switch(node->getType())
-	{
-		case cap::Expression::Type::Root:
-		{
-			auto root = std::static_pointer_cast <cap::Expression::Root> (node);
-
-			if(root->getFirst())
-			{
-				traverseExpression(root->getFirst());
-			}
-
-			break;
-		}
-
-		case cap::Expression::Type::BinaryOperator:
-		{
-			auto op = std::static_pointer_cast <cap::BinaryOperator> (node);
-			traverseExpression(op->getLeft());
-			traverseExpression(op->getRight());
-
-			break;
-		}
-
-		case cap::Expression::Type::UnaryOperator:
-		{
-			break;
-		}
-
-		case cap::Expression::Type::BracketOperator:
-		{
-			auto op = std::static_pointer_cast <cap::BracketOperator> (node);
-			EXPECT_TRUE(op->getContext());
-			EXPECT_TRUE(op->getInnerRoot());
-			traverseExpression(op->getContext());
-			traverseExpression(op->getInnerRoot());
-
-			break;
-
-		}
-
-		case cap::Expression::Type::Value:
-		{
-			auto value = std::static_pointer_cast <cap::Value> (node);
-			EXPECT_STREQ(value->getValue().c_str(), current.context.c_str());
-			break;
-		}
-
-		case cap::Expression::Type::Declaration:
-		{
-			auto decl = std::static_pointer_cast <cap::Declaration> (node);
-
-			if(decl->getFirst())
-			{
-				traverseExpression(decl->getFirst());
-			}
-
-			break;
-
-		}
-	}
+	return Traverser::Result::Continue;
 }
 
 ExpectedNode NodeMatcher::match(std::shared_ptr <cap::Node> node)

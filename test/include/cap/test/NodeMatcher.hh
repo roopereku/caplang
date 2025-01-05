@@ -2,6 +2,7 @@
 #define CAP_TEST_NODE_MATCHER_HH
 
 #include <cap/Node.hh>
+#include <cap/Traverser.hh>
 #include <cap/BinaryOperator.hh>
 #include <cap/BracketOperator.hh>
 
@@ -28,14 +29,19 @@ ExpectedNode Function(std::wstring&& name);
 ExpectedNode Expression();
 ExpectedNode Declaration();
 
-class NodeMatcher : public cap::Node::Traverser
+class NodeMatcher : public cap::Traverser
 {
 public:
 	NodeMatcher(std::vector <ExpectedNode>&& expectation);
 
-	bool onScope(std::shared_ptr <cap::Scope> node) override;
-	bool onFunction(std::shared_ptr <cap::Function> node) override;
-	void onExpression(std::shared_ptr <cap::Expression> node) override;
+	Result onScope(std::shared_ptr <cap::Scope> node) override;
+	Result onFunction(std::shared_ptr <cap::Function> node) override;
+	Result onExpressionRoot(std::shared_ptr <cap::Expression::Root> node) override;
+	Result onDeclaration(std::shared_ptr <cap::Declaration> node) override;
+	Result onBinaryOperator(std::shared_ptr <cap::BinaryOperator> node) override;
+	Result onBracketOperator(std::shared_ptr <cap::BracketOperator> node) override;
+	Result onValue(std::shared_ptr <cap::Value> node) override;
+
 	ExpectedNode match(std::shared_ptr <cap::Node> node);
 
 	std::vector <ExpectedNode> expectation;

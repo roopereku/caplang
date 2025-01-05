@@ -1,4 +1,5 @@
 #include <cap/Client.hh>
+#include <cap/Traverser.hh>
 #include <cap/Function.hh>
 #include <cap/Expression.hh>
 #include <cap/BinaryOperator.hh>
@@ -47,7 +48,7 @@ public:
 	}
 };
 
-class ASTDumper : public cap::Node::Traverser
+class ASTDumper : public cap::Traverser
 {
 public:
 	ASTDumper(std::string&& path)
@@ -69,110 +70,57 @@ public:
 	}
 
 protected:
-	bool onFunction(std::shared_ptr <cap::Function> scope) override
+	void onNodeExited(std::shared_ptr <cap::Node> node, Result result) override
 	{
-		depth++;
-		file << prefix() << scope->getTypeString();
-
-		if(!scope->getName().empty())
+		if(result == cap::Traverser::Result::NotHandled)
 		{
-			file << ": " << scope->getName();
-		}
-
-		file << '\n';
-
-		for(auto nested : scope->getNested())
-		{
-			// TODO: Check return value?
-			traverseNode(nested);
+			printf("No handler defined for '%s'\n", node->getTypeString());
+			return;
 		}
 
 		depth--;
-		return false;
 	}
 
-	void onExpression(std::shared_ptr <cap::Expression> expr) override
+	Result onScope(std::shared_ptr <cap::Scope> node) override
 	{
-		depth++;
+		file << prefix() << node->getTypeString() << ": " << node->getName() << '\n';
+		return Result::Continue;
+	}
 
-		switch(expr->getType())
-		{
-			case cap::Expression::Type::Root:
-			{
-				auto root = std::static_pointer_cast <cap::Expression::Root> (expr);
-				file << prefix() << root->getTypeString() << '\n';
+	Result onFunction(std::shared_ptr <cap::Function> node) override
+	{
+		file << prefix() << node->getTypeString() << ": " << node->getName() << '\n';
+		return Result::Continue;
+	}
 
-				if(root->getFirst())
-				{
-					traverseExpression(root->getFirst());
-				}
+	Result onExpressionRoot(std::shared_ptr <cap::Expression::Root> node) override
+	{
+		file << prefix() << node->getTypeString() << '\n';
+		return Result::Continue;
+	}
 
-				break;
-			}
+	Result onDeclaration(std::shared_ptr <cap::Declaration> node) override
+	{
+		file << prefix() << node->getTypeString() << '\n';
+		return Result::Continue;
+	}
 
-			case cap::Expression::Type::BinaryOperator:
-			{
-				auto op = std::static_pointer_cast <cap::BinaryOperator> (expr);
-				file << prefix() << op->getTypeString() << '\n';
+	Result onBinaryOperator(std::shared_ptr <cap::BinaryOperator> node) override
+	{
+		file << prefix() << node->getTypeString() << '\n';
+		return Result::Continue;
+	}
 
-				assert(op->getLeft());
-				assert(op->getRight());
-
-				traverseExpression(op->getLeft());
-				traverseExpression(op->getRight());
-
-				break;
-			}
-
-			case cap::Expression::Type::UnaryOperator:
-			{
-				break;
-			}
-
-			case cap::Expression::Type::BracketOperator:
-			{
-				auto op = std::static_pointer_cast <cap::BracketOperator> (expr);
-				file << prefix() << op->getTypeString() << '\n';
-
-				assert(op->getContext());
-
-				traverseExpression(op->getContext());
-
-				if(op->getInnerRoot())
-				{
-					traverseExpression(op->getInnerRoot());
-				}
-
-				break;
-
-			}
-
-			case cap::Expression::Type::Value:
-			{
-				auto value = std::static_pointer_cast <cap::Value> (expr);
-				file << prefix() << "Value: " << value->getValue() << '\n';
-
-				break;
-			}
-
-			case cap::Expression::Type::Declaration:
-			{
-				auto decl = std::static_pointer_cast <cap::Declaration> (expr);
-				file << prefix() << decl->getTypeString() << '\n';
-
-				if(decl->getFirst())
-				{
-					traverseExpression(decl->getFirst());
-				}
-			}
-		}
-
-		depth--;
+	Result onValue(std::shared_ptr <cap::Value> node) override
+	{
+		file << prefix() << node->getTypeString() << ": " << node->getValue() << '\n';
+		return Result::Continue;
 	}
 
 private:
 	std::wstring prefix()
 	{
+		depth++;
 		return std::wstring(depth, '*') + L' ';
 	}
 
@@ -191,7 +139,7 @@ int main()
 
 		func main()
 		{
-			let a = 1 + 2
+			1+2
 		}
 
 	)SRC");
