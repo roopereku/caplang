@@ -34,6 +34,7 @@ public:
 	class ParserContext;
 
 	Token(size_t index, size_t length);
+	Token();
 
 	size_t getIndex() const;
 	size_t getLength() const;

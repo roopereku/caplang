@@ -13,6 +13,7 @@ public:
 	{
 		Assign,
 		Access,
+		Comma,
 
 		Add,
 		Subtract,
@@ -63,6 +64,11 @@ public:
 	///
 	/// \return Value above 0 depending on the type.
 	unsigned getPrecedence() override;
+
+	/// Gets the type of this binary operator.
+	///
+	/// \return The type of this binary operator.
+	Type getType();
 
 	std::shared_ptr <Expression> getLeft();
 	std::shared_ptr <Expression> getRight();

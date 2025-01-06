@@ -14,9 +14,9 @@ std::shared_ptr <BinaryOperator> BinaryOperator::create(cap::ParserContext& ctx,
 
 	// TODO: Implement compound operators for operators that don't already
 	// have an override. This is not implemented for ==, !=, <= and >=.
-	std::array <std::wstring_view, 21> ops
+	std::array <std::wstring_view, 22> ops
 	{
-		L"=", L".",
+		L"=", L".", L",",
 		L"+", L"-", L"*", L"/", L"%", L"**",
 		L"||", L"&&", L"<", L">", L"<=", L">=", L"==", L"!=",
 		L"<<", L">>", L"&", L"|", L"^",
@@ -60,6 +60,7 @@ unsigned BinaryOperator::getPrecedence()
 {
 	switch(type)
 	{
+		case Type::Comma: return 1;
 		case Type::Assign: return 2;
 		case Type::Or: return 3;
 		case Type::And: return 4;
@@ -98,6 +99,11 @@ unsigned BinaryOperator::getPrecedence()
 	return -1;
 }
 
+BinaryOperator::Type BinaryOperator::getType()
+{
+	return type;
+}
+
 std::shared_ptr <Expression> BinaryOperator::getLeft()
 {
 	return left;
@@ -114,6 +120,7 @@ const char* BinaryOperator::getTypeString(Type type)
 	{
 		case Type::Assign: return "Assign";
 		case Type::Access: return "Access";
+		case Type::Comma: return "Comma";
 		case Type::Add: return "Add";
 		case Type::Subtract: return "Subtract";
 		case Type::Multiply: return "Multiply";

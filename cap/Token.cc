@@ -22,6 +22,11 @@ Token::Token(size_t index, size_t length)
 {
 }
 
+Token::Token()
+	: index(0), length(0), type(Type::Invalid)
+{
+}
+
 size_t Token::getIndex() const
 {
 	return index;
@@ -251,7 +256,7 @@ Token::ParseResult Token::parseOperator(ParserContext& ctx, size_t& i)
 	{
 		'+', '-', '*', '/', '%', '*',
 		'<', '>', '&', '|', '^',
-		'=', '!', '.'
+		'=', '!', '.', ','
 	};
 
 	while(std::find(opChars.begin(), opChars.end(), ctx.source[i]) != opChars.end())
