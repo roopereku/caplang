@@ -3,9 +3,9 @@
 namespace cap
 {
 
-void Client::parse(Source& source)
+bool Client::parse(Source& source)
 {
-	source.parse(*this);
+	return source.parse(*this);
 }
 
 void Client::onSourceError(SourceLocation&, const std::wstring&) {}

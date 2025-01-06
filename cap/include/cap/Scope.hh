@@ -9,6 +9,8 @@
 namespace cap
 {
 
+class Declaration;
+
 /// Scope is a node representing an area within the source
 /// code in which declarations, expressions and statements live in.
 class Scope : public Node

@@ -51,9 +51,9 @@ ExpectedNode Expression()
 	return ExpectedNode("Root");
 }
 
-ExpectedNode Declaration()
+ExpectedNode DeclarationRoot()
 {
-	return ExpectedNode("Declaration");
+	return ExpectedNode("Declaration Root");
 }
 
 NodeMatcher::NodeMatcher(std::vector <ExpectedNode>&& expectation)
@@ -80,7 +80,7 @@ Traverser::Result NodeMatcher::onExpressionRoot(std::shared_ptr <cap::Expression
 	return Traverser::Result::Continue;
 }
 
-Traverser::Result NodeMatcher::onDeclaration(std::shared_ptr <cap::Declaration> node)
+Traverser::Result NodeMatcher::onDeclarationRoot(std::shared_ptr <cap::Declaration::Root> node)
 {
 	match(node);
 	return Traverser::Result::Continue;

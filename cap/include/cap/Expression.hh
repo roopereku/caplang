@@ -16,7 +16,7 @@ public:
 		UnaryOperator,
 		BinaryOperator,
 		BracketOperator,
-		Declaration
+		DeclarationRoot,
 	};
 
 	/// Parses an expression.

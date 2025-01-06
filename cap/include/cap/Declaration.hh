@@ -6,11 +6,16 @@
 namespace cap
 {
 
-class Declaration : public Expression::Root
+class Declaration
 {
 public:
-	Declaration()
-		: Expression::Root(Type::Declaration)
+	class Root;
+};
+
+class Declaration::Root : public Expression::Root
+{
+public:
+	Root() : Expression::Root(Type::DeclarationRoot)
 	{
 	}
 };

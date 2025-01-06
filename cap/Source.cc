@@ -1,4 +1,5 @@
 #include <cap/Source.hh>
+#include <cap/Validator.hh>
 
 #include <string>
 #include <cassert>
@@ -57,6 +58,12 @@ bool Source::parse(Client& client)
 
 	// The current node has to return to the root node.
 	assert(currentNode.lock() == global);
+
+	Validator validator(nodeCtx);
+	if(!validator.traverseScope(global))
+	{
+		return false;
+	}
 
 	return true;
 }

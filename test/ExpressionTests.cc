@@ -241,7 +241,7 @@ TEST(ExpressionTests, Declarations)
 	tester.test(L"let a = 1 + 2",
 	{
 		Expression(),
-			Declaration(),
+			DeclarationRoot(),
 				cap::BinaryOperator::Type::Assign,
 					Value(L"a"),
 					cap::BinaryOperator::Type::Add,

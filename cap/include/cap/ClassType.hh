@@ -2,11 +2,12 @@
 #define CAP_CLASS_TYPE_HH
 
 #include <cap/Scope.hh>
+#include <cap/TypeDefinition.hh>
 
 namespace cap
 {
 
-class ClassType : public Scope
+class ClassType : public Scope, public TypeDefinition
 {
 public:
 	ClassType();

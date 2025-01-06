@@ -3,6 +3,7 @@
 
 #include <cap/Node.hh>
 #include <cap/Expression.hh>
+#include <cap/Declaration.hh>
 
 namespace cap
 {
@@ -13,7 +14,6 @@ class Function;
 class ClassType;
 class BinaryOperator;
 class BracketOperator;
-class Declaration;
 class Value;
 
 class Traverser
@@ -98,11 +98,11 @@ protected:
 	/// \return Continue if the traversal should continue to the first expression node.
 	virtual Result onExpressionRoot(std::shared_ptr <Expression::Root> node);
 
-	/// Invoked upon hitting a declaration in an expression.
+	/// Invoked upon hitting a declaration root in an expression.
 	///
-	/// \param node The node representing a declaration
+	/// \param node The node representing a declaration root.
 	/// \return Continue if the traversal should continue to the underlying expression.
-	virtual Result onDeclaration(std::shared_ptr <Declaration> node);
+	virtual Result onDeclarationRoot(std::shared_ptr <Declaration::Root> node);
 
 	/// Invoked upon hitting a binary operator in an expression.
 	///

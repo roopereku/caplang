@@ -99,7 +99,7 @@ protected:
 		return Result::Continue;
 	}
 
-	Result onDeclaration(std::shared_ptr <cap::Declaration> node) override
+	Result onDeclarationRoot(std::shared_ptr <cap::Declaration::Root> node) override
 	{
 		file << prefix() << node->getTypeString() << '\n';
 		return Result::Continue;
@@ -139,12 +139,15 @@ int main()
 
 		func main()
 		{
-			1+2
+			let a = 5, b = 10
 		}
 
 	)SRC");
 
-	client.parse(entry);
+	if(!client.parse(entry))
+	{
+		return 1;
+	}
 
 	ASTDumper dumper("ast.puml");
 	dumper.traverseNode(entry.getGlobal());

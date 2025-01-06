@@ -14,7 +14,7 @@ namespace cap
 class Client
 {
 public:
-	void parse(Source& source);
+	bool parse(Source& source);
 
 	template <typename... Args>
 	void sourceError(SourceLocation& at, Args&&... args)

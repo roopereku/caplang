@@ -5,6 +5,11 @@
 namespace cap
 {
 
+Node::Node(Type type)
+	: type(type)
+{
+}
+
 std::weak_ptr <Node> Node::handleToken(ParserContext&, Token&)
 {
 	return weak_from_this();
@@ -26,9 +31,14 @@ Node::Type Node::getType()
 	return type;
 }
 
-Node::Node(Type type)
-	: type(type)
+void Node::setToken(Token token)
 {
+	at = token;
+}
+
+Token Node::getToken()
+{
+	return at;
 }
 
 }

@@ -74,7 +74,7 @@ std::weak_ptr <Node> Expression::handleToken(Node::ParserContext& ctx, Token& to
 		if(ctx.source.match(token, L"let"))
 		{
 			printf("Create declaration\n");
-			newNode = std::make_shared <Declaration> ();
+			newNode = std::make_shared <Declaration::Root> ();
 		}
 
 		else
@@ -82,6 +82,9 @@ std::weak_ptr <Node> Expression::handleToken(Node::ParserContext& ctx, Token& to
 			newNode = std::make_shared <Value> (ctx.source.getString(token));
 		}
 	}
+
+	assert(newNode);
+	newNode->setToken(token);
 
 	// If this node isn't complete, handle the new node as a value.
 	if(!complete)
@@ -146,7 +149,7 @@ const char* Expression::getTypeString(Type type)
 		case Type::UnaryOperator: return "UnaryOperator";
 		case Type::BinaryOperator: return "BinaryOperator";
 		case Type::BracketOperator: return "BracketOperator";
-		case Type::Declaration: return "Declaration";
+		case Type::DeclarationRoot: return "Declaration Root";
 	}
 
 	return "???";

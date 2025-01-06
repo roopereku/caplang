@@ -44,6 +44,16 @@ public:
 	/// \return The type of this node.
 	Type getType();
 
+	/// Sets the token associated with this node.
+	///
+	/// \param token The token to associate with this node.
+	void setToken(Token token);
+
+	/// Gets the token associated with this node.
+	///
+	/// \return The token associated with this node.
+	Token getToken();
+
 	virtual const char* getTypeString() = 0;
 
 protected:
@@ -52,6 +62,7 @@ protected:
 private:
 	std::weak_ptr <Node> parent;
 	Type type;
+	Token at;
 };
 
 class Node::ParserContext : public cap::ParserContext

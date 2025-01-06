@@ -93,7 +93,7 @@ bool Traverser::traverseScope(std::shared_ptr <Scope> node)
 	}
 
 	onNodeExited(node, result);
-	return true;
+	return result != Result::Stop;
 }
 
 bool Traverser::traverseExpression(std::shared_ptr <Expression> node)
@@ -125,12 +125,12 @@ bool Traverser::traverseExpression(std::shared_ptr <Expression> node)
 			break;
 		}
 
-		case Expression::Type::Declaration:
+		case Expression::Type::DeclarationRoot:
 		{
-			auto decl = std::static_pointer_cast <Declaration> (node);
-			result = onDeclaration(decl);
+			auto decl = std::static_pointer_cast <Declaration::Root> (node);
+			result = onDeclarationRoot(decl);
 
-			if(shouldContinue(result))
+			if(shouldContinue(result) && decl->getFirst())
 			{
 				if(!traverseExpression(decl->getFirst()))
 				{
@@ -182,7 +182,7 @@ bool Traverser::traverseExpression(std::shared_ptr <Expression> node)
 	}
 
 	onNodeExited(node, result);
-	return true;
+	return result != Result::Stop;
 }
 
 void Traverser::onNodeExited(std::shared_ptr <Node>, Result) {}
@@ -192,7 +192,7 @@ Traverser::Result Traverser::onFunction(std::shared_ptr <Function>) { return Res
 Traverser::Result Traverser::onClassType(std::shared_ptr <ClassType>) { return Result::NotHandled; }
 Traverser::Result Traverser::onCustomScope(std::shared_ptr <Scope>) { return Result::NotHandled; }
 Traverser::Result Traverser::onExpressionRoot(std::shared_ptr <Expression::Root>) {return Result::NotHandled; }
-Traverser::Result Traverser::onDeclaration(std::shared_ptr <Declaration>) {return Result::NotHandled; }
+Traverser::Result Traverser::onDeclarationRoot(std::shared_ptr <Declaration::Root>) {return Result::NotHandled; }
 Traverser::Result Traverser::onBinaryOperator(std::shared_ptr <BinaryOperator>) {return Result::NotHandled; }
 Traverser::Result Traverser::onBracketOperator(std::shared_ptr <BracketOperator>) {return Result::NotHandled; }
 Traverser::Result Traverser::onValue(std::shared_ptr <Value>) {return Result::NotHandled; }
