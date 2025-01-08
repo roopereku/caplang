@@ -63,6 +63,28 @@ const std::vector <std::shared_ptr <Node>>& Scope::getNested()
 	return nested;
 }
 
+std::shared_ptr <Declaration> Scope::findDeclaration(Source& source, Token name)
+{
+	// Is the declaration in this scope.
+	for(auto decl : declarations)
+	{
+		if(source.match(name, decl->getName()))
+		{
+			return decl;
+		}
+	}
+
+	// Look for the declaration in a parent scope if there is any.
+	auto parent = getParentScope();
+	return parent ? parent->findDeclaration(source, name) : nullptr;
+}
+
+void Scope::addDeclaration(std::shared_ptr <Declaration> node)
+{
+	adopt(node);
+	declarations.emplace_back(std::move(node));
+}
+
 const char* Scope::getTypeString()
 {
 	return "Scope";

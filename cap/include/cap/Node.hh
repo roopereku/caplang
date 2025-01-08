@@ -9,6 +9,8 @@
 namespace cap
 {
 
+class Scope;
+
 class Node : public std::enable_shared_from_this <Node>
 {
 public:
@@ -54,6 +56,11 @@ public:
 	///
 	/// \return The token associated with this node.
 	Token getToken();
+
+	/// Find the nearest parent scope relative to this node.
+	///
+	/// \return The nearest parent scope up until the global scope or null.
+	std::shared_ptr <Scope> getParentScope();
 
 	virtual const char* getTypeString() = 0;
 

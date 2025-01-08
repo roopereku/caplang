@@ -26,6 +26,7 @@ std::weak_ptr <Node> Function::handleToken(ParserContext& ctx, Token& token)
 			return {};
 		}
 
+		setToken(token);
 		name = ctx.source.getString(token);
 		return weak_from_this();
 	}

@@ -1,8 +1,10 @@
 #include <cap/Validator.hh>
-#include <cap/BinaryOperator.hh>
 #include <cap/Source.hh>
 #include <cap/Client.hh>
+#include <cap/Function.hh>
+#include <cap/BinaryOperator.hh>
 #include <cap/Value.hh>
+#include <cap/Variable.hh>
 
 #include <cassert>
 
@@ -16,6 +18,19 @@ Validator::Validator(ParserContext& ctx)
 
 void Validator::onNodeExited(std::shared_ptr <Node> node, Result result)
 {
+}
+
+Traverser::Result Validator::onFunction(std::shared_ptr <Function> node)
+{
+	auto scope = node->getParentScope();
+
+	if(!checkDeclaration(scope, node))
+	{
+		return Result::Stop;
+	}
+
+	scope->addDeclaration(node);
+	return Result::Continue;
 }
 
 Traverser::Result Validator::onDeclarationRoot(std::shared_ptr <Declaration::Root> node)
@@ -70,7 +85,7 @@ bool Validator::checkAssignment(std::shared_ptr <Expression> node)
 
 		else if(op->getType() == BinaryOperator::Type::Assign)
 		{
-			// Make sure that the declaration target is valid.
+			// Make sure that the declaration target is an identifier.
 			if(!checkDeclarationTarget(op->getLeft(), false))
 			{
 				return false;
@@ -82,9 +97,19 @@ bool Validator::checkAssignment(std::shared_ptr <Expression> node)
 				return false;
 			}
 
-			// TODO: Make sure that the given declaration target doesn't exist already.
+			auto parent = op->getParentScope();
+			assert(parent);
 
-			// TODO: Split the expression into separate Declaration nodes.
+			if(!checkDeclaration(parent, op->getLeft()))
+			{
+				return false;
+			}
+
+			// TODO: Add a different kind of declaration depending on the initialization type.
+
+			// The lhs of an assignment is known to be a value at this point.
+			auto value = std::static_pointer_cast <Value> (op->getLeft());
+			parent->addDeclaration(std::make_shared <Variable> (value));
 		}
 
 		else
@@ -100,7 +125,7 @@ bool Validator::checkAssignment(std::shared_ptr <Expression> node)
 
 bool Validator::checkDeclarationTarget(std::shared_ptr <Expression> node, bool onlyValue)
 {
-	if(isIdentifier(node))
+	if(isValueAndIdentifier(node))
 	{
 		// If only a value without "=" was found, log an error.
 		if(onlyValue)
@@ -126,7 +151,21 @@ bool Validator::checkDeclarationTarget(std::shared_ptr <Expression> node, bool o
 	return false;
 }
 
-bool Validator::isIdentifier(std::shared_ptr <Expression> node)
+bool Validator::checkDeclaration(std::shared_ptr <Scope> scope, std::shared_ptr <Node> name)
+{
+	auto existing = scope->findDeclaration(ctx.source, name->getToken());
+	if(existing)
+	{
+		// TODO: Indicate where the existing declaration was declared.
+		SourceLocation location(ctx.source, name->getToken());
+		ctx.client.sourceError(location, "'", ctx.source.getString(name->getToken()), "' already exists");
+		return false;
+	}
+
+	return true;
+}
+
+bool Validator::isValueAndIdentifier(std::shared_ptr <Expression> node)
 {
 	return node->getType() == Expression::Type::Value &&
 		node->getToken().getType() == Token::Type::Identifier;

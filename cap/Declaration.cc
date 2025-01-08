@@ -24,6 +24,7 @@ const char* Declaration::getTypeString()
 	{
 		case Type::ClassType: return "Class Type";
 		case Type::Function: return "Function";
+		case Type::Variable: return "Variable";
 	}
 
 	return "(decl) ???";

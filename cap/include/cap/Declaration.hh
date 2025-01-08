@@ -13,6 +13,7 @@ public:
 	{
 		ClassType,
 		Function,
+		Variable
 	};
 
 	class Root;
