@@ -2,12 +2,13 @@
 #define CAP_CLASS_TYPE_HH
 
 #include <cap/Scope.hh>
+#include <cap/Declaration.hh>
 #include <cap/TypeDefinition.hh>
 
 namespace cap
 {
 
-class ClassType : public Scope, public TypeDefinition
+class ClassType : public Declaration, public TypeDefinition
 {
 public:
 	ClassType();
@@ -18,6 +19,9 @@ public:
 	/// \param token The token to handle.
 	/// \return This type or the parent node.
 	std::weak_ptr <Node> handleToken(ParserContext& ctx, Token& token) override;
+
+private:
+	std::shared_ptr <Scope> body;
 };
 
 }

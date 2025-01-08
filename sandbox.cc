@@ -83,7 +83,7 @@ protected:
 
 	Result onScope(std::shared_ptr <cap::Scope> node) override
 	{
-		file << prefix() << node->getTypeString() << ": " << node->getName() << '\n';
+		file << prefix() << node->getTypeString() << '\n';
 		return Result::Continue;
 	}
 

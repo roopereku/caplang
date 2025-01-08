@@ -2,6 +2,7 @@
 #define CAP_FUNCTION_HH
 
 #include <cap/Scope.hh>
+#include <cap/Declaration.hh>
 #include <cap/Expression.hh>
 
 namespace cap
@@ -9,7 +10,7 @@ namespace cap
 
 /// Function is a node representing a scope with a
 /// function signature.
-class Function : public Scope
+class Function : public Declaration
 {
 public:
 	/// Constructs a function.
@@ -23,8 +24,14 @@ public:
 	/// \return This function.
 	std::weak_ptr <Node> handleToken(ParserContext& ctx, Token& token) override;
 
+	/// Gets the function body.
+	///
+	/// \return The function body.
+	std::shared_ptr <Scope> getBody();
+
 private:
 	std::shared_ptr <Expression::Root> signature;
+	std::shared_ptr <Scope> body;
 };
 
 }

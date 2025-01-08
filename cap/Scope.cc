@@ -9,39 +9,22 @@ namespace cap
 {
 
 Scope::Scope()
-	: Node(Node::Type::Scope), type(Type::Standalone), requiresBrackets(false), onlyDeclarations(true)
+	: Node(Node::Type::Scope), onlyDeclarations(true)
 {
 }
 
-Scope::Scope(Type type, bool onlyDeclarations)
-	: Node(Node::Type::Scope), type(type), requiresBrackets(true), onlyDeclarations(onlyDeclarations)
+Scope::Scope(bool onlyDeclarations)
+	: Node(Node::Type::Scope), onlyDeclarations(onlyDeclarations)
 {
 }
 
 std::weak_ptr <Node> Scope::handleToken(ParserContext& ctx, Token& token)
 {
-	if(requiresBrackets)
+	if(token.isClosingBracket(ctx, '}'))
 	{
-		// TODO: Implement the brace checker in a nicer way.
-		// The first token of a scope isolated by
-		// by brackets requires an opener.
-		/*
-		if(ctx.tokensProcessed == 0)
-		{
-			if(!token.isOpeningBracket(ctx, '{'))
-			{
-				SourceLocation location(ctx.source, token);
-				ctx.client.sourceError(location, "Expected '{' to indicate the beginning of a scope");
-				return {};
-			}
-		}
-
-		else*/ if(token.isClosingBracket(ctx, '}'))
-		{
-			printf("Switch to parent of scope\n");
-			assert(!getParent().expired());
-			return getParent();
-		}
+		// Let the parent node handle the closing bracket.
+		assert(!getParent().expired());
+		return getParent().lock()->handleToken(ctx, token);
 	}
 
 	if(ctx.source.match(token, L"func"))
@@ -51,7 +34,7 @@ std::weak_ptr <Node> Scope::handleToken(ParserContext& ctx, Token& token)
 
 	else if(token.isOpeningBracket(ctx, '{'))
 	{
-		// TODO: Implement scopes.
+		// TODO: Implement subscopes.
 	}
 
 	// TODO: When it's guaranteed that no comments can appear here,
@@ -75,32 +58,14 @@ std::weak_ptr <Node> Scope::handleToken(ParserContext& ctx, Token& token)
 	return weak_from_this();
 }
 
-Scope::Type Scope::getType()
-{
-	return type;
-}
-
 const std::vector <std::shared_ptr <Node>>& Scope::getNested()
 {
 	return nested;
 }
 
-const std::wstring& Scope::getName()
-{
-	return name;
-}
-
 const char* Scope::getTypeString()
 {
-	switch(type)
-	{
-		case Type::Standalone: return "Scope";
-		case Type::Function: return "Function";
-		case Type::ClassType: return "ClassType";
-		case Type::Custom: return "Custom Scope";
-	}
-
-	return "???";
+	return "Scope";
 }
 
 std::weak_ptr <Node> Scope::appendNested(std::shared_ptr <Node> node)

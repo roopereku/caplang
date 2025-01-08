@@ -8,7 +8,7 @@ namespace cap
 {
 
 Function::Function()
-	: Scope(Type::Function, false)
+	: Declaration(Type::Function)
 {
 }
 
@@ -47,8 +47,36 @@ std::weak_ptr <Node> Function::handleToken(ParserContext& ctx, Token& token)
 		return signature->handleToken(ctx, token);
 	}
 
-	assert(signature);
-	return Scope::handleToken(ctx, token);
+	else if(!body)
+	{
+		// Expect a scope beginning.
+		if(!token.isOpeningBracket(ctx, '{'))
+		{
+			SourceLocation location(ctx.source, token);
+			ctx.client.sourceError(location, "Expected '{' after function declaration");
+			return {};
+		}
+
+		body = std::make_shared <Scope> (false);
+		adopt(body);
+
+		return body;
+	}
+
+	// Return to the parent node upon a closing brace.
+	if(token.isClosingBracket(ctx, '}'))
+	{
+		assert(!getParent().expired());
+		return getParent();
+	}
+
+	assert(false);
+	return {};
+}
+
+std::shared_ptr <Scope> Function::getBody()
+{
+	return body;
 }
 
 }

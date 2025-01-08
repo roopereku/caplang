@@ -4,7 +4,7 @@ namespace cap
 {
 
 ClassType::ClassType()
-	: Scope(Type::ClassType, true)
+	: Declaration(Type::ClassType)
 {
 }
 

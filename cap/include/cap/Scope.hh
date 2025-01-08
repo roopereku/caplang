@@ -3,7 +3,6 @@
 
 #include <cap/Node.hh>
 
-#include <string>
 #include <vector>
 
 namespace cap
@@ -16,21 +15,13 @@ class Declaration;
 class Scope : public Node
 {
 public:
-	enum class Type
-	{
-		Standalone,
-		Function,
-		ClassType,
-		Custom
-	};
-
 	/// Constructs a global scope.
 	Scope();
 
 	/// Constructs a non-global scope.
 	///
 	/// \param onlyDeclarations If true, only declarations are allowed.
-	Scope(Type type, bool onlyDeclarations);
+	Scope(bool onlyDeclarations);
 
 	/// Checks if the token represents a nested node
 	/// and constructs new nodes based on the input.
@@ -40,20 +31,10 @@ public:
 	/// \return This scope, a new nested node or the parent node.
 	virtual std::weak_ptr <Node> handleToken(ParserContext& ctx, Token& token) override;
 
-	/// Gets the type of this scope.
-	///
-	/// \return The type of this scope.
-	Type getType();
-
 	/// Gets the nested nodes within this scope.
 	///
 	/// \return The nested nodes.
 	const std::vector <std::shared_ptr <Node>>& getNested();
-
-	/// Gets the name of this scope.
-	///
-	/// \return The name of this scope.
-	const std::wstring& getName();
 
 	const char* getTypeString() override;
 
@@ -62,13 +43,10 @@ protected:
 	/// given node is appended after the last nested node.
 	std::weak_ptr <Node> appendNested(std::shared_ptr <Node> node);
 
-	std::wstring name;
 	std::vector <std::shared_ptr <Node>> nested;
+	std::vector <std::shared_ptr <Declaration>> declarations;
 
-	bool requiresBrackets;
 	bool onlyDeclarations;
-
-	Type type;
 };
 
 }

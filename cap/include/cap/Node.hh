@@ -16,6 +16,7 @@ public:
 	{
 		Scope,
 		Expression,
+		Declaration,
 		Custom
 	};
 

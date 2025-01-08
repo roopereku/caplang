@@ -10,7 +10,7 @@ class ExpressionTester : public cap::Client
 {
 public:
 	ExpressionTester()
-		: base({ Scope(), Function(L"test"), })
+		: base({ Scope(), Function(L"test"), Scope() })
 	{
 	}
 

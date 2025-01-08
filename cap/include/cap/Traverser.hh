@@ -54,6 +54,12 @@ public:
 	/// \return False if the traversal was unsuccessful.
 	bool traverseExpression(std::shared_ptr <Expression> node);
 
+	/// Performs depth first traversal on a declaration.
+	///
+	/// \param node The declaration to traverse.
+	/// \return False if the traversal was unsuccessful.
+	bool traverseDeclaration(std::shared_ptr <Declaration> node);
+
 protected:
 	/// Invoked when a node is exited.
 	/// NOTE: This is only called when the exited node had a custom handler.
@@ -68,7 +74,7 @@ protected:
 	/// \return The next step of traversal.
 	virtual Result onCustomNode(std::shared_ptr <Node> node);
 
-	/// Invoked upon hitting a standalone scope node.
+	/// Invoked upon hitting a scope node.
 	///
 	/// \param node The node representing a scope.
 	/// \return Continue if the traversal should continue to the nested nodes.
@@ -85,12 +91,6 @@ protected:
 	/// \param node The node representing a class type.
 	/// \return Continue if the traversal should continue to the nested nodes.
 	virtual Result onClassType(std::shared_ptr <ClassType> node);
-
-	/// Invoked upon hitting a custom scope.
-	///
-	/// \param node The node representing a custom scope.
-	/// \return Continue if the traversal should continue to the nested nodes.
-	virtual Result onCustomScope(std::shared_ptr <Scope> node);
 
 	/// Invoked upon hitting an expression root.
 	///

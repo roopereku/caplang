@@ -24,6 +24,7 @@ bool Traverser::traverseNode(std::shared_ptr <Node> node)
 	{
 		case Node::Type::Scope: return traverseScope(std::static_pointer_cast <Scope> (node));
 		case Node::Type::Expression: return traverseExpression(std::static_pointer_cast <Expression> (node));
+		case Node::Type::Declaration: return traverseDeclaration(std::static_pointer_cast <Declaration> (node));
 
 		case Node::Type::Custom:
 		{
@@ -39,46 +40,7 @@ bool Traverser::traverseNode(std::shared_ptr <Node> node)
 
 bool Traverser::traverseScope(std::shared_ptr <Scope> node)
 {
-	Result result;
-
-	switch(node->getType())
-	{
-		case Scope::Type::Standalone:
-		{
-			result = onScope(node);
-			break;
-		}
-
-		case Scope::Type::Function:
-		{
-			result = onFunction(std::static_pointer_cast <Function> (node));
-
-			// TODO: Traverse to the return value and signature?
-			if(shouldContinue(result))
-			{
-			}
-
-			break;
-		}
-
-		case Scope::Type::ClassType:
-		{
-			result = onClassType(std::static_pointer_cast <ClassType> (node));
-
-			// TODO: Traverse to the base classes?
-			if(shouldContinue(result))
-			{
-			}
-
-			break;
-		}
-
-		case Scope::Type::Custom:
-		{
-			result = onCustomScope(node);
-			break;
-		}
-	}
+	Result result = onScope(node);
 
 	if(shouldContinue(result))
 	{
@@ -89,6 +51,48 @@ bool Traverser::traverseScope(std::shared_ptr <Scope> node)
 				onNodeExited(node, result);
 				return false;
 			}
+		}
+	}
+
+	onNodeExited(node, result);
+	return result != Result::Stop;
+}
+
+bool Traverser::traverseDeclaration(std::shared_ptr <Declaration> node)
+{
+	Result result;
+
+	switch(node->getType())
+	{
+		case Declaration::Type::ClassType:
+		{
+			auto classType = std::static_pointer_cast <ClassType> (node);
+			result = onClassType(classType);
+
+			// TODO: Traverse to the base classes?
+			if(shouldContinue(result))
+			{
+			}
+
+			break;
+		}
+
+		case Declaration::Type::Function:
+		{
+			auto function = std::static_pointer_cast <Function> (node);
+			result = onFunction(function);
+
+			// TODO: Traverse to the return value and signature?
+			if(shouldContinue(result))
+			{
+				if(!traverseScope(function->getBody()))
+				{
+					onNodeExited(node, result);
+					return false;
+				}
+			}
+
+			break;
 		}
 	}
 
@@ -190,7 +194,6 @@ Traverser::Result Traverser::onCustomNode(std::shared_ptr <Node>) { return Resul
 Traverser::Result Traverser::onScope(std::shared_ptr <Scope>) { return Result::NotHandled; }
 Traverser::Result Traverser::onFunction(std::shared_ptr <Function>) { return Result::NotHandled; }
 Traverser::Result Traverser::onClassType(std::shared_ptr <ClassType>) { return Result::NotHandled; }
-Traverser::Result Traverser::onCustomScope(std::shared_ptr <Scope>) { return Result::NotHandled; }
 Traverser::Result Traverser::onExpressionRoot(std::shared_ptr <Expression::Root>) {return Result::NotHandled; }
 Traverser::Result Traverser::onDeclarationRoot(std::shared_ptr <Declaration::Root>) {return Result::NotHandled; }
 Traverser::Result Traverser::onBinaryOperator(std::shared_ptr <BinaryOperator>) {return Result::NotHandled; }
