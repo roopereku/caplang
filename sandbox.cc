@@ -111,9 +111,22 @@ protected:
 		return Result::Continue;
 	}
 
+	Result onBracketOperator(std::shared_ptr <cap::BracketOperator> node) override
+	{
+		file << prefix() << node->getTypeString() << '\n';
+		return Result::Continue;
+	}
+
 	Result onValue(std::shared_ptr <cap::Value> node) override
 	{
-		file << prefix() << node->getTypeString() << ": " << node->getValue() << '\n';
+		file << prefix() << node->getTypeString() << ": " << node->getValue();
+
+		if(node->getReferred())
+		{
+			file << "\\n-> " << node->getReferred()->getName();
+		}
+
+		file << '\n';
 		return Result::Continue;
 	}
 
@@ -139,7 +152,8 @@ int main()
 
 		func main()
 		{
-			let a = 5, b = 10
+			let a = 10
+			let b = a, c = b + a
 		}
 
 	)SRC");

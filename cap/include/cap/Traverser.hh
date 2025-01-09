@@ -14,6 +14,7 @@ class Function;
 class ClassType;
 class BinaryOperator;
 class BracketOperator;
+class TypeDefinition;
 class Value;
 
 class Traverser
@@ -59,6 +60,12 @@ public:
 	/// \param node The declaration to traverse.
 	/// \return False if the traversal was unsuccessful.
 	bool traverseDeclaration(std::shared_ptr <Declaration> node);
+
+	/// Performs depth first traversal on a type definition.
+	///
+	/// \param node The type definition to traverse.
+	/// \return False if the traversal was unsuccessful.
+	bool traverseTypeDefinition(std::shared_ptr <TypeDefinition> node);
 
 protected:
 	/// Invoked when a node is exited.

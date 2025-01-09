@@ -8,7 +8,7 @@
 namespace cap
 {
 
-class ClassType : public Declaration, public TypeDefinition
+class ClassType : public TypeDefinition
 {
 public:
 	ClassType();

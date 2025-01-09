@@ -6,6 +6,8 @@
 namespace cap
 {
 
+class Declaration;
+
 class Value : public Expression
 {
 public:
@@ -18,11 +20,21 @@ public:
 
 	const std::wstring& getValue();
 
+	/// Returns the declaration that this value refers to if any.
+	///
+	/// \return The referred declaration or null.
+	std::shared_ptr <Declaration> getReferred();
+
+	/// Sets the declaration that this value refers to.
+	///
+	/// \param node The declaration to refer to.
+	void setReferred(std::shared_ptr <Declaration> node);
+
 	const char* getTypeString() override;
 
 private:
-	// TODO: Should this be a token?
 	std::wstring value;
+	std::weak_ptr <Declaration> referred;
 };
 
 }

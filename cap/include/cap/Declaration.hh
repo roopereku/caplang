@@ -11,7 +11,7 @@ class Declaration : public Node
 public:
 	enum class Type
 	{
-		ClassType,
+		TypeDefinition,
 		Function,
 		Variable
 	};

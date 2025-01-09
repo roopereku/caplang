@@ -22,7 +22,7 @@ const char* Declaration::getTypeString()
 {
 	switch(type)
 	{
-		case Type::ClassType: return "Class Type";
+		case Type::TypeDefinition: return "Type definition";
 		case Type::Function: return "Function";
 		case Type::Variable: return "Variable";
 	}

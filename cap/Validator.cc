@@ -5,6 +5,7 @@
 #include <cap/BinaryOperator.hh>
 #include <cap/Value.hh>
 #include <cap/Variable.hh>
+#include <cap/PrimitiveType.hh>
 
 #include <cassert>
 
@@ -53,6 +54,33 @@ Traverser::Result Validator::onDeclarationRoot(std::shared_ptr <Declaration::Roo
 Traverser::Result Validator::onBinaryOperator(std::shared_ptr <BinaryOperator> node)
 {
 	return Result::Continue;
+}
+
+Traverser::Result Validator::onValue(std::shared_ptr <Value> node)
+{
+	// TODO: Handle scope context change when binary operator encounters ".".
+	if(node->getToken().getType() == Token::Type::Identifier)
+	{
+		auto scope = node->getParentScope();
+		node->setReferred(scope->findDeclaration(ctx.source, node->getToken()));
+
+		if(!node->getReferred())
+		{
+			SourceLocation location(ctx.source, node->getToken());
+			ctx.client.sourceError(location, "Undeclared identifier '", node->getValue(), '\'');
+			return Result::Stop;
+		}
+	}
+
+	else
+	{
+		// Make the non-identifier value refer to a primitive type.
+		// TODO: Use PrimitiveType::matchValue when it replaces matchToken.
+		node->setReferred(PrimitiveType::matchToken(node->getToken()));
+		assert(node->getReferred());
+	}
+
+	return Result::Exit;
 }
 
 bool Validator::checkAssignment(std::shared_ptr <Expression> node)

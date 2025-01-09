@@ -6,6 +6,7 @@
 #include <cap/Declaration.hh>
 #include <cap/BinaryOperator.hh>
 #include <cap/BracketOperator.hh>
+#include <cap/TypeDefinition.hh>
 #include <cap/Value.hh>
 
 #include <cassert>
@@ -51,48 +52,6 @@ bool Traverser::traverseScope(std::shared_ptr <Scope> node)
 				onNodeExited(node, result);
 				return false;
 			}
-		}
-	}
-
-	onNodeExited(node, result);
-	return result != Result::Stop;
-}
-
-bool Traverser::traverseDeclaration(std::shared_ptr <Declaration> node)
-{
-	Result result;
-
-	switch(node->getType())
-	{
-		case Declaration::Type::ClassType:
-		{
-			auto classType = std::static_pointer_cast <ClassType> (node);
-			result = onClassType(classType);
-
-			// TODO: Traverse to the base classes?
-			if(shouldContinue(result))
-			{
-			}
-
-			break;
-		}
-
-		case Declaration::Type::Function:
-		{
-			auto function = std::static_pointer_cast <Function> (node);
-			result = onFunction(function);
-
-			// TODO: Traverse to the return value and signature?
-			if(shouldContinue(result))
-			{
-				if(!traverseScope(function->getBody()))
-				{
-					onNodeExited(node, result);
-					return false;
-				}
-			}
-
-			break;
 		}
 	}
 
@@ -183,6 +142,76 @@ bool Traverser::traverseExpression(std::shared_ptr <Expression> node)
 		}
 
 		case Expression::Type::UnaryOperator: assert(false && "UnaryOperator Unimplemented");
+	}
+
+	onNodeExited(node, result);
+	return result != Result::Stop;
+}
+
+bool Traverser::traverseDeclaration(std::shared_ptr <Declaration> node)
+{
+	Result result;
+
+	switch(node->getType())
+	{
+		case Declaration::Type::TypeDefinition:
+		{
+			return traverseTypeDefinition(std::static_pointer_cast <TypeDefinition> (node));
+		}
+
+		case Declaration::Type::Function:
+		{
+			auto function = std::static_pointer_cast <Function> (node);
+			result = onFunction(function);
+
+			// TODO: Traverse to the return value and signature?
+			if(shouldContinue(result))
+			{
+				if(!traverseScope(function->getBody()))
+				{
+					onNodeExited(node, result);
+					return false;
+				}
+			}
+
+			break;
+		}
+
+		case Declaration::Type::Variable:
+		{
+			assert(false && "Variable traversal unimplemented");
+			break;
+		}
+	}
+
+	onNodeExited(node, result);
+	return result != Result::Stop;
+}
+
+bool Traverser::traverseTypeDefinition(std::shared_ptr <TypeDefinition> node)
+{
+	Result result;
+
+	switch(node->getType())
+	{
+		case TypeDefinition::Type::Class:
+		{
+			auto classType = std::static_pointer_cast <ClassType> (node);
+			result = onClassType(classType);
+
+			// TODO: Traverse to the base classes?
+			if(shouldContinue(result))
+			{
+			}
+
+			break;
+		}
+
+		case TypeDefinition::Type::Primitive:
+		{
+			assert(false && "Primitive type traversal unimplemented");
+			break;
+		}
 	}
 
 	onNodeExited(node, result);

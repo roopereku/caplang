@@ -1,4 +1,5 @@
 #include <cap/Value.hh>
+#include <cap/Declaration.hh>
 
 #include <cassert>
 
@@ -19,6 +20,21 @@ bool Value::isComplete() const
 const std::wstring& Value::getValue()
 {
 	return value;
+}
+
+std::shared_ptr <Declaration> Value::getReferred()
+{
+	if(!referred.expired())
+	{
+		return referred.lock();
+	}
+
+	return nullptr;
+}
+
+void Value::setReferred(std::shared_ptr <Declaration> node)
+{
+	referred = node;
 }
 
 const char* Value::getTypeString()

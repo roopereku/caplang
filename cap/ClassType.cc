@@ -4,7 +4,7 @@ namespace cap
 {
 
 ClassType::ClassType()
-	: Declaration(Type::ClassType)
+	: TypeDefinition(Type::Class)
 {
 }
 
