@@ -12,7 +12,7 @@ Source::Source()
 {
 }
 
-bool Source::parse(Client& client)
+bool Source::parse(Client& client, bool validate)
 {
 	Token::ParserContext tokenCtx(client, *this);
 	Node::ParserContext nodeCtx(client, *this);
@@ -59,10 +59,13 @@ bool Source::parse(Client& client)
 	// The current node has to return to the root node.
 	assert(currentNode.lock() == global);
 
-	Validator validator(nodeCtx);
-	if(!validator.traverseScope(global))
+	if(validate)
 	{
-		return false;
+		Validator validator(nodeCtx);
+		if(!validator.traverseScope(global))
+		{
+			return false;
+		}
 	}
 
 	return true;

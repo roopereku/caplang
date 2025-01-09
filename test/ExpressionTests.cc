@@ -27,7 +27,7 @@ public:
 		// TODO: When validation exists, disable it
 		// as a lot of the tests only make sure that the
 		// parsing phase works.
-		ASSERT_TRUE(source.parse(*this));
+		ASSERT_TRUE(source.parse(*this, false));
 
 		expectedExpr.insert(expectedExpr.begin(), base.begin(), base.end());
 		NodeMatcher matcher(std::move(expectedExpr));

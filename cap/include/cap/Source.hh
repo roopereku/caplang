@@ -14,7 +14,10 @@ namespace cap
 class Source
 {
 public:
-	bool parse(Client& client);
+	/// Parses and optionally validates this source file.
+	///
+	/// \return The global scope.
+	bool parse(Client& client, bool validate = true);
 
 	/// Gets the global scope of this source.
 	///
