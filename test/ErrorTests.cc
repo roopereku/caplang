@@ -47,8 +47,7 @@ TEST(ErrorTests, ExpectedDeclaration)
 	ErrorTester tester;
 
 	tester.reportsError(L"a = 10", L"Only declarations are allowed here", true);
-
-	// TODO: Add a check for types?
+	tester.reportsError(L"type T\n{\na = 10\n}", L"Only declarations are allowed here", true);
 }
 
 TEST(ErrorTests, UndeclaredIdentifier)
@@ -71,8 +70,12 @@ TEST(ErrorTests, InvalidDeclaration)
 {
 	ErrorTester tester;
 
-	// TODO: Add invalid function declarations.
-	// TODO: Add invalid type declarations.
+	tester.reportsError(L"func", L"Expected an identifier after 'func'");
+	tester.reportsError(L"func foo", L"Expected '(' after function name");
+	tester.reportsError(L"func foo()", L"Expected '{' after a function declaration");
+
+	tester.reportsError(L"type", L"Expected an identifier after 'type'");
+	tester.reportsError(L"type foo", L"Expected '{' after a type declaration");
 
 	tester.reportsError(L"let a", L"Missing initialization for 'a'. Add '=' after it");
 	tester.reportsError(L"let", L"Expected an expression after 'let'");
@@ -83,8 +86,10 @@ TEST(ErrorTests, DuplicateIdentifier)
 	ErrorTester tester;
 
 	tester.reportsError(L"let a = 10\nlet a = 20", L"'a' already exists");
+
 	tester.reportsError(L"func foo()\n{\n}\nlet foo = 20", L"'foo' already exists");
 	tester.reportsError(L"let foo = 20\nfunc foo()\n{\n}", L"'foo' already exists");
 
-	// TODO: Add a check with types.
+	tester.reportsError(L"type foo\n{\n}\nlet foo = 20", L"'foo' already exists");
+	tester.reportsError(L"let foo = 20\ntype foo\n{\n}", L"'foo' already exists");
 }

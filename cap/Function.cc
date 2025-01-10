@@ -54,7 +54,7 @@ std::weak_ptr <Node> Function::handleToken(ParserContext& ctx, Token& token)
 		if(!token.isOpeningBracket(ctx, '{'))
 		{
 			SourceLocation location(ctx.source, token);
-			ctx.client.sourceError(location, "Expected '{' after function declaration");
+			ctx.client.sourceError(location, "Expected '{' after a function declaration");
 			return {};
 		}
 
