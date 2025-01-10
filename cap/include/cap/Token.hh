@@ -50,7 +50,11 @@ public:
 
 	bool canBeValue() const;
 
-	bool isBeforeNewline(cap::ParserContext& ctx);
+	/// Determines whether this token is the last of its line.
+	///
+	/// \param ctx The parser context containing the source.
+	/// \return True if this token is the last of its line.
+	bool isLastOfLine(cap::ParserContext& ctx);
 
 	static Token parseFirst(ParserContext& ctx);
 	static Token parseNext(ParserContext& ctx, Token token);

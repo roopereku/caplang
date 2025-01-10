@@ -26,7 +26,7 @@ std::weak_ptr <Node> Expression::handleToken(Node::ParserContext& ctx, Token& to
 
 		// If this closing bracket ends all subexpressions and is the final token
 		// on a line, recursively break out of the expression.
-		bool recursive = ctx.subExpressionDepth <= 0 && token.isBeforeNewline(ctx);
+		bool recursive = ctx.subExpressionDepth <= 0 && token.isLastOfLine(ctx);
 		return exitCurrentExpression(recursive);
 	}
 
@@ -112,7 +112,7 @@ std::weak_ptr <Node> Expression::handleToken(Node::ParserContext& ctx, Token& to
 	// If the current token is the last of the line and no subexpressions
 	// are active, end the expression.
 	// TODO: If the new node represents a binary operator, extend to the next line.
-	if(ctx.subExpressionDepth == 0 && token.isBeforeNewline(ctx))
+	if(ctx.subExpressionDepth == 0 && token.isLastOfLine(ctx))
 	{
 		newCurrent = exitCurrentExpression(false);
 	}

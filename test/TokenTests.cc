@@ -182,3 +182,20 @@ TEST(TokenTests, TestBrackets)
 	test.expect(Token::Type::ClosingBracket, L")", false);
 	test.expect(Token::Type::Invalid, L"", false);
 }
+
+TEST(TokenTests, TestLineChangeDetection)
+{
+	TokenTester test;
+	test.source += L"a b\nc\n\n\nd e";
+
+	test.current = Token::parseFirst(test.ctx);
+	ASSERT_FALSE(test.current.isLastOfLine(test.ctx));
+	test.current = Token::parseNext(test.ctx, test.current);
+	ASSERT_TRUE(test.current.isLastOfLine(test.ctx));
+	test.current = Token::parseNext(test.ctx, test.current);
+	ASSERT_TRUE(test.current.isLastOfLine(test.ctx));
+	test.current = Token::parseNext(test.ctx, test.current);
+	ASSERT_FALSE(test.current.isLastOfLine(test.ctx));
+	test.current = Token::parseNext(test.ctx, test.current);
+	ASSERT_TRUE(test.current.isLastOfLine(test.ctx));
+}

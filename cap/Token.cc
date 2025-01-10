@@ -106,13 +106,13 @@ bool Token::canBeValue() const
 	);
 }
 
-bool Token::isBeforeNewline(cap::ParserContext& ctx)
+bool Token::isLastOfLine(cap::ParserContext& ctx)
 {
 	size_t i = index + length;
 	while(true)
 	{
 		// TODO: Handle windows linebreaks.
-		if(ctx.source[i] == '\n')
+		if(ctx.source[i] == '\n' || ctx.source[i] == 0)
 		{
 			return true;
 		}
