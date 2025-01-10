@@ -41,18 +41,28 @@ std::weak_ptr <Node> Scope::handleToken(ParserContext& ctx, Token& token)
 	// it's almost given that anything else relates to an expression.
 	else if(token.canBeValue() || token.getType() == Token::Type::Operator || token.getType() == Token::Type::OpeningBracket)
 	{
-		if(onlyDeclarations)
-		{
-			SourceLocation location(ctx.source, token);
-			ctx.client.sourceError(location, "Only declarations are allowed here");
-			return {};
-		}
-
 		// Adopt the expression root and delegate the first token of
 		// the expression to the root.
 		auto exprRoot = std::make_shared <Expression::Root> ();
 		appendNested(exprRoot);
-		return exprRoot->handleToken(ctx, token);
+		auto ret = exprRoot->handleToken(ctx, token);
+
+		// If only declarations are alloweds, check if the first
+		// node of the expression starts a declaration.
+		if(onlyDeclarations)
+		{
+			assert(!ret.expired());
+			auto expr = std::static_pointer_cast <Expression> (ret.lock());
+
+			if(expr->getType() != Expression::Type::DeclarationRoot)
+			{
+				SourceLocation location(ctx.source, token);
+				ctx.client.sourceError(location, "Only declarations are allowed here");
+				return {};
+			}
+		}
+
+		return ret;
 	}
 
 	return weak_from_this();
