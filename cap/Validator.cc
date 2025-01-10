@@ -2,6 +2,7 @@
 #include <cap/Source.hh>
 #include <cap/Client.hh>
 #include <cap/Function.hh>
+#include <cap/ClassType.hh>
 #include <cap/BinaryOperator.hh>
 #include <cap/Value.hh>
 #include <cap/Variable.hh>
@@ -24,7 +25,18 @@ void Validator::onNodeExited(std::shared_ptr <Node> node, Result result)
 Traverser::Result Validator::onFunction(std::shared_ptr <Function> node)
 {
 	auto scope = node->getParentScope();
+	if(!checkDeclaration(scope, node))
+	{
+		return Result::Stop;
+	}
 
+	scope->addDeclaration(node);
+	return Result::Continue;
+}
+
+Traverser::Result Validator::onClassType(std::shared_ptr <ClassType> node)
+{
+	auto scope = node->getParentScope();
 	if(!checkDeclaration(scope, node))
 	{
 		return Result::Stop;

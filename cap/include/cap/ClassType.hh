@@ -20,6 +20,13 @@ public:
 	/// \return This type or the parent node.
 	std::weak_ptr <Node> handleToken(ParserContext& ctx, Token& token) override;
 
+	/// Gets the body of this class type.
+	///
+	/// \return The body of this class type.
+	std::shared_ptr <Scope> getBody();
+
+	const char* getTypeString() override;
+
 private:
 	std::shared_ptr <Scope> body;
 };

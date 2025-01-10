@@ -1,6 +1,7 @@
 #include <cap/Scope.hh>
 #include <cap/Client.hh>
 #include <cap/Function.hh>
+#include <cap/ClassType.hh>
 #include <cap/Expression.hh>
 
 #include <cassert>
@@ -30,6 +31,11 @@ std::weak_ptr <Node> Scope::handleToken(ParserContext& ctx, Token& token)
 	if(ctx.source.match(token, L"func"))
 	{
 		return appendNested(std::make_shared <Function> ());
+	}
+
+	else if(ctx.source.match(token, L"type"))
+	{
+		return appendNested(std::make_shared <ClassType> ());
 	}
 
 	else if(token.isOpeningBracket(ctx, '{'))

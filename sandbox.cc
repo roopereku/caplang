@@ -1,6 +1,7 @@
 #include <cap/Client.hh>
 #include <cap/Traverser.hh>
 #include <cap/Function.hh>
+#include <cap/ClassType.hh>
 #include <cap/Expression.hh>
 #include <cap/BinaryOperator.hh>
 #include <cap/BracketOperator.hh>
@@ -87,6 +88,12 @@ protected:
 		return Result::Continue;
 	}
 
+	Result onClassType(std::shared_ptr <cap::ClassType> node) override
+	{
+		file << prefix() << node->getTypeString() << ": " << node->getName() << '\n';
+		return Result::Continue;
+	}
+
 	Result onFunction(std::shared_ptr <cap::Function> node) override
 	{
 		file << prefix() << node->getTypeString() << ": " << node->getName() << '\n';
@@ -150,9 +157,25 @@ int main()
 	Sandbox client;
 	SourceString entry(LR"SRC(
 
+		type T
+		{
+			let member = 10
+
+			func init()
+			{
+				let a = member * 2
+			}
+
+			func doSomething()
+			{
+				let a = member ** 10
+				member = a / 10
+			}
+		}
+
 		func main()
 		{
-			let a = 10
+			let a = T
 			let b = a, c = b + a
 		}
 

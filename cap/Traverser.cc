@@ -202,6 +202,11 @@ bool Traverser::traverseTypeDefinition(std::shared_ptr <TypeDefinition> node)
 			// TODO: Traverse to the base classes?
 			if(shouldContinue(result))
 			{
+				if(!traverseScope(classType->getBody()))
+				{
+					onNodeExited(node, result);
+					return false;
+				}
 			}
 
 			break;
