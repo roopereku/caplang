@@ -6,6 +6,13 @@
 #include <string>
 #include <sstream>
 
+// TODO: Add DBG_MESSAGE_AT
+#ifdef CAP_DEBUG
+#define DBG_MESSAGE(client, ...) client.debugMessage(__VA_ARGS__)
+#else
+#define DBG_MESSAGE(client, ...)
+#endif
+
 namespace cap
 {
 
@@ -24,9 +31,18 @@ public:
 		onSourceError(at, ss.str());
 	}
 
+	template <typename... Args>
+	void debugMessage(Args&&... args)
+	{
+		std::wostringstream ss;
+		((ss << args), ...);
+		onDebugMessage(ss.str());
+	}
+
 protected:
 	virtual void onSourceError(SourceLocation& at, const std::wstring& error);
 	virtual void onError(const std::wstring& error);
+	virtual void onDebugMessage(const std::wstring& msg);
 };
 
 }

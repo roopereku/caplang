@@ -10,5 +10,6 @@ bool Client::parse(Source& source)
 
 void Client::onSourceError(SourceLocation&, const std::wstring&) {}
 void Client::onError(const std::wstring&) {}
+void Client::onDebugMessage(const std::wstring&) {}
 
 }

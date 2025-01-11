@@ -16,7 +16,7 @@ std::weak_ptr <Node> Expression::handleToken(Node::ParserContext& ctx, Token& to
 	// handleToken should never be called for a value.
 	assert(type != Type::Value);
 
-	printf("(%s) Expr token '%ls'\n", getTypeString(), ctx.source.getString(token).c_str());
+	DBG_MESSAGE(ctx.client, "Expr token '", ctx.source.getString(token), "' handled by ", getTypeString());
 
 	if(token.getType() == Token::Type::ClosingBracket)
 	{
@@ -73,7 +73,6 @@ std::weak_ptr <Node> Expression::handleToken(Node::ParserContext& ctx, Token& to
 	{
 		if(ctx.source.match(token, L"let"))
 		{
-			printf("Create declaration\n");
 			newNode = std::make_shared <Declaration::Root> ();
 		}
 

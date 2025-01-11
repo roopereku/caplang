@@ -1,4 +1,5 @@
 #include <cap/Source.hh>
+#include <cap/Client.hh>
 #include <cap/Validator.hh>
 
 #include <string>
@@ -28,13 +29,12 @@ bool Source::parse(Client& client, bool validate)
 
 	while(currentToken.isValid())
 	{
-		std::wstring str(getString(currentToken));
-		printf("[%s] Token '%ls'\n", currentToken.getTypeString(), str.c_str());
+		DBG_MESSAGE(client, "Token '", getString(currentToken), "' (", currentToken.getTypeString(), ")");
 
 		currentNode = currentNode.lock()->handleToken(nodeCtx, currentToken);
 		if(currentNode.expired())
 		{
-			printf("Failure\n");
+			DBG_MESSAGE(client, "Failure");
 			return false;
 		}
 

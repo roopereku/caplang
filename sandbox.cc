@@ -47,6 +47,11 @@ public:
 	{
 		printf("[%u:%u] Error in '%ls': %ls\n", at.getRow(), at.getColumn(), at.getString().c_str(), msg.c_str());
 	}
+
+	void onDebugMessage(const std::wstring& msg) override
+	{
+		printf("Debug: %ls\n", msg.c_str());
+	}
 };
 
 class ASTDumper : public cap::Traverser
