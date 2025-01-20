@@ -167,7 +167,8 @@ bool Traverser::traverseDeclaration(std::shared_ptr <Declaration> node)
 			// TODO: Traverse to the return value and signature?
 			if(shouldContinue(result))
 			{
-				if(!traverseScope(function->getBody()))
+				if(!traverseExpression(function->getParameterRoot()) ||
+					!traverseScope(function->getBody()))
 				{
 					onNodeExited(node, result);
 					return false;

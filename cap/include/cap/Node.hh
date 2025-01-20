@@ -86,12 +86,16 @@ public:
 	size_t tokensProcessed = 0;
 
 	/// How many nested subexpressions are there currently?
-	int subExpressionDepth = 0;
+	size_t subExpressionDepth = 0;
 
 	/// Used to stop the recursive openings of subexpressions.
 	/// Such could happen when a switch to the parent
 	/// expression node is made during handleToken.
 	bool canOpenSubexpression = true;
+
+	/// Used to insert a "let" at the beginning of the next expression.
+	/// This is skipped if a closing bracket comes first.
+	bool implicitDeclaration = false;
 };
 
 }

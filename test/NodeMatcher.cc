@@ -71,7 +71,16 @@ Traverser::Result NodeMatcher::onFunction(std::shared_ptr <cap::Function> node)
 {
 	auto current = match(node);
 	EXPECT_STREQ(node->getName().c_str(), current.context.c_str());
-	return Traverser::Result::Continue;
+
+	// TODO: Check for Stop?
+
+	if(node->getParameterRoot()->getFirst())
+	{
+		traverseExpression(node->getParameterRoot()->getFirst());
+	}
+
+	traverseScope(node->getBody());
+	return Traverser::Result::Exit;
 }
 
 Traverser::Result NodeMatcher::onExpressionRoot(std::shared_ptr <cap::Expression::Root> node)

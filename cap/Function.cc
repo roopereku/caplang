@@ -31,7 +31,7 @@ std::weak_ptr <Node> Function::handleToken(ParserContext& ctx, Token& token)
 		return weak_from_this();
 	}
 
-	else if(!signature)
+	else if(!parameters)
 	{
 		if(!token.isOpeningBracket(ctx, '('))
 		{
@@ -41,11 +41,11 @@ std::weak_ptr <Node> Function::handleToken(ParserContext& ctx, Token& token)
 			return {};
 		}
 
-		signature = std::make_shared <Expression::Root> ();
-		adopt(signature);
+		parameters = std::make_shared <Expression::Root> ();
+		adopt(parameters);
 
-		// Delegate the opening bracket to the expression.
-		return signature->handleToken(ctx, token);
+		ctx.implicitDeclaration = true;
+		return parameters;
 	}
 
 	else if(!body)
@@ -73,6 +73,11 @@ std::weak_ptr <Node> Function::handleToken(ParserContext& ctx, Token& token)
 
 	assert(false);
 	return {};
+}
+
+std::shared_ptr <Expression::Root> Function::getParameterRoot()
+{
+	return parameters;
 }
 
 std::shared_ptr <Scope> Function::getBody()

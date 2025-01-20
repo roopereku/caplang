@@ -162,26 +162,16 @@ int main()
 	Sandbox client;
 	SourceString entry(LR"SRC(
 
-		type T
+		type List
 		{
-			let member = 10
-
-			func init()
-			{
-				let a = member * 2
-			}
-
-			func doSomething()
-			{
-				let a = member ** 10
-				member = a / 10
-			}
 		}
 
-		func main()
+		func getValue()
 		{
-			let a = T
-			let b = a, c = b + a
+		}
+
+		func main(args = List, b = 60)
+		{
 		}
 
 	)SRC");
