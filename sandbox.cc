@@ -162,16 +162,9 @@ int main()
 	Sandbox client;
 	SourceString entry(LR"SRC(
 
-		type List
+		func main()
 		{
-		}
-
-		func getValue()
-		{
-		}
-
-		func main(args = List, b = 60)
-		{
+			let a = int64
 		}
 
 	)SRC");

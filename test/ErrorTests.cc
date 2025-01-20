@@ -92,4 +92,9 @@ TEST(ErrorTests, DuplicateIdentifier)
 
 	tester.reportsError(L"type foo\n{\n}\nlet foo = 20", L"'foo' already exists");
 	tester.reportsError(L"let foo = 20\ntype foo\n{\n}", L"'foo' already exists");
+
+	tester.reportsError(L"let int8 = 10\n", L"'int8' already exists");
+	tester.reportsError(L"let int32 = 10\n", L"'int32' already exists");
+	tester.reportsError(L"let uint16 = 10\n", L"'uint16' already exists");
+	tester.reportsError(L"let uint64 = 10\n", L"'uint64' already exists");
 }

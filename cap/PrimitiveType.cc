@@ -34,7 +34,7 @@ std::shared_ptr <PrimitiveType> PrimitiveType::matchName(Source& source, Token t
 		}
 	}
 
-	return primitives.back();	
+	return nullptr;
 }
 
 std::shared_ptr <PrimitiveType> PrimitiveType::matchToken(Token token)

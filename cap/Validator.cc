@@ -73,8 +73,15 @@ Traverser::Result Validator::onValue(std::shared_ptr <Value> node)
 	// TODO: Handle scope context change when binary operator encounters ".".
 	if(node->getToken().getType() == Token::Type::Identifier)
 	{
+		// Check if the given identifier exists somewhere within the scope hierarchy.
 		auto scope = node->getParentScope();
 		node->setReferred(scope->findDeclaration(ctx.source, node->getToken()));
+
+		// If nothing was found, check if the value refers to a primitive type.
+		if(!node->getReferred())
+		{
+			node->setReferred(PrimitiveType::matchName(ctx.source, node->getToken()));
+		}
 
 		if(!node->getReferred())
 		{
@@ -194,6 +201,13 @@ bool Validator::checkDeclarationTarget(std::shared_ptr <Expression> node, bool o
 bool Validator::checkDeclaration(std::shared_ptr <Scope> scope, std::shared_ptr <Node> name)
 {
 	auto existing = scope->findDeclaration(ctx.source, name->getToken());
+
+	// If nothing was found yet, the name might represent something builtin.
+	if(!existing)
+	{
+		existing = PrimitiveType::matchName(ctx.source, name->getToken());
+	}
+
 	if(existing)
 	{
 		// TODO: Indicate where the existing declaration was declared.
