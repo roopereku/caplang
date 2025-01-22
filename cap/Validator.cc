@@ -55,7 +55,7 @@ Traverser::Result Validator::onDeclarationRoot(std::shared_ptr <Declaration::Roo
 		return Result::Stop;
 	}
 
-	if(!checkAssignment(node->getFirst()))
+	if(!checkAssignment(node->getFirst(), node->findTargetScope()))
 	{
 		return Result::Stop;
 	}
@@ -102,7 +102,7 @@ Traverser::Result Validator::onValue(std::shared_ptr <Value> node)
 	return Result::Exit;
 }
 
-bool Validator::checkAssignment(std::shared_ptr <Expression> node)
+bool Validator::checkAssignment(std::shared_ptr <Expression> node, std::shared_ptr <Scope> target)
 {
 	// TODO: Allow something like foo(let a) where the first parameter of function
 	// foo takes a parameter that is an output.
@@ -123,8 +123,8 @@ bool Validator::checkAssignment(std::shared_ptr <Expression> node)
 		// Assignments can be separated by commas.
 		if(op->getType() == BinaryOperator::Type::Comma)
 		{
-			if(!checkAssignment(op->getLeft()) ||
-				!checkAssignment(op->getRight()))
+			if(!checkAssignment(op->getLeft(), target) ||
+				!checkAssignment(op->getRight(), target))
 			{
 				return false;
 			}
@@ -144,10 +144,7 @@ bool Validator::checkAssignment(std::shared_ptr <Expression> node)
 				return false;
 			}
 
-			auto parent = op->getParentScope();
-			assert(parent);
-
-			if(!checkDeclaration(parent, op->getLeft()))
+			if(!checkDeclaration(target, op->getLeft()))
 			{
 				return false;
 			}
@@ -156,7 +153,7 @@ bool Validator::checkAssignment(std::shared_ptr <Expression> node)
 
 			// The lhs of an assignment is known to be a value at this point.
 			auto value = std::static_pointer_cast <Value> (op->getLeft());
-			parent->addDeclaration(std::make_shared <Variable> (value));
+			target->addDeclaration(std::make_shared <Variable> (value));
 		}
 
 		else

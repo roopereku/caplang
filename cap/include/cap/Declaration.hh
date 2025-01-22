@@ -45,6 +45,24 @@ public:
 	Root() : Expression::Root(Type::DeclarationRoot)
 	{
 	}
+
+	/// Makes this declaration root declare function parameters.
+	void setParameterDeclaration();
+
+	/// Checks whether this declaration root declares function parameters.
+	///
+	/// \return True if parameters are declared.
+	bool isParameterDeclaration() const;
+
+	/// Find the scope which the declarations are done for.
+	///
+	/// \return The scope that the declarations target.
+	std::shared_ptr <Scope> findTargetScope();
+
+	const char* getTypeString() override;
+
+private:
+	bool parameterDeclaration = false;
 };
 
 }

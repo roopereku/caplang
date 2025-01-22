@@ -21,7 +21,7 @@ protected:
 	Result onValue(std::shared_ptr <Value> node) override;
 
 private:
-	bool checkAssignment(std::shared_ptr <Expression> node);
+	bool checkAssignment(std::shared_ptr <Expression> node, std::shared_ptr <Scope> target);
 	bool checkDeclarationTarget(std::shared_ptr <Expression> node, bool onlyValue);
 
 	bool checkDeclaration(std::shared_ptr <Scope> scope, std::shared_ptr <Node> name);

@@ -1,4 +1,7 @@
 #include <cap/Declaration.hh>
+#include <cap/Function.hh>
+
+#include <cassert>
 
 namespace cap
 {
@@ -28,6 +31,38 @@ const char* Declaration::getTypeString()
 	}
 
 	return "(decl) ???";
+}
+
+void Declaration::Root::setParameterDeclaration()
+{
+	parameterDeclaration = true;
+}
+
+bool Declaration::Root::isParameterDeclaration() const
+{
+	return parameterDeclaration;
+}
+
+std::shared_ptr <Scope> Declaration::Root::findTargetScope()
+{
+	// TODO: If a parent of this declaration node is a scoped expression
+	// such as "if", "when" or "while", return something more specific.
+
+	// Return the function body for parameter declarations.
+	if(parameterDeclaration)
+	{
+		auto parent = getParentFunction();
+		assert(parent);
+
+		return parent->getBody();
+	}
+
+	return getParentScope();
+}
+
+const char* Declaration::Root::getTypeString()
+{
+	return parameterDeclaration ? "Parameter Root" : "Declaration Root";
 }
 
 }

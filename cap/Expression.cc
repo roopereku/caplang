@@ -166,7 +166,7 @@ const char* Expression::getTypeString(Type type)
 		case Type::DeclarationRoot: return "Declaration Root";
 	}
 
-	return "???";
+	return "(expr) ???";
 }
 
 const char* Expression::getTypeString()

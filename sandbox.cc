@@ -162,10 +162,12 @@ int main()
 	Sandbox client;
 	SourceString entry(LR"SRC(
 
-		func main()
+		func main(arg = uint64)
 		{
 			let a = int64
 		}
+
+		let arg = 32
 
 	)SRC");
 

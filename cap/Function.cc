@@ -50,6 +50,13 @@ std::weak_ptr <Node> Function::handleToken(ParserContext& ctx, Token& token)
 
 	else if(!body)
 	{
+		if(parameters->getFirst())
+		{
+			// The implicit declaration should declare parameters.
+			assert(parameters->getFirst()->getType() == Expression::Type::DeclarationRoot);
+			std::static_pointer_cast <Declaration::Root> (parameters->getFirst())->setParameterDeclaration();
+		}
+
 		// Expect a scope beginning.
 		if(!token.isOpeningBracket(ctx, '{'))
 		{

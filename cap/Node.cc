@@ -1,5 +1,6 @@
 #include <cap/Node.hh>
 #include <cap/Scope.hh>
+#include <cap/Function.hh>
 
 #include <cassert>
 
@@ -44,17 +45,36 @@ Token Node::getToken()
 
 std::shared_ptr <Scope> Node::getParentScope()
 {
+	auto result = findParentNode([](std::shared_ptr <Node> node) -> bool
+	{
+		return node->type == Type::Scope;
+	});
+
+	return result ? std::static_pointer_cast <Scope> (result) : nullptr;
+}
+
+std::shared_ptr <Function> Node::getParentFunction()
+{
+	auto result = findParentNode([](std::shared_ptr <Node> node) -> bool
+	{
+		return node->type == Type::Declaration &&
+			std::static_pointer_cast <Declaration> (node)->getType() == Declaration::Type::Function;
+	});
+
+	return result ? std::static_pointer_cast <Function> (result) : nullptr;
+}
+
+std::shared_ptr <Node> Node::findParentNode(bool (*filter)(std::shared_ptr <Node>))
+{
 	// TODO: Avoid recursion?
 
 	if(!parent.expired())
 	{
 		auto next = parent.lock();
 
-		// If the parent node is a scope, return it.
-		// Alternatively go further.
-		return next->type == Type::Scope ?
-			std::static_pointer_cast <Scope> (next) :
-			next->getParentScope();
+		// If the parent node is of desired type, return it.
+		// Alternatively recurse further.
+		return filter(next) ? next : next->findParentNode(filter);
 	}
 
 	// If there is no parent, there is no parent scope.
