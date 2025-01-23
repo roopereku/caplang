@@ -37,6 +37,24 @@ public:
 	std::vector <ExpectedNode> base;
 };
 
+TEST(ExpressionTests, SingleValue)
+{
+	ExpressionTester tester;
+
+	tester.test(L"0",
+	{
+		Expression(),
+			Value(L"0")
+	});
+
+	tester.test(L"foo",
+	{
+		Expression(),
+			Value(L"foo")
+	});
+
+}
+
 TEST(ExpressionTests, BinaryOperators)
 {
 	ExpressionTester tester;

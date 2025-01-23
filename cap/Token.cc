@@ -17,6 +17,13 @@ static bool isIdentifierCharacter(wchar_t ch)
 	return std::isalpha(ch, locale) || std::isdigit(ch, locale) || ch == '_';
 }
 
+static bool isNumeric(wchar_t ch)
+{
+	// TODO: The locale could be determined by the given Source.
+	std::locale locale;
+	return std::isdigit(ch, locale);
+}
+
 Token::Token(size_t index, size_t length)
 	: index(index), length(length)
 {
@@ -287,14 +294,17 @@ Token::ParseResult Token::parseNumeric(ParserContext& ctx, size_t& i)
 				i++;
 				return parseBinary(ctx, i);
 			}
-
-			// Maybe octal.
-			default:
-			{
-				i++;
-				return parseOctal(ctx, i);
-			}
 		}
+
+		// Any numeric value after "0" indicates octal.
+		if(isNumeric(ctx.source[i]))
+		{
+			i++;
+			return parseOctal(ctx, i);
+		}
+
+		// If the next character wasn't a numeric value, the token is simply "0".
+		return Type::Integer;
 	}
 
 	// TODO: Allow floats written as ".2f"

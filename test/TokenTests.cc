@@ -109,6 +109,8 @@ TEST(TokenTests, TestInteger)
 
 	test.expect(Token::Type::Integer, L"123", false);
 	test.expect(Token::Type::Integer, L"9999999", false);
+
+	test.expect(Token::Type::Integer, L"0", false);
 	test.expect(Token::Type::Invalid, L"4567a", true);
 
 	// TODO: Test a scenario when the invalid character is in the middle.
