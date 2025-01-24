@@ -46,6 +46,11 @@ ExpectedNode Function(std::wstring&& name)
 	return ExpectedNode("Function", std::move(name));
 }
 
+ExpectedNode ClassType(std::wstring&& name)
+{
+	return ExpectedNode("Class Type", std::move(name));
+}
+
 ExpectedNode Expression()
 {
 	return ExpectedNode("Root");
@@ -54,6 +59,11 @@ ExpectedNode Expression()
 ExpectedNode DeclarationRoot()
 {
 	return ExpectedNode("Declaration Root");
+}
+
+ExpectedNode ParameterRoot()
+{
+	return ExpectedNode("Parameter Root");
 }
 
 NodeMatcher::NodeMatcher(std::vector <ExpectedNode>&& expectation)
@@ -81,6 +91,12 @@ Traverser::Result NodeMatcher::onFunction(std::shared_ptr <cap::Function> node)
 
 	traverseScope(node->getBody());
 	return Traverser::Result::Exit;
+}
+
+Traverser::Result NodeMatcher::onClassType(std::shared_ptr <cap::ClassType> node)
+{
+	match(node);
+	return Traverser::Result::Continue;
 }
 
 Traverser::Result NodeMatcher::onExpressionRoot(std::shared_ptr <cap::Expression::Root> node)

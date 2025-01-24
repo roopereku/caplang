@@ -26,8 +26,10 @@ public:
 ExpectedNode Value(std::wstring&& value);
 ExpectedNode Scope();
 ExpectedNode Function(std::wstring&& name);
+ExpectedNode ClassType(std::wstring&& name);
 ExpectedNode Expression();
 ExpectedNode DeclarationRoot();
+ExpectedNode ParameterRoot();
 
 class NodeMatcher : public cap::Traverser
 {
@@ -36,6 +38,7 @@ public:
 
 	Result onScope(std::shared_ptr <cap::Scope> node) override;
 	Result onFunction(std::shared_ptr <cap::Function> node) override;
+	Result onClassType(std::shared_ptr <cap::ClassType> node) override;
 	Result onExpressionRoot(std::shared_ptr <cap::Expression::Root> node) override;
 	Result onDeclarationRoot(std::shared_ptr <cap::Declaration::Root> node) override;
 	Result onBinaryOperator(std::shared_ptr <cap::BinaryOperator> node) override;
