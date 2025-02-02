@@ -175,6 +175,7 @@ Token Token::parse(ParserContext& ctx, Token token)
 	bool shorted = (
 		token.setTypeIfMoved(ctx, i, &Token::parseBracket) ||
 		token.setTypeIfMoved(ctx, i, &Token::parseNumeric) ||
+		token.setTypeIfMoved(ctx, i, &Token::parseString) ||
 		token.setTypeIfMoved(ctx, i, &Token::parseIdentifier) ||
 		token.setTypeIfMoved(ctx, i, &Token::parseComment) ||
 		token.setTypeIfMoved(ctx, i, &Token::parseOperator)
@@ -324,6 +325,40 @@ Token::ParseResult Token::parseComment(ParserContext& ctx, size_t& i)
 	}
 
 	return Type::Comment;
+}
+
+Token::ParseResult Token::parseString(ParserContext& ctx, size_t& i)
+{
+	// TODO: String prefixes?
+
+	if(ctx.source[i] == '"')
+	{
+		bool escaped = false;
+		bool matched = false;
+
+		for(++i; !matched && ctx.source[i] != 0; i++)
+		{
+			// TODO: Handle windows linebreaks.
+			// TODO: Support multiline strings.
+			if(ctx.source[i] == '\n')
+			{
+				break;
+			}
+
+			// Exit on a non-escaped quote.
+			matched = (ctx.source[i] == '"' && !escaped);
+
+			// In case of consecutive backslashes, toggle to escape status.
+			escaped = ctx.source[i] == '\\' ? !escaped : false;
+		}
+
+		if(!matched)
+		{
+			return ParseResult(L"Unterminated \"");
+		}
+	}
+
+	return Type::String;
 }
 
 Token::ParseResult Token::parseNumeric(ParserContext& ctx, size_t& i)

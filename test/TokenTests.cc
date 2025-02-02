@@ -203,6 +203,18 @@ TEST(TokenTests, TestComments)
 	test.expect(Token::Type::Invalid, L"/* ", true);
 }
 
+TEST(TokenTests, TestString)
+{
+	TokenTester test;
+
+	test.expect(Token::Type::String, L"\"foo\"", false);
+	test.expect(Token::Type::String, L"\"\"", false);
+	test.expect(Token::Type::String, L"\" \\\" \"", false);
+	test.expect(Token::Type::Invalid, L"\"", true);
+	test.expect(Token::Type::Invalid, L"\"foo\n\"", true);
+	test.expect(Token::Type::Invalid, L"\" \\\\\" \"", true);
+}
+
 TEST(TokenTests, TestLineChangeDetection)
 {
 	TokenTester test;

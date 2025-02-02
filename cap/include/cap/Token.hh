@@ -77,6 +77,7 @@ private:
 	ParseResult parseIdentifier(ParserContext& ctx, size_t& i);
 	ParseResult parseOperator(ParserContext& ctx, size_t& i);
 	ParseResult parseComment(ParserContext& ctx, size_t& i);
+	ParseResult parseString(ParserContext& ctx, size_t& i);
 
 	ParseResult parseNumeric(ParserContext& ctx, size_t& i);
 	ParseResult parseDecimal(ParserContext& ctx, size_t& i);

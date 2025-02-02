@@ -164,9 +164,7 @@ int main()
 
 		func main()
 		{
-			// Single line comment
-
-			let /* Create variable i */ i = 0
+			let a = "\""
 		}
 
 	)SRC");

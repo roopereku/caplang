@@ -5,7 +5,7 @@
 namespace cap
 {
 
-static std::array <std::shared_ptr <PrimitiveType>, 8> primitives
+static std::array <std::shared_ptr <PrimitiveType>, 9> primitives
 {
 	std::make_shared <PrimitiveType> (L"uint8", 1),
 	std::make_shared <PrimitiveType> (L"uint16", 2),
@@ -16,6 +16,8 @@ static std::array <std::shared_ptr <PrimitiveType>, 8> primitives
 	std::make_shared <PrimitiveType> (L"int16", 2),
 	std::make_shared <PrimitiveType> (L"int32", 4),
 	std::make_shared <PrimitiveType> (L"int64", 8),
+
+	std::make_shared <PrimitiveType> (L"string", 8),
 };
 
 PrimitiveType::PrimitiveType(std::wstring_view name, size_t bytes)
@@ -52,6 +54,12 @@ std::shared_ptr <PrimitiveType> PrimitiveType::matchToken(Token token)
 		{
 			// int64.
 			return primitives[7];
+		}
+
+		case Token::Type::String:
+		{
+			// string.
+			return primitives[8];
 		}
 
 		default: return nullptr;
