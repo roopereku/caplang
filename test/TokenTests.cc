@@ -8,7 +8,7 @@
 
 using cap::Token;
 
-void addRandomWhitespace(cap::test::DynamicSource& source)
+void addRandomWhitespace(cap::test::DynamicSource& source, bool preferNewlines)
 {
 	constexpr std::array <wchar_t, 3> whitespace
 	{
@@ -24,7 +24,7 @@ void addRandomWhitespace(cap::test::DynamicSource& source)
 	std::wstring ws(' ', lengthDist(gen));
 	for(size_t i = 0; i < ws.length(); i++)
 	{
-		ws[i] = whitespace[indexDist(gen)];
+		ws[i] = preferNewlines ? '\n' : whitespace[indexDist(gen)];
 	}
 
 	source += std::move(ws);
@@ -66,14 +66,18 @@ public:
 	{
 		unsigned prevErrors = errors;
 
-		addRandomWhitespace(source);
+		addRandomWhitespace(source, makeWhitespaceNewline);
 		size_t beginning = source.getLength();
 		source += std::wstring(str);
-		addRandomWhitespace(source);
+		addRandomWhitespace(source, makeWhitespaceNewline);
 
 		current = Token::parseNext(ctx, current);
-		cap::SourceLocation location(source, current);
-		checkLocation(location, type, str, beginning, str.length());
+
+		if(!shouldError)
+		{
+			cap::SourceLocation location(source, current);
+			checkLocation(location, type, str, beginning, str.length());
+		}
 
 		if(shouldError)
 		{
@@ -91,6 +95,8 @@ public:
 
 	Token::ParserContext ctx;
 	Token current;
+
+	bool makeWhitespaceNewline = false;
 };
 
 TEST(TokenTests, TestIdentifier)
@@ -185,6 +191,18 @@ TEST(TokenTests, TestBrackets)
 	test.expect(Token::Type::Invalid, L"", false);
 }
 
+TEST(TokenTests, TestComments)
+{
+	TokenTester test;
+	test.makeWhitespaceNewline = true;
+
+	test.expect(Token::Type::Comment, L"// foo", false);
+	test.expect(Token::Type::Comment, L"//", false);
+	test.expect(Token::Type::Identifier, L"foo", false);
+	test.expect(Token::Type::Comment, L"/* foo */", false);
+	test.expect(Token::Type::Invalid, L"/* ", true);
+}
+
 TEST(TokenTests, TestLineChangeDetection)
 {
 	TokenTester test;
@@ -201,3 +219,4 @@ TEST(TokenTests, TestLineChangeDetection)
 	test.current = Token::parseNext(test.ctx, test.current);
 	ASSERT_TRUE(test.current.isLastOfLine(test.ctx));
 }
+

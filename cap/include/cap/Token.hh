@@ -28,6 +28,7 @@ public:
 		Octal,
 		String,
 		Operator,
+		Comment,
 		Invalid,
 	};
 
@@ -75,6 +76,7 @@ private:
 	ParseResult parseBracket(ParserContext& ctx, size_t& i);
 	ParseResult parseIdentifier(ParserContext& ctx, size_t& i);
 	ParseResult parseOperator(ParserContext& ctx, size_t& i);
+	ParseResult parseComment(ParserContext& ctx, size_t& i);
 
 	ParseResult parseNumeric(ParserContext& ctx, size_t& i);
 	ParseResult parseDecimal(ParserContext& ctx, size_t& i);

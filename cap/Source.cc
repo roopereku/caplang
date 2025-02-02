@@ -29,6 +29,13 @@ bool Source::parse(Client& client, bool validate)
 
 	while(currentToken.isValid())
 	{
+		// TODO: Associate comments with nodes.
+		if(currentToken.getType() == Token::Type::Comment)
+		{
+			currentToken = Token::parseNext(tokenCtx, currentToken);
+			continue;
+		}
+
 		DBG_MESSAGE(client, "Token '", getString(currentToken), "' (", currentToken.getTypeString(), ")");
 
 		currentNode = currentNode.lock()->handleToken(nodeCtx, currentToken);

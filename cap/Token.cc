@@ -63,6 +63,7 @@ const char* Token::getTypeString(Type type)
 		case Type::Octal: return "Octal";
 		case Type::String: return "String";
 		case Type::Operator: return "Operator";
+		case Type::Comment: return "Comment";
 		case Type::Invalid: return "Invalid";
 	}
 
@@ -175,6 +176,7 @@ Token Token::parse(ParserContext& ctx, Token token)
 		token.setTypeIfMoved(ctx, i, &Token::parseBracket) ||
 		token.setTypeIfMoved(ctx, i, &Token::parseNumeric) ||
 		token.setTypeIfMoved(ctx, i, &Token::parseIdentifier) ||
+		token.setTypeIfMoved(ctx, i, &Token::parseComment) ||
 		token.setTypeIfMoved(ctx, i, &Token::parseOperator)
 	);
 
@@ -272,6 +274,56 @@ Token::ParseResult Token::parseOperator(ParserContext& ctx, size_t& i)
 	}
 
 	return Type::Operator;
+}
+
+Token::ParseResult Token::parseComment(ParserContext& ctx, size_t& i)
+{
+	if(ctx.source[i] == '/')
+	{
+		i++;
+
+		switch(ctx.source[i])
+		{
+			// Single line comment.
+			case '/':
+			{
+				// TODO: Handle windows linebreaks.
+				while(ctx.source[i] != '\n' && ctx.source[i] != 0)
+				{
+					i++;
+				}
+
+				break;
+			}
+
+			// Block comment.
+			case '*':
+			{
+				// TODO: If source ever contains std::wstring, use std::wstring::find?
+
+				std::wstring_view toMatch(L"*/");
+				size_t current = 0;
+
+				for(++i; current < toMatch.length() && ctx.source[i] != 0; i++)
+				{
+					// For each matching character, move on to the next character or reset.
+					current = (ctx.source[i] == toMatch[current]) ? current + 1 : 0;
+				}
+
+				// Unterminated multiline comment.
+				if(current < toMatch.length())
+				{
+					return ParseResult(L"Unterminated comment");
+				}
+
+				break;
+			}
+
+			default: i--;
+		}
+	}
+
+	return Type::Comment;
 }
 
 Token::ParseResult Token::parseNumeric(ParserContext& ctx, size_t& i)
