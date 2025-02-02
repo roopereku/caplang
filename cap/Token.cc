@@ -395,7 +395,7 @@ Token::ParseResult Token::parseNumeric(ParserContext& ctx, size_t& i)
 	}
 
 	// TODO: Allow floats written as ".2f"
-	else if(isdigit(ctx.source[i]))
+	else if(isNumeric(ctx.source[i]))
 	{
 		return parseDecimal(ctx, i);
 	}
@@ -429,7 +429,7 @@ Token::ParseResult Token::parseDecimal(ParserContext& ctx, size_t& i)
 			}
 		}
 
-		else if(!isdigit(ch))
+		else if(!isNumeric(ch))
 		{
 			break;
 		}
@@ -452,7 +452,7 @@ Token::ParseResult Token::parseDecimal(ParserContext& ctx, size_t& i)
 Token::ParseResult Token::parseHexadecimal(ParserContext& ctx, size_t& i)
 {
 	wchar_t ch = tolower(ctx.source[i]);
-	while(isdigit(ch) || (ch >= 'a' && ch <= 'f'))
+	while(isNumeric(ch) || (ch >= 'a' && ch <= 'f'))
 	{
 		i++;
 		ch = tolower(ctx.source[i]);
