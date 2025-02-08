@@ -48,6 +48,14 @@ public:
 	/// \param variable The declaration node to add.
 	void addDeclaration(std::shared_ptr <Declaration> node);
 
+	class DeclarationIterator;
+	class DeclarationRange;
+
+	friend class DeclarationIterator;
+	friend class DeclarationRange;
+
+	DeclarationRange recurseDeclarations();
+
 	const char* getTypeString() override;
 
 protected:
@@ -59,6 +67,44 @@ protected:
 	std::vector <std::shared_ptr <Declaration>> declarations;
 
 	bool onlyDeclarations;
+};
+
+class Scope::DeclarationIterator
+{
+public:
+	using iterator_category = std::forward_iterator_tag;
+    using value_type = std::shared_ptr <Declaration>;
+    using difference_type = std::ptrdiff_t;
+    using pointer = Declaration*;
+    using reference = value_type;
+
+	DeclarationIterator(std::shared_ptr <Scope> scope);
+
+	reference operator*() const;
+	pointer operator->() const;
+	DeclarationIterator& operator++();
+	DeclarationIterator operator++(int);
+	bool operator==(const DeclarationIterator& rhs) const;
+	bool operator!=(const DeclarationIterator& rhs) const;
+
+private:
+	void advance();
+	void handleScopeChange();
+
+	size_t index = 0;
+	std::shared_ptr <Scope> scope;
+};
+
+class Scope::DeclarationRange
+{
+public:
+	DeclarationRange(std::shared_ptr <Scope> scope);
+
+	Scope::DeclarationIterator begin() const;
+	Scope::DeclarationIterator end() const;
+
+private:
+	std::weak_ptr <Scope> scope;
 };
 
 }

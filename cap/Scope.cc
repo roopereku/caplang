@@ -81,8 +81,7 @@ const std::vector <std::shared_ptr <Node>>& Scope::getNested()
 
 std::shared_ptr <Declaration> Scope::findDeclaration(Source& source, Token name)
 {
-	// Is the declaration in this scope.
-	for(auto decl : declarations)
+	for(auto decl : recurseDeclarations())
 	{
 		if(source.match(name, decl->getName()))
 		{
@@ -90,15 +89,19 @@ std::shared_ptr <Declaration> Scope::findDeclaration(Source& source, Token name)
 		}
 	}
 
-	// Look for the declaration in a parent scope if there is any.
-	auto parent = getParentScope();
-	return parent ? parent->findDeclaration(source, name) : nullptr;
+	return nullptr;
 }
 
 void Scope::addDeclaration(std::shared_ptr <Declaration> node)
 {
 	adopt(node);
 	declarations.emplace_back(std::move(node));
+}
+
+Scope::DeclarationRange Scope::recurseDeclarations()
+{
+	auto scope = std::static_pointer_cast <Scope> (shared_from_this());
+	return DeclarationRange(scope);
 }
 
 const char* Scope::getTypeString()
@@ -112,6 +115,92 @@ std::weak_ptr <Node> Scope::appendNested(std::shared_ptr <Node> node)
 	nested.emplace_back(std::move(node));
 
 	return nested.back();
+}
+
+Scope::DeclarationIterator::DeclarationIterator(std::shared_ptr <Scope> scope)
+	: scope(scope)
+{
+	// Bad things will happen if we begin on an empty scope.
+	handleScopeChange();
+}
+
+Scope::DeclarationIterator::reference Scope::DeclarationIterator::operator*() const
+{
+	if(scope)
+	{
+		assert(index < scope->declarations.size());
+		return scope->declarations[index];
+	}
+
+	return nullptr;
+}
+
+Scope::DeclarationIterator::pointer Scope::DeclarationIterator::operator->() const
+{
+	if(scope)
+	{
+		assert(index < scope->declarations.size());
+		return scope->declarations[index].get();
+	}
+
+	return nullptr;
+}
+
+Scope::DeclarationIterator& Scope::DeclarationIterator::operator++()
+{
+	advance();
+	return *this;
+}
+
+Scope::DeclarationIterator Scope::DeclarationIterator::operator++(int)
+{
+	auto temp = *this;
+	advance();
+	return temp;
+}
+
+bool Scope::DeclarationIterator::operator==(const DeclarationIterator& rhs) const
+{
+	return scope == rhs.scope && index == rhs.index;
+}
+
+bool Scope::DeclarationIterator::operator!=(const DeclarationIterator& rhs) const
+{
+	return scope != rhs.scope || index != rhs.index;
+}
+
+void Scope::DeclarationIterator::advance()
+{
+	index++;
+	handleScopeChange();
+}
+
+void Scope::DeclarationIterator::handleScopeChange()
+{
+	// If the current scope no longer has any declarations, switch to the parent.
+	// If the parent has no declarations, go even further. This could happen with
+	// scopes within expression where the parent scope has no declarations.
+	while(scope && index >= scope->declarations.size())
+	{
+		index = 0;
+		scope = scope->getParentScope();
+	}
+}
+
+Scope::DeclarationRange::DeclarationRange(std::shared_ptr <Scope> scope)
+	: scope(scope)
+{
+}
+
+Scope::DeclarationIterator Scope::DeclarationRange::begin() const
+{
+	assert(!scope.expired());
+	return Scope::DeclarationIterator(scope.lock());
+}
+
+Scope::DeclarationIterator Scope::DeclarationRange::end() const
+{
+	return Scope::DeclarationIterator(nullptr);
 }
 
 }
