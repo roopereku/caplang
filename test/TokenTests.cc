@@ -191,6 +191,37 @@ TEST(TokenTests, TestBrackets)
 	test.expect(Token::Type::Invalid, L"", false);
 }
 
+TEST(TokenTests, TestGenerics)
+{
+	TokenTester test;
+
+	test.source += L"<a>";
+
+	test.current = Token::parseFirst(test.ctx);
+	ASSERT_STREQ(test.current.getTypeString(), "OpeningBracket");
+	test.current = Token::parseNext(test.ctx, test.current);
+	ASSERT_STREQ(test.current.getTypeString(), "Identifier");
+	test.current = Token::parseNext(test.ctx, test.current);
+	ASSERT_STREQ(test.current.getTypeString(), "ClosingBracket");
+
+	test.source += L"<a, b, c>";
+
+	test.current = Token::parseNext(test.ctx, test.current);
+	ASSERT_STREQ(test.current.getTypeString(), "OpeningBracket");
+	test.current = Token::parseNext(test.ctx, test.current);
+	ASSERT_STREQ(test.current.getTypeString(), "Identifier");
+	test.current = Token::parseNext(test.ctx, test.current);
+	ASSERT_STREQ(test.current.getTypeString(), "Operator");
+	test.current = Token::parseNext(test.ctx, test.current);
+	ASSERT_STREQ(test.current.getTypeString(), "Identifier");
+	test.current = Token::parseNext(test.ctx, test.current);
+	ASSERT_STREQ(test.current.getTypeString(), "Operator");
+	test.current = Token::parseNext(test.ctx, test.current);
+	ASSERT_STREQ(test.current.getTypeString(), "Identifier");
+	test.current = Token::parseNext(test.ctx, test.current);
+	ASSERT_STREQ(test.current.getTypeString(), "ClosingBracket");
+}
+
 TEST(TokenTests, TestComments)
 {
 	TokenTester test;

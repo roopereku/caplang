@@ -102,6 +102,7 @@ public:
 	}
 
 	std::stack <Token> openedBrackets;
+	wchar_t previous = 0;
 };
 
 }

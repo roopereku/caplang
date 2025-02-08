@@ -16,9 +16,9 @@ std::shared_ptr <BracketOperator> BracketOperator::create(cap::ParserContext& ct
 {
 	// TODO: It could be faster if source provided a way to match against a list of strings.
 
-	std::array <std::wstring_view, 2> ops
+	std::array <std::wstring_view, 3> ops
 	{
-		L"(", L"["
+		L"(", L"[", L"<"
 	};
 
 	for(size_t i = 0; i < ops.size(); i++)
@@ -81,6 +81,7 @@ const char* BracketOperator::getTypeString(Type type)
 	{
 		case Type::Call: return "Call";
 		case Type::Subscript: return "Subscript";
+		case Type::Generic: return "Generic";
 	}
 
 	return "(bracketop) ???";

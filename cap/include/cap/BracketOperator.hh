@@ -12,9 +12,8 @@ public:
 	enum class Type
 	{
 		Call,
-		Subscript
-
-		// TODO: Implement curly braces and generics here.
+		Subscript,
+		Generic
 	};
 
 	BracketOperator(Type type);

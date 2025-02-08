@@ -161,6 +161,35 @@ TEST(ExpressionTests, BracketOperators)
 						Value(L"20"),
 				Expression(),
 	});
+
+	// Test generic operators.
+	tester.test(L"foo <10, 20> * (a<50> - getType() <int> ().value)",
+	{
+		Expression(),
+			cap::BinaryOperator::Type::Multiply,
+				cap::BracketOperator::Type::Generic,
+					Value(L"foo"),
+					Expression(),
+						cap::BinaryOperator::Type::Comma,
+							Value(L"10"),
+							Value(L"20"),
+				Expression(),
+					cap::BinaryOperator::Type::Subtract,
+						cap::BracketOperator::Type::Generic,
+							Value(L"a"),
+							Expression(),
+								Value(L"50"),
+						cap::BinaryOperator::Type::Access,
+							cap::BracketOperator::Type::Call,
+								cap::BracketOperator::Type::Generic,
+									cap::BracketOperator::Type::Call,
+										Value(L"getType"),
+										Expression(),
+									Expression(),
+										Value(L"int"),
+								Expression(),
+							Value(L"value"),
+	});
 }
 
 TEST(ExpressionTests, ExpressionEnds)

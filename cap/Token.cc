@@ -150,6 +150,7 @@ Token Token::parseNext(ParserContext& ctx, Token token)
 	next.index += token.length;
 
 	skipWhitespace(ctx, next.index);	
+	ctx.previous = ctx.source[next.index - 1];
 	return parse(ctx, next);
 }
 
@@ -208,6 +209,18 @@ Token::ParseResult Token::parseBracket(ParserContext& ctx, size_t& i)
 
 	switch(ch)
 	{
+		case '<':
+		{
+			// "<" is treated as an opening bracket if something immediately
+			// follows it that doesn't make an operator.
+			// Example: foo <5, 10>. foo < 5 would indicate an operator.
+			wchar_t next = ctx.source[i + 1];
+			if(next == '<' || next == '=' || isspace(next) || next == 0)
+			{
+				return Type::Invalid;
+			}
+		}
+
 		case '(': case '{': case '[':
 		{
 			ctx.openedBrackets.push(Token(i, 1));
@@ -219,6 +232,18 @@ Token::ParseResult Token::parseBracket(ParserContext& ctx, size_t& i)
 		case ')': expectedOpener = '('; break;
 		case '}': expectedOpener = '{'; break;
 		case ']': expectedOpener = '['; break;
+
+		case '>':
+		{
+			// ">" is treated as a closing bracket if it immediately follows
+			// something else. Example foo <5, 10> (x). 10 > (x) would indicate an operator.
+			// TODO: Check for "-" to support "->" properly.
+			if(ctx.previous != '>' && !isspace(ctx.previous))
+			{
+				expectedOpener = '<';
+				break;
+			}
+		}
 
 		// Not a bracket so move on to the next parser.
 		default: return Type::Invalid;
@@ -408,7 +433,7 @@ Token::ParseResult Token::parseDecimal(ParserContext& ctx, size_t& i)
 	size_t dots = 0;
 	wchar_t previous = 0;
 
-	while(true)
+	for(; i != 0; i++)
 	{
 		wchar_t ch = ctx.source[i];
 
@@ -423,27 +448,27 @@ Token::ParseResult Token::parseDecimal(ParserContext& ctx, size_t& i)
 			}
 
 			// Only include a single dot in decimal literals.
-			if(++dots > 1)
-			{
-				break;
-			}
+		   if(++dots > 1)
+		   {
+			   break;
+		   }
 		}
 
 		else if(!isNumeric(ch))
 		{
+			if(isIdentifierCharacter(ctx.source[i]))
+			{
+				// TODO: Parse identifier to get the whole suffix.
+				return ParseResult(L"Invalid decimal suffix");
+			}
+
 			break;
 		}
 
 		previous = ch;
-		i++;
 	}
 
-	if(isIdentifierCharacter(ctx.source[i]))
-	{
-		// TODO: Parse identifier to get the whole suffix.
-		i++;
-		return ParseResult(L"Invalid decimal suffix");
-	}
+	// TODO: Handle too many dots.	
 
 	// TODO: If the decimal ends in a dot, treat the dot as its own operator.
 	return dots > 0 ? Type::Float : Type::Integer;
