@@ -44,9 +44,8 @@ std::weak_ptr <Node> Scope::handleToken(ParserContext& ctx, Token& token)
 		// TODO: Implement subscopes.
 	}
 
-	// TODO: When it's guaranteed that no comments can appear here,
-	// it's almost given that anything else relates to an expression.
-	else if(token.canBeValue() || token.getType() == Token::Type::Operator || token.getType() == Token::Type::OpeningBracket)
+	// Parse anything else as expressions.
+	else
 	{
 		// Adopt the expression root and delegate the first token of
 		// the expression to the root.

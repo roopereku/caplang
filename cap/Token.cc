@@ -102,19 +102,6 @@ bool Token::isClosingBracket(cap::ParserContext& ctx, wchar_t ch) const
 	return type == Type::ClosingBracket && ctx.source[index] == ch;
 }
 
-bool Token::canBeValue() const
-{
-	return (
-		type == Type::Identifier ||
-		type == Type::String ||
-		type == Type::Integer ||
-		type == Type::Float ||
-		type == Type::Hexadecimal ||
-		type == Type::Binary ||
-		type == Type::Octal
-	);
-}
-
 bool Token::isLastOfLine(cap::ParserContext& ctx)
 {
 	size_t i = index + length;

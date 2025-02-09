@@ -82,9 +82,8 @@ std::weak_ptr <Node> Expression::handleToken(Node::ParserContext& ctx, Token& to
 		}
 	}
 	
-	// TODO: When it's guaranteed that no comments can appear here,
-	// it's almost given that anything not operator can be a value.
-	else if(token.canBeValue())
+	// Treat anything else as a value or a keyword.
+	else
 	{
 		if(ctx.source.match(token, L"let"))
 		{

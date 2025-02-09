@@ -47,8 +47,6 @@ public:
 	bool isOpeningBracket(cap::ParserContext& ctx, wchar_t ch) const;
 	bool isClosingBracket(cap::ParserContext& ctx, wchar_t ch) const;
 
-	bool canBeValue() const;
-
 	/// Determines whether this token is the last of its line.
 	///
 	/// \param ctx The parser context containing the source.
