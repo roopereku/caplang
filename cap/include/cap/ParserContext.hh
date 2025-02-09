@@ -44,10 +44,6 @@ public:
 	{
 	}
 
-	/// How many tokens have been processed since the node was
-	/// switched.
-	size_t tokensProcessed = 0;
-
 	/// How many nested subexpressions are there currently?
 	size_t subExpressionDepth = 0;
 

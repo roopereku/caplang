@@ -45,19 +45,6 @@ bool Source::parse(Client& client, bool validate)
 			return false;
 		}
 
-		// If the previousNode isn't the same as the current one, the node has switched.
-		// In such a case reset some state in the node parser context.
-		// TODO: Maybe this can be improved?
-		if(prevNode.expired() || currentNode.lock() != prevNode.lock())
-		{
-			nodeCtx.tokensProcessed = 0;
-		}
-
-		else
-		{
-			nodeCtx.tokensProcessed++;
-		}
-
 		prevNode = currentNode;
 		currentToken = Token::parseNext(tokenCtx, currentToken);
 		nodeCtx.canOpenSubexpression = true;
