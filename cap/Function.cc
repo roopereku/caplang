@@ -1,4 +1,5 @@
 #include <cap/Function.hh>
+#include <cap/ParserContext.hh>
 #include <cap/Source.hh>
 #include <cap/Client.hh>
 
@@ -44,7 +45,7 @@ std::weak_ptr <Node> Function::handleToken(ParserContext& ctx, Token& token)
 		parameters = std::make_shared <Expression::Root> ();
 		adopt(parameters);
 
-		ctx.implicitDeclaration = true;
+		ctx.implicitDeclaration = Declaration::Root::Type::Parameter;
 		return parameters;
 	}
 
@@ -54,7 +55,8 @@ std::weak_ptr <Node> Function::handleToken(ParserContext& ctx, Token& token)
 		{
 			// The implicit declaration should declare parameters.
 			assert(parameters->getFirst()->getType() == Expression::Type::DeclarationRoot);
-			std::static_pointer_cast <Declaration::Root> (parameters->getFirst())->setParameterDeclaration();
+			assert(std::static_pointer_cast <Declaration::Root>
+					(parameters->getFirst())->getType() == Declaration::Root::Type::Parameter);
 		}
 
 		// Expect a scope beginning.

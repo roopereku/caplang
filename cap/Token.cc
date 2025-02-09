@@ -1,6 +1,7 @@
 #include <cap/Token.hh>
 #include <cap/Client.hh>
 #include <cap/Source.hh>
+#include <cap/ParserContext.hh>
 
 #include <algorithm>
 #include <locale>

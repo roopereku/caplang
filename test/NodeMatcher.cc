@@ -31,6 +31,11 @@ ExpectedNode::ExpectedNode(cap::BracketOperator::Type type)
 {
 }
 
+ExpectedNode::ExpectedNode(cap::Declaration::Root::Type type)
+	: ExpectedNode(cap::Declaration::Root::getTypeString(type))
+{
+}
+
 ExpectedNode Value(std::wstring&& value)
 {
 	return ExpectedNode("Value", std::move(value));
@@ -58,12 +63,12 @@ ExpectedNode Expression()
 
 ExpectedNode DeclarationRoot()
 {
-	return ExpectedNode("Declaration Root");
+	return ExpectedNode("Local declaration");
 }
 
 ExpectedNode ParameterRoot()
 {
-	return ExpectedNode("Parameter Root");
+	return ExpectedNode("Parameter declaration");
 }
 
 NodeMatcher::NodeMatcher(std::vector <ExpectedNode>&& expectation)
@@ -95,8 +100,18 @@ Traverser::Result NodeMatcher::onFunction(std::shared_ptr <cap::Function> node)
 
 Traverser::Result NodeMatcher::onClassType(std::shared_ptr <cap::ClassType> node)
 {
-	match(node);
-	return Traverser::Result::Continue;
+	auto current = match(node);
+	EXPECT_STREQ(node->getName().c_str(), current.context.c_str());
+
+	// TODO: Check for Stop?
+
+	if(node->getGenericRoot())
+	{
+		traverseExpression(node->getGenericRoot()->getFirst());
+	}
+
+	traverseScope(node->getBody());
+	return Traverser::Result::Exit;
 }
 
 Traverser::Result NodeMatcher::onExpressionRoot(std::shared_ptr <cap::Expression::Root> node)

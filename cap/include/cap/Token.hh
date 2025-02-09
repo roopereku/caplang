@@ -1,15 +1,13 @@
 #ifndef CAP_TOKEN_HH
 #define CAP_TOKEN_HH
 
-#include <cap/ParserContext.hh>
-
 #include <cstddef>
 #include <string>
-#include <stack>
 
 namespace cap
 {
 
+class ParserContext;
 class Source;
 class Client;
 
@@ -93,17 +91,7 @@ private:
 	Type type = Type::Invalid;
 };
 
-class Token::ParserContext : public cap::ParserContext
-{
-public:
-	ParserContext(Client& client, Source& source)
-		: cap::ParserContext(client, source)
-	{
-	}
 
-	std::stack <Token> openedBrackets;
-	wchar_t previous = 0;
-};
 
 }
 

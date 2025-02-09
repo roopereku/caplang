@@ -1,6 +1,7 @@
 #include <gtest/gtest.h>
 
 #include <cap/test/DynamicSource.hh>
+#include <cap/ParserContext.hh>
 #include <cap/Client.hh>
 
 #include <random>

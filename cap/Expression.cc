@@ -1,4 +1,5 @@
 #include <cap/Expression.hh>
+#include <cap/ParserContext.hh>
 #include <cap/BinaryOperator.hh>
 #include <cap/BracketOperator.hh>
 #include <cap/Declaration.hh>
@@ -20,7 +21,7 @@ std::weak_ptr <Node> Expression::handleToken(Node::ParserContext& ctx, Token& to
 
 	if(token.getType() == Token::Type::ClosingBracket)
 	{
-		ctx.implicitDeclaration = false;
+		ctx.implicitDeclaration = Declaration::Root::Type::None;
 
 		// The state can get messed up if this goes below 0.
 		if(ctx.subExpressionDepth > 0)
@@ -36,11 +37,11 @@ std::weak_ptr <Node> Expression::handleToken(Node::ParserContext& ctx, Token& to
 		return exitCurrentExpression(recursive);
 	}
 
-	else if(ctx.implicitDeclaration)
+	else if(ctx.implicitDeclaration != Declaration::Root::Type::None)
 	{
 		// Inject a declaration root to the current node and let it handle the token.
-		auto decl = adoptValue(std::make_shared <Declaration::Root> ());
-		ctx.implicitDeclaration = false;
+		auto decl = adoptValue(std::make_shared <Declaration::Root> (ctx.implicitDeclaration));
+		ctx.implicitDeclaration = Declaration::Root::Type::None;
 		return decl.lock()->handleToken(ctx, token);
 	}
 
@@ -87,7 +88,8 @@ std::weak_ptr <Node> Expression::handleToken(Node::ParserContext& ctx, Token& to
 	{
 		if(ctx.source.match(token, L"let"))
 		{
-			newNode = std::make_shared <Declaration::Root> ();
+			// TODO: Fields as well?
+			newNode = std::make_shared <Declaration::Root> (Declaration::Root::Type::Local);
 		}
 
 		else

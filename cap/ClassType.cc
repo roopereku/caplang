@@ -1,4 +1,5 @@
 #include <cap/ClassType.hh>
+#include <cap/ParserContext.hh>
 #include <cap/Client.hh>
 
 #include <cassert>
@@ -31,6 +32,14 @@ std::weak_ptr <Node> ClassType::handleToken(ParserContext& ctx, Token& token)
 
 	else if(!body)
 	{
+		if(token.isOpeningBracket(ctx, '<'))
+		{
+			generic = std::make_shared <Expression::Root> ();
+			adopt(generic);
+			ctx.implicitDeclaration = Declaration::Root::Type::Generic;
+			return generic;
+		}
+
 		// Expect a scope beginning.
 		if(!token.isOpeningBracket(ctx, '{'))
 		{
@@ -54,6 +63,11 @@ std::weak_ptr <Node> ClassType::handleToken(ParserContext& ctx, Token& token)
 
 	assert(false);
 	return {};
+}
+
+std::shared_ptr <Expression::Root> ClassType::getGenericRoot()
+{
+	return generic;
 }
 
 std::shared_ptr <Scope> ClassType::getBody()

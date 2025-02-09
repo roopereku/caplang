@@ -41,7 +41,7 @@ TEST(ParserTests, FunctionDeclaration)
 	tester.test(L"func foo(a = int64, b = uint32)\n{\n}",
 	{
 		Function(L"foo"),
-			ParameterRoot(),
+			cap::Declaration::Root::Type::Parameter,
 				cap::BinaryOperator::Type::Comma,
 					cap::BinaryOperator::Type::Assign,
 						Value(L"a"),
@@ -81,4 +81,19 @@ TEST(ParserTests, ClassTypeDeclaration)
 				ClassType(L"bar"),
 					Scope()
 	});	
+
+	// Test a generics with initializations.
+	tester.test(L"type foo <T1 = int64, T2 = uint32>\n{\n}",
+	{
+		ClassType(L"foo"),
+			cap::Declaration::Root::Type::Generic,
+				cap::BinaryOperator::Type::Comma,
+					cap::BinaryOperator::Type::Assign,
+						Value(L"T1"),
+						Value(L"int64"),
+					cap::BinaryOperator::Type::Assign,
+						Value(L"T2"),
+						Value(L"uint32"),
+			Scope()
+	});
 }

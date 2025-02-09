@@ -203,7 +203,12 @@ bool Traverser::traverseTypeDefinition(std::shared_ptr <TypeDefinition> node)
 			// TODO: Traverse to the base classes?
 			if(shouldContinue(result))
 			{
-				if(!traverseScope(classType->getBody()))
+				// If there's no generic root, report success to skip it.
+				bool genericTraverseResult = !classType->getGenericRoot() ||
+					traverseExpression(classType->getGenericRoot());
+
+				if(!genericTraverseResult ||
+					!traverseScope(classType->getBody()))
 				{
 					onNodeExited(node, result);
 					return false;

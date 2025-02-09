@@ -162,16 +162,9 @@ int main()
 	Sandbox client;
 	SourceString entry(LR"SRC(
 
-		type t
+		type foo <T1 = int64, T2 = uint32>
 		{
 		}
-
-		func main()
-		{
-			let a = t <10>
-			foo <10, 20> * (a<50> - getType() <int> ().value)
-		}
-
 
 	)SRC");
 

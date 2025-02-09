@@ -3,6 +3,7 @@
 #include <cap/Function.hh>
 #include <cap/ClassType.hh>
 #include <cap/Expression.hh>
+#include <cap/ParserContext.hh>
 
 #include <cassert>
 

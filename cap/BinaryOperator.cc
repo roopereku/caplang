@@ -1,4 +1,5 @@
 #include <cap/BinaryOperator.hh>
+#include <cap/ParserContext.hh>
 #include <cap/Source.hh>
 
 #include <string_view>

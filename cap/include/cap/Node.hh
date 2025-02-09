@@ -1,7 +1,6 @@
 #ifndef CAP_NODE_HH
 #define CAP_NODE_HH
 
-#include <cap/ParserContext.hh>
 #include <cap/Token.hh>
 
 #include <memory>
@@ -11,6 +10,7 @@ namespace cap
 
 class Scope;
 class Function;
+class ParserContext;
 
 class Node : public std::enable_shared_from_this <Node>
 {
@@ -79,31 +79,6 @@ private:
 	std::weak_ptr <Node> parent;
 	Type type;
 	Token at;
-};
-
-class Node::ParserContext : public cap::ParserContext
-{
-public:
-	ParserContext(Client& client, Source& source)
-		: cap::ParserContext(client, source)
-	{
-	}
-
-	/// How many tokens have been processed since the node was
-	/// switched.
-	size_t tokensProcessed = 0;
-
-	/// How many nested subexpressions are there currently?
-	size_t subExpressionDepth = 0;
-
-	/// Used to stop the recursive openings of subexpressions.
-	/// Such could happen when a switch to the parent
-	/// expression node is made during handleToken.
-	bool canOpenSubexpression = true;
-
-	/// Used to insert a "let" at the beginning of the next expression.
-	/// This is skipped if a closing bracket comes first.
-	bool implicitDeclaration = false;
 };
 
 }

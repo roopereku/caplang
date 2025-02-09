@@ -5,6 +5,7 @@
 #include <cap/Traverser.hh>
 #include <cap/BinaryOperator.hh>
 #include <cap/BracketOperator.hh>
+#include <cap/Declaration.hh>
 
 #include <vector>
 
@@ -18,6 +19,7 @@ public:
 	ExpectedNode(std::string_view nodeType);
 	ExpectedNode(cap::BinaryOperator::Type type);
 	ExpectedNode(cap::BracketOperator::Type type);
+	ExpectedNode(cap::Declaration::Root::Type type);
 
 	std::string_view nodeType;
 	std::wstring context;
@@ -28,8 +30,6 @@ ExpectedNode Scope();
 ExpectedNode Function(std::wstring&& name);
 ExpectedNode ClassType(std::wstring&& name);
 ExpectedNode Expression();
-ExpectedNode DeclarationRoot();
-ExpectedNode ParameterRoot();
 
 class NodeMatcher : public cap::Traverser
 {

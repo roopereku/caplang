@@ -33,14 +33,9 @@ const char* Declaration::getTypeString()
 	return "(decl) ???";
 }
 
-void Declaration::Root::setParameterDeclaration()
+Declaration::Root::Root(Type type)
+	: Expression::Root(Expression::Type::DeclarationRoot), type(type)
 {
-	parameterDeclaration = true;
-}
-
-bool Declaration::Root::isParameterDeclaration() const
-{
-	return parameterDeclaration;
 }
 
 std::shared_ptr <Scope> Declaration::Root::findTargetScope()
@@ -49,7 +44,7 @@ std::shared_ptr <Scope> Declaration::Root::findTargetScope()
 	// such as "if", "when" or "while", return something more specific.
 
 	// Return the function body for parameter declarations.
-	if(parameterDeclaration)
+	if(type == Type::Parameter)
 	{
 		auto parent = getParentFunction();
 		assert(parent);
@@ -60,9 +55,30 @@ std::shared_ptr <Scope> Declaration::Root::findTargetScope()
 	return getParentScope();
 }
 
+Declaration::Root::Type Declaration::Root::getType() const
+{
+	return type;
+}
+
+const char* Declaration::Root::getTypeString(Type type)
+{
+	assert(type != Type::None);
+
+	switch(type)
+	{
+		case Type::Generic: return "Generic declaration";
+		case Type::Parameter: return "Parameter declaration";
+		case Type::Local: return "Local declaration";
+
+		default: {}
+	}
+
+	return "(declroot) ???";
+}
+
 const char* Declaration::Root::getTypeString()
 {
-	return parameterDeclaration ? "Parameter Root" : "Declaration Root";
+	return getTypeString(type);
 }
 
 }

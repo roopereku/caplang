@@ -1,4 +1,5 @@
 #include <cap/BracketOperator.hh>
+#include <cap/ParserContext.hh>
 #include <cap/Source.hh>
 
 #include <cassert>

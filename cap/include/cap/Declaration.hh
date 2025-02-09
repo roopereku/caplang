@@ -42,27 +42,33 @@ private:
 class Declaration::Root : public Expression::Root
 {
 public:
-	Root() : Expression::Root(Type::DeclarationRoot)
+	enum class Type
 	{
-	}
+		Local,
+		Generic,
+		Parameter,
 
-	/// Makes this declaration root declare function parameters.
-	void setParameterDeclaration();
+		// Used to control implicit declarations.
+		None
+	};
 
-	/// Checks whether this declaration root declares function parameters.
-	///
-	/// \return True if parameters are declared.
-	bool isParameterDeclaration() const;
+	Root(Type type);
 
 	/// Find the scope which the declarations are done for.
 	///
 	/// \return The scope that the declarations target.
 	std::shared_ptr <Scope> findTargetScope();
 
+	/// Gets the type of this declaration root.
+	///
+	/// \return The type of this declaration root.
+	Type getType() const;
+
+	static const char* getTypeString(Type type);
 	const char* getTypeString() override;
 
 private:
-	bool parameterDeclaration = false;
+	Type type;
 };
 
 }
