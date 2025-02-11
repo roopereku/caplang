@@ -28,16 +28,23 @@ std::weak_ptr <Node> ClassType::handleToken(ParserContext& ctx, Token& token)
 		return weak_from_this();
 	}
 
-	// TODO: Parse base types.
-
 	else if(!body)
 	{
+		// Parse a generic.
 		if(token.isOpeningBracket(ctx, '<'))
 		{
 			generic = std::make_shared <Expression::Root> ();
 			adopt(generic);
 			ctx.implicitDeclaration = Declaration::Root::Type::Generic;
 			return generic;
+		}
+
+		// Parse base types.
+		if(ctx.source[token.getIndex()] == ':')
+		{
+			baseTypes = std::make_shared <Expression::Root> ();
+			adopt(baseTypes);
+			return baseTypes;
 		}
 
 		// Expect a scope beginning.
@@ -63,6 +70,11 @@ std::weak_ptr <Node> ClassType::handleToken(ParserContext& ctx, Token& token)
 
 	assert(false);
 	return {};
+}
+
+std::shared_ptr <Expression::Root> ClassType::getBaseTypeRoot()
+{
+	return baseTypes;
 }
 
 std::shared_ptr <Expression::Root> ClassType::getGenericRoot()

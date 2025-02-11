@@ -20,6 +20,11 @@ public:
 	/// \return This type or the parent node.
 	std::weak_ptr <Node> handleToken(ParserContext& ctx, Token& token) override;
 
+	/// Gets the root of the expression representing the base types if any.
+	///
+	/// \return The root of the base type expression or null.
+	std::shared_ptr <Expression::Root> getBaseTypeRoot();
+
 	/// Gets the root of the expression representing the generic if any.
 	///
 	/// \return The root of the generic expression or null.
@@ -33,6 +38,7 @@ public:
 	const char* getTypeString() override;
 
 private:
+	std::shared_ptr <Expression::Root> baseTypes;
 	std::shared_ptr <Expression::Root> generic;
 	std::shared_ptr <Scope> body;
 };
