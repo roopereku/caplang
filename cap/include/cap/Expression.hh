@@ -2,6 +2,7 @@
 #define CAP_EXPRESSION_HH
 
 #include <cap/Node.hh>
+#include <cap/TypeContext.hh>
 
 namespace cap
 {

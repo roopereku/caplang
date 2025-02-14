@@ -2,6 +2,7 @@
 #define CAP_DECLARATION_HH
 
 #include <cap/Expression.hh>
+#include <cap/TypeContext.hh>
 
 namespace cap
 {
@@ -37,6 +38,7 @@ protected:
 
 private:
 	Type type;
+	TypeContext referredType;
 };
 
 class Declaration::Root : public Expression::Root
