@@ -12,6 +12,7 @@ class Scope;
 class Class;
 class Function;
 class ClassType;
+class CallableType;
 class BinaryOperator;
 class BracketOperator;
 class TypeDefinition;
@@ -98,6 +99,12 @@ protected:
 	/// \param node The node representing a class type.
 	/// \return Continue if the traversal should continue to the nested nodes.
 	virtual Result onClassType(std::shared_ptr <ClassType> node);
+
+	/// Invoked upon hitting a callable type.
+	///
+	/// \param node The node representing a callable type.
+	/// \return Continue if the traversal should continue to the return type and parameters.
+	virtual Result onCallableType(std::shared_ptr <CallableType> node);
 
 	/// Invoked upon hitting an expression root.
 	///

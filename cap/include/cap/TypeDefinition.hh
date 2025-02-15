@@ -12,7 +12,8 @@ public:
 	enum class Type
 	{
 		Primitive,
-		Class
+		Class,
+		Callable
 	};
 
 	/// Gets the type of this type definition.

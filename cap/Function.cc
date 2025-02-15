@@ -9,8 +9,10 @@ namespace cap
 {
 
 Function::Function()
-	: Declaration(Type::Function)
+	: Declaration(Type::Function), signature(std::make_shared <CallableType> ())
 {
+	referredType = TypeContext(signature);
+	referredType.isTypeName = true;
 }
 
 std::weak_ptr <Node> Function::handleToken(ParserContext& ctx, Token& token)
@@ -32,7 +34,7 @@ std::weak_ptr <Node> Function::handleToken(ParserContext& ctx, Token& token)
 		return weak_from_this();
 	}
 
-	else if(!parameters)
+	else if(!signature->getParameters())
 	{
 		if(!token.isOpeningBracket(ctx, '('))
 		{
@@ -42,21 +44,22 @@ std::weak_ptr <Node> Function::handleToken(ParserContext& ctx, Token& token)
 			return {};
 		}
 
-		parameters = std::make_shared <Expression::Root> ();
-		adopt(parameters);
+		// TODO: Deallocate parameters if none are given.
+		signature->initializeParameters();
+		adopt(signature->getParameters());
 
 		ctx.implicitDeclaration = Declaration::Root::Type::Parameter;
-		return parameters;
+		return signature->getParameters();
 	}
 
 	else if(!body)
 	{
-		if(parameters->getFirst())
+		if(signature->getParameters()->getFirst())
 		{
 			// The implicit declaration should declare parameters.
-			assert(parameters->getFirst()->getType() == Expression::Type::DeclarationRoot);
+			assert(signature->getParameters()->getFirst()->getType() == Expression::Type::DeclarationRoot);
 			assert(std::static_pointer_cast <Declaration::Root>
-					(parameters->getFirst())->getType() == Declaration::Root::Type::Parameter);
+					(signature->getParameters()->getFirst())->getType() == Declaration::Root::Type::Parameter);
 		}
 
 		// Expect a scope beginning.
@@ -84,12 +87,12 @@ std::weak_ptr <Node> Function::handleToken(ParserContext& ctx, Token& token)
 	return {};
 }
 
-std::shared_ptr <Expression::Root> Function::getParameterRoot()
+std::shared_ptr <CallableType> Function::getSignature() const
 {
-	return parameters;
+	return signature;
 }
 
-std::shared_ptr <Scope> Function::getBody()
+std::shared_ptr <Scope> Function::getBody() const
 {
 	return body;
 }

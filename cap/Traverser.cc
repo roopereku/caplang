@@ -2,6 +2,7 @@
 #include <cap/Scope.hh>
 #include <cap/Function.hh>
 #include <cap/ClassType.hh>
+#include <cap/CallableType.hh>
 #include <cap/Expression.hh>
 #include <cap/Declaration.hh>
 #include <cap/BinaryOperator.hh>
@@ -164,10 +165,9 @@ bool Traverser::traverseDeclaration(std::shared_ptr <Declaration> node)
 			auto function = std::static_pointer_cast <Function> (node);
 			result = onFunction(function);
 
-			// TODO: Traverse to the return value and signature?
 			if(shouldContinue(result))
 			{
-				if(!traverseExpression(function->getParameterRoot()) ||
+				if(!traverseDeclaration(function->getSignature()) ||
 					!traverseScope(function->getBody()))
 				{
 					onNodeExited(node, result);
@@ -223,6 +223,25 @@ bool Traverser::traverseTypeDefinition(std::shared_ptr <TypeDefinition> node)
 			assert(false && "Primitive type traversal unimplemented");
 			break;
 		}
+
+		case TypeDefinition::Type::Callable:
+		{
+			auto callable = std::static_pointer_cast <CallableType> (node);
+			result = onCallableType(callable);
+
+			if(shouldContinue(result))
+			{
+				auto ret = callable->getReturnType();
+				auto param = callable->getParameters();
+
+				if((param && !traverseExpression(param)) ||
+					(ret && !traverseExpression(ret)))
+				{
+					onNodeExited(node, result);
+					return false;
+				}
+			}
+		}
 	}
 
 	onNodeExited(node, result);
@@ -234,6 +253,7 @@ Traverser::Result Traverser::onCustomNode(std::shared_ptr <Node>) { return Resul
 Traverser::Result Traverser::onScope(std::shared_ptr <Scope>) { return Result::NotHandled; }
 Traverser::Result Traverser::onFunction(std::shared_ptr <Function>) { return Result::NotHandled; }
 Traverser::Result Traverser::onClassType(std::shared_ptr <ClassType>) { return Result::NotHandled; }
+Traverser::Result Traverser::onCallableType(std::shared_ptr <CallableType>) { return Result::NotHandled; }
 Traverser::Result Traverser::onExpressionRoot(std::shared_ptr <Expression::Root>) {return Result::NotHandled; }
 Traverser::Result Traverser::onDeclarationRoot(std::shared_ptr <Declaration::Root>) {return Result::NotHandled; }
 Traverser::Result Traverser::onBinaryOperator(std::shared_ptr <BinaryOperator>) {return Result::NotHandled; }

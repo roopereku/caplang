@@ -2,6 +2,7 @@
 #include <cap/Traverser.hh>
 #include <cap/Function.hh>
 #include <cap/ClassType.hh>
+#include <cap/CallableType.hh>
 #include <cap/Expression.hh>
 #include <cap/BinaryOperator.hh>
 #include <cap/BracketOperator.hh>
@@ -99,6 +100,12 @@ protected:
 		return Result::Continue;
 	}
 
+	Result onCallableType(std::shared_ptr <cap::CallableType> node) override
+	{
+		file << prefix() << node->getTypeString() << '\n';
+		return Result::Continue;
+	}
+
 	Result onFunction(std::shared_ptr <cap::Function> node) override
 	{
 		file << prefix() << node->getTypeString() << ": " << node->getName() << '\n';
@@ -162,7 +169,11 @@ int main()
 	Sandbox client;
 	SourceString entry(LR"SRC(
 
-		type foo <T1 = int64, T2 = uint32>
+		type Foo
+		{
+		}
+
+		func main(argc = int64)
 		{
 		}
 

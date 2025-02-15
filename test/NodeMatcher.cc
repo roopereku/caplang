@@ -89,9 +89,9 @@ Traverser::Result NodeMatcher::onFunction(std::shared_ptr <cap::Function> node)
 
 	// TODO: Check for Stop?
 
-	if(node->getParameterRoot()->getFirst())
+	if(node->getSignature()->getParameters()->getFirst())
 	{
-		traverseExpression(node->getParameterRoot()->getFirst());
+		traverseExpression(node->getSignature()->getParameters()->getFirst());
 	}
 
 	traverseScope(node->getBody());

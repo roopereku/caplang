@@ -4,6 +4,7 @@
 #include <cap/Scope.hh>
 #include <cap/Declaration.hh>
 #include <cap/Expression.hh>
+#include <cap/CallableType.hh>
 
 namespace cap
 {
@@ -24,18 +25,18 @@ public:
 	/// \return This function.
 	std::weak_ptr <Node> handleToken(ParserContext& ctx, Token& token) override;
 
-	/// Gets the root of the expression representing the parameters if any.
+	/// Gets the signature of this function.
 	///
-	/// \return The root of the parameter declaration expression or null.
-	std::shared_ptr <Expression::Root> getParameterRoot();
+	/// \return The signature of this function.
+	std::shared_ptr <CallableType> getSignature() const;
 
 	/// Gets the function body.
 	///
 	/// \return The function body.
-	std::shared_ptr <Scope> getBody();
+	std::shared_ptr <Scope> getBody() const;
 
 private:
-	std::shared_ptr <Expression::Root> parameters;
+	std::shared_ptr <CallableType> signature;
 	std::shared_ptr <Scope> body;
 };
 

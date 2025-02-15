@@ -29,16 +29,24 @@ public:
 	/// \return The type of this declaration.
 	Type getType();
 
+	/// Gets the type referred to by this declaration.
+	///
+	/// \return The type referred to by this declaration.
+	const TypeContext& getReferredType() const;
+
 	const char* getTypeString() override;
 
 protected:
 	Declaration(Type type);
 
+	/// Implementation defined type such as the referred type of an
+	/// alias, variable or a callable type with the signature for functions.
+	TypeContext referredType;
+
 	std::wstring name;
 
 private:
 	Type type;
-	TypeContext referredType;
 };
 
 class Declaration::Root : public Expression::Root
