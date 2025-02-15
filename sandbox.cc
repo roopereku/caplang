@@ -173,7 +173,7 @@ int main()
 		{
 		}
 
-		func main(argc = int64)
+		func main(argc = int64) -> Foo
 		{
 		}
 

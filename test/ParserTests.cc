@@ -60,6 +60,14 @@ TEST(ParserTests, FunctionDeclaration)
 				Function(L"bar"),
 					Scope()
 	});	
+
+	// Function with an explicit return type
+	tester.test(L"func foo() -> SomeType\n{\n}\n",
+	{
+		Function(L"foo"),
+			Value(L"SomeType"),
+			Scope()
+	});
 }
 
 TEST(ParserTests, ClassTypeDeclaration)

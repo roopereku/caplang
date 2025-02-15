@@ -56,6 +56,7 @@ TEST(ErrorTests, UndeclaredIdentifier)
 
 	tester.reportsError(L"let a = c", L"Undeclared identifier 'c'");
 	tester.reportsError(L"let a = 10\nlet b = a1", L"Undeclared identifier 'a1'");
+	tester.reportsError(L"func foo() -> abc\n{\n}\n", L"Undeclared identifier 'abc'");
 }
 
 TEST(ErrorTests, ExpectedIdentifier)

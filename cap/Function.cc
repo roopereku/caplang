@@ -62,6 +62,17 @@ std::weak_ptr <Node> Function::handleToken(ParserContext& ctx, Token& token)
 					(signature->getParameters()->getFirst())->getType() == Declaration::Root::Type::Parameter);
 		}
 
+		// Parse return types.
+		if(token.getType() == Token::Type::Operator &&
+			ctx.source.match(token, L"->"))
+		{
+			assert(!signature->getReturnType());
+			signature->initializeReturnType();
+
+			adopt(signature->getReturnType());
+			return signature->getReturnType();
+		}
+
 		// Expect a scope beginning.
 		if(!token.isOpeningBracket(ctx, '{'))
 		{

@@ -94,6 +94,12 @@ Traverser::Result NodeMatcher::onFunction(std::shared_ptr <cap::Function> node)
 		traverseExpression(node->getSignature()->getParameters()->getFirst());
 	}
 
+	auto ret = node->getSignature()->getReturnType();
+	if(ret && ret->getFirst())
+	{
+		traverseExpression(ret->getFirst());
+	}
+
 	traverseScope(node->getBody());
 	return Traverser::Result::Exit;
 }
