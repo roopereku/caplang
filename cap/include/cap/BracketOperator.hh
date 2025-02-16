@@ -40,8 +40,13 @@ public:
 	/// \return 17.
 	unsigned getPrecedence() override;
 
-	std::shared_ptr <Expression> getContext();
-	std::shared_ptr <Root> getInnerRoot();
+	std::shared_ptr <Expression> getContext() const;
+	std::shared_ptr <Root> getInnerRoot() const;
+
+	/// Gets the type of this bracket operator.
+	///
+	/// \return The type of this bracket operator.
+	Type getType() const;
 
 	static const char* getTypeString(Type type);
 	const char* getTypeString() override;

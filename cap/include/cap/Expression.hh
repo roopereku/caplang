@@ -54,6 +54,16 @@ public:
 	/// \return The type of this expression node.
 	Type getType();
 
+	/// Gets the result type of this expression node.
+	///
+	/// \return The result type of this expression node.
+	const TypeContext& getResultType() const;
+
+	/// Sets the result type of this expression node.
+	///
+	/// \param tc The result type of this expression node.
+	void setResultType(const TypeContext& ctx);
+
 	static const char* getTypeString(Type type);
 	const char* getTypeString() override;
 
@@ -69,6 +79,7 @@ protected:
 
 private:
 	Type type;
+	TypeContext resultType;
 };
 
 class Expression::Root : public Expression

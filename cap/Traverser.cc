@@ -231,8 +231,8 @@ bool Traverser::traverseTypeDefinition(std::shared_ptr <TypeDefinition> node)
 
 			if(shouldContinue(result))
 			{
-				auto ret = callable->getReturnType();
-				auto param = callable->getParameters();
+				auto ret = callable->getReturnTypeRoot();
+				auto param = callable->getParameterRoot();
 
 				if((param && !traverseExpression(param)) ||
 					(ret && !traverseExpression(ret)))

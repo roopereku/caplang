@@ -4,6 +4,7 @@
 #include <cap/Function.hh>
 #include <cap/ClassType.hh>
 #include <cap/BinaryOperator.hh>
+#include <cap/BracketOperator.hh>
 #include <cap/Value.hh>
 #include <cap/Variable.hh>
 #include <cap/PrimitiveType.hh>
@@ -52,6 +53,21 @@ Traverser::Result Validator::onClassType(std::shared_ptr <ClassType> node)
 	return Result::Continue;
 }
 
+Traverser::Result Validator::onExpressionRoot(std::shared_ptr <Expression::Root> node)
+{
+	if(node->getFirst())
+	{
+		if(!traverseExpression(node->getFirst()))
+		{
+			return Result::Stop;
+		}
+
+		node->setResultType(node->getFirst()->getResultType());
+	}
+
+	return Result::Exit;
+}
+
 Traverser::Result Validator::onDeclarationRoot(std::shared_ptr <Declaration::Root> node)
 {
 	if(!node->getFirst())
@@ -71,7 +87,64 @@ Traverser::Result Validator::onDeclarationRoot(std::shared_ptr <Declaration::Roo
 
 Traverser::Result Validator::onBinaryOperator(std::shared_ptr <BinaryOperator> node)
 {
-	return Result::Continue;
+	if(!traverseExpression(node->getLeft()) ||
+		!traverseExpression(node->getRight()))
+	{
+		return Result::Stop;
+	}
+
+	// TODO: Check if there is a binary operator overload and set the result
+	// type based on that.
+	node->setResultType(node->getLeft()->getResultType());
+	assert(node->getLeft()->getResultType().getReferenced());
+
+	return Result::Exit;
+}
+
+Traverser::Result Validator::onBracketOperator(std::shared_ptr <BracketOperator> node)
+{
+	if(node->getType() != BracketOperator::Type::Call)
+	{
+		SourceLocation location(ctx.source, node->getToken());
+		ctx.client.sourceError(location, "TODO: Bracket operator validation implemented for call operators only");
+		return Result::Stop;
+	}
+
+	if(node->getContext()->getType() == Expression::Type::Value)
+	{
+		auto value = std::static_pointer_cast <Value> (node->getContext());
+		if(value->getToken().getType() != Token::Type::Identifier)
+		{
+			SourceLocation location(ctx.source, value->getToken());
+			ctx.client.sourceError(location, "Literal values cannot be called");
+			return Result::Stop;
+		}
+	}
+
+	// First validate the parameters so that they can be used for matching.
+	if(!traverseExpression(node->getInnerRoot()))
+	{
+		return Result::Stop;
+	}
+
+	associatedParameters = node->getInnerRoot();
+	if(!traverseExpression(node->getContext()))
+	{
+		return Result::Stop;
+	}
+
+	associatedParameters = nullptr;
+	auto callable = node->getContext()->getResultType().getReferenced();
+	assert(callable);
+	assert(callable->getType() == TypeDefinition::Type::Callable);
+
+	// The call operator now results in the return type of the callable.
+	auto returnTypeRoot = std::static_pointer_cast <CallableType> (callable)->getReturnTypeRoot();
+	assert(returnTypeRoot);
+	node->setResultType(returnTypeRoot->getResultType());
+	assert(node->getResultType().getReferenced());
+
+	return Result::Exit;
 }
 
 Traverser::Result Validator::onValue(std::shared_ptr <Value> node)
@@ -79,20 +152,99 @@ Traverser::Result Validator::onValue(std::shared_ptr <Value> node)
 	// TODO: Handle scope context change when binary operator encounters ".".
 	if(node->getToken().getType() == Token::Type::Identifier)
 	{
-		// Check if the given identifier exists somewhere within the scope hierarchy.
 		auto scope = node->getParentScope();
-		node->setReferred(scope->findDeclaration(ctx.source, node->getToken()));
+		size_t triedCallables = 0;
+
+		for(auto decl : scope->recurseDeclarations())
+		{
+			if(decl->getName() != node->getValue())
+			{
+				continue;
+			}
+
+			// Should parameters be matched as well?
+			if(associatedParameters)
+			{
+				std::shared_ptr <CallableType> callable;
+
+				DBG_MESSAGE(ctx.client, "Matching parameters for ", decl->getTypeString() , " '", decl->getName(), "'");
+
+				switch(decl->getType())
+				{
+					// Normal function calls.
+					case Declaration::Type::Function:
+					{
+						callable = std::static_pointer_cast <Function> (decl)->getSignature();
+						break;
+					}
+
+					// Constructor calls and type conversions.
+					case Declaration::Type::TypeDefinition:
+					{
+						SourceLocation location(ctx.source, node->getToken());
+						ctx.client.sourceError(location, "TODO: Find a constructor or a type conversion");
+						return Result::Stop;
+					}
+
+					// Operator overload call from an object.
+					case Declaration::Type::Variable:
+					{
+						SourceLocation location(ctx.source, node->getToken());
+						ctx.client.sourceError(location, "TODO: Find a callable in the context of an object");
+						return Result::Stop;
+					}
+				}
+
+				assert(callable);
+				triedCallables++;
+
+				// TODO: Store the currently most fitting candidate and based on future unidentical
+				// parameters select a more fitting one. This way more fitting function overloads
+				// can be prioritized over those where parameters are implicitly casted.
+
+				auto [compatible, unidentical] = callable->matchParameters(associatedParameters);
+				if(compatible)
+				{
+					node->setReferred(decl);
+					break;
+				}
+			}
+
+			else
+			{
+				node->setReferred(decl);
+				break;
+			}
+		}
 
 		// If nothing was found, check if the value refers to a primitive type.
 		if(!node->getReferred())
 		{
-			node->setReferred(PrimitiveType::matchName(ctx.source, node->getToken()));
+			auto primitive = PrimitiveType::matchName(ctx.source, node->getToken());
+
+			if(primitive)
+			{
+				TypeContext resultType(primitive);
+				resultType.isTypeName = true;
+				node->setReferred(primitive);
+
+				// TODO: The result type is not yet stored in the primitive itself so just calling
+				// setReferred isn't enough. This could change when primitives are defined as cap source code.
+				node->setResultType(resultType);
+			}
 		}
 
 		if(!node->getReferred())
 		{
+			// If we tried to match callables, show a different message.
+			// TODO: node->getValue() should also be something else in the
+			// case of type constructors or type conversions.
+			const char* msg = triedCallables ?
+				"No matching overload found for" :
+				"Undeclared identifier";
+
 			SourceLocation location(ctx.source, node->getToken());
-			ctx.client.sourceError(location, "Undeclared identifier '", node->getValue(), '\'');
+			ctx.client.sourceError(location, msg, " '", node->getValue(), '\'');
 			return Result::Stop;
 		}
 	}
@@ -101,8 +253,8 @@ Traverser::Result Validator::onValue(std::shared_ptr <Value> node)
 	{
 		// Make the non-identifier value refer to a primitive type.
 		// TODO: Use PrimitiveType::matchValue when it replaces matchToken.
-		node->setReferred(PrimitiveType::matchToken(node->getToken()));
-		assert(node->getReferred());
+		node->setResultType(TypeContext(PrimitiveType::matchToken(node->getToken())));
+		assert(node->getResultType().getReferenced());
 	}
 
 	return Result::Exit;
@@ -160,6 +312,12 @@ bool Validator::checkAssignment(std::shared_ptr <Expression> node, std::shared_p
 			// The lhs of an assignment is known to be a value at this point.
 			auto value = std::static_pointer_cast <Value> (op->getLeft());
 			target->addDeclaration(std::make_shared <Variable> (value));
+
+			// TODO: Set referred for the declaration?
+			// Set the result type for the declaration node and the assignment.
+			// The assignment is useful for parameter matching.
+			value->setResultType(op->getRight()->getResultType());
+			op->setResultType(value->getResultType());
 		}
 
 		else

@@ -66,14 +66,19 @@ unsigned BracketOperator::getPrecedence()
 	return 17;
 }
 
-std::shared_ptr <Expression> BracketOperator::getContext()
+std::shared_ptr <Expression> BracketOperator::getContext() const
 {
 	return context;
 }
 
-std::shared_ptr <Expression::Root> BracketOperator::getInnerRoot()
+std::shared_ptr <Expression::Root> BracketOperator::getInnerRoot() const
 {
 	return innerRoot;
+}
+
+BracketOperator::Type BracketOperator::getType() const
+{
+	return type;
 }
 
 const char* BracketOperator::getTypeString(Type type)

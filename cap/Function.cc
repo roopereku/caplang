@@ -34,7 +34,7 @@ std::weak_ptr <Node> Function::handleToken(ParserContext& ctx, Token& token)
 		return weak_from_this();
 	}
 
-	else if(!signature->getParameters())
+	else if(!signature->getParameterRoot())
 	{
 		if(!token.isOpeningBracket(ctx, '('))
 		{
@@ -46,31 +46,31 @@ std::weak_ptr <Node> Function::handleToken(ParserContext& ctx, Token& token)
 
 		// TODO: Deallocate parameters if none are given.
 		signature->initializeParameters();
-		adopt(signature->getParameters());
+		adopt(signature->getParameterRoot());
 
 		ctx.implicitDeclaration = Declaration::Root::Type::Parameter;
-		return signature->getParameters();
+		return signature->getParameterRoot();
 	}
 
 	else if(!body)
 	{
-		if(signature->getParameters()->getFirst())
+		if(signature->getParameterRoot()->getFirst())
 		{
 			// The implicit declaration should declare parameters.
-			assert(signature->getParameters()->getFirst()->getType() == Expression::Type::DeclarationRoot);
+			assert(signature->getParameterRoot()->getFirst()->getType() == Expression::Type::DeclarationRoot);
 			assert(std::static_pointer_cast <Declaration::Root>
-					(signature->getParameters()->getFirst())->getType() == Declaration::Root::Type::Parameter);
+					(signature->getParameterRoot()->getFirst())->getType() == Declaration::Root::Type::Parameter);
 		}
 
 		// Parse return types.
 		if(token.getType() == Token::Type::Operator &&
 			ctx.source.match(token, L"->"))
 		{
-			assert(!signature->getReturnType());
+			assert(!signature->getReturnTypeRoot());
 			signature->initializeReturnType();
 
-			adopt(signature->getReturnType());
-			return signature->getReturnType();
+			adopt(signature->getReturnTypeRoot());
+			return signature->getReturnTypeRoot();
 		}
 
 		// Expect a scope beginning.

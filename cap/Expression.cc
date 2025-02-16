@@ -155,6 +155,16 @@ Expression::Type Expression::getType()
 	return type;
 }
 
+const TypeContext& Expression::getResultType() const
+{
+	return resultType;
+}
+
+void Expression::setResultType(const TypeContext& ctx)
+{
+	resultType = ctx;
+}
+
 const char* Expression::getTypeString(Type type)
 {
 	switch(type)

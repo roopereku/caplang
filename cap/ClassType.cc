@@ -25,6 +25,11 @@ std::weak_ptr <Node> ClassType::handleToken(ParserContext& ctx, Token& token)
 
 		setToken(token);
 		name = ctx.source.getString(token);
+
+		// Initialize the referred type to this class type itself.
+		referredType = TypeContext(std::static_pointer_cast <ClassType> (shared_from_this()));
+		referredType.isTypeName = true;
+
 		return weak_from_this();
 	}
 

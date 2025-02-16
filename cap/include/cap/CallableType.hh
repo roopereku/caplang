@@ -18,12 +18,12 @@ public:
 	/// Gets the parameter root.
 	///
 	/// \return The parameter root.
-	std::shared_ptr <Expression::Root> getParameters();
+	std::shared_ptr <Expression::Root> getParameterRoot() const;
 
 	/// Gets the return type root.
 	///
 	/// \return The return type root.
-	std::shared_ptr <Expression::Root> getReturnType();
+	std::shared_ptr <Expression::Root> getReturnTypeRoot() const;
 
 	/// Initializes the parameter root.
 	void initializeParameters();
@@ -31,9 +31,17 @@ public:
 	/// Initializes the return type root.
 	void initializeReturnType();
 
+	/// Matches the parameters within this callable type against others.
+	///
+	/// \param root The parameters to match against.
+	/// \return Whether the parameters are compatible and how many are unidentical.
+	std::pair <bool, size_t> matchParameters(std::shared_ptr <Expression::Root> root) const;
+
 	const char* getTypeString() override;
 
 private:
+	std::pair <bool, bool> isCompatible(const TypeContext& selfCtx, const TypeContext& otherCtx) const;
+
 	std::shared_ptr <Expression::Root> parameters;
 	std::shared_ptr <Expression::Root> returnType;
 };

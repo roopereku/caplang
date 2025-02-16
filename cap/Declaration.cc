@@ -21,6 +21,11 @@ Declaration::Type Declaration::getType()
 	return type;
 }
 
+const TypeContext& Declaration::getReferredType() const
+{
+	return referredType;
+}
+
 const char* Declaration::getTypeString()
 {
 	switch(type)

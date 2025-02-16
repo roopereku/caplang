@@ -114,7 +114,7 @@ protected:
 
 	Result onExpressionRoot(std::shared_ptr <cap::Expression::Root> node) override
 	{
-		file << prefix() << node->getTypeString() << '\n';
+		file << prefix() << node->getTypeString() << getResultType(node) << '\n';
 		return Result::Continue;
 	}
 
@@ -126,19 +126,19 @@ protected:
 
 	Result onBinaryOperator(std::shared_ptr <cap::BinaryOperator> node) override
 	{
-		file << prefix() << node->getTypeString() << '\n';
+		file << prefix() << node->getTypeString() << getResultType(node) << '\n';
 		return Result::Continue;
 	}
 
 	Result onBracketOperator(std::shared_ptr <cap::BracketOperator> node) override
 	{
-		file << prefix() << node->getTypeString() << '\n';
+		file << prefix() << node->getTypeString() << getResultType(node) << '\n';
 		return Result::Continue;
 	}
 
 	Result onValue(std::shared_ptr <cap::Value> node) override
 	{
-		file << prefix() << node->getTypeString() << ": " << node->getValue();
+		file << prefix() << node->getTypeString() << ": " << node->getValue() << getResultType(node);
 
 		if(node->getReferred())
 		{
@@ -150,6 +150,19 @@ protected:
 	}
 
 private:
+	std::wstring getResultType(std::shared_ptr <cap::Expression> node)
+	{
+		std::wstring str;
+		auto result = node->getResultType().getReferenced();
+
+		if(result)
+		{
+			str += L"\\nResult -> " + result->getName();
+		}
+
+		return str;
+	}
+
 	std::wstring prefix()
 	{
 		depth++;
@@ -169,12 +182,17 @@ int main()
 	Sandbox client;
 	SourceString entry(LR"SRC(
 
-		type Foo
+		func foo(a = int64) -> uint32
 		{
 		}
 
-		func main(argc = int64) -> Foo
+		func foo(a = int64, b = string) -> uint32
 		{
+		}
+
+		func main()
+		{
+			let a = foo(10)
 		}
 
 	)SRC");
