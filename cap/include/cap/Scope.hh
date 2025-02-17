@@ -52,9 +52,9 @@ public:
 	class DeclarationRange;
 
 	friend class DeclarationIterator;
-	friend class DeclarationRange;
 
 	DeclarationRange recurseDeclarations();
+	DeclarationRange iterateDeclarations();
 
 	const char* getTypeString() override;
 
@@ -78,7 +78,7 @@ public:
     using pointer = Declaration*;
     using reference = value_type;
 
-	DeclarationIterator(std::shared_ptr <Scope> scope);
+	DeclarationIterator(std::shared_ptr <Scope> scope, bool recursive);
 
 	reference operator*() const;
 	pointer operator->() const;
@@ -93,18 +93,20 @@ private:
 
 	size_t index = 0;
 	std::shared_ptr <Scope> scope;
+	bool recursive;
 };
 
 class Scope::DeclarationRange
 {
 public:
-	DeclarationRange(std::shared_ptr <Scope> scope);
+	DeclarationRange(std::shared_ptr <Scope> scope, bool recursive);
 
 	Scope::DeclarationIterator begin() const;
 	Scope::DeclarationIterator end() const;
 
 private:
 	std::weak_ptr <Scope> scope;
+	bool recursive;
 };
 
 }

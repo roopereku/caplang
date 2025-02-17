@@ -25,14 +25,52 @@ void Validator::onNodeExited(std::shared_ptr <Node> node, Result result)
 
 Traverser::Result Validator::onFunction(std::shared_ptr <Function> node)
 {
-	auto scope = node->getParentScope();
-	if(!checkDeclaration(scope, node))
+	// The parameters have to be validated before matching against other functions.
+	if(!traverseTypeDefinition(node->getSignature()))
 	{
 		return Result::Stop;
 	}
 
+	auto scope = node->getParentScope();
+
+	// Functions only care about duplicate names or other function in the same scope.
+	for(auto decl : scope->iterateDeclarations())
+	{
+		if(decl->getName() == node->getName())
+		{
+			// If the declaration with the same name is a function,
+			// make sure that the parameters aren't identical.
+			if(decl->getType() == Declaration::Type::Function)
+			{
+				auto function = std::static_pointer_cast <Function> (decl);
+				auto nodeParams = node->getSignature()->getParameterRoot();
+
+				auto [compatible, unidentical] = function->getSignature()->matchParameters(nodeParams);
+				if(compatible && unidentical == 0)
+				{
+					// TODO: Give more context for the existing function?
+					SourceLocation location(ctx.source, node->getToken());
+					ctx.client.sourceError(location, "Function with the same parameters already exists");
+					return Result::Stop;
+				}
+			}
+
+			// Other declarations of the same name aren't allowed.
+			else
+			{
+				indicateExistingDeclaration(node, decl);
+				return Result::Stop;
+			}
+		}
+	}
+
 	scope->addDeclaration(node);
-	return Result::Continue;
+	if(!traverseScope(node->getBody()))
+	{
+		return Result::Stop;
+	}
+
+	return Result::Exit;
 }
 
 Traverser::Result Validator::onClassType(std::shared_ptr <ClassType> node)
@@ -166,8 +204,6 @@ Traverser::Result Validator::onValue(std::shared_ptr <Value> node)
 			if(associatedParameters)
 			{
 				std::shared_ptr <CallableType> callable;
-
-				DBG_MESSAGE(ctx.client, "Matching parameters for ", decl->getTypeString() , " '", decl->getName(), "'");
 
 				switch(decl->getType())
 				{
@@ -371,9 +407,7 @@ bool Validator::checkDeclaration(std::shared_ptr <Scope> scope, std::shared_ptr 
 
 	if(existing)
 	{
-		// TODO: Indicate where the existing declaration was declared.
-		SourceLocation location(ctx.source, name->getToken());
-		ctx.client.sourceError(location, "'", ctx.source.getString(name->getToken()), "' already exists");
+		indicateExistingDeclaration(name, existing);
 		return false;
 	}
 
@@ -384,6 +418,15 @@ bool Validator::isValueAndIdentifier(std::shared_ptr <Expression> node)
 {
 	return node->getType() == Expression::Type::Value &&
 		node->getToken().getType() == Token::Type::Identifier;
+}
+
+void Validator::indicateExistingDeclaration(std::shared_ptr <Node> node, std::shared_ptr <Declaration> existing)
+{
+	// TODO: Indicate where the existing declaration was declared.
+	(void)existing;
+
+	SourceLocation location(ctx.source, node->getToken());
+	ctx.client.sourceError(location, "'", ctx.source.getString(node->getToken()), "' already exists");
 }
 
 }

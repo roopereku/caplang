@@ -99,3 +99,42 @@ TEST(ErrorTests, DuplicateIdentifier)
 	tester.reportsError(L"let uint16 = 10\n", L"'uint16' already exists");
 	tester.reportsError(L"let uint64 = 10\n", L"'uint64' already exists");
 }
+
+TEST(ErrorTests, FunctionParameters)
+{
+	ErrorTester tester;
+
+	// Test that duplicate function names with duplicate parameters are forbidden.
+	tester.reportsError(LR"SRC(
+		func foo(a = int64, b = string)
+		{
+		}
+
+		func foo(a = int64, b = string)
+		{
+		}
+	)SRC", L"Function with the same parameters already exists");
+
+	auto testCall = [](std::wstring&& str) -> std::wstring
+	{
+		std::wstring funcs = LR"SRC(
+			func foo(a = string, b = int64) -> int64
+			{
+			}
+
+			func foo(a = int64) -> int64
+			{
+			}
+		)SRC";
+
+		return funcs + L"func main()\n{\n" + std::move(str) + L"\n}\n";
+	};
+
+	// Test that empty parameters fail.
+	tester.reportsError(testCall(L"foo()"), L"No matching overload found for 'foo'");
+
+	// Test that mismatching parameters fail.
+	tester.reportsError(testCall(L"foo(\"test\")"), L"No matching overload found for 'foo'");
+	tester.reportsError(testCall(L"foo(10, \"test\")"), L"No matching overload found for 'foo'");
+	tester.reportsError(testCall(L"foo(10, \"test\", 20, 50)"), L"No matching overload found for 'foo'");
+}

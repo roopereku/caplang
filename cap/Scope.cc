@@ -101,7 +101,13 @@ void Scope::addDeclaration(std::shared_ptr <Declaration> node)
 Scope::DeclarationRange Scope::recurseDeclarations()
 {
 	auto scope = std::static_pointer_cast <Scope> (shared_from_this());
-	return DeclarationRange(scope);
+	return DeclarationRange(scope, true);
+}
+
+Scope::DeclarationRange Scope::iterateDeclarations()
+{
+	auto scope = std::static_pointer_cast <Scope> (shared_from_this());
+	return DeclarationRange(scope, false);
 }
 
 const char* Scope::getTypeString()
@@ -117,8 +123,8 @@ std::weak_ptr <Node> Scope::appendNested(std::shared_ptr <Node> node)
 	return nested.back();
 }
 
-Scope::DeclarationIterator::DeclarationIterator(std::shared_ptr <Scope> scope)
-	: scope(scope)
+Scope::DeclarationIterator::DeclarationIterator(std::shared_ptr <Scope> scope, bool recursive)
+	: scope(scope), recursive(recursive)
 {
 	// Bad things will happen if we begin on an empty scope.
 	handleScopeChange();
@@ -177,30 +183,40 @@ void Scope::DeclarationIterator::advance()
 
 void Scope::DeclarationIterator::handleScopeChange()
 {
-	// If the current scope no longer has any declarations, switch to the parent.
-	// If the parent has no declarations, go even further. This could happen with
-	// scopes within expression where the parent scope has no declarations.
-	while(scope && index >= scope->declarations.size())
+	if(recursive)
+	{
+		// If the current scope no longer has any declarations, switch to the parent.
+		// If the parent has no declarations, go even further. This could happen with
+		// scopes within expression where the parent scope has no declarations.
+		while(scope && index >= scope->declarations.size())
+		{
+			index = 0;
+			scope = scope->getParentScope();
+		}
+	}
+
+	// If no recursion will happen and there's no more declarations, stop iterating.
+	else if(scope && index >= scope->declarations.size())
 	{
 		index = 0;
-		scope = scope->getParentScope();
+		scope = nullptr;
 	}
 }
 
-Scope::DeclarationRange::DeclarationRange(std::shared_ptr <Scope> scope)
-	: scope(scope)
+Scope::DeclarationRange::DeclarationRange(std::shared_ptr <Scope> scope, bool recursive)
+	: scope(scope), recursive(recursive)
 {
 }
 
 Scope::DeclarationIterator Scope::DeclarationRange::begin() const
 {
 	assert(!scope.expired());
-	return Scope::DeclarationIterator(scope.lock());
+	return Scope::DeclarationIterator(scope.lock(), recursive);
 }
 
 Scope::DeclarationIterator Scope::DeclarationRange::end() const
 {
-	return Scope::DeclarationIterator(nullptr);
+	return Scope::DeclarationIterator(nullptr, recursive);
 }
 
 }

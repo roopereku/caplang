@@ -30,6 +30,8 @@ private:
 
 	bool isValueAndIdentifier(std::shared_ptr <Expression> node);
 
+	void indicateExistingDeclaration(std::shared_ptr <Node> node, std::shared_ptr <Declaration> existing);
+
 	ParserContext& ctx;
 
 	std::shared_ptr <Expression::Root> associatedParameters;
