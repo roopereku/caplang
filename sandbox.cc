@@ -62,6 +62,10 @@ public:
 		: file(path)
 	{
 		file << "@startmindmap\n";
+		file << "<style>\n";
+		file << "root {\nBackgroundColor #00000000;\n}\n";
+		file << "element {\nBackgroundColor #BBBBBB; LineColor #BBBBBB;\n}\n";
+		file << "</style>\n";
 	}
 
 	~ASTDumper()
@@ -142,7 +146,7 @@ protected:
 
 		if(node->getReferred())
 		{
-			file << "\\n-> " << node->getReferred()->getName();
+			file << "\\nRefers -> " << node->getReferred()->getName();
 		}
 
 		file << '\n';
@@ -184,15 +188,7 @@ int main()
 
 		func foo(a = int64) -> uint32
 		{
-		}
-
-		func foo(a = int64, b = string) -> uint32
-		{
-		}
-
-		func main()
-		{
-			let a = foo(10)
+			let result = foo(a)
 		}
 
 	)SRC");

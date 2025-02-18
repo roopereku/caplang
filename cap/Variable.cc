@@ -12,8 +12,11 @@ Variable::Variable(std::weak_ptr <Value> at)
 	assert(!at.expired());
 	assert(at.lock()->getToken().getType() == Token::Type::Identifier);
 
-	// TODO: Use move?
-	name = at.lock()->getValue();
+	auto value = at.lock();
+	assert(value->getResultType().getReferenced());
+
+	name = value->getValue();
+	referredType = value->getResultType();
 }
 
 }

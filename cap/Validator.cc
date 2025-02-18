@@ -171,7 +171,6 @@ Traverser::Result Validator::onBracketOperator(std::shared_ptr <BracketOperator>
 		return Result::Stop;
 	}
 
-	associatedParameters = nullptr;
 	auto callable = node->getContext()->getResultType().getReferenced();
 	assert(callable);
 	assert(callable->getType() == TypeDefinition::Type::Callable);
@@ -193,6 +192,11 @@ Traverser::Result Validator::onValue(std::shared_ptr <Value> node)
 		auto scope = node->getParentScope();
 		size_t triedCallables = 0;
 
+		// Recursion might be problematic when the associated parameters
+		// are stored beyond this point.
+		auto parameters = associatedParameters;
+		associatedParameters = nullptr;
+
 		for(auto decl : scope->recurseDeclarations())
 		{
 			if(decl->getName() != node->getValue())
@@ -201,7 +205,7 @@ Traverser::Result Validator::onValue(std::shared_ptr <Value> node)
 			}
 
 			// Should parameters be matched as well?
-			if(associatedParameters)
+			if(parameters)
 			{
 				std::shared_ptr <CallableType> callable;
 
@@ -238,7 +242,7 @@ Traverser::Result Validator::onValue(std::shared_ptr <Value> node)
 				// parameters select a more fitting one. This way more fitting function overloads
 				// can be prioritized over those where parameters are implicitly casted.
 
-				auto [compatible, unidentical] = callable->matchParameters(associatedParameters);
+				auto [compatible, unidentical] = callable->matchParameters(parameters);
 				if(compatible)
 				{
 					node->setReferred(decl);
@@ -347,13 +351,12 @@ bool Validator::checkAssignment(std::shared_ptr <Expression> node, std::shared_p
 
 			// The lhs of an assignment is known to be a value at this point.
 			auto value = std::static_pointer_cast <Value> (op->getLeft());
-			target->addDeclaration(std::make_shared <Variable> (value));
 
-			// TODO: Set referred for the declaration?
 			// Set the result type for the declaration node and the assignment.
-			// The assignment is useful for parameter matching.
 			value->setResultType(op->getRight()->getResultType());
 			op->setResultType(value->getResultType());
+
+			target->addDeclaration(std::make_shared <Variable> (value));
 		}
 
 		else
