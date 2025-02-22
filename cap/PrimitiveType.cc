@@ -66,4 +66,12 @@ std::shared_ptr <PrimitiveType> PrimitiveType::matchToken(Token token)
 	}
 }
 
+bool PrimitiveType::validate(Validator& validator)
+{
+	referredType = TypeContext(std::static_pointer_cast <PrimitiveType> (shared_from_this()));
+	referredType.isTypeName = true;
+
+	return true;
+}
+
 }

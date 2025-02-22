@@ -72,7 +72,7 @@ public:
 protected:
 	Expression(Type type);
 
-	std::weak_ptr <Node> exitCurrentExpression(bool recursive);
+	std::weak_ptr <Node> exitCurrentExpression(ParserContext& ctx, bool recursive);
 	std::weak_ptr <Node> adoptValue(std::shared_ptr <Expression> node);
 
 	virtual std::shared_ptr <Expression> stealLatestValue();

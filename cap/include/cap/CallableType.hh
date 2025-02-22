@@ -37,6 +37,12 @@ public:
 	/// \return Whether the parameters are compatible and how many are unidentical.
 	std::pair <bool, size_t> matchParameters(std::shared_ptr <Expression::Root> root) const;
 
+	/// Validates the return type and parameters of this callable type.
+	///
+	/// \param validator The validator used for traversal.
+	/// \return True if validation succeeded.
+	bool validate(Validator& validator) override;
+
 	const char* getTypeString() override;
 
 private:

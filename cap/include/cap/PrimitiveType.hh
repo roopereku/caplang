@@ -24,6 +24,12 @@ public:
 	/// \param token The token to match against a primitive type.
 	/// \return Primitive type or null.
 	static std::shared_ptr <PrimitiveType> matchToken(Token token);
+
+	/// Sets the referred type for this primitive type.
+	///
+	/// \param validator The validator used for traversal.
+	/// \return True if validation succeeded.
+	bool validate(Validator& validator) override;
 };
 
 }

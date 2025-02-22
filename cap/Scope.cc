@@ -4,6 +4,10 @@
 #include <cap/ClassType.hh>
 #include <cap/Expression.hh>
 #include <cap/ParserContext.hh>
+#include <cap/BinaryOperator.hh>
+#include <cap/Variable.hh>
+#include <cap/Value.hh>
+#include <cap/PrimitiveType.hh>
 
 #include <cassert>
 
@@ -92,10 +96,62 @@ std::shared_ptr <Declaration> Scope::findDeclaration(Source& source, Token name)
 	return nullptr;
 }
 
-void Scope::addDeclaration(std::shared_ptr <Declaration> node)
+bool Scope::addDeclaration(cap::ParserContext& ctx, std::shared_ptr <Declaration> node)
 {
+	// Make sure that no other declaration of the same name already exists
+	// within this scope. Some cases are allowed.
+	for(auto decl : iterateDeclarations())
+	{
+		if(node->getName() == decl->getName())
+		{
+			// Allow multiple functions of the same name.
+			if(node->getType() == Declaration::Type::Function &&
+				decl->getType() == Declaration::Type::Function)
+			{
+				continue;
+			}
+
+			SourceLocation location(ctx.source, node->getToken());
+			ctx.client.sourceError(location, "'", node->getName(), "' already exists");
+			return false;
+		}
+	}
+
+	// Don't allow duplicates of primitives in any scope.
+	if(PrimitiveType::matchName(ctx.source, node->getToken()))
+	{
+		SourceLocation location(ctx.source, node->getToken());
+		ctx.client.sourceError(location, "'", node->getName(), "' already exists");
+		return false;
+	}
+
 	adopt(node);
 	declarations.emplace_back(std::move(node));
+
+	return true;
+}
+
+bool Scope::createDeclaration(cap::ParserContext& ctx, std::shared_ptr <Expression> node)
+{
+	if(node->getType() == Expression::Type::BinaryOperator)
+	{
+		auto op = std::static_pointer_cast <BinaryOperator> (node);
+		if(op->getType() == BinaryOperator::Type::Assign)
+		{
+			if(op->getLeft()->getToken().getType() != Token::Type::Identifier)
+			{
+				SourceLocation location(ctx.source, op->getLeft()->getToken());
+				ctx.client.sourceError(location, "Expected an identifier");
+				return false;
+			}
+
+			return addDeclaration(ctx, std::make_shared <Variable> (op));
+		}
+	}
+
+	SourceLocation location(ctx.source, node->getToken());
+	ctx.client.sourceError(location, "Expected '='");
+	return false;
 }
 
 Scope::DeclarationRange Scope::recurseDeclarations()

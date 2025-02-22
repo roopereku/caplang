@@ -18,6 +18,8 @@ public:
 
 	void reportsError(std::wstring&& src, const std::wstring& error, bool inGlobalScope = false)
 	{
+		SCOPED_TRACE(src.c_str());
+
 		if(inGlobalScope)
 		{
 			ASSERT_FALSE(parse(std::move(src)));
@@ -63,13 +65,15 @@ TEST(ErrorTests, ExpectedIdentifier)
 {
 	ErrorTester tester;
 
-	tester.reportsError(L"let 10 = c", L"Expected an identifier before '='");
-	tester.reportsError(L"let 0xFF = 10", L"Expected an identifier before '='");
+	tester.reportsError(L"let 10 = c", L"Expected an identifier");
+	tester.reportsError(L"let 0xFF = 10", L"Expected an identifier");
 }
 
 TEST(ErrorTests, InvalidDeclaration)
 {
 	ErrorTester tester;
+
+	// TODO: Have tests with and without encapsulating function "test".
 
 	tester.reportsError(L"func", L"Expected an identifier after 'func'");
 	tester.reportsError(L"func foo", L"Expected '(' after function name");
@@ -78,7 +82,7 @@ TEST(ErrorTests, InvalidDeclaration)
 	tester.reportsError(L"type", L"Expected an identifier after 'type'");
 	tester.reportsError(L"type foo", L"Expected '{' after a type declaration");
 
-	tester.reportsError(L"let a", L"Missing initialization for 'a'. Add '=' after it");
+	tester.reportsError(L"let a", L"Expected '='");
 	tester.reportsError(L"let", L"Expected an expression after 'let'");
 }
 

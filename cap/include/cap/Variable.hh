@@ -6,15 +6,21 @@
 namespace cap
 {
 
-class Value;
+class BinaryOperator;
 
 class Variable : public Declaration
 {
 public:
-	Variable(std::weak_ptr <Value> at);
+	Variable(std::weak_ptr <BinaryOperator> initialization);
+
+	/// Validates the initialization of this variable.
+	///
+	/// \param validator The validator used for traversal.
+	/// \return True if validation succeeded.
+	bool validate(Validator& validator) override;
 
 private:
-	std::weak_ptr <Value> at;
+	std::weak_ptr <BinaryOperator> initialization;
 };
 
 }

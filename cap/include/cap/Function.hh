@@ -35,6 +35,12 @@ public:
 	/// \return The function body.
 	std::shared_ptr <Scope> getBody() const;
 
+	/// Validates the signature and body of this function.
+	///
+	/// \param validator The validator used for traversal.
+	/// \return True if validation succeeded.
+	bool validate(Validator& validator) override;
+
 private:
 	std::shared_ptr <CallableType> signature;
 	std::shared_ptr <Scope> body;

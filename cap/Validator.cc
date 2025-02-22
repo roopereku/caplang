@@ -25,8 +25,7 @@ void Validator::onNodeExited(std::shared_ptr <Node> node, Result result)
 
 Traverser::Result Validator::onFunction(std::shared_ptr <Function> node)
 {
-	// The parameters have to be validated before matching against other functions.
-	if(!traverseTypeDefinition(node->getSignature()))
+	if(!node->getSignature()->validate(*this))
 	{
 		return Result::Stop;
 	}
@@ -36,7 +35,13 @@ Traverser::Result Validator::onFunction(std::shared_ptr <Function> node)
 	// Functions only care about duplicate names or other function in the same scope.
 	for(auto decl : scope->iterateDeclarations())
 	{
-		if(decl->getName() == node->getName())
+		// Make sure that whatever is being matched against is validated.
+		if(!decl->validate(*this))
+		{
+			return Result::Stop;
+		}
+
+		if(decl->getName() == node->getName() && decl != node)
 		{
 			// If the declaration with the same name is a function,
 			// make sure that the parameters aren't identical.
@@ -58,13 +63,12 @@ Traverser::Result Validator::onFunction(std::shared_ptr <Function> node)
 			// Other declarations of the same name aren't allowed.
 			else
 			{
-				indicateExistingDeclaration(node, decl);
+				// TODO: Something here?
 				return Result::Stop;
 			}
 		}
 	}
 
-	scope->addDeclaration(node);
 	if(!traverseScope(node->getBody()))
 	{
 		return Result::Stop;
@@ -82,12 +86,6 @@ Traverser::Result Validator::onClassType(std::shared_ptr <ClassType> node)
 	}
 
 	auto scope = node->getParentScope();
-	if(!checkDeclaration(scope, node))
-	{
-		return Result::Stop;
-	}
-
-	scope->addDeclaration(node);
 	return Result::Continue;
 }
 
@@ -115,12 +113,7 @@ Traverser::Result Validator::onDeclarationRoot(std::shared_ptr <Declaration::Roo
 		return Result::Stop;
 	}
 
-	if(!checkAssignment(node->getFirst(), node->findTargetScope()))
-	{
-		return Result::Stop;
-	}
-
-	return Result::Exit;
+	return Result::Continue;
 }
 
 Traverser::Result Validator::onBinaryOperator(std::shared_ptr <BinaryOperator> node)
@@ -131,10 +124,14 @@ Traverser::Result Validator::onBinaryOperator(std::shared_ptr <BinaryOperator> n
 		return Result::Stop;
 	}
 
-	// TODO: Check if there is a binary operator overload and set the result
-	// type based on that.
-	node->setResultType(node->getLeft()->getResultType());
-	assert(node->getLeft()->getResultType().getReferenced());
+	// Saving the result type doesn't make sense for commas.
+	if(node->getType() != BinaryOperator::Type::Comma)
+	{
+		// TODO: Check if there is a binary operator overload and set the result
+		// type based on that.
+		node->getLeft()->setResultType(node->getRight()->getResultType());
+		node->setResultType(node->getLeft()->getResultType());
+	}
 
 	return Result::Exit;
 }
@@ -179,8 +176,8 @@ Traverser::Result Validator::onBracketOperator(std::shared_ptr <BracketOperator>
 	auto returnTypeRoot = std::static_pointer_cast <CallableType> (callable)->getReturnTypeRoot();
 	assert(returnTypeRoot);
 	node->setResultType(returnTypeRoot->getResultType());
-	assert(node->getResultType().getReferenced());
 
+	assert(node->getResultType().getReferenced());
 	return Result::Exit;
 }
 
@@ -189,7 +186,9 @@ Traverser::Result Validator::onValue(std::shared_ptr <Value> node)
 	// TODO: Handle scope context change when binary operator encounters ".".
 	if(node->getToken().getType() == Token::Type::Identifier)
 	{
-		auto scope = node->getParentScope();
+		auto parentFunction = node->getParentFunction();
+		auto scope = parentFunction ? parentFunction->getBody() : node->getParentScope();
+
 		size_t triedCallables = 0;
 
 		// Recursion might be problematic when the associated parameters
@@ -202,6 +201,12 @@ Traverser::Result Validator::onValue(std::shared_ptr <Value> node)
 			if(decl->getName() != node->getValue())
 			{
 				continue;
+			}
+
+			// Make sure that whatever is being matched against is validated.
+			if(!decl->validate(*this))
+			{
+				return Result::Stop;
 			}
 
 			// Should parameters be matched as well?
@@ -238,8 +243,8 @@ Traverser::Result Validator::onValue(std::shared_ptr <Value> node)
 				assert(callable);
 				triedCallables++;
 
-				// TODO: Store the currently most fitting candidate and based on future unidentical
-				// parameters select a more fitting one. This way more fitting function overloads
+				// TODO: Store the currently most fitting candidate based on unidentical
+				// parameters select the most fitting one. This way more fitting function overloads
 				// can be prioritized over those where parameters are implicitly casted.
 
 				auto [compatible, unidentical] = callable->matchParameters(parameters);
@@ -262,15 +267,12 @@ Traverser::Result Validator::onValue(std::shared_ptr <Value> node)
 		{
 			auto primitive = PrimitiveType::matchName(ctx.source, node->getToken());
 
-			if(primitive)
+			if(primitive && primitive->validate(*this))
 			{
 				TypeContext resultType(primitive);
 				resultType.isTypeName = true;
 				node->setReferred(primitive);
 
-				// TODO: The result type is not yet stored in the primitive itself so just calling
-				// setReferred isn't enough. This could change when primitives are defined as cap source code.
-				node->setResultType(resultType);
 			}
 		}
 
@@ -298,138 +300,6 @@ Traverser::Result Validator::onValue(std::shared_ptr <Value> node)
 	}
 
 	return Result::Exit;
-}
-
-bool Validator::checkAssignment(std::shared_ptr <Expression> node, std::shared_ptr <Scope> target)
-{
-	// TODO: Allow something like foo(let a) where the first parameter of function
-	// foo takes a parameter that is an output.
-
-	if(node->getType() != Expression::Type::BinaryOperator)
-	{
-		// The input might be something like "let a". If the current node
-		// that should be an assignment or a comma is the target value before
-		// the operator, guide the user to add the valid operator.
-		checkDeclarationTarget(node, true);
-		return false;
-	}
-
-	else
-	{
-		auto op = std::static_pointer_cast <BinaryOperator> (node);
-
-		// Assignments can be separated by commas.
-		if(op->getType() == BinaryOperator::Type::Comma)
-		{
-			if(!checkAssignment(op->getLeft(), target) ||
-				!checkAssignment(op->getRight(), target))
-			{
-				return false;
-			}
-		}
-
-		else if(op->getType() == BinaryOperator::Type::Assign)
-		{
-			// Make sure that the declaration target is an identifier.
-			if(!checkDeclarationTarget(op->getLeft(), false))
-			{
-				return false;
-			}
-
-			// Validate the expression after the assignment.
-			if(!traverseExpression(op->getRight()))
-			{
-				return false;
-			}
-
-			if(!checkDeclaration(target, op->getLeft()))
-			{
-				return false;
-			}
-
-			// TODO: Add a different kind of declaration depending on the initialization type.
-
-			// The lhs of an assignment is known to be a value at this point.
-			auto value = std::static_pointer_cast <Value> (op->getLeft());
-
-			// Set the result type for the declaration node and the assignment.
-			value->setResultType(op->getRight()->getResultType());
-			op->setResultType(value->getResultType());
-
-			target->addDeclaration(std::make_shared <Variable> (value));
-		}
-
-		else
-		{
-			SourceLocation location(ctx.source, node->getToken());
-			ctx.client.sourceError(location, "Expected '=' after a declaration");
-			return false;
-		}
-	}
-
-	return true;
-}
-
-bool Validator::checkDeclarationTarget(std::shared_ptr <Expression> node, bool onlyValue)
-{
-	if(isValueAndIdentifier(node))
-	{
-		// If only a value without "=" was found, log an error.
-		if(onlyValue)
-		{
-			SourceLocation location(ctx.source, node->getToken());
-			ctx.client.sourceError(location, "Missing initialization for '",
-				ctx.source.getString(node->getToken()), "'. Add '=' after it");
-
-			return false;
-		}
-
-		return true;
-	}
-
-	// TODO: If the input is something like "let 5 + 5 = 10", extend the token
-	// to cover the entire lhs expression to give the user more context.
-
-	// TODO: If the input is something like "let a.b = 10", add a custom message
-	// that points out how the syntax is invalid.
-
-	SourceLocation location(ctx.source, node->getToken());
-	ctx.client.sourceError(location, "Expected an identifier before '='");
-	return false;
-}
-
-bool Validator::checkDeclaration(std::shared_ptr <Scope> scope, std::shared_ptr <Node> name)
-{
-	auto existing = scope->findDeclaration(ctx.source, name->getToken());
-
-	// If nothing was found yet, the name might represent something builtin.
-	if(!existing)
-	{
-		existing = PrimitiveType::matchName(ctx.source, name->getToken());
-	}
-
-	if(existing)
-	{
-		indicateExistingDeclaration(name, existing);
-		return false;
-	}
-
-	return true;
-}
-
-bool Validator::isValueAndIdentifier(std::shared_ptr <Expression> node)
-{
-	return node->getType() == Expression::Type::Value &&
-		node->getToken().getType() == Token::Type::Identifier;
-}
-
-void Validator::indicateExistingDeclaration(std::shared_ptr <Node> node, std::shared_ptr <Declaration> existing)
-{
-	// TODO: Indicate where the existing declaration was declared.
-	(void)existing;
-
-	SourceLocation location(ctx.source, node->getToken());
-	ctx.client.sourceError(location, "'", ctx.source.getString(node->getToken()), "' already exists");
 }
 
 }

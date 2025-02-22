@@ -44,6 +44,7 @@ void BracketOperator::handleValue(std::shared_ptr <Expression> node)
 
 	else
 	{
+		innerRoot->adopt(node);
 		innerRoot->handleValue(node);
 	}
 }

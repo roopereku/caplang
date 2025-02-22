@@ -35,6 +35,12 @@ public:
 	/// \return The body of this class type.
 	std::shared_ptr <Scope> getBody();
 
+	/// Validates this class type.
+	///
+	/// \param validator The validator used for traversal.
+	/// \return True if validation succeeded.
+	bool validate(Validator& validator) override;
+
 	const char* getTypeString() override;
 
 private:

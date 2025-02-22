@@ -2,6 +2,7 @@
 #include <cap/ParserContext.hh>
 #include <cap/Source.hh>
 #include <cap/Client.hh>
+#include <cap/Validator.hh>
 
 #include <cassert>
 
@@ -11,8 +12,6 @@ namespace cap
 Function::Function()
 	: Declaration(Type::Function), signature(std::make_shared <CallableType> ())
 {
-	referredType = TypeContext(signature);
-	referredType.isTypeName = true;
 }
 
 std::weak_ptr <Node> Function::handleToken(ParserContext& ctx, Token& token)
@@ -31,6 +30,13 @@ std::weak_ptr <Node> Function::handleToken(ParserContext& ctx, Token& token)
 
 		setToken(token);
 		name = ctx.source.getString(token);
+
+		assert(getParentScope());
+		if(!getParentScope()->addDeclaration(ctx, std::static_pointer_cast <Function> (shared_from_this())))
+		{
+			return {};
+		}
+
 		return weak_from_this();
 	}
 
@@ -48,50 +54,60 @@ std::weak_ptr <Node> Function::handleToken(ParserContext& ctx, Token& token)
 		signature->initializeParameters();
 		adopt(signature->getParameterRoot());
 
+		// Initialize the body so that parameters can be added into it.
+		body = std::make_shared <Scope> (false);
+
 		ctx.implicitDeclaration = Declaration::Root::Type::Parameter;
+		ctx.declarationLocation = body;
+
+		ctx.delegateFinalBrace = ')';
 		return signature->getParameterRoot();
 	}
 
-	else if(!body)
+	// End of parameters.
+	else if(token.isClosingBracket(ctx, ')'))
 	{
-		if(signature->getParameterRoot()->getFirst())
-		{
-			// The implicit declaration should declare parameters.
-			assert(signature->getParameterRoot()->getFirst()->getType() == Expression::Type::DeclarationRoot);
-			assert(std::static_pointer_cast <Declaration::Root>
-					(signature->getParameterRoot()->getFirst())->getType() == Declaration::Root::Type::Parameter);
-		}
+		DBG_MESSAGE(ctx.client, "End of params for ", name);
+		ctx.braceHasToBeOpener = true;
+		ctx.declarationLocation = nullptr;
 
-		// Parse return types.
-		if(token.getType() == Token::Type::Operator &&
-			ctx.source.match(token, L"->"))
-		{
-			assert(!signature->getReturnTypeRoot());
-			signature->initializeReturnType();
+		return weak_from_this();
+	}
 
-			adopt(signature->getReturnTypeRoot());
-			return signature->getReturnTypeRoot();
+	// Parse return types.
+	else if(token.getType() == Token::Type::Operator && ctx.source.match(token, L"->"))
+	{
+		assert(!signature->getReturnTypeRoot());
+		signature->initializeReturnType();
+
+		adopt(signature->getReturnTypeRoot());
+		return signature->getReturnTypeRoot();
+	}
+
+	else
+	{
+		// Return to the parent node upon a closing brace.
+		if(token.isClosingBracket(ctx, '}'))
+		{
+			if(!ctx.braceHasToBeOpener)
+			{
+				assert(!getParent().expired());
+				return getParent();
+			}
 		}
 
 		// Expect a scope beginning.
 		if(!token.isOpeningBracket(ctx, '{'))
 		{
+			assert(ctx.braceHasToBeOpener);
 			SourceLocation location(ctx.source, token);
 			ctx.client.sourceError(location, "Expected '{' after a function declaration");
 			return {};
 		}
 
-		body = std::make_shared <Scope> (false);
+		ctx.braceHasToBeOpener = false;
 		adopt(body);
-
 		return body;
-	}
-
-	// Return to the parent node upon a closing brace.
-	if(token.isClosingBracket(ctx, '}'))
-	{
-		assert(!getParent().expired());
-		return getParent();
 	}
 
 	assert(false);
@@ -106,6 +122,23 @@ std::shared_ptr <CallableType> Function::getSignature() const
 std::shared_ptr <Scope> Function::getBody() const
 {
 	return body;
+}
+
+bool Function::validate(Validator& validator)
+{
+	if(!referredType.getReferenced())
+	{
+		referredType = TypeContext(signature);
+		referredType.isTypeName = true;
+
+		if(!signature->validate(validator) ||
+			!validator.traverseScope(body))
+		{
+			return false;
+		}
+	}
+
+	return true;
 }
 
 }

@@ -7,6 +7,8 @@
 namespace cap
 {
 
+class Validator;
+
 class Declaration : public Node
 {
 public:
@@ -33,6 +35,12 @@ public:
 	///
 	/// \return The type referred to by this declaration.
 	const TypeContext& getReferredType() const;
+
+	/// Validates this declaration.
+	///
+	/// \param validator The validator used for traversal.
+	/// \return True if validation succeeded.
+	virtual bool validate(Validator& validator) = 0;
 
 	const char* getTypeString() override;
 
@@ -63,11 +71,6 @@ public:
 	};
 
 	Root(Type type);
-
-	/// Find the scope which the declarations are done for.
-	///
-	/// \return The scope that the declarations target.
-	std::shared_ptr <Scope> findTargetScope();
 
 	/// Gets the type of this declaration root.
 	///

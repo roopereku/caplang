@@ -43,23 +43,6 @@ Declaration::Root::Root(Type type)
 {
 }
 
-std::shared_ptr <Scope> Declaration::Root::findTargetScope()
-{
-	// TODO: If a parent of this declaration node is a scoped expression
-	// such as "if", "when" or "while", return something more specific.
-
-	// Return the function body for parameter declarations.
-	if(type == Type::Parameter)
-	{
-		auto parent = getParentFunction();
-		assert(parent);
-
-		return parent->getBody();
-	}
-
-	return getParentScope();
-}
-
 Declaration::Root::Type Declaration::Root::getType() const
 {
 	return type;

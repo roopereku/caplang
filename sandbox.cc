@@ -94,6 +94,29 @@ protected:
 
 	Result onScope(std::shared_ptr <cap::Scope> node) override
 	{
+		auto range = node->iterateDeclarations();
+		std::vector <std::shared_ptr <cap::Declaration>> decls(range.begin(), range.end());
+
+		if(!decls.empty())
+		{
+			auto parent = node->getParentFunction();
+
+			if(parent)
+			{
+				printf("Declarations in function '%ls':\n", parent->getName().c_str());
+			}
+
+			else
+			{
+				printf("Declarations in scope:\n");
+			}
+
+			for(auto decl : decls)
+			{
+				printf("- '%ls' -> %s\n", decl->getName().c_str(), decl->getTypeString());
+			}
+		}
+
 		file << prefix() << node->getTypeString() << '\n';
 		return Result::Continue;
 	}
@@ -186,9 +209,12 @@ int main()
 	Sandbox client;
 	SourceString entry(LR"SRC(
 
-		func foo(a = int64) -> uint32
+		func foo(a = int64, b = string)
 		{
-			let result = foo(a)
+		}
+
+		func foo(a = int64, b = string)
+		{
 		}
 
 	)SRC");

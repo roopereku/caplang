@@ -9,6 +9,7 @@ namespace cap
 {
 
 class Declaration;
+class Expression;
 class Variable;
 
 /// Scope is a node representing an area within the source
@@ -43,10 +44,19 @@ public:
 	/// \return The declaration if it is found.
 	std::shared_ptr <Declaration> findDeclaration(Source& source, Token name);
 
-	/// Adds a new declaration into this scope. NOTE: Duplicates are allowed.
+	/// Adds a new declaration into this scope.
 	///
-	/// \param variable The declaration node to add.
-	void addDeclaration(std::shared_ptr <Declaration> node);
+	/// \param ctx The context to get the source and client from.
+	/// \param node The declaration node to add.
+	/// \return True if the declaration was added successfully.
+	bool addDeclaration(cap::ParserContext& ctx, std::shared_ptr <Declaration> node);
+
+	/// Creates a new declaration based on an expression node.
+	///
+	/// \param ctx The context to get the source and client from.
+	/// \param node The expression node to create a declaration from.
+	/// \return True if a declaration was created successfully.
+	bool createDeclaration(cap::ParserContext& ctx, std::shared_ptr <Expression> node);
 
 	class DeclarationIterator;
 	class DeclarationRange;

@@ -1,5 +1,6 @@
 #include <cap/CallableType.hh>
-#include <cap/ParameterAccessor.hh>
+#include <cap/ArgumentAccessor.hh>
+#include <cap/Validator.hh>
 
 #include <cassert>
 
@@ -36,8 +37,8 @@ void CallableType::initializeReturnType()
 
 std::pair <bool, size_t> CallableType::matchParameters(std::shared_ptr <Expression::Root> root) const
 {
-	ParameterAccessor self(parameters);
-	ParameterAccessor other(root);
+	ArgumentAccessor self(parameters);
+	ArgumentAccessor other(root);
 
 	size_t unidentical = 0;
 
@@ -76,6 +77,19 @@ std::pair <bool, bool> CallableType::isCompatible(const TypeContext& selfCtx, co
 	// TODO: Check for other modifiers in the type context.
 	bool identical = ref1 == ref2;
 	return { identical, identical };
+}
+
+bool CallableType::validate(Validator& validator)
+{
+	if(!referredType.getReferenced())
+	{
+		referredType = TypeContext(std::static_pointer_cast <CallableType> (shared_from_this()));
+		referredType.isTypeName = true;
+
+		return validator.traverseTypeDefinition(std::static_pointer_cast <CallableType> (shared_from_this()));
+	}
+
+	return true;
 }
 
 const char* CallableType::getTypeString()

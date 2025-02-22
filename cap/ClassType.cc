@@ -26,15 +26,19 @@ std::weak_ptr <Node> ClassType::handleToken(ParserContext& ctx, Token& token)
 		setToken(token);
 		name = ctx.source.getString(token);
 
-		// Initialize the referred type to this class type itself.
-		referredType = TypeContext(std::static_pointer_cast <ClassType> (shared_from_this()));
-		referredType.isTypeName = true;
+		assert(getParentScope());
+		if(!getParentScope()->addDeclaration(ctx, std::static_pointer_cast <ClassType> (shared_from_this())))
+		{
+			return {};
+		}
 
 		return weak_from_this();
 	}
 
 	else if(!body)
 	{
+		// TODO: Establish an order of what is expected when.
+
 		// Parse a generic.
 		if(token.isOpeningBracket(ctx, '<'))
 		{
@@ -90,6 +94,17 @@ std::shared_ptr <Expression::Root> ClassType::getGenericRoot()
 std::shared_ptr <Scope> ClassType::getBody()
 {
 	return body;
+}
+
+bool ClassType::validate(Validator& validator)
+{
+	if(!referredType.getReferenced())
+	{
+		referredType = TypeContext(std::static_pointer_cast <ClassType> (shared_from_this()));
+		referredType.isTypeName = true;
+	}
+
+	return true;
 }
 
 const char* ClassType::getTypeString()

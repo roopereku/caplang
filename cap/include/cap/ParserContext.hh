@@ -47,6 +47,13 @@ public:
 	/// How many nested subexpressions are there currently?
 	size_t subExpressionDepth = 0;
 
+	/// Which closing brace is delegated to the parent from
+	/// an expression when subExpressionDepth becomes 0.
+	wchar_t delegateFinalBrace = 0;
+
+	/// Used to indicate that the next brace has to be an opening brace.
+	bool braceHasToBeOpener = false;
+
 	/// Used to stop the recursive openings of subexpressions.
 	/// Such could happen when a switch to the parent
 	/// expression node is made during handleToken.
@@ -55,6 +62,10 @@ public:
 	/// Used to insert a "let" at the beginning of the next expression.
 	/// This is skipped if a closing bracket comes first.
 	Declaration::Root::Type implicitDeclaration = Declaration::Root::Type::None;
+
+	/// The scope to add declarations to.
+	/// Only applies to those added by expressions.
+	std::shared_ptr <Scope> declarationLocation;
 };
 
 }
