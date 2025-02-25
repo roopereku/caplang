@@ -19,7 +19,7 @@ Validator::Validator(ParserContext& ctx)
 {
 }
 
-void Validator::onNodeExited(std::shared_ptr <Node> node, Result result)
+void Validator::onNodeExited(std::shared_ptr <Node>, Result)
 {
 }
 

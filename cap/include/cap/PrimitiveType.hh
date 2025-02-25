@@ -30,6 +30,9 @@ public:
 	/// \param validator The validator used for traversal.
 	/// \return True if validation succeeded.
 	bool validate(Validator& validator) override;
+
+private:
+	size_t size;
 };
 
 }

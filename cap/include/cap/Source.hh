@@ -53,8 +53,8 @@ public:
 	const Source& getSource() const;
 
 private:
-	Token at;
 	const Source& source;
+	Token at;
 
 	unsigned row;
 	unsigned column;

@@ -57,7 +57,7 @@ public:
 	{
 	}
 
-	void onSourceError(cap::SourceLocation& at, const std::wstring& msg) override
+	void onSourceError(cap::SourceLocation&, const std::wstring&) override
 	{
 		//printf("[%u:%u] Error in '%ls': %ls\n", at.getRow(), at.getColumn(), at.getString().c_str(), msg.c_str());
 		errors++;

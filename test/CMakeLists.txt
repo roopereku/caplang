@@ -25,5 +25,11 @@ add_executable(captests ${Sources})
 target_link_libraries(captests cap GTest::gtest_main)
 target_include_directories(captests PRIVATE include)
 
+if(MSVC)
+  target_compile_options(captests PRIVATE /W4 /WX)
+else()
+  target_compile_options(captests PRIVATE -Wall -Wextra -Wpedantic -Werror)
+endif()
+
 include(GoogleTest)
 gtest_discover_tests(captests)

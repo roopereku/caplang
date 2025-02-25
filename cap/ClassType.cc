@@ -96,7 +96,7 @@ std::shared_ptr <Scope> ClassType::getBody()
 	return body;
 }
 
-bool ClassType::validate(Validator& validator)
+bool ClassType::validate(Validator&)
 {
 	if(!referredType.getReferenced())
 	{

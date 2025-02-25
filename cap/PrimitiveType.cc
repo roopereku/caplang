@@ -21,7 +21,7 @@ static std::array <std::shared_ptr <PrimitiveType>, 9> primitives
 };
 
 PrimitiveType::PrimitiveType(std::wstring_view name, size_t bytes)
-	: TypeDefinition(Type::Primitive)
+	: TypeDefinition(Type::Primitive), size(bytes)
 {
 	this->name = name;
 }
@@ -66,7 +66,7 @@ std::shared_ptr <PrimitiveType> PrimitiveType::matchToken(Token token)
 	}
 }
 
-bool PrimitiveType::validate(Validator& validator)
+bool PrimitiveType::validate(Validator&)
 {
 	referredType = TypeContext(std::static_pointer_cast <PrimitiveType> (shared_from_this()));
 	referredType.isTypeName = true;

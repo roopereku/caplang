@@ -35,7 +35,7 @@ public:
 		errors.pop();
 	}
 
-	void onSourceError(cap::SourceLocation& loc, const std::wstring& msg) override
+	void onSourceError(cap::SourceLocation&, const std::wstring& msg) override
 	{
 		// TODO: Store location?
 		errors.emplace(msg);

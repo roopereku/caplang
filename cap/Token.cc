@@ -195,21 +195,21 @@ Token::ParseResult Token::parseBracket(ParserContext& ctx, size_t& i)
 	wchar_t ch = ctx.source[i];
 	wchar_t expectedOpener = 0;
 
+	if(ch == '<')
+	{
+		// "<" is treated as an opening bracket if something immediately
+		// follows it that doesn't make an operator.
+		// Example: foo <5, 10>. foo < 5 would indicate an operator.
+		wchar_t next = ctx.source[i + 1];
+		if(next == '<' || next == '=' || isspace(next) || next == 0)
+		{
+			return Type::Invalid;
+		}
+	}
+
 	switch(ch)
 	{
-		case '<':
-		{
-			// "<" is treated as an opening bracket if something immediately
-			// follows it that doesn't make an operator.
-			// Example: foo <5, 10>. foo < 5 would indicate an operator.
-			wchar_t next = ctx.source[i + 1];
-			if(next == '<' || next == '=' || isspace(next) || next == 0)
-			{
-				return Type::Invalid;
-			}
-		}
-
-		case '(': case '{': case '[':
+		case '(': case '{': case '[': case '<':
 		{
 			ctx.openedBrackets.push(Token(i, 1));
 			i++;
@@ -231,6 +231,8 @@ Token::ParseResult Token::parseBracket(ParserContext& ctx, size_t& i)
 				expectedOpener = '<';
 				break;
 			}
+
+			return Type::Invalid;
 		}
 
 		// Not a bracket so move on to the next parser.
@@ -498,7 +500,7 @@ Token::ParseResult Token::parseBinary(ParserContext& ctx, size_t& i)
 	return Type::Binary;
 }
 
-Token::ParseResult Token::parseOctal(ParserContext& ctx, size_t& i)
+Token::ParseResult Token::parseOctal(ParserContext&, size_t&)
 {
 	// TODO: Implement octal.
 	return Type::Invalid;

@@ -95,7 +95,7 @@ SourceLocation::SourceLocation(const Source& source, Token at)
 }
 
 SourceLocation::SourceLocation(const SourceLocation& rhs)
-	: at(rhs.at), source(rhs.source), row(rhs.row), column(rhs.column)
+	: source(rhs.source), at(rhs.at), row(rhs.row), column(rhs.column)
 {
 }
 

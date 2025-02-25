@@ -199,6 +199,7 @@ const char* Expression::getTypeString(Type type)
 		case Type::BinaryOperator: return "BinaryOperator";
 		case Type::BracketOperator: return "BracketOperator";
 		case Type::DeclarationRoot: return "Declaration Root";
+		case Type::ModifierRoot: return "Modifier root";
 	}
 
 	return "(expr) ???";
