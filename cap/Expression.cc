@@ -7,6 +7,7 @@
 #include <cap/Value.hh>
 #include <cap/Client.hh>
 #include <cap/ArgumentAccessor.hh>
+#include <cap/ModifierRoot.hh>
 #include <cap/Scope.hh>
 
 #include <cassert>
@@ -97,12 +98,20 @@ std::weak_ptr <Node> Expression::handleToken(Node::ParserContext& ctx, Token& to
 	// Treat anything else as a value or a keyword.
 	else
 	{
+		// Parse variables.
 		if(ctx.source.match(token, L"let"))
 		{
 			// TODO: Fields as well?
 			newNode = std::make_shared <Declaration::Root> (Declaration::Root::Type::Local);
 		}
 
+		// Parse modifiers.
+		else if(auto modifier = ModifierRoot::create(ctx, token))
+		{
+			newNode = modifier;
+		}
+
+		// Anything else is a value.
 		else
 		{
 			newNode = std::make_shared <Value> (ctx.source.getString(token));

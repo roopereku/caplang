@@ -6,6 +6,7 @@
 #include <cap/BinaryOperator.hh>
 #include <cap/BracketOperator.hh>
 #include <cap/Declaration.hh>
+#include <cap/ModifierRoot.hh>
 
 #include <vector>
 
@@ -20,6 +21,7 @@ public:
 	ExpectedNode(cap::BinaryOperator::Type type);
 	ExpectedNode(cap::BracketOperator::Type type);
 	ExpectedNode(cap::Declaration::Root::Type type);
+	ExpectedNode(cap::ModifierRoot::Type type);
 
 	std::string_view nodeType;
 	std::wstring context;
@@ -41,6 +43,7 @@ public:
 	Result onClassType(std::shared_ptr <cap::ClassType> node) override;
 	Result onExpressionRoot(std::shared_ptr <cap::Expression::Root> node) override;
 	Result onDeclarationRoot(std::shared_ptr <cap::Declaration::Root> node) override;
+	Result onModifierRoot(std::shared_ptr <cap::ModifierRoot> node) override;
 	Result onBinaryOperator(std::shared_ptr <cap::BinaryOperator> node) override;
 	Result onBracketOperator(std::shared_ptr <cap::BracketOperator> node) override;
 	Result onValue(std::shared_ptr <cap::Value> node) override;

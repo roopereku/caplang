@@ -7,6 +7,7 @@
 #include <cap/BinaryOperator.hh>
 #include <cap/BracketOperator.hh>
 #include <cap/Declaration.hh>
+#include <cap/ModifierRoot.hh>
 #include <cap/Value.hh>
 
 #include <iostream>
@@ -151,6 +152,12 @@ protected:
 		return Result::Continue;
 	}
 
+	Result onModifierRoot(std::shared_ptr <cap::ModifierRoot> node) override
+	{
+		file << prefix() << node->getTypeString() << '\n';
+		return Result::Continue;
+	}
+
 	Result onBinaryOperator(std::shared_ptr <cap::BinaryOperator> node) override
 	{
 		file << prefix() << node->getTypeString() << getResultType(node) << '\n';
@@ -209,13 +216,7 @@ int main()
 	Sandbox client;
 	SourceString entry(LR"SRC(
 
-		func foo(a = int64, b = string)
-		{
-		}
-
-		func foo(a = int64, b = string)
-		{
-		}
+		let a = type int64
 
 	)SRC");
 

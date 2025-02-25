@@ -8,6 +8,7 @@
 #include <cap/BinaryOperator.hh>
 #include <cap/BracketOperator.hh>
 #include <cap/TypeDefinition.hh>
+#include <cap/ModifierRoot.hh>
 #include <cap/Value.hh>
 
 #include <cassert>
@@ -97,6 +98,23 @@ bool Traverser::traverseExpression(std::shared_ptr <Expression> node)
 			if(shouldContinue(result) && decl->getFirst())
 			{
 				if(!traverseExpression(decl->getFirst()))
+				{
+					onNodeExited(node, result);
+					return false;
+				}
+			}
+
+			break;
+		}
+
+		case Expression::Type::ModifierRoot:
+		{
+			auto modifier = std::static_pointer_cast <ModifierRoot> (node);
+			result = onModifierRoot(modifier);
+
+			if(shouldContinue(result) && modifier->getFirst())
+			{
+				if(!traverseExpression(modifier->getFirst()))
 				{
 					onNodeExited(node, result);
 					return false;
@@ -254,10 +272,11 @@ Traverser::Result Traverser::onScope(std::shared_ptr <Scope>) { return Result::N
 Traverser::Result Traverser::onFunction(std::shared_ptr <Function>) { return Result::NotHandled; }
 Traverser::Result Traverser::onClassType(std::shared_ptr <ClassType>) { return Result::NotHandled; }
 Traverser::Result Traverser::onCallableType(std::shared_ptr <CallableType>) { return Result::NotHandled; }
-Traverser::Result Traverser::onExpressionRoot(std::shared_ptr <Expression::Root>) {return Result::NotHandled; }
-Traverser::Result Traverser::onDeclarationRoot(std::shared_ptr <Declaration::Root>) {return Result::NotHandled; }
-Traverser::Result Traverser::onBinaryOperator(std::shared_ptr <BinaryOperator>) {return Result::NotHandled; }
-Traverser::Result Traverser::onBracketOperator(std::shared_ptr <BracketOperator>) {return Result::NotHandled; }
-Traverser::Result Traverser::onValue(std::shared_ptr <Value>) {return Result::NotHandled; }
+Traverser::Result Traverser::onExpressionRoot(std::shared_ptr <Expression::Root>) { return Result::NotHandled; }
+Traverser::Result Traverser::onDeclarationRoot(std::shared_ptr <Declaration::Root>) { return Result::NotHandled; }
+Traverser::Result Traverser::onModifierRoot(std::shared_ptr <ModifierRoot>) { return Result::NotHandled; }
+Traverser::Result Traverser::onBinaryOperator(std::shared_ptr <BinaryOperator>) { return Result::NotHandled; }
+Traverser::Result Traverser::onBracketOperator(std::shared_ptr <BracketOperator>) { return Result::NotHandled; }
+Traverser::Result Traverser::onValue(std::shared_ptr <Value>) { return Result::NotHandled; }
 
 }

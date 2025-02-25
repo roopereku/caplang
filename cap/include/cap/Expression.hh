@@ -18,6 +18,7 @@ public:
 		BinaryOperator,
 		BracketOperator,
 		DeclarationRoot,
+		ModifierRoot,
 	};
 
 	/// Parses an expression.

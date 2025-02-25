@@ -36,6 +36,11 @@ ExpectedNode::ExpectedNode(cap::Declaration::Root::Type type)
 {
 }
 
+ExpectedNode::ExpectedNode(cap::ModifierRoot::Type type)
+	: ExpectedNode(cap::ModifierRoot::getTypeString(type))
+{
+}
+
 ExpectedNode Value(std::wstring&& value)
 {
 	return ExpectedNode("Value", std::move(value));
@@ -131,6 +136,13 @@ Traverser::Result NodeMatcher::onDeclarationRoot(std::shared_ptr <cap::Declarati
 	match(node);
 	return Traverser::Result::Continue;
 }
+
+Traverser::Result NodeMatcher::onModifierRoot(std::shared_ptr <cap::ModifierRoot> node)
+{
+	match(node);
+	return Traverser::Result::Continue;
+}
+
 
 Traverser::Result NodeMatcher::onBinaryOperator(std::shared_ptr <cap::BinaryOperator> node)
 {

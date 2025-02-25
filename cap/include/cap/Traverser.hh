@@ -16,6 +16,7 @@ class CallableType;
 class BinaryOperator;
 class BracketOperator;
 class TypeDefinition;
+class ModifierRoot;
 class Value;
 
 class Traverser
@@ -117,6 +118,12 @@ protected:
 	/// \param node The node representing a declaration root.
 	/// \return Continue if the traversal should continue to the underlying expression.
 	virtual Result onDeclarationRoot(std::shared_ptr <Declaration::Root> node);
+
+	/// Invoked upon hitting a modifier root in an expression.
+	///
+	/// \param node The node representing a modifier root.
+	/// \return Continue if the traversal should continue to the underlying expression.
+	virtual Result onModifierRoot(std::shared_ptr <ModifierRoot> node);
 
 	/// Invoked upon hitting a binary operator in an expression.
 	///

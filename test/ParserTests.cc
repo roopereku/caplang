@@ -105,3 +105,19 @@ TEST(ParserTests, ClassTypeDeclaration)
 			Scope()
 	});
 }
+
+TEST(ParserTests, Modifiers)
+{
+	ParserTester tester;
+
+	tester.test(L"let T = type int64",
+	{
+		Expression(),
+			cap::Declaration::Root::Type::Local,
+				cap::BinaryOperator::Type::Assign,
+					Value(L"T"),
+					cap::ModifierRoot::Type::Alias,
+						Value(L"int64"),
+
+	});
+}
