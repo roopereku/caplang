@@ -42,8 +42,6 @@ public:
 	/// \return True if validation succeeded.
 	virtual bool validate(Validator& validator) = 0;
 
-	const char* getTypeString() override;
-
 protected:
 	Declaration(Type type);
 
@@ -78,7 +76,7 @@ public:
 	Type getType() const;
 
 	static const char* getTypeString(Type type);
-	const char* getTypeString() override;
+	const char* getTypeString() const override;
 
 private:
 	Type type;

@@ -92,7 +92,7 @@ bool CallableType::validate(Validator& validator)
 	return true;
 }
 
-const char* CallableType::getTypeString()
+const char* CallableType::getTypeString() const
 {
 	return "Callable Type";
 }

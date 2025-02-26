@@ -19,6 +19,8 @@ public:
 	/// \return True if validation succeeded.
 	bool validate(Validator& validator) override;
 
+	const char* getTypeString() const override;
+
 private:
 	std::weak_ptr <BinaryOperator> initialization;
 };

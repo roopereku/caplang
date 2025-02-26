@@ -94,7 +94,7 @@ const char* BracketOperator::getTypeString(Type type)
 	return "(bracketop) ???";
 }
 
-const char* BracketOperator::getTypeString()
+const char* BracketOperator::getTypeString() const
 {
 	return getTypeString(type);
 }

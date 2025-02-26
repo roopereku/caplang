@@ -146,7 +146,7 @@ const char* BinaryOperator::getTypeString(Type type)
 	return "(binaryop) ???";
 }
 
-const char* BinaryOperator::getTypeString()
+const char* BinaryOperator::getTypeString() const
 {
 	return getTypeString(type);
 }

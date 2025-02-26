@@ -46,4 +46,9 @@ bool Variable::validate(Validator& validator)
 	return true;
 }
 
+const char* Variable::getTypeString() const
+{
+	return "Variable";
+}
+
 }

@@ -65,9 +65,6 @@ public:
 	/// \param tc The result type of this expression node.
 	void setResultType(const TypeContext& ctx);
 
-	static const char* getTypeString(Type type);
-	const char* getTypeString() override;
-
 	class Root;
 
 protected:
@@ -99,6 +96,8 @@ public:
 	///
 	/// \return The first node of this expression.
 	std::shared_ptr <Expression> getFirst();
+
+	const char* getTypeString() const override;
 
 protected:
 	Root(Type type);

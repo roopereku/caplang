@@ -63,7 +63,7 @@ ExpectedNode ClassType(std::wstring&& name)
 
 ExpectedNode Expression()
 {
-	return ExpectedNode("Root");
+	return ExpectedNode("Expression");
 }
 
 ExpectedNode DeclarationRoot()

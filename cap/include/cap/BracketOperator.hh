@@ -49,7 +49,7 @@ public:
 	Type getType() const;
 
 	static const char* getTypeString(Type type);
-	const char* getTypeString() override;
+	const char* getTypeString() const override;
 
 private:
 	std::shared_ptr <Expression> context;

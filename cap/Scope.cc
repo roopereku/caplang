@@ -166,7 +166,7 @@ Scope::DeclarationRange Scope::iterateDeclarations()
 	return DeclarationRange(scope, false);
 }
 
-const char* Scope::getTypeString()
+const char* Scope::getTypeString() const
 {
 	return "Scope";
 }

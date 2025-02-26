@@ -26,18 +26,6 @@ const TypeContext& Declaration::getReferredType() const
 	return referredType;
 }
 
-const char* Declaration::getTypeString()
-{
-	switch(type)
-	{
-		case Type::TypeDefinition: return "Type definition";
-		case Type::Function: return "Function";
-		case Type::Variable: return "Variable";
-	}
-
-	return "(decl) ???";
-}
-
 Declaration::Root::Root(Type type)
 	: Expression::Root(Expression::Type::DeclarationRoot), type(type)
 {
@@ -64,7 +52,7 @@ const char* Declaration::Root::getTypeString(Type type)
 	return "(declroot) ???";
 }
 
-const char* Declaration::Root::getTypeString()
+const char* Declaration::Root::getTypeString() const
 {
 	return getTypeString(type);
 }

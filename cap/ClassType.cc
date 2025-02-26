@@ -107,7 +107,7 @@ bool ClassType::validate(Validator&)
 	return true;
 }
 
-const char* ClassType::getTypeString()
+const char* ClassType::getTypeString() const
 {
 	return "Class Type";
 }

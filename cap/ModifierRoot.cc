@@ -44,7 +44,7 @@ const char* ModifierRoot::getTypeString(Type type)
 	return "(modifierroot) ???";
 }
 
-const char* ModifierRoot::getTypeString()
+const char* ModifierRoot::getTypeString() const
 {
 	return getTypeString(type);
 }

@@ -66,7 +66,7 @@ public:
 	DeclarationRange recurseDeclarations();
 	DeclarationRange iterateDeclarations();
 
-	const char* getTypeString() override;
+	const char* getTypeString() const override;
 
 protected:
 	/// If no nested nodes exist, the first is initialized. Otherwise the

@@ -74,4 +74,9 @@ bool PrimitiveType::validate(Validator&)
 	return true;
 }
 
+const char* PrimitiveType::getTypeString() const
+{
+	return "Primitive type";
+}
+
 }

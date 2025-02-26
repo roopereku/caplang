@@ -141,4 +141,9 @@ bool Function::validate(Validator& validator)
 	return true;
 }
 
+const char* Function::getTypeString() const
+{
+	return "Function";
+}
+
 }

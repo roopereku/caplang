@@ -30,7 +30,7 @@ public:
 	/// \param node The declaration to refer to.
 	void setReferred(std::shared_ptr <Declaration> node);
 
-	const char* getTypeString() override;
+	const char* getTypeString() const override;
 
 private:
 	std::wstring value;

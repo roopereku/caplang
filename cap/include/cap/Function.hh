@@ -41,6 +41,8 @@ public:
 	/// \return True if validation succeeded.
 	bool validate(Validator& validator) override;
 
+	const char* getTypeString() const override;
+
 private:
 	std::shared_ptr <CallableType> signature;
 	std::shared_ptr <Scope> body;

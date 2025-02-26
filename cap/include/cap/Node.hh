@@ -68,7 +68,7 @@ public:
 	/// \return The nearest parent function null if not inside a function.
 	std::shared_ptr <Function> getParentFunction();
 
-	virtual const char* getTypeString() = 0;
+	virtual const char* getTypeString() const = 0;
 
 protected:
 	Node(Type type);

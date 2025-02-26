@@ -38,7 +38,7 @@ void Value::setReferred(std::shared_ptr <Declaration> node)
 	setResultType(node->getReferredType());
 }
 
-const char* Value::getTypeString()
+const char* Value::getTypeString() const
 {
 	return "Value";
 }

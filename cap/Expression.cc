@@ -189,27 +189,6 @@ void Expression::setResultType(const TypeContext& ctx)
 	resultType = ctx;
 }
 
-const char* Expression::getTypeString(Type type)
-{
-	switch(type)
-	{
-		case Type::Root: return "Root";
-		case Type::Value: return "Value";
-		case Type::UnaryOperator: return "UnaryOperator";
-		case Type::BinaryOperator: return "BinaryOperator";
-		case Type::BracketOperator: return "BracketOperator";
-		case Type::DeclarationRoot: return "Declaration Root";
-		case Type::ModifierRoot: return "Modifier root";
-	}
-
-	return "(expr) ???";
-}
-
-const char* Expression::getTypeString()
-{
-	return Expression::getTypeString(type);
-}
-
 Expression::Expression(Type type)
 	: Node(Node::Type::Expression), type(type)
 {
@@ -317,6 +296,11 @@ std::shared_ptr <Expression> Expression::Root::stealLatestValue()
 {
 	auto ret = std::move(first);
 	return ret;
+}
+
+const char* Expression::Root::getTypeString() const
+{
+	return "Expression";
 }
 
 }
