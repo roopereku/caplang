@@ -114,7 +114,7 @@ protected:
 
 			for(auto decl : decls)
 			{
-				printf("- '%ls' -> %s\n", decl->getName().c_str(), decl->getTypeString());
+				printf("- '%ls' -> %s\n", decl->getLocation().c_str(), decl->getTypeString());
 			}
 		}
 
@@ -176,7 +176,7 @@ protected:
 
 		if(node->getReferred())
 		{
-			file << "\\nRefers -> " << node->getReferred()->getName();
+			file << "\\nRefers -> " << node->getReferred()->getLocation();
 		}
 
 		file << '\n';
@@ -216,7 +216,13 @@ int main()
 	Sandbox client;
 	SourceString entry(LR"SRC(
 
-		let a = type int64
+		type Foo
+		{
+			type Bar
+			{
+				let a = type Bar
+			}
+		}
 
 	)SRC");
 

@@ -24,7 +24,7 @@ public:
 	/// Gets the name of this declaration.
 	///
 	/// \return The name of this declaration.
-	const std::wstring& getName();
+	const std::wstring& getName() const;
 
 	/// Gets the type of this declaration.
 	///
@@ -41,6 +41,17 @@ public:
 	/// \param validator The validator used for traversal.
 	/// \return True if validation succeeded.
 	virtual bool validate(Validator& validator) = 0;
+
+	/// Gets the full location of this declaration.
+	///
+	/// \param delimiter The delimiter to put between names.
+	/// \return The full location delimited by a delimiter.
+	std::wstring getLocation(wchar_t delimiter = '.') const;
+
+	/// Gets the declaration that this declaration resides in.
+	///
+	/// \return The parent declaration if any.
+	std::shared_ptr <Declaration> getParentDeclaration() const;
 
 protected:
 	Declaration(Type type);
