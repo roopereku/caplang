@@ -23,9 +23,19 @@ protected:
 	Result onValue(std::shared_ptr <Value> node) override;
 
 private:
-	ParserContext& ctx;
+	struct ResolverContext
+	{
+		std::shared_ptr <Expression::Root> parameters;
+		TypeContext accessedFrom;
+	};
 
-	std::shared_ptr <Expression::Root> associatedParameters;
+	Result validateIdentifier(std::shared_ptr <Value> node, ResolverContext& resolve);
+
+	Result connectDeclaration(std::shared_ptr <Value> node,
+			std::shared_ptr <Declaration> decl, ResolverContext& resolve);
+
+	ResolverContext resolverCtx;
+	ParserContext& ctx;
 };
 
 }

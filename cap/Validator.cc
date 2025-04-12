@@ -118,11 +118,25 @@ Traverser::Result Validator::onDeclarationRoot(std::shared_ptr <Declaration::Roo
 
 Traverser::Result Validator::onBinaryOperator(std::shared_ptr <BinaryOperator> node)
 {
-	if(!traverseExpression(node->getLeft()) ||
-		!traverseExpression(node->getRight()))
+	if(!traverseExpression(node->getLeft()))
 	{
 		return Result::Stop;
 	}
+
+	// If something is being accessed, store some context for
+	// the right node to consume.
+	if(node->getType() == BinaryOperator::Type::Access)
+	{
+		assert(node->getLeft()->getResultType().getReferenced());
+		resolverCtx.accessedFrom = node->getLeft()->getResultType();
+	}
+
+	if(!traverseExpression(node->getRight()))
+	{
+		return Result::Stop;
+	}
+
+	resolverCtx = {};
 
 	// Saving the result type doesn't make sense for commas.
 	if(node->getType() != BinaryOperator::Type::Comma)
@@ -162,7 +176,7 @@ Traverser::Result Validator::onBracketOperator(std::shared_ptr <BracketOperator>
 		return Result::Stop;
 	}
 
-	associatedParameters = node->getInnerRoot();
+	resolverCtx.parameters = node->getInnerRoot();
 	if(!traverseExpression(node->getContext()))
 	{
 		return Result::Stop;
@@ -183,112 +197,12 @@ Traverser::Result Validator::onBracketOperator(std::shared_ptr <BracketOperator>
 
 Traverser::Result Validator::onValue(std::shared_ptr <Value> node)
 {
+	ResolverContext resolve = std::move(resolverCtx);
+
 	// TODO: Handle scope context change when binary operator encounters ".".
 	if(node->getToken().getType() == Token::Type::Identifier)
 	{
-		auto parentFunction = node->getParentFunction();
-		auto scope = parentFunction ? parentFunction->getBody() : node->getParentScope();
-
-		size_t triedCallables = 0;
-
-		// Recursion might be problematic when the associated parameters
-		// are stored beyond this point.
-		auto parameters = associatedParameters;
-		associatedParameters = nullptr;
-
-		for(auto decl : scope->recurseDeclarations())
-		{
-			if(decl->getName() != node->getValue())
-			{
-				continue;
-			}
-
-			// Make sure that whatever is being matched against is validated.
-			if(!decl->validate(*this))
-			{
-				return Result::Stop;
-			}
-
-			// Should parameters be matched as well?
-			if(parameters)
-			{
-				std::shared_ptr <CallableType> callable;
-
-				switch(decl->getType())
-				{
-					// Normal function calls.
-					case Declaration::Type::Function:
-					{
-						callable = std::static_pointer_cast <Function> (decl)->getSignature();
-						break;
-					}
-
-					// Constructor calls and type conversions.
-					case Declaration::Type::TypeDefinition:
-					{
-						SourceLocation location(ctx.source, node->getToken());
-						ctx.client.sourceError(location, "TODO: Find a constructor or a type conversion");
-						return Result::Stop;
-					}
-
-					// Operator overload call from an object.
-					case Declaration::Type::Variable:
-					{
-						SourceLocation location(ctx.source, node->getToken());
-						ctx.client.sourceError(location, "TODO: Find a callable in the context of an object");
-						return Result::Stop;
-					}
-				}
-
-				assert(callable);
-				triedCallables++;
-
-				// TODO: Store the currently most fitting candidate based on unidentical
-				// parameters select the most fitting one. This way more fitting function overloads
-				// can be prioritized over those where parameters are implicitly casted.
-
-				auto [compatible, unidentical] = callable->matchParameters(parameters);
-				if(compatible)
-				{
-					node->setReferred(decl);
-					break;
-				}
-			}
-
-			else
-			{
-				node->setReferred(decl);
-				break;
-			}
-		}
-
-		// If nothing was found, check if the value refers to a primitive type.
-		if(!node->getReferred())
-		{
-			auto primitive = PrimitiveType::matchName(ctx.source, node->getToken());
-
-			if(primitive && primitive->validate(*this))
-			{
-				TypeContext resultType(primitive);
-				resultType.isTypeName = true;
-				node->setReferred(primitive);
-
-			}
-		}
-
-		if(!node->getReferred())
-		{
-			// If we tried to match callables, show a different message.
-			// TODO: node->getValue() should also be something else in the
-			// case of type constructors or type conversions.
-			const char* msg = triedCallables ?
-				"No matching overload found for" :
-				"Undeclared identifier";
-
-			SourceLocation location(ctx.source, node->getToken());
-			ctx.client.sourceError(location, msg, " '", node->getValue(), '\'');
-			return Result::Stop;
-		}
+		return validateIdentifier(node, resolve);
 	}
 
 	else
@@ -300,6 +214,176 @@ Traverser::Result Validator::onValue(std::shared_ptr <Value> node)
 	}
 
 	return Result::Exit;
+}
+
+Traverser::Result Validator::validateIdentifier(std::shared_ptr <Value> node, ResolverContext& resolve)
+{
+	auto parentFunction = node->getParentFunction();
+	auto scope = parentFunction ? parentFunction->getBody() : node->getParentScope();
+
+	Result result = Result::NotHandled;
+	auto accessContext = resolve.accessedFrom.getReferenced();
+
+	DBG_MESSAGE(ctx.client, "VALIDATE IDENTIFIER ", node->getValue());
+	if(accessContext)
+	{
+		DBG_MESSAGE(ctx.client, "HAS ACCESS CONTEXT IN ", node->getValue());
+		switch(resolve.accessedFrom.getReferenced()->getType())
+		{
+			case cap::TypeDefinition::Type::Class:
+			{
+				auto classType = std::static_pointer_cast <ClassType> (accessContext);
+
+				for(auto decl : classType->getBody()->iterateDeclarations())
+				{
+					result = connectDeclaration(node, decl, resolve);
+					if(result != Result::Continue)
+					{
+						break;
+					}
+				}
+
+				// TODO: Iterate base classes. Modify the resolver context so that
+				// accessedFrom references a base class.
+
+				break;
+			}
+
+			case cap::TypeDefinition::Type::Callable:
+			{
+				SourceLocation location(ctx.source, node->getToken());
+				ctx.client.sourceError(location, "Cannot access contents of a callable");
+				return Result::Stop;
+			}
+
+			case cap::TypeDefinition::Type::Primitive:
+			{
+				// TODO: Allow this?
+				SourceLocation location(ctx.source, node->getToken());
+				ctx.client.sourceError(location, "Cannot access contents of a primitive");
+				return Result::Stop;
+			}
+		}
+	}
+
+	else
+	{
+		auto parentFunction = node->getParentFunction();
+		auto scope = parentFunction ? parentFunction->getBody() : node->getParentScope();
+
+		for(auto decl : scope->recurseDeclarations())
+		{
+			result = connectDeclaration(node, decl, resolve);
+			if(result != Result::Continue)
+			{
+				break;
+			}
+		}
+	}
+
+	if(result == Result::Stop)
+	{
+		return result;
+	}
+
+	// If nothing was found, check if the value refers to a primitive type.
+	if(!node->getReferred())
+	{
+		auto primitive = PrimitiveType::matchName(ctx.source, node->getToken());
+
+		if(primitive && primitive->validate(*this))
+		{
+			TypeContext resultType(primitive);
+			resultType.isTypeName = true;
+			node->setReferred(primitive);
+		}
+	}
+
+	if(!node->getReferred())
+	{
+		// TODO: node->getValue() should also be something else in the
+		// case of type constructors or type conversions.
+
+		// TODO: Show a different message for generics? The param type can be
+		// stored in ResolverContext.
+
+		// If pararameters are supplied, we're looking for something more specific.
+		const char* msg = resolve.parameters ?
+			"No matching overload found for" :
+			"Undeclared identifier";
+
+		SourceLocation location(ctx.source, node->getToken());
+		ctx.client.sourceError(location, msg, " '", node->getValue(), '\'');
+		return Result::Stop;
+	}
+
+	return Result::Exit;
+}
+
+Traverser::Result Validator::connectDeclaration(std::shared_ptr <Value> node,
+		std::shared_ptr <Declaration> decl, ResolverContext& resolve)
+{
+	if(decl->getName() != node->getValue())
+	{
+		return Result::Continue;
+	}
+
+	// Make sure that whatever is being matched against is validated.
+	if(!decl->validate(*this))
+	{
+		return Result::Stop;
+	}
+
+	// Should parameters be matched as well?
+	if(resolve.parameters)
+	{
+		std::shared_ptr <CallableType> callable;
+
+		switch(decl->getType())
+		{
+			// Normal function calls.
+			case Declaration::Type::Function:
+			{
+				callable = std::static_pointer_cast <Function> (decl)->getSignature();
+				break;
+			}
+
+			// Constructor calls and type conversions.
+			case Declaration::Type::TypeDefinition:
+			{
+				assert(false && "TODO: Find a constructor or a type conversion");
+				break;
+			}
+
+			// Operator overload call from an object.
+			case Declaration::Type::Variable:
+			{
+				assert(false && "TODO: Find a callable in the context of an object");
+				break;
+			}
+		}
+
+		assert(callable);
+
+		// TODO: Store the currently most fitting candidate based on unidentical
+		// parameters select the most fitting one. This way more fitting function overloads
+		// can be prioritized over those where parameters are implicitly casted.
+
+		auto [compatible, unidentical] = callable->matchParameters(resolve.parameters);
+		if(compatible)
+		{
+			node->setReferred(decl);
+			return Result::Exit;
+		}
+	}
+
+	else
+	{
+		node->setReferred(decl);
+		return Result::Exit;
+	}
+
+	return Result::Continue;
 }
 
 }
