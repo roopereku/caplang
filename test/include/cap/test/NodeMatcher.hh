@@ -24,6 +24,7 @@ public:
 	ExpectedNode(cap::ModifierRoot::Type type);
 
 	std::string_view nodeType;
+	std::wstring resultType;
 	std::wstring context;
 };
 
@@ -54,6 +55,14 @@ public:
 	size_t current = 0;
 };
 
+}
+
+template <typename T>
+cap::test::ExpectedNode operator>(T&& expected, std::wstring_view resultType)
+{
+	cap::test::ExpectedNode result(std::forward <T> (expected));
+	result.resultType = std::wstring(resultType);
+	return result;
 }
 
 #endif

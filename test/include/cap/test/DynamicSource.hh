@@ -16,6 +16,7 @@ public:
 	bool match(cap::Token token, std::wstring_view value) const override;
 
 	void operator+=(std::wstring&& value);
+	void operator+=(const std::wstring& value);
 	size_t getLength() const;
 
 private:

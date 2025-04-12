@@ -33,6 +33,11 @@ void DynamicSource::operator+=(std::wstring&& value)
 	str += std::move(value);
 }
 
+void DynamicSource::operator+=(const std::wstring& value)
+{
+	str += value;
+}
+
 size_t DynamicSource::getLength() const
 {
 	return str.length();

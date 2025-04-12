@@ -141,10 +141,15 @@ Traverser::Result Validator::onBinaryOperator(std::shared_ptr <BinaryOperator> n
 	// Saving the result type doesn't make sense for commas.
 	if(node->getType() != BinaryOperator::Type::Comma)
 	{
+		// TODO: Forbid resetting of result type after initialization.
+		if(node->getType() == BinaryOperator::Type::Assign)
+		{
+			node->getLeft()->setResultType(node->getRight()->getResultType());
+		}
+
 		// TODO: Check if there is a binary operator overload and set the result
 		// type based on that.
-		node->getLeft()->setResultType(node->getRight()->getResultType());
-		node->setResultType(node->getLeft()->getResultType());
+		node->setResultType(node->getRight()->getResultType());
 	}
 
 	return Result::Exit;

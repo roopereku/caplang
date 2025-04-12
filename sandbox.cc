@@ -216,22 +216,15 @@ int main()
 	Sandbox client;
 	SourceString entry(LR"SRC(
 
-		let c = Foo.Baz.y
-
 		type Foo
 		{
 			type Bar
 			{
 				let a = 10
-				let b = Baz.y - a
-			}
-
-			type Baz
-			{
-				let x = 55
-				let y = x * Bar.a
 			}
 		}
+
+		let a = Foo.Bar.a
 
 	)SRC");
 

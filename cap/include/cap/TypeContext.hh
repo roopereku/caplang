@@ -2,6 +2,7 @@
 #define CAP_TYPE_CONTEXT_HH
 
 #include <memory>
+#include <string>
 
 namespace cap
 {
@@ -13,19 +14,11 @@ class TypeDefinition;
 class TypeContext
 {
 public:
-	TypeContext(std::shared_ptr <TypeDefinition> referenced)
-		: isImmutable(false), isParseTime(false), isTypeName(false), referenced(referenced)
-	{
-	}
+	TypeContext(std::shared_ptr <TypeDefinition> referenced);
+	TypeContext();
 
-	TypeContext() : TypeContext(nullptr)
-	{
-	}
-
-	std::shared_ptr <TypeDefinition> getReferenced() const
-	{
-		return referenced.expired() ? nullptr : referenced.lock();
-	}
+	std::shared_ptr <TypeDefinition> getReferenced() const;
+	std::wstring toString() const;
 
 	/// Is a type instance referred whose values are immutable?
 	bool isImmutable;

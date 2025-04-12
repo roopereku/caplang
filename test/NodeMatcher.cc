@@ -180,6 +180,12 @@ ExpectedNode NodeMatcher::match(std::shared_ptr <cap::Node> node)
 	auto ret = expectation[current];
 	EXPECT_STREQ(node->getTypeString(), ret.nodeType.data());
 
+	if(node->getType() == cap::Node::Type::Expression && !ret.resultType.empty())
+	{
+		auto expr = std::static_pointer_cast <cap::Expression> (node);
+		EXPECT_STREQ(expr->getResultType().toString().c_str(), ret.resultType.c_str());
+	}
+
 	current++;
 	return ret;
 }
