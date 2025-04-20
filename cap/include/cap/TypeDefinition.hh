@@ -11,7 +11,6 @@ class TypeDefinition : public Declaration
 public:
 	enum class Type
 	{
-		Primitive,
 		Class,
 		Callable
 	};

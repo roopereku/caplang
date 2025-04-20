@@ -236,12 +236,6 @@ bool Traverser::traverseTypeDefinition(std::shared_ptr <TypeDefinition> node)
 			break;
 		}
 
-		case TypeDefinition::Type::Primitive:
-		{
-			assert(false && "Primitive type traversal unimplemented");
-			break;
-		}
-
 		case TypeDefinition::Type::Callable:
 		{
 			auto callable = std::static_pointer_cast <CallableType> (node);

@@ -2,6 +2,7 @@
 #define CAP_CLIENT_HH
 
 #include <cap/Source.hh>
+#include <cap/Builtin.hh>
 
 #include <string>
 #include <sstream>
@@ -21,7 +22,17 @@ namespace cap
 class Client
 {
 public:
-	bool parse(Source& source);
+	/// Parser the given source using this client.
+	///
+	/// \param source The source to parse.
+	/// \param validate True if should validation be performed.
+	/// \return True if the parsing was successful.
+	bool parse(Source& source, bool validate = true);
+
+	/// Gets the builtin code wrapper.
+	///
+	/// \return The builtin code wrapper.
+	const Builtin& getBuiltin();
 
 	template <typename... Args>
 	void sourceError(SourceLocation& at, Args&&... args)
@@ -43,6 +54,9 @@ protected:
 	virtual void onSourceError(SourceLocation& at, const std::wstring& error);
 	virtual void onError(const std::wstring& error);
 	virtual void onDebugMessage(const std::wstring& msg);
+
+private:
+	Builtin builtin;
 };
 
 }

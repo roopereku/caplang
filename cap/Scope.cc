@@ -7,7 +7,6 @@
 #include <cap/BinaryOperator.hh>
 #include <cap/Variable.hh>
 #include <cap/Value.hh>
-#include <cap/PrimitiveType.hh>
 
 #include <cassert>
 
@@ -83,20 +82,7 @@ const std::vector <std::shared_ptr <Node>>& Scope::getNested()
 	return nested;
 }
 
-std::shared_ptr <Declaration> Scope::findDeclaration(Source& source, Token name)
-{
-	for(auto decl : recurseDeclarations())
-	{
-		if(source.match(name, decl->getName()))
-		{
-			return decl;
-		}
-	}
-
-	return nullptr;
-}
-
-bool Scope::addDeclaration(cap::ParserContext& ctx, std::shared_ptr <Declaration> node)
+bool Scope::canAddDeclaration(std::shared_ptr <Declaration> node)
 {
 	// Make sure that no other declaration of the same name already exists
 	// within this scope. Some cases are allowed.
@@ -111,15 +97,20 @@ bool Scope::addDeclaration(cap::ParserContext& ctx, std::shared_ptr <Declaration
 				continue;
 			}
 
-			SourceLocation location(ctx.source, node->getToken());
-			ctx.client.sourceError(location, "'", node->getName(), "' already exists");
 			return false;
 		}
 	}
 
-	// Don't allow duplicates of primitives in any scope.
-	if(PrimitiveType::matchName(ctx.source, node->getToken()))
+	return true;
+}
+
+bool Scope::addDeclaration(cap::ParserContext& ctx, std::shared_ptr <Declaration> node)
+{
+	// Make sure that the declaration doesn't conflict with anything in this
+	// scope or the builtin scope.
+	if(!canAddDeclaration(node) || !ctx.client.getBuiltin().getGlobal()->canAddDeclaration(node))
 	{
+		// TODO: Indicate where the declaration already exists?
 		SourceLocation location(ctx.source, node->getToken());
 		ctx.client.sourceError(location, "'", node->getName(), "' already exists");
 		return false;

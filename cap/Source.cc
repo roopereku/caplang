@@ -9,12 +9,23 @@ namespace cap
 {
 
 Source::Source()
-	: global(std::make_shared <Scope> ())
 {
 }
 
 bool Source::parse(Client& client, bool validate)
 {
+	// TODO: Add an actual error message when a source is already
+	// parsed by some client. Add a test for this.
+	assert(!global);
+	global = std::make_shared <Scope> ();
+	auto builtin = client.getBuiltin();
+
+	// Connect the global scope to the builtins.
+	if(global != builtin.getGlobal())
+	{
+		builtin.getGlobal()->adopt(global);
+	}
+
 	Token::ParserContext tokenCtx(client, *this);
 	Node::ParserContext nodeCtx(client, *this);
 
@@ -66,6 +77,11 @@ bool Source::parse(Client& client, bool validate)
 }
 
 std::shared_ptr <Scope> Source::getGlobal()
+{
+	return global;
+}
+
+const std::shared_ptr <Scope> Source::getGlobal() const
 {
 	return global;
 }

@@ -38,12 +38,6 @@ public:
 	/// \return The nested nodes.
 	const std::vector <std::shared_ptr <Node>>& getNested();
 
-	/// Find a declaration of the given name within this
-	/// scope or a parent scope.
-	///
-	/// \return The declaration if it is found.
-	std::shared_ptr <Declaration> findDeclaration(Source& source, Token name);
-
 	/// Adds a new declaration into this scope.
 	///
 	/// \param ctx The context to get the source and client from.
@@ -68,10 +62,12 @@ public:
 
 	const char* getTypeString() const override;
 
-protected:
+private:
 	/// If no nested nodes exist, the first is initialized. Otherwise the
 	/// given node is appended after the last nested node.
 	std::weak_ptr <Node> appendNested(std::shared_ptr <Node> node);
+
+	bool canAddDeclaration(std::shared_ptr <Declaration> node);
 
 	std::vector <std::shared_ptr <Node>> nested;
 	std::vector <std::shared_ptr <Declaration>> declarations;

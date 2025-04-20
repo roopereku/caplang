@@ -7,7 +7,6 @@
 #include <cap/BracketOperator.hh>
 #include <cap/Value.hh>
 #include <cap/Variable.hh>
-#include <cap/PrimitiveType.hh>
 
 #include <cassert>
 
@@ -210,12 +209,31 @@ Traverser::Result Validator::onValue(std::shared_ptr <Value> node)
 		return validateIdentifier(node, resolve);
 	}
 
+	// Determine the result type of a literal.
 	else
 	{
-		// Make the non-identifier value refer to a primitive type.
-		// TODO: Use PrimitiveType::matchValue when it replaces matchToken.
-		node->setResultType(TypeContext(PrimitiveType::matchToken(node->getToken())));
-		assert(node->getResultType().getReferenced());
+		switch(node->getToken().getType())
+		{
+			case Token::Type::Integer:
+			case Token::Type::Hexadecimal:
+			case Token::Type::Binary:
+			case Token::Type::Octal:
+			{
+				node->setResultType(TypeContext(ctx.client.getBuiltin().getDefaultIntegerType()));
+				break;
+			}
+
+			case Token::Type::String:
+			{
+				node->setResultType(TypeContext(ctx.client.getBuiltin().getStringType()));
+				break;
+			}
+
+			default:
+			{
+				assert("TODO: No matching type for literal" && false);
+			}
+		}
 	}
 
 	return Result::Exit;
@@ -260,14 +278,6 @@ Traverser::Result Validator::validateIdentifier(std::shared_ptr <Value> node, Re
 				ctx.client.sourceError(location, "Cannot access contents of a callable");
 				return Result::Stop;
 			}
-
-			case cap::TypeDefinition::Type::Primitive:
-			{
-				// TODO: Allow this?
-				SourceLocation location(ctx.source, node->getToken());
-				ctx.client.sourceError(location, "Cannot access contents of a primitive");
-				return Result::Stop;
-			}
 		}
 	}
 
@@ -289,19 +299,6 @@ Traverser::Result Validator::validateIdentifier(std::shared_ptr <Value> node, Re
 	if(result == Result::Stop)
 	{
 		return result;
-	}
-
-	// If nothing was found, check if the value refers to a primitive type.
-	if(!node->getReferred())
-	{
-		auto primitive = PrimitiveType::matchName(ctx.source, node->getToken());
-
-		if(primitive && primitive->validate(*this))
-		{
-			TypeContext resultType(primitive);
-			resultType.isTypeName = true;
-			node->setReferred(primitive);
-		}
 	}
 
 	if(!node->getReferred())
