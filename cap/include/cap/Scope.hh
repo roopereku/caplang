@@ -2,6 +2,7 @@
 #define CAP_SCOPE_HH
 
 #include <cap/Node.hh>
+#include <cap/Variable.hh>
 
 #include <vector>
 
@@ -10,7 +11,6 @@ namespace cap
 
 class Declaration;
 class Expression;
-class Variable;
 
 /// Scope is a node representing an area within the source
 /// code in which declarations, expressions and statements live in.
@@ -45,12 +45,13 @@ public:
 	/// \return True if the declaration was added successfully.
 	bool addDeclaration(cap::ParserContext& ctx, std::shared_ptr <Declaration> node);
 
-	/// Creates a new declaration based on an expression node.
+	/// Creates a new variable based on an expression node.
 	///
 	/// \param ctx The context to get the source and client from.
-	/// \param node The expression node to create a declaration from.
-	/// \return True if a declaration was created successfully.
-	bool createDeclaration(cap::ParserContext& ctx, std::shared_ptr <Expression> node);
+	/// \param node The expression node to create a variable from.
+	/// \param node The type of the variable to create.
+	/// \return True if a variable was created successfully.
+	bool createVariable(cap::ParserContext& ctx, std::shared_ptr <Expression> node, Variable::Type type);
 
 	class DeclarationIterator;
 	class DeclarationRange;

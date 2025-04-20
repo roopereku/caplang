@@ -83,7 +83,7 @@ TEST(ErrorTests, InvalidDeclaration)
 	tester.reportsError(L"type foo", L"Expected '{' after a type declaration");
 
 	tester.reportsError(L"let a", L"Expected '='");
-	tester.reportsError(L"let", L"Expected an expression after 'let'");
+	tester.reportsError(L"let", L"Nothing declared with 'let'");
 }
 
 TEST(ErrorTests, DuplicateIdentifier)

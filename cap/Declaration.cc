@@ -23,7 +23,16 @@ Declaration::Type Declaration::getType()
 
 const TypeContext& Declaration::getReferredType() const
 {
-	return referredType;
+	// TODO: Should a declaration always have a referred type upon access?
+	// There seems to be none when making a name value refer to the declaration.
+
+	if(referredType.has_value())
+	{
+		return referredType.value();
+	}
+
+	static TypeContext empty;
+	return empty;
 }
 
 std::wstring Declaration::getLocation(wchar_t delimiter) const
@@ -55,37 +64,6 @@ std::shared_ptr <Declaration> Declaration::getParentDeclaration() const
 	}
 
 	return nullptr;
-}
-
-Declaration::Root::Root(Type type)
-	: Expression::Root(Expression::Type::DeclarationRoot), type(type)
-{
-}
-
-Declaration::Root::Type Declaration::Root::getType() const
-{
-	return type;
-}
-
-const char* Declaration::Root::getTypeString(Type type)
-{
-	assert(type != Type::None);
-
-	switch(type)
-	{
-		case Type::Generic: return "Generic declaration";
-		case Type::Parameter: return "Parameter declaration";
-		case Type::Local: return "Local declaration";
-
-		default: {}
-	}
-
-	return "(declroot) ???";
-}
-
-const char* Declaration::Root::getTypeString() const
-{
-	return getTypeString(type);
 }
 
 }

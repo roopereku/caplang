@@ -3,7 +3,7 @@
 #include <cap/Function.hh>
 #include <cap/ClassType.hh>
 #include <cap/BracketOperator.hh>
-#include <cap/Declaration.hh>
+#include <cap/Variable.hh>
 #include <cap/Value.hh>
 
 #include <gtest/gtest.h>
@@ -31,8 +31,8 @@ ExpectedNode::ExpectedNode(cap::BracketOperator::Type type)
 {
 }
 
-ExpectedNode::ExpectedNode(cap::Declaration::Root::Type type)
-	: ExpectedNode(cap::Declaration::Root::getTypeString(type))
+ExpectedNode::ExpectedNode(cap::Variable::Type type)
+	: ExpectedNode(cap::Variable::getTypeString(type))
 {
 }
 
@@ -63,17 +63,22 @@ ExpectedNode ClassType(std::wstring&& name)
 
 ExpectedNode Expression()
 {
-	return ExpectedNode("Expression");
+	return ExpectedNode("Expression root");
 }
 
-ExpectedNode DeclarationRoot()
+ExpectedNode LocalVariable(std::wstring&& name)
 {
-	return ExpectedNode("Local declaration");
+	return ExpectedNode("Local variable", std::move(name));
 }
 
-ExpectedNode ParameterRoot()
+ExpectedNode Parameter(std::wstring&& name)
 {
-	return ExpectedNode("Parameter declaration");
+	return ExpectedNode("Parameter", std::move(name));
+}
+
+ExpectedNode Generic(std::wstring&& name)
+{
+	return ExpectedNode("Generic", std::move(name));
 }
 
 NodeMatcher::NodeMatcher(std::vector <ExpectedNode>&& expectation)
@@ -131,7 +136,7 @@ Traverser::Result NodeMatcher::onExpressionRoot(std::shared_ptr <cap::Expression
 	return Traverser::Result::Continue;
 }
 
-Traverser::Result NodeMatcher::onDeclarationRoot(std::shared_ptr <cap::Declaration::Root> node)
+Traverser::Result NodeMatcher::onVariable(std::shared_ptr <cap::Variable> node)
 {
 	match(node);
 	return Traverser::Result::Continue;
@@ -142,7 +147,6 @@ Traverser::Result NodeMatcher::onModifierRoot(std::shared_ptr <cap::ModifierRoot
 	match(node);
 	return Traverser::Result::Continue;
 }
-
 
 Traverser::Result NodeMatcher::onBinaryOperator(std::shared_ptr <cap::BinaryOperator> node)
 {

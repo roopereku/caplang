@@ -63,7 +63,7 @@ std::weak_ptr <Node> Scope::handleToken(ParserContext& ctx, Token& token)
 			assert(!ret.expired());
 			auto expr = std::static_pointer_cast <Expression> (ret.lock());
 
-			if(expr->getType() != Expression::Type::DeclarationRoot)
+			if(expr->getType() != Expression::Type::VariableRoot)
 			{
 				SourceLocation location(ctx.source, token);
 				ctx.client.sourceError(location, "Only declarations are allowed here");
@@ -122,7 +122,7 @@ bool Scope::addDeclaration(cap::ParserContext& ctx, std::shared_ptr <Declaration
 	return true;
 }
 
-bool Scope::createDeclaration(cap::ParserContext& ctx, std::shared_ptr <Expression> node)
+bool Scope::createVariable(cap::ParserContext& ctx, std::shared_ptr <Expression> node, Variable::Type type)
 {
 	if(node->getType() == Expression::Type::BinaryOperator)
 	{
@@ -136,7 +136,11 @@ bool Scope::createDeclaration(cap::ParserContext& ctx, std::shared_ptr <Expressi
 				return false;
 			}
 
-			return addDeclaration(ctx, std::make_shared <Variable> (op));
+			auto decl =  std::make_shared <Variable> (type, op);
+			auto name = std::static_pointer_cast <Value> (op->getLeft());
+
+			name->setReferred(decl);
+			return addDeclaration(ctx, std::move(decl));
 		}
 	}
 

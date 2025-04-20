@@ -5,7 +5,7 @@
 #include <cap/Traverser.hh>
 #include <cap/BinaryOperator.hh>
 #include <cap/BracketOperator.hh>
-#include <cap/Declaration.hh>
+#include <cap/Variable.hh>
 #include <cap/ModifierRoot.hh>
 
 #include <vector>
@@ -20,7 +20,7 @@ public:
 	ExpectedNode(std::string_view nodeType);
 	ExpectedNode(cap::BinaryOperator::Type type);
 	ExpectedNode(cap::BracketOperator::Type type);
-	ExpectedNode(cap::Declaration::Root::Type type);
+	ExpectedNode(cap::Variable::Type type);
 	ExpectedNode(cap::ModifierRoot::Type type);
 
 	std::string_view nodeType;
@@ -33,6 +33,9 @@ ExpectedNode Scope();
 ExpectedNode Function(std::wstring&& name);
 ExpectedNode ClassType(std::wstring&& name);
 ExpectedNode Expression();
+ExpectedNode LocalVariable(std::wstring&& name);
+ExpectedNode Parameter(std::wstring&& name);
+ExpectedNode Generic(std::wstring&& name);
 
 class NodeMatcher : public cap::Traverser
 {
@@ -43,7 +46,7 @@ public:
 	Result onFunction(std::shared_ptr <cap::Function> node) override;
 	Result onClassType(std::shared_ptr <cap::ClassType> node) override;
 	Result onExpressionRoot(std::shared_ptr <cap::Expression::Root> node) override;
-	Result onDeclarationRoot(std::shared_ptr <cap::Declaration::Root> node) override;
+	Result onVariable(std::shared_ptr <cap::Variable> node) override;
 	Result onModifierRoot(std::shared_ptr <cap::ModifierRoot> node) override;
 	Result onBinaryOperator(std::shared_ptr <cap::BinaryOperator> node) override;
 	Result onBracketOperator(std::shared_ptr <cap::BracketOperator> node) override;

@@ -1,4 +1,5 @@
 #include <cap/Traverser.hh>
+#include <cap/ArgumentAccessor.hh>
 #include <cap/Scope.hh>
 #include <cap/Function.hh>
 #include <cap/ClassType.hh>
@@ -9,6 +10,7 @@
 #include <cap/BracketOperator.hh>
 #include <cap/TypeDefinition.hh>
 #include <cap/ModifierRoot.hh>
+#include <cap/Variable.hh>
 #include <cap/Value.hh>
 
 #include <cassert>
@@ -90,21 +92,32 @@ bool Traverser::traverseExpression(std::shared_ptr <Expression> node)
 			break;
 		}
 
-		case Expression::Type::DeclarationRoot:
+		case Expression::Type::VariableRoot:
 		{
-			auto decl = std::static_pointer_cast <Declaration::Root> (node);
-			result = onDeclarationRoot(decl);
+			auto variableRoot = std::static_pointer_cast <Variable::Root> (node);
+			ArgumentAccessor args(variableRoot);
+			result = Result::Exit;
 
-			if(shouldContinue(result) && decl->getFirst())
+			// Instead of traversing through the expression nodes within the variable
+			// root, just traverse through the variable declarations to exclude
+			// commas and assignments. This makes the AST a bit clearer.
+			while(auto expr = args.getNext())
 			{
-				if(!traverseExpression(decl->getFirst()))
+				assert(expr->getType() == Expression::Type::BinaryOperator);
+				auto op = std::static_pointer_cast <BinaryOperator> (expr);
+
+				assert(op->getLeft()->getType() == Expression::Type::Value);
+				auto name = std::static_pointer_cast <Value> (op->getLeft());
+
+				if(!traverseDeclaration(name->getReferred()))
 				{
 					onNodeExited(node, result);
 					return false;
 				}
 			}
 
-			break;
+			// Stop early to prevent onNodeExited being fired for Variable::Root.
+			return result != Result::Stop;
 		}
 
 		case Expression::Type::ModifierRoot:
@@ -198,7 +211,18 @@ bool Traverser::traverseDeclaration(std::shared_ptr <Declaration> node)
 
 		case Declaration::Type::Variable:
 		{
-			assert(false && "Variable traversal unimplemented");
+			auto variable = std::static_pointer_cast <Variable> (node);
+			result = onVariable(variable);
+
+			if(shouldContinue(result))
+			{
+				if(!traverseExpression(variable->getInitialization()))
+				{
+					onNodeExited(node, result);
+					return false;
+				}
+			}
+
 			break;
 		}
 	}
@@ -267,10 +291,10 @@ Traverser::Result Traverser::onFunction(std::shared_ptr <Function>) { return Res
 Traverser::Result Traverser::onClassType(std::shared_ptr <ClassType>) { return Result::NotHandled; }
 Traverser::Result Traverser::onCallableType(std::shared_ptr <CallableType>) { return Result::NotHandled; }
 Traverser::Result Traverser::onExpressionRoot(std::shared_ptr <Expression::Root>) { return Result::NotHandled; }
-Traverser::Result Traverser::onDeclarationRoot(std::shared_ptr <Declaration::Root>) { return Result::NotHandled; }
 Traverser::Result Traverser::onModifierRoot(std::shared_ptr <ModifierRoot>) { return Result::NotHandled; }
 Traverser::Result Traverser::onBinaryOperator(std::shared_ptr <BinaryOperator>) { return Result::NotHandled; }
 Traverser::Result Traverser::onBracketOperator(std::shared_ptr <BracketOperator>) { return Result::NotHandled; }
 Traverser::Result Traverser::onValue(std::shared_ptr <Value>) { return Result::NotHandled; }
+Traverser::Result Traverser::onVariable(std::shared_ptr <Variable>) { return Result::NotHandled; }
 
 }

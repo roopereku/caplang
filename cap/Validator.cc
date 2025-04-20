@@ -103,12 +103,10 @@ Traverser::Result Validator::onExpressionRoot(std::shared_ptr <Expression::Root>
 	return Result::Exit;
 }
 
-Traverser::Result Validator::onDeclarationRoot(std::shared_ptr <Declaration::Root> node)
+Traverser::Result Validator::onVariable(std::shared_ptr <Variable> node)
 {
-	if(!node->getFirst())
+	if(!node->validate(*this))
 	{
-		SourceLocation location(ctx.source, node->getToken());
-		ctx.client.sourceError(location, "Expected an expression after 'let'");
 		return Result::Stop;
 	}
 

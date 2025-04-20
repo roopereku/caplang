@@ -44,7 +44,7 @@ std::weak_ptr <Node> ClassType::handleToken(ParserContext& ctx, Token& token)
 		{
 			generic = std::make_shared <Expression::Root> ();
 			adopt(generic);
-			ctx.implicitDeclaration = Declaration::Root::Type::Generic;
+			ctx.implicitDeclaration.emplace(Variable::Type::Generic);
 			return generic;
 		}
 
@@ -98,10 +98,10 @@ std::shared_ptr <Scope> ClassType::getBody()
 
 bool ClassType::validate(Validator&)
 {
-	if(!referredType.getReferenced())
+	if(!referredType.has_value())
 	{
 		referredType = TypeContext(std::static_pointer_cast <ClassType> (shared_from_this()));
-		referredType.isTypeName = true;
+		referredType.value().isTypeName = true;
 	}
 
 	return true;

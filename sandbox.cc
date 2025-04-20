@@ -6,7 +6,7 @@
 #include <cap/Expression.hh>
 #include <cap/BinaryOperator.hh>
 #include <cap/BracketOperator.hh>
-#include <cap/Declaration.hh>
+#include <cap/Variable.hh>
 #include <cap/ModifierRoot.hh>
 #include <cap/Value.hh>
 
@@ -146,9 +146,9 @@ protected:
 		return Result::Continue;
 	}
 
-	Result onDeclarationRoot(std::shared_ptr <cap::Declaration::Root> node) override
+	Result onVariable(std::shared_ptr <cap::Variable> node) override
 	{
-		file << prefix() << node->getTypeString() << '\n';
+		file << prefix() << node->getTypeString() << " " << node->getName() << getResultType(node) << '\n';
 		return Result::Continue;
 	}
 
@@ -184,14 +184,25 @@ protected:
 	}
 
 private:
-	std::wstring getResultType(std::shared_ptr <cap::Expression> node)
+	std::wstring getResultType(std::shared_ptr <cap::Node> node)
 	{
 		std::wstring str;
-		auto result = node->getResultType().getReferenced();
+		cap::TypeContext result;
 
-		if(result)
+		if(node->getType() == cap::Node::Type::Expression)
 		{
-			str += L"\\nResult -> " + result->getName();
+			result = std::static_pointer_cast <cap::Expression> (node)->getResultType();
+		}
+
+		else if(node->getType() == cap::Node::Type::Declaration)
+		{
+			result = std::static_pointer_cast <cap::Declaration> (node)->getReferredType();
+		}
+
+		if(result.getReferenced())
+		{
+			// TODO: Add modifiers?
+			str += L"\\nResult -> " + result.getReferenced()->getName();
 		}
 
 		return str;
@@ -216,8 +227,18 @@ int main()
 	Sandbox client;
 	SourceString entry(LR"SRC(
 
-		let a = uint64
-		let b = 100
+		func foo(a = int64, b = string)
+		{
+		}
+
+		func foo(a = int32, b = string)
+		{
+			let x1 = a * 10
+			let x2 = x1 ** 5
+		}
+
+		let a = 10
+		let T = type int64
 
 	)SRC");
 

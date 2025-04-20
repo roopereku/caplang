@@ -81,10 +81,10 @@ std::pair <bool, bool> CallableType::isCompatible(const TypeContext& selfCtx, co
 
 bool CallableType::validate(Validator& validator)
 {
-	if(!referredType.getReferenced())
+	if(!referredType.has_value())
 	{
 		referredType = TypeContext(std::static_pointer_cast <CallableType> (shared_from_this()));
-		referredType.isTypeName = true;
+		referredType.value().isTypeName = true;
 
 		return validator.traverseTypeDefinition(std::static_pointer_cast <CallableType> (shared_from_this()));
 	}

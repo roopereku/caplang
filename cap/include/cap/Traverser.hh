@@ -3,7 +3,7 @@
 
 #include <cap/Node.hh>
 #include <cap/Expression.hh>
-#include <cap/Declaration.hh>
+#include <cap/Variable.hh>
 
 namespace cap
 {
@@ -117,7 +117,7 @@ protected:
 	///
 	/// \param node The node representing a declaration root.
 	/// \return Continue if the traversal should continue to the underlying expression.
-	virtual Result onDeclarationRoot(std::shared_ptr <Declaration::Root> node);
+	virtual Result onVariable(std::shared_ptr <Variable> node);
 
 	/// Invoked upon hitting a modifier root in an expression.
 	///

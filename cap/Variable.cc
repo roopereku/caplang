@@ -8,8 +8,9 @@
 namespace cap
 {
 
-Variable::Variable(std::weak_ptr <BinaryOperator> initialization)
-	: Declaration(Type::Variable), initialization(initialization)
+Variable::Variable(Type type, std::weak_ptr <BinaryOperator> initialization) :
+	Declaration(Declaration::Type::Variable),
+	type(type), initialization(initialization)
 {
 	assert(!initialization.expired());
 
@@ -26,29 +27,64 @@ Variable::Variable(std::weak_ptr <BinaryOperator> initialization)
 
 bool Variable::validate(Validator& validator)
 {
-	if(!referredType.getReferenced())
+	if(!referredType.has_value())
 	{
-		// TODO: Initialize referredType earlier somehow to prevent recursion?
+		referredType.emplace(TypeContext());
 
 		assert(!initialization.expired());
-		auto op = initialization.lock();
+		auto init = initialization.lock();
 
-		assert(op->getType() == BinaryOperator::Type::Assign);
-		if(!validator.traverseExpression(op->getRight()))
+		// Validate the name and the initialization.
+		if(!validator.traverseExpression(init))
 		{
 			return false;
 		}
 
-		// TODO: What exactly is being referred to here?
-		referredType = op->getRight()->getResultType();
+		// TODO: Should a declaration be referred to in some case?
+		referredType.emplace(init->getResultType());
 	}
 
 	return true;
 }
 
+std::shared_ptr <Expression> Variable::getInitialization()
+{
+	assert(!initialization.expired());
+	return initialization.lock()->getRight();
+}
+
+const char* Variable::getTypeString(Type type)
+{
+	switch(type)
+	{
+		case Type::Generic: return "Generic";
+		case Type::Parameter: return "Parameter";
+		case Type::Local: return "Local variable";
+
+		default: {}
+	}
+
+	return "(declroot) ???";
+}
+
 const char* Variable::getTypeString() const
 {
-	return "Variable";
+	return getTypeString(type);
+}
+
+Variable::Root::Root(Variable::Type type)
+	: Expression::Root(Expression::Type::VariableRoot), type(type)
+{
+}
+
+Variable::Type Variable::Root::getType() const
+{
+	return type;
+}
+
+const char* Variable::Root::getTypeString() const
+{
+	return "Variable root";
 }
 
 }

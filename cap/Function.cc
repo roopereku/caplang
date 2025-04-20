@@ -57,7 +57,7 @@ std::weak_ptr <Node> Function::handleToken(ParserContext& ctx, Token& token)
 		// Initialize the body so that parameters can be added into it.
 		body = std::make_shared <Scope> (false);
 
-		ctx.implicitDeclaration = Declaration::Root::Type::Parameter;
+		ctx.implicitDeclaration.emplace(Variable::Type::Parameter);
 		ctx.declarationLocation = body;
 
 		ctx.delegateFinalBrace = ')';
@@ -126,10 +126,10 @@ std::shared_ptr <Scope> Function::getBody() const
 
 bool Function::validate(Validator& validator)
 {
-	if(!referredType.getReferenced())
+	if(!referredType.has_value())
 	{
-		referredType = TypeContext(signature);
-		referredType.isTypeName = true;
+		referredType.emplace(TypeContext(signature));
+		referredType.value().isTypeName = true;
 
 		if(!signature->validate(validator) ||
 			!validator.traverseScope(body))

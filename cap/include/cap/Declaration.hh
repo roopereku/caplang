@@ -4,6 +4,8 @@
 #include <cap/Expression.hh>
 #include <cap/TypeContext.hh>
 
+#include <optional>
+
 namespace cap
 {
 
@@ -58,36 +60,9 @@ protected:
 
 	/// Implementation defined type such as the referred type of an
 	/// alias, variable or a callable type with the signature for functions.
-	TypeContext referredType;
+	std::optional <TypeContext> referredType;
 
 	std::wstring name;
-
-private:
-	Type type;
-};
-
-class Declaration::Root : public Expression::Root
-{
-public:
-	enum class Type
-	{
-		Local,
-		Generic,
-		Parameter,
-
-		// Used to control implicit declarations.
-		None
-	};
-
-	Root(Type type);
-
-	/// Gets the type of this declaration root.
-	///
-	/// \return The type of this declaration root.
-	Type getType() const;
-
-	static const char* getTypeString(Type type);
-	const char* getTypeString() const override;
 
 private:
 	Type type;

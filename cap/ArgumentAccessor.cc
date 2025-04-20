@@ -1,6 +1,6 @@
 #include <cap/ArgumentAccessor.hh>
 #include <cap/BinaryOperator.hh>
-#include <cap/Declaration.hh>
+#include <cap/Variable.hh>
 
 #include <cassert>
 
@@ -14,10 +14,10 @@ ArgumentAccessor::ArgumentAccessor(std::shared_ptr <Expression::Root> root)
 	if(root->getFirst())
 	{
 		// In the case of declararations, the stopping point is the declaration root.
-		if(root->getFirst()->getType() == Expression::Type::DeclarationRoot)
+		if(root->getFirst()->getType() == Expression::Type::VariableRoot)
 		{
 			origin = root->getFirst();
-			current = std::static_pointer_cast <Declaration::Root> (origin)->getFirst();
+			current = std::static_pointer_cast <Variable::Root> (origin)->getFirst();
 		}
 
 		// In the case of non-declarations, the stopping point the expression root.

@@ -2,9 +2,10 @@
 #define CAP_PARSER_CONTEXT_HH
 
 #include <cap/Token.hh>
-#include <cap/Declaration.hh>
+#include <cap/Variable.hh>
 
 #include <stack>
+#include <optional>
 
 namespace cap
 {
@@ -61,7 +62,7 @@ public:
 
 	/// Used to insert a "let" at the beginning of the next expression.
 	/// This is skipped if a closing bracket comes first.
-	Declaration::Root::Type implicitDeclaration = Declaration::Root::Type::None;
+	std::optional <Variable::Type> implicitDeclaration;
 
 	/// The scope to add declarations to.
 	/// Only applies to those added by expressions.

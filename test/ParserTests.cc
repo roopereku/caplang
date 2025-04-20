@@ -41,15 +41,11 @@ TEST(ParserTests, FunctionDeclaration)
 	tester.test(L"func foo(a = int64, b = uint32)\n{\n}",
 	{
 		Function(L"foo"),
-			cap::Declaration::Root::Type::Parameter,
-				cap::BinaryOperator::Type::Comma,
-					cap::BinaryOperator::Type::Assign,
-						Value(L"a"),
-						Value(L"int64"),
-					cap::BinaryOperator::Type::Assign,
-						Value(L"b"),
-						Value(L"uint32"),
-			Scope(),
+			Parameter(L"a"),
+				Value(L"int64"),
+			Parameter(L"b"),
+				Value(L"uint32"),
+			Scope()
 	});
 
 	// Nested functions.
@@ -94,14 +90,10 @@ TEST(ParserTests, ClassTypeDeclaration)
 	tester.test(L"type foo <T1 = int64, T2 = uint32>\n{\n}",
 	{
 		ClassType(L"foo"),
-			cap::Declaration::Root::Type::Generic,
-				cap::BinaryOperator::Type::Comma,
-					cap::BinaryOperator::Type::Assign,
-						Value(L"T1"),
-						Value(L"int64"),
-					cap::BinaryOperator::Type::Assign,
-						Value(L"T2"),
-						Value(L"uint32"),
+			Generic(L"T1"),
+				Value(L"int64"),
+			Generic(L"T2"),
+				Value(L"uint32"),
 			Scope()
 	});
 }
@@ -113,11 +105,8 @@ TEST(ParserTests, Modifiers)
 	tester.test(L"let T = type int64",
 	{
 		Expression(),
-			cap::Declaration::Root::Type::Local,
-				cap::BinaryOperator::Type::Assign,
-					Value(L"T"),
-					cap::ModifierRoot::Type::Alias,
-						Value(L"int64"),
-
+			LocalVariable(L"T"),
+				cap::ModifierRoot::Type::Alias,
+					Value(L"int64")
 	});
 }

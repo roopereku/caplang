@@ -7,11 +7,19 @@ namespace cap
 {
 
 class BinaryOperator;
+class Value;
 
 class Variable : public Declaration
 {
 public:
-	Variable(std::weak_ptr <BinaryOperator> initialization);
+	enum class Type
+	{
+		Local,
+		Generic,
+		Parameter,
+	};
+
+	Variable(Type type, std::weak_ptr <BinaryOperator> initialization);
 
 	/// Validates the initialization of this variable.
 	///
@@ -19,10 +27,35 @@ public:
 	/// \return True if validation succeeded.
 	bool validate(Validator& validator) override;
 
+	/// Gets the right side of the initializing binary operator.
+	///
+	/// \return The expression initializing this variable.
+	std::shared_ptr <Expression> getInitialization();
+
+	static const char* getTypeString(Type type);
+	const char* getTypeString() const override;
+
+	class Root;
+
+private:
+	Type type;
+	std::weak_ptr <BinaryOperator> initialization;
+};
+
+class Variable::Root : public Expression::Root
+{
+public:
+	Root(Variable::Type type);
+
+	/// Gets the type of this declaration root.
+	///
+	/// \return The type of this declaration root.
+	Variable::Type getType() const;
+
 	const char* getTypeString() const override;
 
 private:
-	std::weak_ptr <BinaryOperator> initialization;
+	Variable::Type type;
 };
 
 }
