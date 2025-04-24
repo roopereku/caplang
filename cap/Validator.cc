@@ -284,13 +284,19 @@ Traverser::Result Validator::validateIdentifier(std::shared_ptr <Value> node, Re
 		auto parentFunction = node->getParentFunction();
 		auto scope = parentFunction ? parentFunction->getBody() : node->getParentScope();
 
-		for(auto decl : scope->recurseDeclarations())
+		// Check if the initial scope or any of its parents contain the desired declaration.
+		while(scope)
 		{
-			result = connectDeclaration(node, decl, resolve);
-			if(result != Result::Continue)
+			for(auto decl : scope->iterateDeclarations())
 			{
-				break;
+				result = connectDeclaration(node, decl, resolve);
+				if(result != Result::Continue)
+				{
+					break;
+				}
 			}
+
+			scope = scope->getParentScope();
 		}
 	}
 
