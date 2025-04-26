@@ -32,6 +32,14 @@ public:
 	/// \return This scope, a new nested node or the parent node.
 	virtual std::weak_ptr <Node> handleToken(ParserContext& ctx, Token& token) override;
 
+	/// Starts the parsing of a scope and checks for possible errors.
+	///
+	/// \param ctx The parser context.
+	/// \param token The token starting the scope.
+	/// \param onlyDeclarations True if the scope only allows declarations.
+	/// \return New scope or null on an error.
+	static std::shared_ptr <Scope> startParsing(ParserContext& ctx, Token& token, bool onlyDeclarations);
+
 	/// Gets the nested nodes within this scope.
 	///
 	/// \return The nested nodes.

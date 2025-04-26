@@ -35,43 +35,41 @@ std::weak_ptr <Node> ClassType::handleToken(ParserContext& ctx, Token& token)
 		return weak_from_this();
 	}
 
+	// Parse a generic.
+	else if(token.isOpeningBracket(ctx, '<'))
+	{
+		// TODO: Check for this again in cases like "type T <a> <b>"?
+
+		generic = std::make_shared <Expression::Root> ();
+		adopt(generic);
+		ctx.implicitDeclaration.emplace(Variable::Type::Generic);
+		return generic;
+	}
+
+	// Parse base types.
+	else if(ctx.source[token.getIndex()] == ':')
+	{
+		// TODO: Check for this again in cases like "type T : a : b"?
+		// Mostly applies if there is a way to end the first expression.
+
+		baseTypes = std::make_shared <Expression::Root> ();
+		adopt(baseTypes);
+		return baseTypes;
+	}
+
 	else if(!body)
 	{
-		// TODO: Establish an order of what is expected when.
-
-		// Parse a generic.
-		if(token.isOpeningBracket(ctx, '<'))
+		body = Scope::startParsing(ctx, token, true);
+		if(body)
 		{
-			generic = std::make_shared <Expression::Root> ();
-			adopt(generic);
-			ctx.implicitDeclaration.emplace(Variable::Type::Generic);
-			return generic;
+			adopt(body);
 		}
-
-		// Parse base types.
-		if(ctx.source[token.getIndex()] == ':')
-		{
-			baseTypes = std::make_shared <Expression::Root> ();
-			adopt(baseTypes);
-			return baseTypes;
-		}
-
-		// Expect a scope beginning.
-		if(!token.isOpeningBracket(ctx, '{'))
-		{
-			SourceLocation location(ctx.source, token);
-			ctx.client.sourceError(location, "Expected '{' after a type declaration");
-			return {};
-		}
-
-		body = std::make_shared <Scope> (true);
-		adopt(body);
 
 		return body;
 	}
 
 	// Return to the parent node upon a closing brace.
-	if(token.isClosingBracket(ctx, '}'))
+	else if(token.isClosingBracket(ctx, '}'))
 	{
 		assert(!getParent().expired());
 		return getParent();

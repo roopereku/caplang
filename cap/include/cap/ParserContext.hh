@@ -53,9 +53,6 @@ public:
 	/// an expression when subExpressionDepth becomes 0.
 	wchar_t delegateFinalBrace = 0;
 
-	/// Used to indicate that the next brace has to be an opening brace.
-	bool braceHasToBeOpener = false;
-
 	/// Used to stop the recursive openings of subexpressions.
 	/// Such could happen when a switch to the parent
 	/// expression node is made during handleToken.

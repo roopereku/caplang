@@ -77,6 +77,18 @@ std::weak_ptr <Node> Scope::handleToken(ParserContext& ctx, Token& token)
 	return weak_from_this();
 }
 
+std::shared_ptr <Scope> Scope::startParsing(ParserContext& ctx, Token& token, bool onlyDeclarations)
+{
+	if(token.isOpeningBracket(ctx, '{'))
+	{
+		return std::make_shared <Scope> (onlyDeclarations);
+	}
+
+	SourceLocation location(ctx.source, token);
+	ctx.client.sourceError(location, "Expected '{'");
+	return nullptr;
+}
+
 const std::vector <std::shared_ptr <Node>>& Scope::getNested()
 {
 	return nested;

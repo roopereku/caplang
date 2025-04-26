@@ -77,10 +77,10 @@ TEST(ErrorTests, InvalidDeclaration)
 
 	tester.reportsError(L"func", L"Expected an identifier after 'func'");
 	tester.reportsError(L"func foo", L"Expected '(' after function name");
-	tester.reportsError(L"func foo()", L"Expected '{' after a function declaration");
+	tester.reportsError(L"func foo()", L"Expected '{'");
 
 	tester.reportsError(L"type", L"Expected an identifier after 'type'");
-	tester.reportsError(L"type foo", L"Expected '{' after a type declaration");
+	tester.reportsError(L"type foo", L"Expected '{'");
 
 	tester.reportsError(L"let a", L"Expected '='");
 	tester.reportsError(L"let", L"Nothing declared with 'let'");

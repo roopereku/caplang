@@ -16,6 +16,7 @@ Function::Function()
 
 std::weak_ptr <Node> Function::handleToken(ParserContext& ctx, Token& token)
 {
+	// Parse the function name.
 	if(name.empty())
 	{
 		// TODO: Check if there is no name but the token is an
@@ -40,6 +41,7 @@ std::weak_ptr <Node> Function::handleToken(ParserContext& ctx, Token& token)
 		return weak_from_this();
 	}
 
+	// Parse the function parameters.
 	else if(!signature->getParameterRoot())
 	{
 		if(!token.isOpeningBracket(ctx, '('))
@@ -54,9 +56,6 @@ std::weak_ptr <Node> Function::handleToken(ParserContext& ctx, Token& token)
 		signature->initializeParameters();
 		adopt(signature->getParameterRoot());
 
-		// Initialize the body so that parameters can be added into it.
-		body = std::make_shared <Scope> (false);
-
 		ctx.implicitDeclaration.emplace(Variable::Type::Parameter);
 		ctx.declarationLocation = shared_from_this();
 
@@ -68,13 +67,12 @@ std::weak_ptr <Node> Function::handleToken(ParserContext& ctx, Token& token)
 	else if(token.isClosingBracket(ctx, ')'))
 	{
 		DBG_MESSAGE(ctx.client, "End of params for ", name);
-		ctx.braceHasToBeOpener = true;
 		ctx.declarationLocation = nullptr;
 
 		return weak_from_this();
 	}
 
-	// Parse return types.
+	// Parse the function return type.
 	else if(token.getType() == Token::Type::Operator && ctx.source.match(token, L"->"))
 	{
 		assert(!signature->getReturnTypeRoot());
@@ -86,27 +84,25 @@ std::weak_ptr <Node> Function::handleToken(ParserContext& ctx, Token& token)
 
 	else
 	{
-		// Return to the parent node upon a closing brace.
-		if(token.isClosingBracket(ctx, '}'))
+		if(!body)
 		{
-			if(!ctx.braceHasToBeOpener)
+			body = Scope::startParsing(ctx, token, false);
+
+			if(body)
 			{
-				assert(!getParent().expired());
-				return getParent();
+				adopt(body);
 			}
+
+			return body;
 		}
 
-		// Expect a scope beginning.
-		if(!token.isOpeningBracket(ctx, '{'))
+		// Return to the parent node upon a closing brace.
+		else if(token.isClosingBracket(ctx, '}'))
 		{
-			assert(ctx.braceHasToBeOpener);
-			SourceLocation location(ctx.source, token);
-			ctx.client.sourceError(location, "Expected '{' after a function declaration");
-			return {};
+			assert(!getParent().expired());
+			return getParent();
 		}
 
-		ctx.braceHasToBeOpener = false;
-		adopt(body);
 		return body;
 	}
 
