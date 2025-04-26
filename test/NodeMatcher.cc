@@ -41,9 +41,12 @@ ExpectedNode::ExpectedNode(cap::ModifierRoot::Type type)
 {
 }
 
-ExpectedNode Value(std::wstring&& value)
+ExpectedNode Value(std::wstring&& value, std::wstring&& referred)
 {
-	return ExpectedNode("Value", std::move(value));
+	auto expected = ExpectedNode("Value", std::move(value));
+	expected.referred = std::move(referred);
+	
+	return expected;
 }
 
 ExpectedNode Scope()
@@ -172,6 +175,12 @@ Traverser::Result NodeMatcher::onValue(std::shared_ptr <cap::Value> node)
 {
 	auto current = match(node);
 	EXPECT_STREQ(node->getValue().c_str(), current.context.c_str());
+
+	if(!current.referred.empty())
+	{
+		EXPECT_TRUE(node->getReferred() != nullptr);
+		EXPECT_STREQ(node->getReferred()->getLocation().c_str(), current.referred.c_str());
+	}
 
 	return Traverser::Result::Continue;
 }

@@ -30,16 +30,6 @@ public:
 	/// \return True if the declaration was added successfully.
 	bool add(cap::ParserContext& ctx, std::shared_ptr <Declaration> node);
 
-	// TODO: Delete createVariable when the creation of declaration is handled in Variable::Root.
-
-	/// Creates a new variable based on an expression node.
-	///
-	/// \param ctx The context to get the source and client from.
-	/// \param node The expression node to create a variable from.
-	/// \param node The type of the variable to create.
-	/// \return True if a variable was created successfully.
-	bool createVariable(cap::ParserContext& ctx, std::shared_ptr <Expression> node, Variable::Type type);
-
 	/// Checks if this declaration storage is valid.
 	///
 	/// \return True if this declaration storage isn't the invalid representation.

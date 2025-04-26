@@ -23,38 +23,11 @@ bool DeclarationStorage::add(cap::ParserContext& ctx, std::shared_ptr <Declarati
 		return false;
 	}
 
-	// TODO: Should this be done?
-	//adopt(node);
+	// TODO: Should callers always be responsible of adoption?
+	assert(!node->getParent().expired());
 	declarations.emplace_back(std::move(node));
 
 	return true;
-}
-
-bool DeclarationStorage::createVariable(cap::ParserContext& ctx, std::shared_ptr <Expression> node, Variable::Type type)
-{
-	if(node->getType() == Expression::Type::BinaryOperator)
-	{
-		auto op = std::static_pointer_cast <BinaryOperator> (node);
-		if(op->getType() == BinaryOperator::Type::Assign)
-		{
-			if(op->getLeft()->getToken().getType() != Token::Type::Identifier)
-			{
-				SourceLocation location(ctx.source, op->getLeft()->getToken());
-				ctx.client.sourceError(location, "Expected an identifier");
-				return false;
-			}
-
-			auto decl =  std::make_shared <Variable> (type, op);
-			auto name = std::static_pointer_cast <Value> (op->getLeft());
-
-			name->setReferred(decl);
-			return add(ctx, std::move(decl));
-		}
-	}
-
-	SourceLocation location(ctx.source, node->getToken());
-	ctx.client.sourceError(location, "Expected '='");
-	return false;
 }
 
 bool DeclarationStorage::isValid()

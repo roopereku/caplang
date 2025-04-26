@@ -221,14 +221,42 @@ std::weak_ptr <Node> Expression::exitCurrentExpression(ParserContext& ctx, bool 
 		auto variableRoot = std::static_pointer_cast <Variable::Root> (shared_from_this());
 
 		ArgumentAccessor declarations(variableRoot);
-		auto& decls = getParentDeclarationStorage();
+		auto declContainer = getParentWithDeclarationStorage();
 
-		while(auto decl = declarations.getNext())
+		// TODO: When VariableRoot is refactored to a statement, do this there.
+
+		while(auto node = declarations.getNext())
 		{
-			if(!decls.createVariable(ctx, decl, variableRoot->getType()))
+			if(node->getType() == Expression::Type::BinaryOperator)
 			{
-				return {};
+				auto op = std::static_pointer_cast <BinaryOperator> (node);
+				if(op->getType() == BinaryOperator::Type::Assign)
+				{
+					if(op->getLeft()->getToken().getType() != Token::Type::Identifier)
+					{
+						SourceLocation location(ctx.source, op->getLeft()->getToken());
+						ctx.client.sourceError(location, "Expected an identifier");
+						return {};
+					}
+
+					auto decl =  std::make_shared <Variable> (variableRoot->getType(), op);
+					auto name = std::static_pointer_cast <Value> (op->getLeft());
+
+					declContainer->adopt(decl);
+					name->setReferred(decl);
+
+					if(!declContainer->getDeclarationStorage().add(ctx, std::move(decl)))
+					{
+						return {};
+					}
+
+					continue;
+				}
 			}
+
+			SourceLocation location(ctx.source, node->getToken());
+			ctx.client.sourceError(location, "Expected '='");
+			return {};
 		}
 	}
 

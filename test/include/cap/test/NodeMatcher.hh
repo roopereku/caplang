@@ -25,10 +25,11 @@ public:
 
 	std::string_view nodeType;
 	std::wstring resultType;
+	std::wstring referred;
 	std::wstring context;
 };
 
-ExpectedNode Value(std::wstring&& value);
+ExpectedNode Value(std::wstring&& value, std::wstring&& referred = L"");
 ExpectedNode Scope();
 ExpectedNode Function(std::wstring&& name);
 ExpectedNode ClassType(std::wstring&& name);

@@ -73,6 +73,6 @@ TEST(ValidationTests, AccessOperatorResultType)
 				cap::BinaryOperator::Type::Access > L"Foo.Bar",
 					Value(L"Foo") > L"Foo",
 					Value(L"Bar") > L"Foo.Bar",
-				Value(L"a") > L"int64"
+				Value(L"a", L"Foo.Bar.a") > L"int64"
 	});
 }
