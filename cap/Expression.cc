@@ -221,11 +221,11 @@ std::weak_ptr <Node> Expression::exitCurrentExpression(ParserContext& ctx, bool 
 		auto variableRoot = std::static_pointer_cast <Variable::Root> (shared_from_this());
 
 		ArgumentAccessor declarations(variableRoot);
-		auto target = ctx.declarationLocation ? ctx.declarationLocation : getParentScope();
+		auto& decls = getParentDeclarationStorage();
 
 		while(auto decl = declarations.getNext())
 		{
-			if(!target->createVariable(ctx, decl, variableRoot->getType()))
+			if(!decls.createVariable(ctx, decl, variableRoot->getType()))
 			{
 				return {};
 			}

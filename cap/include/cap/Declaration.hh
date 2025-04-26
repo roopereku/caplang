@@ -57,6 +57,7 @@ public:
 
 protected:
 	Declaration(Type type);
+	Declaration(Type type, DeclarationStorage& declStorage);
 
 	/// Implementation defined type such as the referred type of an
 	/// alias, variable or a callable type with the signature for functions.

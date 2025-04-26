@@ -22,6 +22,7 @@ public:
 
 protected:
 	TypeDefinition(Type type);
+	TypeDefinition(Type type, DeclarationStorage& declStorage);
 
 private:
 	Type type;

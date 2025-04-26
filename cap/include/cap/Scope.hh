@@ -13,7 +13,7 @@ class Expression;
 
 /// Scope is a node representing an area within the source
 /// code in which declarations, expressions and statements live in.
-class Scope : public Node, public DeclarationStorage
+class Scope : public Node
 {
 public:
 	/// Constructs a global scope.
@@ -38,6 +38,9 @@ public:
 	const std::vector <std::shared_ptr <Node>>& getNested();
 
 	const char* getTypeString() const override;
+
+	/// The nested declarations within this scope.
+	DeclarationStorage declarations;
 
 private:
 	/// If no nested nodes exist, the first is initialized. Otherwise the

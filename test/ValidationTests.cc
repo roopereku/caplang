@@ -29,7 +29,7 @@ public:
 		NodeMatcher matcher(std::move(expectedExpr));
 
 		std::shared_ptr <cap::Scope> root;
-		for(auto decl : source.getGlobal()->iterateDeclarations())
+		for(auto decl : source.getGlobal()->declarations)
 		{
 			if(decl->getName() == L"test")
 			{

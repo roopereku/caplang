@@ -51,7 +51,7 @@ bool Builtin::match(cap::Token token, std::wstring_view value) const
 void Builtin::doCaching()
 {
 	assert(getGlobal());
-	for(auto decl : getGlobal()->iterateDeclarations())
+	for(auto decl : getGlobal()->declarations)
 	{
 		if(decl->getName() == L"int64")
 		{

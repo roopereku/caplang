@@ -4,6 +4,7 @@
 #include <cap/Scope.hh>
 #include <cap/Declaration.hh>
 #include <cap/TypeDefinition.hh>
+#include <cap/DeclarationStorage.hh>
 
 namespace cap
 {
@@ -42,6 +43,9 @@ public:
 	bool validate(Validator& validator) override;
 
 	const char* getTypeString() const override;
+
+	/// The declaration storage for generic declarations.
+	DeclarationStorage generics;
 
 private:
 	std::shared_ptr <Expression::Root> baseTypes;

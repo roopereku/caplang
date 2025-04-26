@@ -4,19 +4,18 @@
 #include <cap/Value.hh>
 #include <cap/Client.hh>
 
+#include <cassert>
+
 namespace cap
 {
 
-DeclarationStorage::Range DeclarationStorage::iterateDeclarations()
+bool DeclarationStorage::add(cap::ParserContext& ctx, std::shared_ptr <Declaration> node)
 {
-	return Range(*this);
-}
+	assert(isValid());
 
-bool DeclarationStorage::addDeclaration(cap::ParserContext& ctx, std::shared_ptr <Declaration> node)
-{
 	// Make sure that the declaration doesn't conflict with anything in this
 	// scope or the builtin scope.
-	if(!canAddDeclaration(node) || !ctx.client.getBuiltin().getGlobal()->canAddDeclaration(node))
+	if(!canAddDeclaration(node) || !ctx.client.getBuiltin().getGlobal()->declarations.canAddDeclaration(node))
 	{
 		// TODO: Indicate where the declaration already exists?
 		SourceLocation location(ctx.source, node->getToken());
@@ -49,7 +48,7 @@ bool DeclarationStorage::createVariable(cap::ParserContext& ctx, std::shared_ptr
 			auto name = std::static_pointer_cast <Value> (op->getLeft());
 
 			name->setReferred(decl);
-			return addDeclaration(ctx, std::move(decl));
+			return add(ctx, std::move(decl));
 		}
 	}
 
@@ -58,11 +57,24 @@ bool DeclarationStorage::createVariable(cap::ParserContext& ctx, std::shared_ptr
 	return false;
 }
 
+bool DeclarationStorage::isValid()
+{
+	return this != &getInvalid();
+}
+
+DeclarationStorage& DeclarationStorage::getInvalid()
+{
+	static DeclarationStorage invalid;
+	return invalid;
+}
+
 bool DeclarationStorage::canAddDeclaration(std::shared_ptr <Declaration> node)
 {
+	assert(isValid());
+
 	// Make sure that no other declaration of the same name already exists
 	// within this scope. Some cases are allowed.
-	for(auto decl : iterateDeclarations())
+	for(auto decl : declarations)
 	{
 		if(node->getName() == decl->getName())
 		{

@@ -8,7 +8,7 @@ namespace cap
 {
 
 ClassType::ClassType()
-	: TypeDefinition(Type::Class)
+	: TypeDefinition(Type::Class, generics)
 {
 }
 
@@ -27,7 +27,7 @@ std::weak_ptr <Node> ClassType::handleToken(ParserContext& ctx, Token& token)
 		name = ctx.source.getString(token);
 
 		assert(getParentScope());
-		if(!getParentScope()->addDeclaration(ctx, std::static_pointer_cast <ClassType> (shared_from_this())))
+		if(!getParentScope()->declarations.add(ctx, std::static_pointer_cast <ClassType> (shared_from_this())))
 		{
 			return {};
 		}

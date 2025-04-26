@@ -12,6 +12,7 @@ namespace cap
 
 class Client;
 class Source;
+class DeclarationStorage;
 
 class ParserContext
 {
@@ -64,9 +65,8 @@ public:
 	/// This is skipped if a closing bracket comes first.
 	std::optional <Variable::Type> implicitDeclaration;
 
-	/// The scope to add declarations to.
-	/// Only applies to those added by expressions.
-	std::shared_ptr <Scope> declarationLocation;
+	/// The declaration storage node to use for new declarations.
+	std::shared_ptr <Node> declarationLocation;
 };
 
 }

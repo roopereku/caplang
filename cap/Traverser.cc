@@ -109,6 +109,7 @@ bool Traverser::traverseExpression(std::shared_ptr <Expression> node)
 				assert(op->getLeft()->getType() == Expression::Type::Value);
 				auto name = std::static_pointer_cast <Value> (op->getLeft());
 
+				assert(name->getReferred());
 				if(!traverseDeclaration(name->getReferred()))
 				{
 					onNodeExited(node, result);

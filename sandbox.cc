@@ -95,29 +95,6 @@ protected:
 
 	Result onScope(std::shared_ptr <cap::Scope> node) override
 	{
-		auto range = node->iterateDeclarations();
-		std::vector <std::shared_ptr <cap::Declaration>> decls(range.begin(), range.end());
-
-		if(!decls.empty())
-		{
-			auto parent = node->getParentFunction();
-
-			if(parent)
-			{
-				printf("Declarations in function '%ls':\n", parent->getName().c_str());
-			}
-
-			else
-			{
-				printf("Declarations in scope:\n");
-			}
-
-			for(auto decl : decls)
-			{
-				printf("- '%ls' -> %s\n", decl->getLocation().c_str(), decl->getTypeString());
-			}
-		}
-
 		file << prefix() << node->getTypeString() << '\n';
 		return Result::Continue;
 	}
@@ -202,7 +179,7 @@ private:
 		if(result.getReferenced())
 		{
 			// TODO: Add modifiers?
-			str += L"\\nResult -> " + result.getReferenced()->getName();
+			str += L"\\nResult -> " + result.toString();
 		}
 
 		return str;
@@ -226,19 +203,24 @@ int main()
 
 	Sandbox client;
 	SourceString entry(LR"SRC(
-
-		func foo(a = int64, b = string)
+		
+		type Bar
 		{
+			let xz = "test"
+
+			type abc
+			{
+			}
 		}
 
 		func foo(a = int32, b = string)
 		{
-			let x1 = a * 10
+			let x1 = a + b
 			let x2 = x1 ** 5
 		}
 
-		let a = 10
-		let T = type int64
+		let b = Bar.abc
+		let c = Bar.xz
 
 	)SRC");
 

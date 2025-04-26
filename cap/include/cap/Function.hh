@@ -43,6 +43,9 @@ public:
 
 	const char* getTypeString() const override;
 
+	/// Declaration storage for function parameters.
+	DeclarationStorage parameters;
+
 private:
 	std::shared_ptr <CallableType> signature;
 	std::shared_ptr <Scope> body;

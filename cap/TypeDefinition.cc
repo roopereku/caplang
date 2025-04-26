@@ -8,6 +8,11 @@ TypeDefinition::TypeDefinition(Type type)
 {
 }
 
+TypeDefinition::TypeDefinition(Type type, DeclarationStorage& declStorage)
+	: Declaration(Declaration::Type::TypeDefinition, declStorage), type(type)
+{
+}
+
 TypeDefinition::Type TypeDefinition::getType()
 {
 	return type;

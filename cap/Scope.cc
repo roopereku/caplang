@@ -14,12 +14,12 @@ namespace cap
 {
 
 Scope::Scope()
-	: Node(Node::Type::Scope), onlyDeclarations(true)
+	: Scope(true)
 {
 }
 
 Scope::Scope(bool onlyDeclarations)
-	: Node(Node::Type::Scope), onlyDeclarations(onlyDeclarations)
+	: Node(Node::Type::Scope, declarations), onlyDeclarations(onlyDeclarations)
 {
 }
 

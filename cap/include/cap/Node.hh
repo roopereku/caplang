@@ -11,6 +11,7 @@ namespace cap
 class Scope;
 class Function;
 class ParserContext;
+class DeclarationStorage;
 
 class Node : public std::enable_shared_from_this <Node>
 {
@@ -61,23 +62,42 @@ public:
 	/// Find the nearest parent scope relative to this node.
 	///
 	/// \return The nearest parent scope up until the global scope or null.
-	std::shared_ptr <Scope> getParentScope();
+	std::shared_ptr <Scope> getParentScope() const;
 
 	/// Find the nearest parent function relative to this node.
 	///
-	/// \return The nearest parent function null if not inside a function.
-	std::shared_ptr <Function> getParentFunction();
+	/// \return The nearest parent function or null if not inside a function.
+	std::shared_ptr <Function> getParentFunction() const;
+
+	/// Find the nearest parent node with a valid declaration storage.
+	///
+	/// \return The nearest node with a valid declaration storage or null.
+	std::shared_ptr <Node> getParentWithDeclarationStorage() const;
+
+	/// Find the nearest declaration storage contained by a parent node.
+	///
+	/// \return The nearest declaration storage.
+	DeclarationStorage& getParentDeclarationStorage();
+
+	/// Gets the declaration storage associated with this node.
+	///
+	/// \return The declaration storage associated with this node.
+	DeclarationStorage& getDeclarationStorage();
+
+	// TODO: DeclarationStorage should probably be a pointer or an optional.
 
 	virtual const char* getTypeString() const = 0;
 
 protected:
 	Node(Type type);
+	Node(Type type, DeclarationStorage& declStorage);
 
 private:
-	std::shared_ptr <Node> findParentNode(bool (*filter)(std::shared_ptr <Node>));
+	std::shared_ptr <Node> findParentNode(bool (*filter)(std::shared_ptr <Node>)) const;
 
-	std::weak_ptr <Node> parent;
 	Type type;
+	DeclarationStorage& declStorage;
+	std::weak_ptr <Node> parent;
 	Token at;
 };
 

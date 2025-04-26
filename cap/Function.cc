@@ -10,7 +10,7 @@ namespace cap
 {
 
 Function::Function()
-	: Declaration(Type::Function), signature(std::make_shared <CallableType> ())
+	: Declaration(Type::Function, parameters), signature(std::make_shared <CallableType> ())
 {
 }
 
@@ -32,7 +32,7 @@ std::weak_ptr <Node> Function::handleToken(ParserContext& ctx, Token& token)
 		name = ctx.source.getString(token);
 
 		assert(getParentScope());
-		if(!getParentScope()->addDeclaration(ctx, std::static_pointer_cast <Function> (shared_from_this())))
+		if(!getParentScope()->declarations.add(ctx, std::static_pointer_cast <Function> (shared_from_this())))
 		{
 			return {};
 		}
@@ -58,7 +58,7 @@ std::weak_ptr <Node> Function::handleToken(ParserContext& ctx, Token& token)
 		body = std::make_shared <Scope> (false);
 
 		ctx.implicitDeclaration.emplace(Variable::Type::Parameter);
-		ctx.declarationLocation = body;
+		ctx.declarationLocation = shared_from_this();
 
 		ctx.delegateFinalBrace = ')';
 		return signature->getParameterRoot();

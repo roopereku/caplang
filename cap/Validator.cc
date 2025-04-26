@@ -29,10 +29,10 @@ Traverser::Result Validator::onFunction(std::shared_ptr <Function> node)
 		return Result::Stop;
 	}
 
-	auto scope = node->getParentScope();
+	auto& decls = node->getParentDeclarationStorage();
 
 	// Functions only care about duplicate names or other function in the same scope.
-	for(auto decl : scope->iterateDeclarations())
+	for(auto decl : decls)
 	{
 		// Make sure that whatever is being matched against is validated.
 		if(!decl->validate(*this))
@@ -240,7 +240,6 @@ Traverser::Result Validator::onValue(std::shared_ptr <Value> node)
 Traverser::Result Validator::validateIdentifier(std::shared_ptr <Value> node, ResolverContext& resolve)
 {
 	auto parentFunction = node->getParentFunction();
-	auto scope = parentFunction ? parentFunction->getBody() : node->getParentScope();
 
 	Result result = Result::NotHandled;
 	auto accessContext = resolve.accessedFrom.getReferenced();
@@ -255,7 +254,7 @@ Traverser::Result Validator::validateIdentifier(std::shared_ptr <Value> node, Re
 			{
 				auto classType = std::static_pointer_cast <ClassType> (accessContext);
 
-				for(auto decl : classType->getBody()->iterateDeclarations())
+				for(auto decl : classType->getBody()->declarations)
 				{
 					result = connectDeclaration(node, decl, resolve);
 					if(result != Result::Continue)
@@ -281,13 +280,13 @@ Traverser::Result Validator::validateIdentifier(std::shared_ptr <Value> node, Re
 
 	else
 	{
-		auto parentFunction = node->getParentFunction();
-		auto scope = parentFunction ? parentFunction->getBody() : node->getParentScope();
+		auto declContainer = node->getParentWithDeclarationStorage();
 
 		// Check if the initial scope or any of its parents contain the desired declaration.
-		while(scope)
+		while(declContainer)
 		{
-			for(auto decl : scope->iterateDeclarations())
+			auto& decls = declContainer->getDeclarationStorage();
+			for(auto decl : decls)
 			{
 				result = connectDeclaration(node, decl, resolve);
 				if(result != Result::Continue)
@@ -296,7 +295,7 @@ Traverser::Result Validator::validateIdentifier(std::shared_ptr <Value> node, Re
 				}
 			}
 
-			scope = scope->getParentScope();
+			declContainer = declContainer->getParentWithDeclarationStorage();
 		}
 	}
 

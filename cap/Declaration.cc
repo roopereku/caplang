@@ -11,6 +11,11 @@ Declaration::Declaration(Type type)
 {
 }
 
+Declaration::Declaration(Type type, DeclarationStorage& declStorage)
+	: Node(Node::Type::Declaration, declStorage), type(type)
+{
+}
+
 const std::wstring& Declaration::getName() const
 {
 	return name;
