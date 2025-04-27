@@ -204,23 +204,14 @@ int main()
 	Sandbox client;
 	SourceString entry(LR"SRC(
 		
-		type Bar
-		{
-			let xz = "test"
-
-			type abc
-			{
-			}
-		}
-
 		func foo(a = int32, b = string)
 		{
 			let x1 = a + b
 			let x2 = x1 ** 5
-		}
 
-		let b = Bar.abc
-		let c = Bar.xz
+			// TODO: Fix this not erroring?
+			let a = "no"
+		}
 
 	)SRC");
 

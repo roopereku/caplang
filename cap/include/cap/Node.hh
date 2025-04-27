@@ -33,6 +33,14 @@ public:
 	/// \return The new "current node".
 	virtual std::weak_ptr <Node> handleToken(Node::ParserContext& ctx, Token& token);
 
+	/// Implementation defined behavior for determining a new "current node" when
+	/// the parsing of a node invoked by this node is finished.
+	///
+	/// \param ctx The parser context containing the exiting node.
+	/// \param token The token that caused the exit.
+	/// \return The new "current node".
+	virtual std::weak_ptr <Node> invokedNodeExited(Node::ParserContext& ctx, Token& token);
+
 	/// Gets the parent node.
 	///
 	/// \return The parent node.

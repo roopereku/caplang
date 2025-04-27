@@ -25,6 +25,13 @@ public:
 	/// \return This function.
 	std::weak_ptr <Node> handleToken(ParserContext& ctx, Token& token) override;
 
+	/// Handles the end of parameters, return value and the body.
+	///
+	/// \param ctx The parser context.
+	/// \param token The token triggering this function.
+	/// \return This or the parent node.
+	std::weak_ptr <Node> invokedNodeExited(ParserContext& ctx, Token& token) override;
+
 	/// Gets the signature of this function.
 	///
 	/// \return The signature of this function.

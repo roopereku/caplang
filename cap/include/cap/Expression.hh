@@ -70,12 +70,14 @@ public:
 protected:
 	Expression(Type type);
 
-	std::weak_ptr <Node> exitCurrentExpression(ParserContext& ctx, bool recursive);
 	std::weak_ptr <Node> adoptValue(std::shared_ptr <Expression> node);
 
 	virtual std::shared_ptr <Expression> stealLatestValue();
 
 private:
+	std::weak_ptr <Node> exitExpression(ParserContext& ctx, Token& token);
+	std::weak_ptr <Node> getExitedExpression(ParserContext& ctx, bool recursive);
+
 	Type type;
 	TypeContext resultType;
 };

@@ -59,19 +59,9 @@ std::weak_ptr <Node> Function::handleToken(ParserContext& ctx, Token& token)
 		ctx.implicitDeclaration.emplace(Variable::Type::Parameter);
 		ctx.declarationLocation = shared_from_this();
 
-		ctx.delegateFinalBrace = ')';
 		return signature->getParameterRoot();
 	}
-
-	// End of parameters.
-	else if(token.isClosingBracket(ctx, ')'))
-	{
-		DBG_MESSAGE(ctx.client, "End of params for ", name);
-		ctx.declarationLocation = nullptr;
-
-		return weak_from_this();
-	}
-
+	
 	// Parse the function return type.
 	else if(token.getType() == Token::Type::Operator && ctx.source.match(token, L"->"))
 	{
@@ -82,28 +72,38 @@ std::weak_ptr <Node> Function::handleToken(ParserContext& ctx, Token& token)
 		return signature->getReturnTypeRoot();
 	}
 
-	else
+	else if(!body)
 	{
-		if(!body)
+		body = Scope::startParsing(ctx, token, false);
+
+		if(body)
 		{
-			body = Scope::startParsing(ctx, token, false);
-
-			if(body)
-			{
-				adopt(body);
-			}
-
-			return body;
-		}
-
-		// Return to the parent node upon a closing brace.
-		else if(token.isClosingBracket(ctx, '}'))
-		{
-			assert(!getParent().expired());
-			return getParent();
+			adopt(body);
 		}
 
 		return body;
+	}
+
+	assert(false);
+	return {};
+}
+
+std::weak_ptr <Node> Function::invokedNodeExited(ParserContext& ctx, Token&)
+{
+	if(ctx.exitedFrom == signature->getParameterRoot())
+	{
+		ctx.declarationLocation = nullptr;
+		return weak_from_this();
+	}
+
+	else if(ctx.exitedFrom == signature->getReturnTypeRoot())
+	{
+		return weak_from_this();
+	}
+
+	else if(ctx.exitedFrom == body)
+	{
+		return getParent();
 	}
 
 	assert(false);

@@ -30,7 +30,14 @@ public:
 	/// \param ctx The parser context.
 	/// \param token The token to handle.
 	/// \return This scope, a new nested node or the parent node.
-	virtual std::weak_ptr <Node> handleToken(ParserContext& ctx, Token& token) override;
+	std::weak_ptr <Node> handleToken(ParserContext& ctx, Token& token) override;
+
+	/// Handles scope exit.
+	///
+	/// \param ctx The parser context.
+	/// \param token The token triggering this function.
+	/// \return This scope or the result of the parent node upon a scope exit.
+	std::weak_ptr <Node> invokedNodeExited(ParserContext& ctx, Token& token) override;
 
 	/// Starts the parsing of a scope and checks for possible errors.
 	///

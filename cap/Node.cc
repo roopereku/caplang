@@ -23,6 +23,11 @@ std::weak_ptr <Node> Node::handleToken(ParserContext&, Token&)
 	return weak_from_this();
 }
 
+std::weak_ptr <Node> Node::invokedNodeExited(Node::ParserContext&, Token&)
+{
+	return weak_from_this();
+}
+
 std::weak_ptr <Node> Node::getParent() const
 {
 	return parent;

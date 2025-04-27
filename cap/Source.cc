@@ -59,6 +59,7 @@ bool Source::parse(Client& client, bool validate)
 		prevNode = currentNode;
 		currentToken = Token::parseNext(tokenCtx, currentToken);
 		nodeCtx.canOpenSubexpression = true;
+		nodeCtx.exitedFrom = nullptr;
 	}
 
 	// The current node has to return to the root node.

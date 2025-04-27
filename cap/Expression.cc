@@ -35,20 +35,7 @@ std::weak_ptr <Node> Expression::handleToken(Node::ParserContext& ctx, Token& to
 
 		// TODO: If the next token is an operator, maybe the expression should be continued?
 
-		bool closerMatches = ctx.source[token.getIndex()] == ctx.delegateFinalBrace;
-
-		// If this closing bracket ends all subexpressions and is the final token
-		// on a line, recursively break out of the expression.
-		bool recursive = ctx.subExpressionDepth == 0 && (token.isLastOfLine(ctx) || closerMatches);
-		auto result = exitCurrentExpression(ctx, recursive);
-
-		if(closerMatches)
-		{
-			ctx.delegateFinalBrace = 0;
-			return result.lock()->handleToken(ctx, token);
-		}
-
-		return result;
+		return exitExpression(ctx, token);
 	}
 
 	else if(ctx.implicitDeclaration.has_value())
@@ -169,7 +156,7 @@ std::weak_ptr <Node> Expression::handleToken(Node::ParserContext& ctx, Token& to
 			return {};
 		}
 
-		newCurrent = exitCurrentExpression(ctx, false);
+		return exitExpression(ctx, token);
 	}
 
 	return newCurrent;
@@ -210,11 +197,27 @@ Expression::Expression(Type type)
 {
 }
 
-std::weak_ptr <Node> Expression::exitCurrentExpression(ParserContext& ctx, bool recursive)
+std::weak_ptr <Node> Expression::exitExpression(ParserContext& ctx, Token& token)
 {
-	// Make sure that the parent node exists and is an expression.
-	assert(!getParent().expired());
+	// If this closing bracket ends all subexpressions and is the final token
+	// on a line, recursively break out of the expression.
+	bool recursive = ctx.subExpressionDepth == 0 && token.isLastOfLine(ctx);
 
+	auto exitedExpression = getExitedExpression(ctx, recursive);
+	if(exitedExpression.expired())
+	{
+		return {};
+	}
+
+	ctx.exitedFrom = exitedExpression.lock();
+	auto exitNode = ctx.exitedFrom->getParent();
+
+	assert(!exitNode.expired());
+	return exitNode.lock()->invokedNodeExited(ctx, token);
+}
+
+std::weak_ptr <Node> Expression::getExitedExpression(ParserContext& ctx, bool recursive)
+{
 	// If the expressions defines declarations, add them to the given scope or the parent scope.
 	if(type == Type::VariableRoot)
 	{
@@ -260,24 +263,27 @@ std::weak_ptr <Node> Expression::exitCurrentExpression(ParserContext& ctx, bool 
 		}
 	}
 
-	// If a root is found, the expression can be exited by setting
-	// the parent of the root as the new current node.
-	if(type == Type::Root)
+	// Expression root is the only exit point.
+	else if(type == Type::Root)
 	{
 		if(recursive)
 		{
+			assert(!getParent().expired());
 			auto parent = getParent().lock();
 			if(parent->getType() == Node::Type::Expression)
 			{
-				return std::static_pointer_cast <Expression> (parent)->exitCurrentExpression(ctx, recursive);
+				return std::static_pointer_cast <Expression> (parent)->getExitedExpression(ctx, recursive);
 			}
 		}
 
-		return getParent();
+		// If the parent isn't an expression, return this root.
+		// It should be the first expression node that parsing was invoked for.
+		return weak_from_this();
 	}
 
+	assert(!getParent().expired());
 	assert(getParent().lock()->getType() == Node::Type::Expression);
-	return std::static_pointer_cast <Expression> (getParent().lock())->exitCurrentExpression(ctx, recursive);
+	return std::static_pointer_cast <Expression> (getParent().lock())->getExitedExpression(ctx, recursive);
 }
 
 std::weak_ptr <Node> Expression::adoptValue(std::shared_ptr <Expression> node)

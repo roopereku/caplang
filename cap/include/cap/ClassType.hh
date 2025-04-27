@@ -21,6 +21,13 @@ public:
 	/// \return This type or the parent node.
 	std::weak_ptr <Node> handleToken(ParserContext& ctx, Token& token) override;
 
+	/// Handles the end of generics, base classes and the body.
+	///
+	/// \param ctx The parser context.
+	/// \param token The token triggering this function.
+	/// \return This or the parent node.
+	std::weak_ptr <Node> invokedNodeExited(ParserContext& ctx, Token& token) override;
+
 	/// Gets the root of the expression representing the base types if any.
 	///
 	/// \return The root of the base type expression or null.

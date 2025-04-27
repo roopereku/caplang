@@ -25,13 +25,6 @@ Scope::Scope(bool onlyDeclarations)
 
 std::weak_ptr <Node> Scope::handleToken(ParserContext& ctx, Token& token)
 {
-	if(token.isClosingBracket(ctx, '}'))
-	{
-		// Let the parent node handle the closing bracket.
-		assert(!getParent().expired());
-		return getParent().lock()->handleToken(ctx, token);
-	}
-
 	if(ctx.source.match(token, L"func"))
 	{
 		return appendNested(std::make_shared <Function> ());
@@ -45,6 +38,13 @@ std::weak_ptr <Node> Scope::handleToken(ParserContext& ctx, Token& token)
 	else if(token.isOpeningBracket(ctx, '{'))
 	{
 		// TODO: Implement subscopes.
+	}
+
+	else if(token.isClosingBracket(ctx, '}'))
+	{
+		assert(!getParent().expired());
+		ctx.exitedFrom = shared_from_this();
+		return getParent().lock()->invokedNodeExited(ctx, token);
 	}
 
 	// Parse anything else as expressions.
@@ -72,6 +72,21 @@ std::weak_ptr <Node> Scope::handleToken(ParserContext& ctx, Token& token)
 		}
 
 		return ret;
+	}
+
+	return weak_from_this();
+}
+
+std::weak_ptr <Node> Scope::invokedNodeExited(ParserContext& ctx, Token& token)
+{
+	if(token.isClosingBracket(ctx, '}'))
+	{
+		DBG_MESSAGE(ctx.client, "HANDLE SCOPE EXIT. DELEGATE BRACKET TO ", getParent().lock()->getTypeString());
+
+		// Let the parent node handle the closing bracket.
+		assert(!getParent().expired());
+		ctx.exitedFrom = shared_from_this();
+		return getParent().lock()->invokedNodeExited(ctx, token);
 	}
 
 	return weak_from_this();

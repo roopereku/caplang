@@ -68,10 +68,25 @@ std::weak_ptr <Node> ClassType::handleToken(ParserContext& ctx, Token& token)
 		return body;
 	}
 
-	// Return to the parent node upon a closing brace.
-	else if(token.isClosingBracket(ctx, '}'))
+	assert(false);
+	return {};
+}
+
+std::weak_ptr <Node> ClassType::invokedNodeExited(ParserContext& ctx, Token&)
+{
+	if(ctx.exitedFrom == generic)
 	{
-		assert(!getParent().expired());
+		ctx.declarationLocation = nullptr;
+		return weak_from_this();
+	}
+
+	else if(ctx.exitedFrom == baseTypes)
+	{
+		return weak_from_this();
+	}
+
+	else if(ctx.exitedFrom == body)
+	{
 		return getParent();
 	}
 

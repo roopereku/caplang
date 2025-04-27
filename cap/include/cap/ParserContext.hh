@@ -49,10 +49,6 @@ public:
 	/// How many nested subexpressions are there currently?
 	size_t subExpressionDepth = 0;
 
-	/// Which closing brace is delegated to the parent from
-	/// an expression when subExpressionDepth becomes 0.
-	wchar_t delegateFinalBrace = 0;
-
 	/// Used to stop the recursive openings of subexpressions.
 	/// Such could happen when a switch to the parent
 	/// expression node is made during handleToken.
@@ -64,6 +60,9 @@ public:
 
 	/// The declaration storage node to use for new declarations.
 	std::shared_ptr <Node> declarationLocation;
+
+	/// The node that is exited from as indicated by invokedNodeExited.
+	std::shared_ptr <Node> exitedFrom;
 };
 
 }
