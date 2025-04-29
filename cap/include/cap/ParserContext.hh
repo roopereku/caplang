@@ -54,10 +54,6 @@ public:
 	/// expression node is made during handleToken.
 	bool canOpenSubexpression = true;
 
-	/// Used to insert a "let" at the beginning of the next expression.
-	/// This is skipped if a closing bracket comes first.
-	std::optional <Variable::Type> implicitDeclaration;
-
 	/// The declaration storage node to use for new declarations.
 	std::shared_ptr <Node> declarationLocation;
 

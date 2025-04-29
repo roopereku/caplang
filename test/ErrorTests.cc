@@ -81,9 +81,10 @@ TEST(ErrorTests, InvalidDeclaration)
 
 	tester.reportsError(L"type", L"Expected an identifier after 'type'");
 	tester.reportsError(L"type foo", L"Expected '{'");
+	tester.reportsError(L"type foo <> {\n}\n", L"Expected a generic");
 
 	tester.reportsError(L"let a", L"Expected '='");
-	tester.reportsError(L"let", L"Nothing declared with 'let'");
+	tester.reportsError(L"let", L"Expected a variable");
 }
 
 TEST(ErrorTests, DuplicateIdentifier)

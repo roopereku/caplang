@@ -99,38 +99,14 @@ Traverser::Result NodeMatcher::onFunction(std::shared_ptr <cap::Function> node)
 {
 	auto current = match(node);
 	EXPECT_STREQ(node->getName().c_str(), current.context.c_str());
-
-	// TODO: Check for Stop?
-
-	if(node->getSignature()->getParameterRoot()->getFirst())
-	{
-		traverseExpression(node->getSignature()->getParameterRoot()->getFirst());
-	}
-
-	auto ret = node->getSignature()->getReturnTypeRoot();
-	if(ret && ret->getFirst())
-	{
-		traverseExpression(ret->getFirst());
-	}
-
-	traverseScope(node->getBody());
-	return Traverser::Result::Exit;
+	return Traverser::Result::Continue;
 }
 
 Traverser::Result NodeMatcher::onClassType(std::shared_ptr <cap::ClassType> node)
 {
 	auto current = match(node);
 	EXPECT_STREQ(node->getName().c_str(), current.context.c_str());
-
-	// TODO: Check for Stop?
-
-	if(node->getGenericRoot())
-	{
-		traverseExpression(node->getGenericRoot()->getFirst());
-	}
-
-	traverseScope(node->getBody());
-	return Traverser::Result::Exit;
+	return Traverser::Result::Continue;
 }
 
 Traverser::Result NodeMatcher::onExpressionRoot(std::shared_ptr <cap::Expression::Root> node)

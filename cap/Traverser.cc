@@ -30,6 +30,7 @@ bool Traverser::traverseNode(std::shared_ptr <Node> node)
 		case Node::Type::Scope: return traverseScope(std::static_pointer_cast <Scope> (node));
 		case Node::Type::Expression: return traverseExpression(std::static_pointer_cast <Expression> (node));
 		case Node::Type::Declaration: return traverseDeclaration(std::static_pointer_cast <Declaration> (node));
+		case Node::Type::Statement: return traverseStatement(std::static_pointer_cast <Statement> (node));
 
 		case Node::Type::Custom:
 		{
@@ -90,35 +91,6 @@ bool Traverser::traverseExpression(std::shared_ptr <Expression> node)
 		{
 			result = onValue(std::static_pointer_cast <Value> (node));
 			break;
-		}
-
-		case Expression::Type::VariableRoot:
-		{
-			auto variableRoot = std::static_pointer_cast <Variable::Root> (node);
-			ArgumentAccessor args(variableRoot);
-			result = Result::Exit;
-
-			// Instead of traversing through the expression nodes within the variable
-			// root, just traverse through the variable declarations to exclude
-			// commas and assignments. This makes the AST a bit clearer.
-			while(auto expr = args.getNext())
-			{
-				assert(expr->getType() == Expression::Type::BinaryOperator);
-				auto op = std::static_pointer_cast <BinaryOperator> (expr);
-
-				assert(op->getLeft()->getType() == Expression::Type::Value);
-				auto name = std::static_pointer_cast <Value> (op->getLeft());
-
-				assert(name->getReferred());
-				if(!traverseDeclaration(name->getReferred()))
-				{
-					onNodeExited(node, result);
-					return false;
-				}
-			}
-
-			// Stop early to prevent onNodeExited being fired for Variable::Root.
-			return result != Result::Stop;
 		}
 
 		case Expression::Type::ModifierRoot:
@@ -248,7 +220,7 @@ bool Traverser::traverseTypeDefinition(std::shared_ptr <TypeDefinition> node)
 			{
 				// If there's no generic root, report success to skip it.
 				bool genericTraverseResult = !classType->getGenericRoot() ||
-					traverseExpression(classType->getGenericRoot());
+					traverseStatement(classType->getGenericRoot());
 
 				if(!genericTraverseResult ||
 					!traverseScope(classType->getBody()))
@@ -271,13 +243,54 @@ bool Traverser::traverseTypeDefinition(std::shared_ptr <TypeDefinition> node)
 				auto ret = callable->getReturnTypeRoot();
 				auto param = callable->getParameterRoot();
 
-				if((param && !traverseExpression(param)) ||
+				if((param && !traverseStatement(param)) ||
 					(ret && !traverseExpression(ret)))
 				{
 					onNodeExited(node, result);
 					return false;
 				}
 			}
+		}
+	}
+
+	onNodeExited(node, result);
+	return result != Result::Stop;
+}
+
+bool Traverser::traverseStatement(std::shared_ptr <Statement> node)
+{
+	// TODO: Don't initialize here when other statements exist.
+	Result result = Result::NotHandled;
+
+	switch(node->getType())
+	{
+		case Statement::Type::VariableRoot:
+		{
+			auto variableRoot = std::static_pointer_cast <Variable::Root> (node);
+			ArgumentAccessor args(variableRoot);
+			result = Result::Exit;
+
+			// Instead of traversing through the expression nodes within the variable
+			// root, just traverse through the variable declarations to exclude
+			// commas and assignments. This makes the AST a bit clearer.
+			while(auto expr = args.getNext())
+			{
+				assert(expr->getType() == Expression::Type::BinaryOperator);
+				auto op = std::static_pointer_cast <BinaryOperator> (expr);
+
+				assert(op->getLeft()->getType() == Expression::Type::Value);
+				auto name = std::static_pointer_cast <Value> (op->getLeft());
+
+				assert(name->getReferred());
+				if(!traverseDeclaration(name->getReferred()))
+				{
+					onNodeExited(node, result);
+					return false;
+				}
+			}
+
+			// Stop early to prevent onNodeExited being fired for Variable::Root.
+			return result != Result::Stop;
 		}
 	}
 

@@ -21,6 +21,7 @@ public:
 		Scope,
 		Expression,
 		Declaration,
+		Statement,
 		Custom
 	};
 

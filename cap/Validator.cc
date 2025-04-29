@@ -49,7 +49,7 @@ Traverser::Result Validator::onFunction(std::shared_ptr <Function> node)
 				auto function = std::static_pointer_cast <Function> (decl);
 				auto nodeParams = node->getSignature()->getParameterRoot();
 
-				auto [compatible, unidentical] = function->getSignature()->matchParameters(nodeParams);
+				auto [compatible, unidentical] = function->getSignature()->matchParameters(ArgumentAccessor(nodeParams));
 				if(compatible && unidentical == 0)
 				{
 					// TODO: Give more context for the existing function?

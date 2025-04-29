@@ -40,9 +40,8 @@ std::weak_ptr <Node> ClassType::handleToken(ParserContext& ctx, Token& token)
 	{
 		// TODO: Check for this again in cases like "type T <a> <b>"?
 
-		generic = std::make_shared <Expression::Root> ();
+		generic = std::make_shared <Variable::Root> (Variable::Type::Generic);
 		adopt(generic);
-		ctx.implicitDeclaration.emplace(Variable::Type::Generic);
 		return generic;
 	}
 
@@ -99,7 +98,7 @@ std::shared_ptr <Expression::Root> ClassType::getBaseTypeRoot()
 	return baseTypes;
 }
 
-std::shared_ptr <Expression::Root> ClassType::getGenericRoot()
+std::shared_ptr <Variable::Root> ClassType::getGenericRoot()
 {
 	return generic;
 }

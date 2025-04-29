@@ -287,10 +287,9 @@ TEST(ExpressionTests, Declarations)
 
 	tester.test(L"let a = 1 + 2",
 	{
-		Expression(),
-			LocalVariable(L"a"),
-				cap::BinaryOperator::Type::Add,
-					Value(L"1"),
-					Value(L"2"),
+		LocalVariable(L"a"),
+			cap::BinaryOperator::Type::Add,
+				Value(L"1"),
+				Value(L"2"),
 	});
 }

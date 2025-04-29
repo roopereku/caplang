@@ -2,6 +2,8 @@
 #include <cap/BinaryOperator.hh>
 #include <cap/Validator.hh>
 #include <cap/Value.hh>
+#include <cap/ArgumentAccessor.hh>
+#include <cap/Client.hh>
 
 #include <cassert>
 
@@ -73,8 +75,88 @@ const char* Variable::getTypeString() const
 }
 
 Variable::Root::Root(Variable::Type type)
-	: Expression::Root(Expression::Type::VariableRoot), type(type)
+	: Statement(Statement::Type::VariableRoot), type(type)
 {
+}
+
+std::weak_ptr <Node> Variable::Root::handleToken(Node::ParserContext& ctx, Token& token)
+{
+	assert(!initializer);
+	initializer = std::make_shared <Expression::Root> ();
+	adopt(initializer);
+	return initializer->handleToken(ctx, token);
+}
+
+std::weak_ptr <Node> Variable::Root::invokedNodeExited(Node::ParserContext& ctx, Token&)
+{
+	assert(ctx.exitedFrom == initializer);
+
+	if(!initializer->getFirst())
+	{
+		std::string_view error;
+		switch(type)
+		{
+			case cap::Variable::Type::Generic: error = "Expected a generic"; break;
+			case cap::Variable::Type::Local: error = "Expected a variable"; break;
+
+			// Allow parameters without an initializer to support empty parentheses.
+			case cap::Variable::Type::Parameter: break;
+		}
+
+		if(!error.empty())
+		{
+			SourceLocation location(ctx.source, getToken());
+			ctx.client.sourceError(location, error.data());
+			return {};
+		}
+	}
+
+	// TODO: Initializer instead?
+	auto variableRoot = std::static_pointer_cast <Variable::Root> (shared_from_this());
+
+	ArgumentAccessor declarations(variableRoot);
+	auto declContainer = getParentWithDeclarationStorage();
+
+	while(auto node = declarations.getNext())
+	{
+		if(node->getType() == Expression::Type::BinaryOperator)
+		{
+			auto op = std::static_pointer_cast <BinaryOperator> (node);
+			if(op->getType() == BinaryOperator::Type::Assign)
+			{
+				if(op->getLeft()->getToken().getType() != Token::Type::Identifier)
+				{
+					SourceLocation location(ctx.source, op->getLeft()->getToken());
+					ctx.client.sourceError(location, "Expected an identifier");
+					return {};
+				}
+
+				auto decl =  std::make_shared <Variable> (variableRoot->getType(), op);
+				auto name = std::static_pointer_cast <Value> (op->getLeft());
+
+				declContainer->adopt(decl);
+				name->setReferred(decl);
+
+				if(!declContainer->getDeclarationStorage().add(ctx, std::move(decl)))
+				{
+					return {};
+				}
+
+				continue;
+			}
+		}
+
+		SourceLocation location(ctx.source, node->getToken());
+		ctx.client.sourceError(location, "Expected '='");
+		return {};
+	}
+
+	return getParent();
+}
+
+std::shared_ptr <Expression::Root> Variable::Root::getInitializer() const
+{
+	return initializer;
 }
 
 Variable::Type Variable::Root::getType() const

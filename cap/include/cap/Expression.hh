@@ -17,7 +17,6 @@ public:
 		UnaryOperator,
 		BinaryOperator,
 		BracketOperator,
-		VariableRoot,
 		ModifierRoot,
 	};
 

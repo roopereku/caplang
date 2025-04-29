@@ -13,6 +13,8 @@ bool DeclarationStorage::add(cap::ParserContext& ctx, std::shared_ptr <Declarati
 {
 	assert(isValid());
 
+	// FIXME: In some cases check if the parent nodes contain a declaration of the same name.
+
 	// Make sure that the declaration doesn't conflict with anything in this
 	// scope or the builtin scope.
 	if(!canAddDeclaration(node) || !ctx.client.getBuiltin().getGlobal()->declarations.canAddDeclaration(node))

@@ -25,8 +25,6 @@ std::weak_ptr <Node> Expression::handleToken(Node::ParserContext& ctx, Token& to
 
 	if(token.getType() == Token::Type::ClosingBracket)
 	{
-		ctx.implicitDeclaration.reset();
-
 		// The state can get messed up if this goes below 0.
 		if(ctx.subExpressionDepth > 0)
 		{
@@ -36,14 +34,6 @@ std::weak_ptr <Node> Expression::handleToken(Node::ParserContext& ctx, Token& to
 		// TODO: If the next token is an operator, maybe the expression should be continued?
 
 		return exitExpression(ctx, token);
-	}
-
-	else if(ctx.implicitDeclaration.has_value())
-	{
-		// Inject a declaration root to the current node and let it handle the token.
-		auto decl = adoptValue(std::make_shared <Variable::Root> (ctx.implicitDeclaration.value()));
-		ctx.implicitDeclaration.reset();
-		return decl.lock()->handleToken(ctx, token);
 	}
 
 	std::weak_ptr <Node> newCurrent = weak_from_this();
@@ -86,15 +76,8 @@ std::weak_ptr <Node> Expression::handleToken(Node::ParserContext& ctx, Token& to
 	// Treat anything else as a value or a keyword.
 	else
 	{
-		// Parse variables.
-		if(ctx.source.match(token, L"let"))
-		{
-			// TODO: Fields as well?
-			newNode = std::make_shared <Variable::Root> (Variable::Type::Local);
-		}
-
 		// Parse modifiers.
-		else if(auto modifier = ModifierRoot::create(ctx, token))
+		if(auto modifier = ModifierRoot::create(ctx, token))
 		{
 			newNode = modifier;
 		}
@@ -140,16 +123,8 @@ std::weak_ptr <Node> Expression::handleToken(Node::ParserContext& ctx, Token& to
 	// TODO: If the new node represents a binary operator, extend to the next line.
 	if(ctx.subExpressionDepth == 0 && token.isLastOfLine(ctx))
 	{
-		// Expressions cannot end at a variable root.
-		if(newNode->getType() == Type::VariableRoot)
-		{
-			SourceLocation location(ctx.source, getToken());
-			ctx.client.sourceError(location, "Nothing declared with 'let'");
-			return {};
-		}
-
 		// Expressions cannot end at a modifier.
-		else if(newNode->getType() == Type::ModifierRoot)
+		if(newNode->getType() == Type::ModifierRoot)
 		{
 			SourceLocation location(ctx.source, getToken());
 			ctx.client.sourceError(location, "Expected an expression after '", ctx.source.getString(newNode->getToken()), "'");
@@ -218,53 +193,8 @@ std::weak_ptr <Node> Expression::exitExpression(ParserContext& ctx, Token& token
 
 std::weak_ptr <Node> Expression::getExitedExpression(ParserContext& ctx, bool recursive)
 {
-	// If the expressions defines declarations, add them to the given scope or the parent scope.
-	if(type == Type::VariableRoot)
-	{
-		auto variableRoot = std::static_pointer_cast <Variable::Root> (shared_from_this());
-
-		ArgumentAccessor declarations(variableRoot);
-		auto declContainer = getParentWithDeclarationStorage();
-
-		// TODO: When VariableRoot is refactored to a statement, do this there.
-
-		while(auto node = declarations.getNext())
-		{
-			if(node->getType() == Expression::Type::BinaryOperator)
-			{
-				auto op = std::static_pointer_cast <BinaryOperator> (node);
-				if(op->getType() == BinaryOperator::Type::Assign)
-				{
-					if(op->getLeft()->getToken().getType() != Token::Type::Identifier)
-					{
-						SourceLocation location(ctx.source, op->getLeft()->getToken());
-						ctx.client.sourceError(location, "Expected an identifier");
-						return {};
-					}
-
-					auto decl =  std::make_shared <Variable> (variableRoot->getType(), op);
-					auto name = std::static_pointer_cast <Value> (op->getLeft());
-
-					declContainer->adopt(decl);
-					name->setReferred(decl);
-
-					if(!declContainer->getDeclarationStorage().add(ctx, std::move(decl)))
-					{
-						return {};
-					}
-
-					continue;
-				}
-			}
-
-			SourceLocation location(ctx.source, node->getToken());
-			ctx.client.sourceError(location, "Expected '='");
-			return {};
-		}
-	}
-
 	// Expression root is the only exit point.
-	else if(type == Type::Root)
+	if(type == Type::Root)
 	{
 		if(recursive)
 		{

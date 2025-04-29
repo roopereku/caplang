@@ -24,6 +24,10 @@ static std::wstring_view src = LR"SRC(
 	{
 	}
 
+	type uint32
+	{
+	}
+
 	type uint64
 	{
 	}

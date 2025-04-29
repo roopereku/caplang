@@ -203,7 +203,7 @@ int main()
 
 	Sandbox client;
 	SourceString entry(LR"SRC(
-		
+
 		func foo(a = int32, b = string)
 		{
 			let x1 = a + b

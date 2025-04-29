@@ -17,6 +17,7 @@ class BinaryOperator;
 class BracketOperator;
 class TypeDefinition;
 class ModifierRoot;
+class Statement;
 class Value;
 
 class Traverser
@@ -68,6 +69,12 @@ public:
 	/// \param node The type definition to traverse.
 	/// \return False if the traversal was unsuccessful.
 	bool traverseTypeDefinition(std::shared_ptr <TypeDefinition> node);
+
+	/// Performs depth first traversal on a statement.
+	///
+	/// \param node The statement to traverse.
+	/// \return False if the traversal was unsuccessful.
+	bool traverseStatement(std::shared_ptr <Statement> node);
 
 protected:
 	/// Invoked when a node is exited.

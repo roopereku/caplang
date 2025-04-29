@@ -2,6 +2,8 @@
 #define CAP_CALLABLE_TYPE_HH
 
 #include <cap/TypeDefinition.hh>
+#include <cap/ArgumentAccessor.hh>
+#include <cap/Variable.hh>
 
 namespace cap
 {
@@ -18,7 +20,7 @@ public:
 	/// Gets the parameter root.
 	///
 	/// \return The parameter root.
-	std::shared_ptr <Expression::Root> getParameterRoot() const;
+	std::shared_ptr <Variable::Root> getParameterRoot() const;
 
 	/// Gets the return type root.
 	///
@@ -33,9 +35,9 @@ public:
 
 	/// Matches the parameters within this callable type against others.
 	///
-	/// \param root The parameters to match against.
+	/// \param arguments The arguments to match against.
 	/// \return Whether the parameters are compatible and how many are unidentical.
-	std::pair <bool, size_t> matchParameters(std::shared_ptr <Expression::Root> root) const;
+	std::pair <bool, size_t> matchParameters(ArgumentAccessor&& arguments) const;
 
 	/// Validates the return type and parameters of this callable type.
 	///
@@ -48,7 +50,8 @@ public:
 private:
 	std::pair <bool, bool> isCompatible(const TypeContext& selfCtx, const TypeContext& otherCtx) const;
 
-	std::shared_ptr <Expression::Root> parameters;
+	// TODO: Function should be the one holding the variable root.
+	std::shared_ptr <Variable::Root> parameters;
 	std::shared_ptr <Expression::Root> returnType;
 };
 

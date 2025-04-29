@@ -35,6 +35,12 @@ std::weak_ptr <Node> Scope::handleToken(ParserContext& ctx, Token& token)
 		return appendNested(std::make_shared <ClassType> ());
 	}
 
+	else if(ctx.source.match(token, L"let"))
+	{
+		// TODO: Do fields for class members?
+		return appendNested(std::make_shared <Variable::Root> (Variable::Type::Local));
+	}
+
 	else if(token.isOpeningBracket(ctx, '{'))
 	{
 		// TODO: Implement subscopes.
@@ -50,26 +56,19 @@ std::weak_ptr <Node> Scope::handleToken(ParserContext& ctx, Token& token)
 	// Parse anything else as expressions.
 	else
 	{
+		// If only declarations are allowed, forbid a top level expression.
+		if(onlyDeclarations)
+		{
+			SourceLocation location(ctx.source, token);
+			ctx.client.sourceError(location, "Only declarations are allowed here");
+			return {};
+		}
+
 		// Adopt the expression root and delegate the first token of
 		// the expression to the root.
 		auto exprRoot = std::make_shared <Expression::Root> ();
 		appendNested(exprRoot);
 		auto ret = exprRoot->handleToken(ctx, token);
-
-		// If only declarations are alloweds, check if the first
-		// node of the expression starts a declaration.
-		if(onlyDeclarations)
-		{
-			assert(!ret.expired());
-			auto expr = std::static_pointer_cast <Expression> (ret.lock());
-
-			if(expr->getType() != Expression::Type::VariableRoot)
-			{
-				SourceLocation location(ctx.source, token);
-				ctx.client.sourceError(location, "Only declarations are allowed here");
-				return {};
-			}
-		}
 
 		return ret;
 	}

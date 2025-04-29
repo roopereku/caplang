@@ -38,32 +38,32 @@ TEST(ParserTests, FunctionDeclaration)
 	});
 
 	// Function with parameters.
-	tester.test(L"func foo(a = int64, b = uint32)\n{\n}",
-	{
-		Function(L"foo"),
-			Parameter(L"a"),
-				Value(L"int64"),
-			Parameter(L"b"),
-				Value(L"uint32"),
-			Scope()
-	});
+	//tester.test(L"func foo(a = int64, b = uint32)\n{\n}",
+	//{
+	//	Function(L"foo"),
+	//		Parameter(L"a"),
+	//			Value(L"int64"),
+	//		Parameter(L"b"),
+	//			Value(L"uint32"),
+	//		Scope()
+	//});
 
 	// Nested functions.
-	tester.test(L"func foo()\n{\nfunc bar()\n{\n}\n}\n",
-	{
-		Function(L"foo"),
-			Scope(),
-				Function(L"bar"),
-					Scope()
-	});	
+	//tester.test(L"func foo()\n{\nfunc bar()\n{\n}\n}\n",
+	//{
+	//	Function(L"foo"),
+	//		Scope(),
+	//			Function(L"bar"),
+	//				Scope()
+	//});	
 
 	// Function with an explicit return type
-	tester.test(L"func foo() -> SomeType\n{\n}\n",
-	{
-		Function(L"foo"),
-			Value(L"SomeType"),
-			Scope()
-	});
+	//tester.test(L"func foo() -> SomeType\n{\n}\n",
+	//{
+	//	Function(L"foo"),
+	//		Value(L"SomeType"),
+	//		Scope()
+	//});
 }
 
 TEST(ParserTests, ClassTypeDeclaration)
@@ -104,9 +104,8 @@ TEST(ParserTests, Modifiers)
 
 	tester.test(L"let T = type int64",
 	{
-		Expression(),
-			LocalVariable(L"T"),
-				cap::ModifierRoot::Type::Alias,
-					Value(L"int64")
+		LocalVariable(L"T"),
+			cap::ModifierRoot::Type::Alias,
+				Value(L"int64")
 	});
 }

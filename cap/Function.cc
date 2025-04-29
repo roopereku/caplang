@@ -56,9 +56,7 @@ std::weak_ptr <Node> Function::handleToken(ParserContext& ctx, Token& token)
 		signature->initializeParameters();
 		adopt(signature->getParameterRoot());
 
-		ctx.implicitDeclaration.emplace(Variable::Type::Parameter);
 		ctx.declarationLocation = shared_from_this();
-
 		return signature->getParameterRoot();
 	}
 	

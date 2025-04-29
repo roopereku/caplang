@@ -36,7 +36,7 @@ public:
 	/// Gets the root of the expression representing the generic if any.
 	///
 	/// \return The root of the generic expression or null.
-	std::shared_ptr <Expression::Root> getGenericRoot();
+	std::shared_ptr <Variable::Root> getGenericRoot();
 
 	/// Gets the body of this class type.
 	///
@@ -56,7 +56,7 @@ public:
 
 private:
 	std::shared_ptr <Expression::Root> baseTypes;
-	std::shared_ptr <Expression::Root> generic;
+	std::shared_ptr <Variable::Root> generic;
 	std::shared_ptr <Scope> body;
 };
 

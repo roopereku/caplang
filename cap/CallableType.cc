@@ -13,7 +13,7 @@ CallableType::CallableType() :
 	name = L"callable";
 }
 
-std::shared_ptr <Expression::Root> CallableType::getParameterRoot() const
+std::shared_ptr <Variable::Root> CallableType::getParameterRoot() const
 {
 	return parameters;
 }
@@ -26,7 +26,7 @@ std::shared_ptr <Expression::Root> CallableType::getReturnTypeRoot() const
 void CallableType::initializeParameters()
 {
 	assert(!parameters);
-	parameters = std::make_shared <Expression::Root> ();
+	parameters = std::make_shared <Variable::Root> (Variable::Type::Parameter);
 }
 
 void CallableType::initializeReturnType()
@@ -35,17 +35,15 @@ void CallableType::initializeReturnType()
 	returnType = std::make_shared <Expression::Root> ();
 }
 
-std::pair <bool, size_t> CallableType::matchParameters(std::shared_ptr <Expression::Root> root) const
+std::pair <bool, size_t> CallableType::matchParameters(ArgumentAccessor&& arguments) const
 {
 	ArgumentAccessor self(parameters);
-	ArgumentAccessor other(root);
-
 	size_t unidentical = 0;
 
 	while(auto selfCurrent = self.getNext())
 	{
 		// If other doesn't have anything to match, the parameter counts differ.
-		auto otherCurrent = other.getNext();
+		auto otherCurrent = arguments.getNext();
 		if(!otherCurrent)
 		{
 			return { false, 0 };
@@ -62,7 +60,7 @@ std::pair <bool, size_t> CallableType::matchParameters(std::shared_ptr <Expressi
 	}
 
 	// If other still has something, the parameter counts differ.
-	return { other.getNext() == nullptr, unidentical };
+	return { arguments.getNext() == nullptr, unidentical };
 }
 
 std::pair <bool, bool> CallableType::isCompatible(const TypeContext& selfCtx, const TypeContext& otherCtx) const

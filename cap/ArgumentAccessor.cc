@@ -11,36 +11,21 @@ ArgumentAccessor::ArgumentAccessor(std::shared_ptr <Expression::Root> root)
 {
 	assert(root);
 
-	if(root->getFirst())
-	{
-		// In the case of declararations, the stopping point is the declaration root.
-		if(root->getFirst()->getType() == Expression::Type::VariableRoot)
-		{
-			origin = root->getFirst();
-			current = std::static_pointer_cast <Variable::Root> (origin)->getFirst();
-		}
+	origin = root;
+	current = root->getFirst();
 
-		// In the case of non-declarations, the stopping point the expression root.
-		else
-		{
-			origin = root;
-			current = root->getFirst();
-		}
+	locateFirst();
+}
 
-		// Find the value of the leftmost comma if any.
-		// This will result in the first argument in case there are multiple.
-		while(current->getType() == Expression::Type::BinaryOperator)
-		{
-			auto op = std::static_pointer_cast <BinaryOperator> (current);
-			if(op->getType() == BinaryOperator::Type::Comma)
-			{
-				current = op->getLeft();
-				continue;
-			}
+ArgumentAccessor::ArgumentAccessor(std::shared_ptr <Variable::Root> root)
+{
+	assert(root);
+	assert(root->getInitializer());
 
-			break;
-		}
-	}
+	origin = root->getInitializer();
+	current = root->getInitializer()->getFirst();
+
+	locateFirst();
 }
 
 std::shared_ptr <Expression> ArgumentAccessor::getNext()
@@ -70,6 +55,30 @@ std::shared_ptr <Expression> ArgumentAccessor::getNext()
 	// getNext call should hit the origin.
 	current = std::static_pointer_cast <Expression> (current->getParent().lock());
 	return result;
+}
+
+void ArgumentAccessor::locateFirst()
+{
+	// Nothing to locate.
+	if(current == nullptr)
+	{
+		origin = nullptr;
+		return;
+	}
+
+	// Find the value of the leftmost comma if any.
+	// This will result in the first argument in case there are multiple.
+	while(current->getType() == Expression::Type::BinaryOperator)
+	{
+		auto op = std::static_pointer_cast <BinaryOperator> (current);
+		if(op->getType() == BinaryOperator::Type::Comma)
+		{
+			current = op->getLeft();
+			continue;
+		}
+
+		break;
+	}
 }
 
 }

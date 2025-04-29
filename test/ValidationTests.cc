@@ -67,12 +67,11 @@ TEST(ValidationTests, AccessOperatorResultType)
 
 	tester.test(L"let a = Foo.Bar.a",
 	{
-		Expression(),
-			LocalVariable(L"a"),
-			cap::BinaryOperator::Type::Access > L"int64",
-				cap::BinaryOperator::Type::Access > L"Foo.Bar",
-					Value(L"Foo") > L"Foo",
-					Value(L"Bar") > L"Foo.Bar",
-				Value(L"a", L"Foo.Bar.a") > L"int64"
+		LocalVariable(L"a"),
+		cap::BinaryOperator::Type::Access > L"int64",
+			cap::BinaryOperator::Type::Access > L"Foo.Bar",
+				Value(L"Foo") > L"Foo",
+				Value(L"Bar") > L"Foo.Bar",
+			Value(L"a", L"Foo.Bar.a") > L"int64"
 	});
 }
