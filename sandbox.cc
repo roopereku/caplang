@@ -211,7 +211,7 @@ int main()
 	Sandbox client;
 	SourceString entry(LR"SRC(
 
-		func foo(a = int32, b = string)
+		func foo(a = int32, b = string) -> int64
 		{
 			let x1 = a + b
 			let x2 = x1 ** 5
@@ -222,7 +222,6 @@ int main()
 			return 0
 		}
 
-		return 5
 
 	)SRC");
 
