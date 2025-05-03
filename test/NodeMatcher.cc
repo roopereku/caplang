@@ -5,6 +5,7 @@
 #include <cap/BracketOperator.hh>
 #include <cap/Variable.hh>
 #include <cap/Value.hh>
+#include <cap/Return.hh>
 
 #include <gtest/gtest.h>
 
@@ -84,6 +85,11 @@ ExpectedNode Generic(std::wstring&& name)
 	return ExpectedNode("Generic", std::move(name));
 }
 
+ExpectedNode Return()
+{
+	return ExpectedNode("Return");
+}
+
 NodeMatcher::NodeMatcher(std::vector <ExpectedNode>&& expectation)
 	: expectation(std::move(expectation))
 {
@@ -158,6 +164,12 @@ Traverser::Result NodeMatcher::onValue(std::shared_ptr <cap::Value> node)
 		EXPECT_STREQ(node->getReferred()->getLocation().c_str(), current.referred.c_str());
 	}
 
+	return Traverser::Result::Continue;
+}
+
+Traverser::Result NodeMatcher::onReturn(std::shared_ptr <cap::Return> node)
+{
+	match(node);
 	return Traverser::Result::Continue;
 }
 

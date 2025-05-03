@@ -37,6 +37,7 @@ ExpectedNode Expression();
 ExpectedNode LocalVariable(std::wstring&& name);
 ExpectedNode Parameter(std::wstring&& name);
 ExpectedNode Generic(std::wstring&& name);
+ExpectedNode Return();
 
 class NodeMatcher : public cap::Traverser
 {
@@ -52,6 +53,7 @@ public:
 	Result onBinaryOperator(std::shared_ptr <cap::BinaryOperator> node) override;
 	Result onBracketOperator(std::shared_ptr <cap::BracketOperator> node) override;
 	Result onValue(std::shared_ptr <cap::Value> node) override;
+	Result onReturn(std::shared_ptr <cap::Return> node) override;
 
 	ExpectedNode match(std::shared_ptr <cap::Node> node);
 

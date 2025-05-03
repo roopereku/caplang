@@ -110,3 +110,18 @@ TEST(ParserTests, Modifiers)
 				Value(L"int64")
 	});
 }
+
+TEST(ParserTests, ReturnStatement)
+{
+	ParserTester tester;
+
+	tester.test(L"func x()\n{\nreturn 0\n}\n",
+	{
+		Function(L"x"),
+			Scope(),
+				Return(),
+					Expression(),
+						Value(L"0")
+	});
+
+}
