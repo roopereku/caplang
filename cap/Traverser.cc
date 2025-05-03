@@ -11,6 +11,7 @@
 #include <cap/TypeDefinition.hh>
 #include <cap/ModifierRoot.hh>
 #include <cap/Variable.hh>
+#include <cap/Return.hh>
 #include <cap/Value.hh>
 
 #include <cassert>
@@ -259,8 +260,7 @@ bool Traverser::traverseTypeDefinition(std::shared_ptr <TypeDefinition> node)
 
 bool Traverser::traverseStatement(std::shared_ptr <Statement> node)
 {
-	// TODO: Don't initialize here when other statements exist.
-	Result result = Result::NotHandled;
+	Result result;
 
 	switch(node->getType())
 	{
@@ -292,6 +292,21 @@ bool Traverser::traverseStatement(std::shared_ptr <Statement> node)
 			// Stop early to prevent onNodeExited being fired for Variable::Root.
 			return result != Result::Stop;
 		}
+
+		case Statement::Type::Return:
+		{
+			auto ret = std::static_pointer_cast <Return> (node);
+			result = onReturn(ret);
+
+			if(shouldContinue(result))
+			{
+				if(!traverseExpression(ret->getExpression()))
+				{
+					onNodeExited(node, result);
+					return false;
+				}
+			}
+		}
 	}
 
 	onNodeExited(node, result);
@@ -310,5 +325,6 @@ Traverser::Result Traverser::onBinaryOperator(std::shared_ptr <BinaryOperator>) 
 Traverser::Result Traverser::onBracketOperator(std::shared_ptr <BracketOperator>) { return Result::NotHandled; }
 Traverser::Result Traverser::onValue(std::shared_ptr <Value>) { return Result::NotHandled; }
 Traverser::Result Traverser::onVariable(std::shared_ptr <Variable>) { return Result::NotHandled; }
+Traverser::Result Traverser::onReturn(std::shared_ptr <Return>) { return Result::NotHandled; }
 
 }

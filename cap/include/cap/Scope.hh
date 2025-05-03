@@ -60,7 +60,7 @@ public:
 private:
 	/// If no nested nodes exist, the first is initialized. Otherwise the
 	/// given node is appended after the last nested node.
-	std::weak_ptr <Node> appendNested(std::shared_ptr <Node> node);
+	std::weak_ptr <Node> appendNested(std::shared_ptr <Node> node, Token& token);
 
 	std::vector <std::shared_ptr <Node>> nested;
 	bool onlyDeclarations;

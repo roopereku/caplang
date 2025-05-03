@@ -6,7 +6,7 @@
 #include <cap/ParserContext.hh>
 #include <cap/BinaryOperator.hh>
 #include <cap/Variable.hh>
-#include <cap/Value.hh>
+#include <cap/Return.hh>
 
 #include <cassert>
 
@@ -27,18 +27,23 @@ std::weak_ptr <Node> Scope::handleToken(ParserContext& ctx, Token& token)
 {
 	if(ctx.source.match(token, L"func"))
 	{
-		return appendNested(std::make_shared <Function> ());
+		return appendNested(std::make_shared <Function> (), token);
 	}
 
 	else if(ctx.source.match(token, L"type"))
 	{
-		return appendNested(std::make_shared <ClassType> ());
+		return appendNested(std::make_shared <ClassType> (), token);
 	}
 
 	else if(ctx.source.match(token, L"let"))
 	{
 		// TODO: Do fields for class members?
-		return appendNested(std::make_shared <Variable::Root> (Variable::Type::Local));
+		return appendNested(std::make_shared <Variable::Root> (Variable::Type::Local), token);
+	}
+
+	else if(ctx.source.match(token, L"return"))
+	{
+		return appendNested(std::make_shared <Return> (), token);
 	}
 
 	else if(token.isOpeningBracket(ctx, '{'))
@@ -67,7 +72,7 @@ std::weak_ptr <Node> Scope::handleToken(ParserContext& ctx, Token& token)
 		// Adopt the expression root and delegate the first token of
 		// the expression to the root.
 		auto exprRoot = std::make_shared <Expression::Root> ();
-		appendNested(exprRoot);
+		appendNested(exprRoot, token);
 		auto ret = exprRoot->handleToken(ctx, token);
 
 		return ret;
@@ -113,9 +118,10 @@ const char* Scope::getTypeString() const
 	return "Scope";
 }
 
-std::weak_ptr <Node> Scope::appendNested(std::shared_ptr <Node> node)
+std::weak_ptr <Node> Scope::appendNested(std::shared_ptr <Node> node, Token& token)
 {
 	adopt(node);
+	node->setToken(token);
 	nested.emplace_back(std::move(node));
 
 	return nested.back();

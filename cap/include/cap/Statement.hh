@@ -11,7 +11,8 @@ class Statement : public Node
 public:
 	enum class Type
 	{
-		VariableRoot
+		VariableRoot,
+		Return
 	};
 
 	/// Gets the type of this statement.

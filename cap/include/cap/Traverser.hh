@@ -18,6 +18,7 @@ class BracketOperator;
 class TypeDefinition;
 class ModifierRoot;
 class Statement;
+class Return;
 class Value;
 
 class Traverser
@@ -125,6 +126,11 @@ protected:
 	/// \param node The node representing a declaration root.
 	/// \return Continue if the traversal should continue to the underlying expression.
 	virtual Result onVariable(std::shared_ptr <Variable> node);
+
+	/// Invoked upon hitting a return.
+	///
+	/// \param node The node representing a return.
+	virtual Result onReturn(std::shared_ptr <Return> node);
 
 	/// Invoked upon hitting a modifier root in an expression.
 	///

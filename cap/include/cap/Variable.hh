@@ -59,7 +59,7 @@ public:
 	///
 	/// \param ctx The parser context containing the exiting node.
 	/// \param token The token that caused the exit.
-	/// \return The new parent node.
+	/// \return The parent node or null upon an invalid declaration.
 	std::weak_ptr <Node> invokedNodeExited(Node::ParserContext& ctx, Token& token) override;
 
 	/// Gets the expression root representing the variable initializer.

@@ -143,3 +143,19 @@ TEST(ErrorTests, FunctionParameters)
 	tester.reportsError(testCall(L"foo(10, \"test\")"), L"No matching overload found for 'foo'");
 	tester.reportsError(testCall(L"foo(10, \"test\", 20, 50)"), L"No matching overload found for 'foo'");
 }
+
+TEST(ErrorTests, UnexpectedReturn)
+{
+	ErrorTester tester;
+
+	tester.reportsError(LR"SRC(
+		return 0
+	)SRC", L"Cannot return here", true);
+
+	tester.reportsError(LR"SRC(
+		type Foo
+		{
+			return 0
+		}
+	)SRC", L"Cannot return here", true);
+}

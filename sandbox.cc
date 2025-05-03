@@ -8,6 +8,7 @@
 #include <cap/BracketOperator.hh>
 #include <cap/Variable.hh>
 #include <cap/ModifierRoot.hh>
+#include <cap/Return.hh>
 #include <cap/Value.hh>
 
 #include <iostream>
@@ -147,6 +148,12 @@ protected:
 		return Result::Continue;
 	}
 
+	Result onReturn(std::shared_ptr <cap::Return> node) override
+	{
+		file << prefix() << node->getTypeString() << '\n';
+		return Result::Continue;
+	}
+
 	Result onValue(std::shared_ptr <cap::Value> node) override
 	{
 		file << prefix() << node->getTypeString() << ": " << node->getValue() << getResultType(node);
@@ -211,7 +218,11 @@ int main()
 
 			// TODO: Fix this not erroring?
 			let a = "no"
+
+			return 0
 		}
+
+		return 5
 
 	)SRC");
 
