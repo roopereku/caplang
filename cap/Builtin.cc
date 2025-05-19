@@ -7,7 +7,7 @@ namespace cap
 {
 
 // TODO: Indicate type size somehow. Maybe attributes?
-static std::wstring_view src = LR"SRC(
+Builtin::Builtin() : Source(LR"SRC(
 	type int8
 	{
 	}
@@ -35,22 +35,8 @@ static std::wstring_view src = LR"SRC(
 	type string
 	{
 	}
-)SRC";
 
-wchar_t Builtin::operator[](size_t index) const
-{
-	return src[index];
-}
-
-std::wstring Builtin::getString(cap::Token token) const
-{
-	return std::wstring(src.substr(token.getIndex(), token.getLength()));
-}
-
-bool Builtin::match(cap::Token token, std::wstring_view value) const
-{
-	return src.substr(token.getIndex(), token.getLength()) == value;
-}
+)SRC") {}
 
 void Builtin::doCaching()
 {

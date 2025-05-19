@@ -10,10 +10,13 @@
 namespace cap
 {
 
-/// Source provides an interface for accessing source code.
 class Source
 {
 public:
+	// TODO: Add a mechanism for loading parts of the source within the given range.
+	// This is to support only storing chunks of the entire source to save memory.
+	Source(std::wstring&& src);
+
 	/// Parses and optionally validates this source file.
 	///
 	/// \return The global scope.
@@ -29,14 +32,27 @@ public:
 	/// \return The global scope as a const.
 	const std::shared_ptr <Scope> getGlobal() const;
 
-	virtual wchar_t operator[](size_t index) const = 0;
-	virtual std::wstring getString(Token token) const = 0;
-	virtual bool match(Token token, std::wstring_view value) const = 0;
+	/// Retrieves a character from the source.
+	///
+	/// \param index The index to get a character at.
+	/// \return The character at the given index.
+	wchar_t operator[](size_t index) const;
+
+	/// Gets a string represented by a token.
+	///
+	/// \param token The token determining the range of the string.
+	/// \return String containing characters in a range determined by a token.
+	std::wstring getString(Token token) const;
+
+	/// Matches the contents of the source within a token.
+	///
+	/// \param token The token determining a range within the source.
+	/// \param value The string to compare against.
+	/// \return True if the range is identical to the given string.
+	bool match(Token token, std::wstring_view value) const;
 
 protected:
-	Source();
-
-	virtual bool canParse(Client& client);
+	std::wstring src;
 
 private:
 	std::shared_ptr <Scope> global;

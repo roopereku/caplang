@@ -15,34 +15,6 @@
 #include <fstream>
 #include <cassert>
 
-class SourceString : public cap::Source
-{
-public:
-	SourceString(std::wstring&& str)
-		: str(std::move(str))
-	{
-	}
-
-	wchar_t operator[](size_t index) const override
-	{
-		return str[index];
-	}
-
-	std::wstring getString(cap::Token token) const override
-	{
-		auto offset = str.begin() + token.getIndex();
-		return std::wstring(offset, offset + token.getLength());
-	}
-
-	bool match(cap::Token token, std::wstring_view value) const override
-	{
-		return str.compare(token.getIndex(), token.getLength(), value) == 0;
-	}
-
-private:
-	std::wstring str;
-};
-
 class Sandbox : public cap::Client
 {
 public:
@@ -209,7 +181,7 @@ int main()
     std::wcout.imbue(std::locale());
 
 	Sandbox client;
-	SourceString entry(LR"SRC(
+	cap::Source entry(LR"SRC(
 
 		func foo(a = int32, b = string) -> int64
 		{

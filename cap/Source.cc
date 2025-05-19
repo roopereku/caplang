@@ -8,7 +8,8 @@
 namespace cap
 {
 
-Source::Source()
+Source::Source(std::wstring&& src)
+	: src(std::move(src))
 {
 }
 
@@ -28,11 +29,6 @@ bool Source::parse(Client& client, bool validate)
 
 	Token::ParserContext tokenCtx(client, *this);
 	Node::ParserContext nodeCtx(client, *this);
-
-	if(!canParse(client))
-	{
-		return false;
-	}
 
 	Token currentToken = Token::parseFirst(tokenCtx);
 	std::weak_ptr <Node> currentNode = global;
@@ -87,9 +83,20 @@ const std::shared_ptr <Scope> Source::getGlobal() const
 	return global;
 }
 
-bool Source::canParse(Client&)
+wchar_t Source::operator[](size_t index) const
 {
-	return true;
+	return src[index];
+}
+
+std::wstring Source::getString(Token token) const
+{
+	auto offset = src.begin() + token.getIndex();
+	return std::wstring(offset, offset + token.getLength());
+}
+
+bool Source::match(Token token, std::wstring_view value) const
+{
+	return src.compare(token.getIndex(), token.getLength(), value) == 0;
 }
 
 SourceLocation::SourceLocation(const Source& source, Token at)

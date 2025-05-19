@@ -10,9 +10,7 @@ namespace cap
 class Builtin : public Source
 {
 public:
-	wchar_t operator[](size_t index) const override;
-	std::wstring getString(cap::Token token) const override;
-	bool match(cap::Token token, std::wstring_view value) const override;
+	Builtin();
 
 	void doCaching();
 
