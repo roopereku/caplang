@@ -159,3 +159,24 @@ TEST(ErrorTests, UnexpectedReturn)
 		}
 	)SRC", L"Cannot return here", true);
 }
+
+TEST(ErrorTests, MismatchingReturnType)
+{
+	ErrorTester tester;
+
+	tester.reportsError(LR"SRC(
+		func foo() -> int64
+		{
+			return "someString"
+		}
+	)SRC", L"Incompatible return type", true);
+
+	tester.reportsError(LR"SRC(
+		func foo()
+		{
+			return "someString"
+			return 10
+		}
+	)SRC", L"Incompatible return type", true);
+
+}

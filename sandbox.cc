@@ -183,16 +183,12 @@ int main()
 	Sandbox client;
 	cap::Source entry(LR"SRC(
 
-		func foo(a = int32, b = string) -> int64
+		func foo(a = int64, b = string)
 		{
-			let x1 = a + b
-			let x2 = x1 ** 5
-
-			// TODO: Fix this not erroring?
-			let a = "no"
-
-			return 0
+			return a
 		}
+
+		let bar = foo(1, "")
 
 
 	)SRC");

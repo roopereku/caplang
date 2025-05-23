@@ -14,10 +14,12 @@ public:
 
 	void doCaching();
 
+	std::shared_ptr <TypeDefinition> getVoidType() const;
 	std::shared_ptr <TypeDefinition> getDefaultIntegerType() const;
 	std::shared_ptr <TypeDefinition> getStringType() const;
 
 private:
+	std::weak_ptr <TypeDefinition> voidType;
 	std::weak_ptr <TypeDefinition> defaultIntegerType;
 	std::weak_ptr <TypeDefinition> stringType;
 };

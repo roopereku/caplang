@@ -21,6 +21,7 @@ protected:
 	Result onBinaryOperator(std::shared_ptr <BinaryOperator> node) override;
 	Result onBracketOperator(std::shared_ptr <BracketOperator> node) override;
 	Result onValue(std::shared_ptr <Value> node) override;
+	Result onReturn(std::shared_ptr <Return> node) override;
 
 private:
 	struct ResolverContext

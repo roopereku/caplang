@@ -48,8 +48,6 @@ public:
 	const char* getTypeString() const override;
 
 private:
-	std::pair <bool, bool> isCompatible(const TypeContext& selfCtx, const TypeContext& otherCtx) const;
-
 	// TODO: Function should be the one holding the variable root.
 	std::shared_ptr <Variable::Root> parameters;
 	std::shared_ptr <Expression::Root> returnType;

@@ -75,3 +75,36 @@ TEST(ValidationTests, AccessOperatorResultType)
 			Value(L"a", L"Foo.Bar.a") > L"int64"
 	});
 }
+
+TEST(ValidationTests, InferredReturnType)
+{
+	ValidationTester tester;
+
+	tester.setup(LR"SRC(
+		func returnInt()
+		{
+			return 10
+		}
+
+		func returnString()
+		{
+			return "test"
+		}
+	)SRC");
+
+	tester.test(L"let a = returnInt()",
+	{
+		LocalVariable(L"a"),
+		cap::BracketOperator::Type::Call > L"int64",
+			Value(L"returnInt"),
+			Expression()
+	});
+
+	tester.test(L"let b = returnString()",
+	{
+		LocalVariable(L"b"),
+		cap::BracketOperator::Type::Call > L"string",
+			Value(L"returnString"),
+			Expression()
+	});
+}

@@ -13,6 +13,18 @@ TypeContext::TypeContext() : TypeContext(nullptr)
 {
 }
 
+bool TypeContext::isCompatible(const TypeContext& other) const
+{
+	// FIXME: Just checking type equality isn't sufficient.
+	return isIdentical(other);
+}
+
+bool TypeContext::isIdentical(const TypeContext& other) const
+{
+	// TODO: Account for modifiers such as mutability.
+	return getReferenced() == other.getReferenced();
+}
+
 std::shared_ptr <TypeDefinition> TypeContext::getReferenced() const
 {
 	return referenced.expired() ? nullptr : referenced.lock();

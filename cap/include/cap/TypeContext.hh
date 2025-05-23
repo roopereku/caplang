@@ -17,6 +17,18 @@ public:
 	TypeContext(std::shared_ptr <TypeDefinition> referenced);
 	TypeContext();
 
+	/// Determines whether this type context is compatible with another.
+	///
+	/// \param other The type context to compare against.
+	/// \return True if compatible.
+	bool isCompatible(const TypeContext& other) const;
+
+	/// Determines whether this type context is identical with another.
+	///
+	/// \param other The type context to compare against.
+	/// \return True if identical.
+	bool isIdentical(const TypeContext& other) const;
+
 	std::shared_ptr <TypeDefinition> getReferenced() const;
 	std::wstring toString() const;
 

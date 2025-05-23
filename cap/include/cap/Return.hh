@@ -10,6 +10,12 @@ namespace cap
 class Return : public Statement
 {
 public:
+	enum class FromType
+	{
+		Function,
+		None
+	};
+
 	Return();
 
 	/// Creates the return expression and delegates the token forward.
@@ -35,10 +41,21 @@ public:
 	///
 	/// \return The node that is returned from.
 	std::shared_ptr <Node> getReturnedFrom() const;
-	
+
+	/// Tries to update the return type of what's being returned from.
+	///
+	/// \param ctx The context to use to log an error upon a failure.
+	/// \return True on success.
+	bool tryUpdatingReturnType(cap::ParserContext& ctx);
+
 	const char* getTypeString() const override;
 
 private:
+	bool findReturnedFrom();
+
+	std::weak_ptr <Node> returnedFrom;
+	FromType fromType = FromType::None;
+
 	std::shared_ptr <Expression::Root> expression;
 };
 

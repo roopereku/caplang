@@ -8,6 +8,10 @@ namespace cap
 
 // TODO: Indicate type size somehow. Maybe attributes?
 Builtin::Builtin() : Source(LR"SRC(
+	type void
+	{
+	}
+
 	type int8
 	{
 	}
@@ -43,7 +47,12 @@ void Builtin::doCaching()
 	assert(getGlobal());
 	for(auto decl : getGlobal()->declarations)
 	{
-		if(decl->getName() == L"int64")
+		if(decl->getName() == L"void")
+		{
+			voidType = std::static_pointer_cast <TypeDefinition> (decl);
+		}
+
+		else if(decl->getName() == L"int64")
 		{
 			defaultIntegerType = std::static_pointer_cast <TypeDefinition> (decl);
 		}
@@ -53,6 +62,12 @@ void Builtin::doCaching()
 			stringType = std::static_pointer_cast <TypeDefinition> (decl);
 		}
 	}
+}
+
+std::shared_ptr <TypeDefinition> Builtin::getVoidType() const
+{
+	assert(!voidType.expired());
+	return voidType.lock();
 }
 
 std::shared_ptr <TypeDefinition> Builtin::getDefaultIntegerType() const

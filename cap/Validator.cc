@@ -7,6 +7,7 @@
 #include <cap/BracketOperator.hh>
 #include <cap/Value.hh>
 #include <cap/Variable.hh>
+#include <cap/Return.hh>
 
 #include <cassert>
 
@@ -232,6 +233,21 @@ Traverser::Result Validator::onValue(std::shared_ptr <Value> node)
 				assert("TODO: No matching type for literal" && false);
 			}
 		}
+	}
+
+	return Result::Exit;
+}
+
+Traverser::Result Validator::onReturn(std::shared_ptr <Return> node)
+{
+	if(!traverseExpression(node->getExpression()))
+	{
+		return Result::Stop;
+	}
+
+	if(!node->tryUpdatingReturnType(ctx))
+	{
+		return Result::Stop;
 	}
 
 	return Result::Exit;

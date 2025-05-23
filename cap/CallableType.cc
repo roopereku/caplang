@@ -49,8 +49,9 @@ std::pair <bool, size_t> CallableType::matchParameters(ArgumentAccessor&& argume
 			return { false, 0 };
 		}
 
-		// Are the current parameters compatible with each other?
-		auto [compatible, identical] = isCompatible(selfCurrent->getResultType(), otherCurrent->getResultType());
+		bool identical = selfCurrent->getResultType().isIdentical(otherCurrent->getResultType());
+		bool compatible = selfCurrent->getResultType().isCompatible(otherCurrent->getResultType());
+
 		if(!compatible)
 		{
 			return { false, 0 };
@@ -61,20 +62,6 @@ std::pair <bool, size_t> CallableType::matchParameters(ArgumentAccessor&& argume
 
 	// If other still has something, the parameter counts differ.
 	return { arguments.getNext() == nullptr, unidentical };
-}
-
-std::pair <bool, bool> CallableType::isCompatible(const TypeContext& selfCtx, const TypeContext& otherCtx) const
-{
-	auto ref1 = selfCtx.getReferenced();
-	auto ref2 = otherCtx.getReferenced();
-
-	assert(ref1);
-	assert(ref2);
-
-	// TODO: Instead of just checking for equality, return true if the types are compatible.
-	// TODO: Check for other modifiers in the type context.
-	bool identical = ref1 == ref2;
-	return { identical, identical };
 }
 
 bool CallableType::validate(Validator& validator)
