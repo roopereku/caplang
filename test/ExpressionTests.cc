@@ -196,10 +196,13 @@ TEST(ExpressionTests, ExpressionEnds)
 {
 	ExpressionTester tester;
 
-	// Test that expressions end at a newline.
+	// Test that expressions end at the last non-comment token.
 	tester.test(LR"SRC(
-		5 * 10 + 20
-		a / b > 10 == true
+		5 * 10 + /* :-) */ 20 /* Ends
+
+		here */
+
+		a / b > 10 == true   // Comment has no effect
 		c = a * b**10
 	)SRC",
 	{

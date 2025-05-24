@@ -113,6 +113,33 @@ bool Token::isLastOfLine(cap::ParserContext& ctx)
 			return true;
 		}
 
+		// Check if a comment comes after this token.
+		else if(ctx.source[i] == '/')
+		{
+			size_t temp = i;
+			bool multiline;
+			bool lineChanged;
+			parseComment(ctx, temp, multiline, lineChanged);
+
+			if(temp > i)
+			{
+				// If a comment after the token consumes the rest of the line,
+				// this token is the last thing we care about on the current line.
+				if(!multiline || lineChanged)
+				{
+					return true;
+				}
+
+				// Skip over the comment if there's something after it.
+				i = temp;
+			}
+
+			else
+			{
+				break;
+			}
+		}
+
 		else if(!isspace(ctx.source[i]))
 		{
 			break;
@@ -294,6 +321,13 @@ Token::ParseResult Token::parseOperator(ParserContext& ctx, size_t& i)
 
 Token::ParseResult Token::parseComment(ParserContext& ctx, size_t& i)
 {
+	bool multiline;
+	bool lineChanged;
+	return parseComment(static_cast <cap::ParserContext&> (ctx), i, multiline, lineChanged);
+}
+
+Token::ParseResult Token::parseComment(cap::ParserContext& ctx, size_t& i, bool& isMultiline, bool& lineChanged)
+{
 	if(ctx.source[i] == '/')
 	{
 		i++;
@@ -303,6 +337,8 @@ Token::ParseResult Token::parseComment(ParserContext& ctx, size_t& i)
 			// Single line comment.
 			case '/':
 			{
+				isMultiline = false;
+
 				// TODO: Handle windows linebreaks.
 				while(ctx.source[i] != '\n' && ctx.source[i] != 0)
 				{
@@ -315,15 +351,27 @@ Token::ParseResult Token::parseComment(ParserContext& ctx, size_t& i)
 			// Block comment.
 			case '*':
 			{
-				// TODO: If source ever contains std::wstring, use std::wstring::find?
+				isMultiline = true;
 
 				std::wstring_view toMatch(L"*/");
 				size_t current = 0;
 
 				for(++i; current < toMatch.length() && ctx.source[i] != 0; i++)
 				{
-					// For each matching character, move on to the next character or reset.
-					current = (ctx.source[i] == toMatch[current]) ? current + 1 : 0;
+					// If a character matches, move on to the next one.
+					if(ctx.source[i] == toMatch[current])
+					{
+						current++;
+						continue;
+					}
+
+					// TODO: Handle windows linebreaks.
+					else if(ctx.source[i] == '\n')
+					{
+						lineChanged = true;
+					}
+
+					current = 0;
 				}
 
 				// Unterminated multiline comment.

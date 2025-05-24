@@ -185,7 +185,7 @@ int main()
 
 		func x()
 		{
-			return
+			return // nonii
 			let a = 0
 		}
 

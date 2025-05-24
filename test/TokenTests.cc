@@ -250,17 +250,27 @@ TEST(TokenTests, TestString)
 TEST(TokenTests, TestLineChangeDetection)
 {
 	TokenTester test;
-	test.source += L"a b\nc\n\n\nd e";
+	test.source += L"a b\nc\n\n\nd e // comment\n\n f  /* not last */ g \n\n\n\n x /";
 
-	test.current = Token::parseFirst(test.ctx);
+	test.current = Token::parseFirst(test.ctx); // a
 	ASSERT_FALSE(test.current.isLastOfLine(test.ctx));
-	test.current = Token::parseNext(test.ctx, test.current);
+	test.current = Token::parseNext(test.ctx, test.current); // b
 	ASSERT_TRUE(test.current.isLastOfLine(test.ctx));
-	test.current = Token::parseNext(test.ctx, test.current);
+	test.current = Token::parseNext(test.ctx, test.current); // c
 	ASSERT_TRUE(test.current.isLastOfLine(test.ctx));
-	test.current = Token::parseNext(test.ctx, test.current);
+	test.current = Token::parseNext(test.ctx, test.current); // d
 	ASSERT_FALSE(test.current.isLastOfLine(test.ctx));
-	test.current = Token::parseNext(test.ctx, test.current);
+	test.current = Token::parseNext(test.ctx, test.current); // e
+	ASSERT_TRUE(test.current.isLastOfLine(test.ctx));
+	test.current = Token::parseNext(test.ctx, test.current); // "comment"
+	test.current = Token::parseNext(test.ctx, test.current); // f
+	ASSERT_FALSE(test.current.isLastOfLine(test.ctx));
+	test.current = Token::parseNext(test.ctx, test.current); // "not last"
+	test.current = Token::parseNext(test.ctx, test.current); // g
+	ASSERT_TRUE(test.current.isLastOfLine(test.ctx));
+	test.current = Token::parseNext(test.ctx, test.current); // x
+	ASSERT_FALSE(test.current.isLastOfLine(test.ctx));
+	test.current = Token::parseNext(test.ctx, test.current); // /
 	ASSERT_TRUE(test.current.isLastOfLine(test.ctx));
 }
 
