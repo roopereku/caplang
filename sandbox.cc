@@ -183,13 +183,11 @@ int main()
 	Sandbox client;
 	cap::Source entry(LR"SRC(
 
-		func foo(a = int64, b = string)
+		func x()
 		{
-			return a
+			return
+			let a = 0
 		}
-
-		let bar = foo(1, "")
-
 
 	)SRC");
 

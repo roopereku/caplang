@@ -85,6 +85,10 @@ TEST(ErrorTests, InvalidDeclaration)
 
 	tester.reportsError(L"let a", L"Expected '='");
 	tester.reportsError(L"let", L"Expected a variable");
+
+	// TODO: Should this same logic apply to functions and types where
+	// the name has to be on the same line as the declarator.
+	tester.reportsError(L"let\na = 10", L"Expected a variable");
 }
 
 TEST(ErrorTests, DuplicateIdentifier)
@@ -175,6 +179,21 @@ TEST(ErrorTests, MismatchingReturnType)
 		func foo()
 		{
 			return "someString"
+			return 10
+		}
+	)SRC", L"Incompatible return type", true);
+
+	tester.reportsError(LR"SRC(
+		func foo()
+		{
+			return
+			return 10
+		}
+	)SRC", L"Incompatible return type", true);
+
+	tester.reportsError(LR"SRC(
+		func foo() -> void
+		{
 			return 10
 		}
 	)SRC", L"Incompatible return type", true);

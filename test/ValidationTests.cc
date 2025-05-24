@@ -90,21 +90,34 @@ TEST(ValidationTests, InferredReturnType)
 		{
 			return "test"
 		}
+
+		func returnVoid()
+		{
+			return
+		}
 	)SRC");
 
 	tester.test(L"let a = returnInt()",
 	{
 		LocalVariable(L"a"),
-		cap::BracketOperator::Type::Call > L"int64",
-			Value(L"returnInt"),
-			Expression()
+			cap::BracketOperator::Type::Call > L"int64",
+				Value(L"returnInt"),
+				Expression()
 	});
 
 	tester.test(L"let b = returnString()",
 	{
 		LocalVariable(L"b"),
-		cap::BracketOperator::Type::Call > L"string",
-			Value(L"returnString"),
-			Expression()
+			cap::BracketOperator::Type::Call > L"string",
+				Value(L"returnString"),
+				Expression()
+	});
+
+	tester.test(L"returnVoid()",
+	{
+		Expression(),
+			cap::BracketOperator::Type::Call > L"void",
+				Value(L"returnVoid"),
+				Expression()
 	});
 }

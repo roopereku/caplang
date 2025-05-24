@@ -16,17 +16,6 @@ Return::Return()
 
 std::weak_ptr <Node> Return::handleToken(Node::ParserContext& ctx, Token& token)
 {
-	assert(returnedFrom.expired());
-	if(!findReturnedFrom())
-	{
-		SourceLocation location(ctx.source, getToken());
-		ctx.client.sourceError(location, "Cannot return here");
-		return {};
-	}
-
-	assert(!expression);
-	expression = std::make_shared <Expression::Root> ();
-	adopt(expression);
 	return expression->handleToken(ctx, token);
 }
 
@@ -89,6 +78,25 @@ bool Return::tryUpdatingReturnType(cap::ParserContext& ctx)
 const char* Return::getTypeString() const
 {
 	return "Return";
+}
+
+bool Return::onInitialize(cap::ParserContext& ctx, bool)
+{
+	assert(returnedFrom.expired());
+	if(!findReturnedFrom())
+	{
+		SourceLocation location(ctx.source, getToken());
+		ctx.client.sourceError(location, "Cannot return here");
+		return false;
+	}
+
+	// Initialize the expression here to make the assumption
+	// of its existence valid.
+	assert(!expression);
+	expression = std::make_shared <Expression::Root> ();
+	adopt(expression);
+
+	return true;
 }
 
 bool Return::findReturnedFrom()

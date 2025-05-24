@@ -74,6 +74,12 @@ public:
 
 	const char* getTypeString() const override;
 
+protected:
+	/// Makes sure that something will be declared when not declaring parameters.
+	bool onInitialize(cap::ParserContext& ctx, bool expectsTokens) override;
+
+	bool requiresDeclaration(cap::ParserContext& ctx);
+
 private:
 	std::shared_ptr <Expression::Root> initializer;
 	Variable::Type type;

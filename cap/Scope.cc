@@ -38,12 +38,14 @@ std::weak_ptr <Node> Scope::handleToken(ParserContext& ctx, Token& token)
 	else if(ctx.source.match(token, L"let"))
 	{
 		// TODO: Do fields for class members?
-		return appendNested(std::make_shared <Variable::Root> (Variable::Type::Local), token);
+		auto varDecl = appendNested(std::make_shared <Variable::Root> (Variable::Type::Local), token);
+		return std::static_pointer_cast <Statement> (varDecl.lock())->getContinuation(ctx);
 	}
 
 	else if(ctx.source.match(token, L"return"))
 	{
-		return appendNested(std::make_shared <Return> (), token);
+		auto ret = appendNested(std::make_shared <Return> (), token);
+		return std::static_pointer_cast <Statement> (ret.lock())->getContinuation(ctx);
 	}
 
 	else if(token.isOpeningBracket(ctx, '{'))

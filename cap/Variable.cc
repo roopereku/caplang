@@ -91,24 +91,9 @@ std::weak_ptr <Node> Variable::Root::invokedNodeExited(Node::ParserContext& ctx,
 {
 	assert(ctx.exitedFrom == initializer);
 
-	if(!initializer->getFirst())
+	if(!initializer->getFirst() && requiresDeclaration(ctx))
 	{
-		std::string_view error;
-		switch(type)
-		{
-			case cap::Variable::Type::Generic: error = "Expected a generic"; break;
-			case cap::Variable::Type::Local: error = "Expected a variable"; break;
-
-			// Allow parameters without an initializer to support empty parentheses.
-			case cap::Variable::Type::Parameter: break;
-		}
-
-		if(!error.empty())
-		{
-			SourceLocation location(ctx.source, getToken());
-			ctx.client.sourceError(location, error.data());
-			return {};
-		}
+		return {};
 	}
 
 	// TODO: Initializer instead?
@@ -167,6 +152,34 @@ Variable::Type Variable::Root::getType() const
 const char* Variable::Root::getTypeString() const
 {
 	return "Variable root";
+}
+
+bool Variable::Root::onInitialize(cap::ParserContext& ctx, bool expectsToken)
+{
+	// The variable root is valid if a token will follow or a declaration is not required.
+	return expectsToken || !requiresDeclaration(ctx);
+}
+
+bool Variable::Root::requiresDeclaration(cap::ParserContext& ctx)
+{
+	std::string_view error;
+	switch(type)
+	{
+		case cap::Variable::Type::Generic: error = "Expected a generic"; break;
+		case cap::Variable::Type::Local: error = "Expected a variable"; break;
+
+		// Allow parameters without an initializer to support empty parentheses.
+		case cap::Variable::Type::Parameter: break;
+	}
+
+	if(!error.empty())
+	{
+		SourceLocation location(ctx.source, getToken());
+		ctx.client.sourceError(location, error.data());
+		return true;
+	}
+
+	return false;
 }
 
 }

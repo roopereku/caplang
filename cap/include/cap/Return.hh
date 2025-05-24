@@ -50,6 +50,10 @@ public:
 
 	const char* getTypeString() const override;
 
+protected:
+	/// Initialized returnedFrom and makes sure that returning is valid.
+	bool onInitialize(cap::ParserContext& ctx, bool expectsTokens) override;
+
 private:
 	bool findReturnedFrom();
 

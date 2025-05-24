@@ -124,4 +124,15 @@ TEST(ParserTests, ReturnStatement)
 						Value(L"0")
 	});
 
+	tester.test(L"func x()\n{\nreturn\n1 + 2\n}\n",
+	{
+		Function(L"x"),
+			Scope(),
+				Return(),
+					Expression(),
+				Expression(),
+					cap::BinaryOperator::Type::Add,
+						Value(L"1"),
+						Value(L"2")
+	});
 }
