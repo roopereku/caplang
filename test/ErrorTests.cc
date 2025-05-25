@@ -67,6 +67,7 @@ TEST(ErrorTests, ExpectedIdentifier)
 
 	tester.reportsError(L"let 10 = c", L"Expected an identifier");
 	tester.reportsError(L"let 0xFF = 10", L"Expected an identifier");
+	tester.reportsError(L"let *a = 10", L"Expected an identifier");
 }
 
 TEST(ErrorTests, InvalidDeclaration)
