@@ -14,6 +14,7 @@ class Function;
 class ClassType;
 class CallableType;
 class BinaryOperator;
+class UnaryOperator;
 class BracketOperator;
 class TypeDefinition;
 class ModifierRoot;
@@ -143,6 +144,12 @@ protected:
 	/// \param node The node representing a binary operator.
 	/// \return Continue if the traversal should continue to left and right nodes.
 	virtual Result onBinaryOperator(std::shared_ptr <BinaryOperator> node);
+
+	/// Invoked upon hitting an unary operator in an expression.
+	///
+	/// \param node The node representing an unary operator.
+	/// \return Continue if the traversal should continue to the inner expression.
+	virtual Result onUnaryOperator(std::shared_ptr <UnaryOperator> node);
 
 	/// Invoked upon hitting a bracket operator in an expression.
 	///

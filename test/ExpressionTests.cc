@@ -78,6 +78,98 @@ TEST(ExpressionTests, BinaryOperators)
 	});
 }
 
+TEST(ExpressionTests, UnaryOperators)
+{
+	ExpressionTester tester;
+
+	tester.test(L"-a",
+	{
+		Expression(),
+			cap::UnaryOperator::Type::Negate,
+				Value(L"a")
+	});
+
+	tester.test(L"~(1)",
+	{
+		Expression(),
+			cap::UnaryOperator::Type::BitwiseNot,
+				Expression(),
+					Value(L"1")
+	});
+
+	tester.test(L"!(1)++",
+	{
+		Expression(),
+			cap::UnaryOperator::Type::LogicalNot,
+				cap::UnaryOperator::Type::PostIncrement,
+					Expression(),
+						Value(L"1")
+	});
+
+	tester.test(L"-10 * 80++ - 100",
+	{
+		Expression(),
+			cap::BinaryOperator::Type::Subtract,
+				cap::BinaryOperator::Type::Multiply,
+					cap::UnaryOperator::Type::Negate,
+							Value(L"10"),
+					cap::UnaryOperator::Type::PostIncrement,
+							Value(L"80"),
+				Value(L"100")
+	});
+
+	tester.test(L"- ++10-- / ~ ~(0xFF--)++",
+	{
+		Expression(),
+			cap::BinaryOperator::Type::Divide,
+				cap::UnaryOperator::Type::Negate,
+					cap::UnaryOperator::Type::PreIncrement,
+						cap::UnaryOperator::Type::PostDecrement,
+							Value(L"10"),
+				cap::UnaryOperator::Type::BitwiseNot,
+					cap::UnaryOperator::Type::BitwiseNot,
+						cap::UnaryOperator::Type::PostIncrement,
+							Expression(),
+								cap::UnaryOperator::Type::PostDecrement,
+									Value(L"0xFF")
+	});
+
+	tester.test(L"-(*(~1 << --0xFF))",
+	{
+		Expression(),
+			cap::UnaryOperator::Type::Negate,
+				Expression(),
+					cap::UnaryOperator::Type::ParseTime,
+						Expression(),
+							cap::BinaryOperator::Type::BitwiseShiftLeft,
+								cap::UnaryOperator::Type::BitwiseNot,
+									Value(L"1"),
+								cap::UnaryOperator::Type::PreDecrement,
+									Value(L"0xFF"),
+	});
+
+	tester.test(L"a++ * 20",
+	{
+		Expression(),
+			cap::BinaryOperator::Type::Multiply,
+				cap::UnaryOperator::Type::PostIncrement,
+					Value(L"a"),
+				Value(L"20")
+	});
+
+	tester.test(L"* ~foo()++",
+	{
+		Expression(),
+			cap::UnaryOperator::Type::ParseTime,
+				cap::UnaryOperator::Type::BitwiseNot,
+					cap::UnaryOperator::Type::PostIncrement,
+						cap::BracketOperator::Type::Call,
+							Value(L"foo"),
+							Expression()
+	});
+
+}
+
 TEST(ExpressionTests, BracketOperators)
 {
 	ExpressionTester tester;
@@ -203,6 +295,8 @@ TEST(ExpressionTests, ExpressionEnds)
 		here */
 
 		a / b > 10 == true   // Comment has no effect
+		x = a++
+		x = b-- // No effect from comment
 		c = a * b**10
 	)SRC",
 	{
@@ -221,6 +315,18 @@ TEST(ExpressionTests, ExpressionEnds)
 						Value(L"b"),
 					Value(L"10"),
 				Value(L"true"),
+
+		Expression(),
+			cap::BinaryOperator::Type::Assign,
+				Value(L"x"),
+				cap::UnaryOperator::Type::PostIncrement,
+					Value(L"a"),
+
+		Expression(),
+			cap::BinaryOperator::Type::Assign,
+				Value(L"x"),
+				cap::UnaryOperator::Type::PostDecrement,
+					Value(L"b"),
 
 		Expression(),
 			cap::BinaryOperator::Type::Assign,

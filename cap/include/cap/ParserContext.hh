@@ -5,7 +5,6 @@
 #include <cap/Variable.hh>
 
 #include <stack>
-#include <optional>
 
 namespace cap
 {

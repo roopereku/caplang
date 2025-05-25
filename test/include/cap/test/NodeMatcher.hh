@@ -4,6 +4,7 @@
 #include <cap/Node.hh>
 #include <cap/Traverser.hh>
 #include <cap/BinaryOperator.hh>
+#include <cap/UnaryOperator.hh>
 #include <cap/BracketOperator.hh>
 #include <cap/Variable.hh>
 #include <cap/ModifierRoot.hh>
@@ -19,6 +20,7 @@ public:
 	ExpectedNode(std::string_view nodeType, std::wstring&& context);
 	ExpectedNode(std::string_view nodeType);
 	ExpectedNode(cap::BinaryOperator::Type type);
+	ExpectedNode(cap::UnaryOperator::Type type);
 	ExpectedNode(cap::BracketOperator::Type type);
 	ExpectedNode(cap::Variable::Type type);
 	ExpectedNode(cap::ModifierRoot::Type type);
@@ -51,6 +53,7 @@ public:
 	Result onVariable(std::shared_ptr <cap::Variable> node) override;
 	Result onModifierRoot(std::shared_ptr <cap::ModifierRoot> node) override;
 	Result onBinaryOperator(std::shared_ptr <cap::BinaryOperator> node) override;
+	Result onUnaryOperator(std::shared_ptr <cap::UnaryOperator> node) override;
 	Result onBracketOperator(std::shared_ptr <cap::BracketOperator> node) override;
 	Result onValue(std::shared_ptr <cap::Value> node) override;
 	Result onReturn(std::shared_ptr <cap::Return> node) override;

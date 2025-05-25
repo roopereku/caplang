@@ -2,6 +2,7 @@
 #include <cap/ParserContext.hh>
 #include <cap/Variable.hh>
 #include <cap/BinaryOperator.hh>
+#include <cap/UnaryOperator.hh>
 #include <cap/BracketOperator.hh>
 #include <cap/Declaration.hh>
 #include <cap/Source.hh>
@@ -38,12 +39,25 @@ std::weak_ptr <Node> Expression::handleToken(Node::ParserContext& ctx, Token& to
 
 	std::weak_ptr <Node> newCurrent = weak_from_this();
 	std::shared_ptr <Expression> newNode;
+
 	bool complete = isComplete();
 
 	if(token.getType() == Token::Type::Operator)
 	{
-		// TODO: If the current node is a binary operator, expect an unary operator.
-		newNode = BinaryOperator::create(ctx, token);
+		if(complete)
+		{
+			newNode = UnaryOperator::createPostfix(ctx, token);
+
+			if(!newNode)
+			{
+				newNode = BinaryOperator::create(ctx, token);
+			}
+		}
+
+		else
+		{
+			newNode = UnaryOperator::createPrefix(ctx, token);
+		}
 	}
 	
 	else if(token.getType() == Token::Type::OpeningBracket)
@@ -114,6 +128,8 @@ std::weak_ptr <Node> Expression::handleToken(Node::ParserContext& ctx, Token& to
 	// to the parent expression until equal or lower precedence is found.
 	else
 	{
+		// TODO: Considering that newNode is set here, an optimization would be
+		// to pass it directly to the parent.
 		assert(!getParent().expired());
 		return getParent().lock()->handleToken(ctx, token);
 	}

@@ -5,6 +5,7 @@
 #include <cap/CallableType.hh>
 #include <cap/Expression.hh>
 #include <cap/BinaryOperator.hh>
+#include <cap/UnaryOperator.hh>
 #include <cap/BracketOperator.hh>
 #include <cap/Variable.hh>
 #include <cap/ModifierRoot.hh>
@@ -114,6 +115,12 @@ protected:
 		return Result::Continue;
 	}
 
+	Result onUnaryOperator(std::shared_ptr <cap::UnaryOperator> node) override
+	{
+		file << prefix() << node->getTypeString() << getResultType(node) << '\n';
+		return Result::Continue;
+	}
+
 	Result onBracketOperator(std::shared_ptr <cap::BracketOperator> node) override
 	{
 		file << prefix() << node->getTypeString() << getResultType(node) << '\n';
@@ -183,10 +190,14 @@ int main()
 	Sandbox client;
 	cap::Source entry(LR"SRC(
 
+		func foo()
+		{
+			return 10
+		}
+
 		func x()
 		{
-			return // nonii
-			let a = 0
+			* ~foo()++
 		}
 
 	)SRC");

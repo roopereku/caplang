@@ -3,6 +3,7 @@
 #include <cap/Function.hh>
 #include <cap/ClassType.hh>
 #include <cap/BracketOperator.hh>
+#include <cap/UnaryOperator.hh>
 #include <cap/Variable.hh>
 #include <cap/Value.hh>
 #include <cap/Return.hh>
@@ -26,6 +27,12 @@ ExpectedNode::ExpectedNode(cap::BinaryOperator::Type type)
 	: ExpectedNode(cap::BinaryOperator::getTypeString(type))
 {
 }
+
+ExpectedNode::ExpectedNode(cap::UnaryOperator::Type type)
+	: ExpectedNode(cap::UnaryOperator::getTypeString(type))
+{
+}
+
 
 ExpectedNode::ExpectedNode(cap::BracketOperator::Type type)
 	: ExpectedNode(cap::BracketOperator::getTypeString(type))
@@ -139,6 +146,14 @@ Traverser::Result NodeMatcher::onBinaryOperator(std::shared_ptr <cap::BinaryOper
 
 	EXPECT_TRUE(node->getLeft());
 	EXPECT_TRUE(node->getRight());
+
+	return Traverser::Result::Continue;
+}
+
+Traverser::Result NodeMatcher::onUnaryOperator(std::shared_ptr <cap::UnaryOperator> node)
+{
+	match(node);
+	EXPECT_TRUE(node->getExpression());
 
 	return Traverser::Result::Continue;
 }

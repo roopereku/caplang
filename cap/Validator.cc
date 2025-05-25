@@ -4,6 +4,7 @@
 #include <cap/Function.hh>
 #include <cap/ClassType.hh>
 #include <cap/BinaryOperator.hh>
+#include <cap/UnaryOperator.hh>
 #include <cap/BracketOperator.hh>
 #include <cap/Value.hh>
 #include <cap/Variable.hh>
@@ -150,6 +151,17 @@ Traverser::Result Validator::onBinaryOperator(std::shared_ptr <BinaryOperator> n
 		node->setResultType(node->getRight()->getResultType());
 	}
 
+	return Result::Exit;
+}
+
+Traverser::Result Validator::onUnaryOperator(std::shared_ptr <UnaryOperator> node)
+{
+	if(!traverseExpression(node->getExpression()))
+	{
+		return Result::Stop;
+	}
+
+	node->setResultType(node->getExpression()->getResultType());
 	return Result::Exit;
 }
 

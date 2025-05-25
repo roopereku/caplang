@@ -304,10 +304,10 @@ Token::ParseResult Token::parseIdentifier(ParserContext& ctx, size_t& i)
 
 Token::ParseResult Token::parseOperator(ParserContext& ctx, size_t& i)
 {
-	static std::array <wchar_t, 16> opChars
+	static std::array <wchar_t, 17> opChars
 	{
 		'+', '-', '*', '/', '%', '*',
-		'<', '>', '&', '|', '^',
+		'<', '>', '&', '|', '^', '~',
 		'=', '!', '.', ',', ':'
 	};
 
