@@ -12,6 +12,8 @@ class Validator : public Traverser
 public:
 	Validator(ParserContext& ctx);
 
+	ParserContext& getParserContext() const;
+
 protected:
 	void onNodeExited(std::shared_ptr <Node> node, Result result) override;
 	Result onFunction(std::shared_ptr <Function> node) override;

@@ -45,19 +45,18 @@ bool Return::tryUpdatingReturnType(cap::ParserContext& ctx)
 
 	// Ensure that a type context exists for the function return type.
 	auto signature = std::static_pointer_cast <Function> (from)->getSignature();
+	assert(signature->getReturnTypeRoot());
 
 	// If the returning expression doesn't exist, default to void.
 	auto& ret = expression->getFirst() ?
 		expression->getFirst()->getResultType() :
 		ctx.client.getBuiltin().getVoidType();
 
-	// If no return type exists for what's being returned from, initialize
+	// If no return type is set for what's being returned from, initialize
 	// to whatever this return statement wants to return.
-	if(!signature->getReturnTypeRoot())
+	if(!signature->getReturnTypeRoot()->getResultType().getReferenced())
 	{
-		signature->initializeReturnType();
 		signature->getReturnTypeRoot()->setResultType(ret);
-
 		return true;
 	}
 

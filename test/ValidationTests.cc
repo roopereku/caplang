@@ -95,6 +95,10 @@ TEST(ValidationTests, InferredReturnType)
 		{
 			return
 		}
+
+		func returnDefault()
+		{
+		}
 	)SRC");
 
 	tester.test(L"let a = returnInt()",
@@ -118,6 +122,14 @@ TEST(ValidationTests, InferredReturnType)
 		Expression(),
 			cap::BracketOperator::Type::Call > L"void",
 				Value(L"returnVoid"),
+				Expression()
+	});
+
+	tester.test(L"returnDefault()",
+	{
+		Expression(),
+			cap::BracketOperator::Type::Call > L"void",
+				Value(L"returnDefault"),
 				Expression()
 	});
 }

@@ -20,23 +20,27 @@ Validator::Validator(ParserContext& ctx)
 {
 }
 
+ParserContext& Validator::getParserContext() const
+{
+	return ctx;
+}
+
 void Validator::onNodeExited(std::shared_ptr <Node>, Result)
 {
 }
 
 Traverser::Result Validator::onFunction(std::shared_ptr <Function> node)
 {
-	if(!node->getSignature()->validate(*this))
-	{
-		return Result::Stop;
-	}
-
 	auto& decls = node->getParentDeclarationStorage();
+
+	// TODO: Might be a good idea to make sure that a function in a base class
+	// isn't shadowed if no override is specified.
 
 	// Functions only care about duplicate names or other function in the same scope.
 	for(auto decl : decls)
 	{
 		// Make sure that whatever is being matched against is validated.
+		// NOTE: The validation for the signature and body are done here.
 		if(!decl->validate(*this))
 		{
 			return Result::Stop;
@@ -68,11 +72,6 @@ Traverser::Result Validator::onFunction(std::shared_ptr <Function> node)
 				return Result::Stop;
 			}
 		}
-	}
-
-	if(!traverseScope(node->getBody()))
-	{
-		return Result::Stop;
 	}
 
 	return Result::Exit;

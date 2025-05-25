@@ -68,6 +68,11 @@ bool CallableType::validate(Validator& validator)
 {
 	if(!referredType.has_value())
 	{
+		if(!returnType)
+		{
+			initializeReturnType();
+		}
+
 		referredType = TypeContext(std::static_pointer_cast <CallableType> (shared_from_this()));
 		referredType.value().isTypeName = true;
 

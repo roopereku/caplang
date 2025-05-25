@@ -192,12 +192,11 @@ int main()
 
 		func foo()
 		{
-			return 10
 		}
 
-		func x()
+		func test()
 		{
-			* ~foo()++
+			foo()
 		}
 
 	)SRC");

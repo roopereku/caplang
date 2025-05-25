@@ -130,6 +130,14 @@ bool Function::validate(Validator& validator)
 		{
 			return false;
 		}
+
+		// If no return type still exists, default to void.
+		auto returnType = signature->getReturnTypeRoot();
+		if(!returnType->getResultType().getReferenced())
+		{
+			auto voidType = validator.getParserContext().client.getBuiltin().getVoidType();
+			returnType->setResultType(voidType);
+		}
 	}
 
 	return true;
