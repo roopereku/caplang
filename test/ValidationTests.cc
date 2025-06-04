@@ -61,18 +61,33 @@ TEST(ValidationTests, AccessOperatorResultType)
 			type Bar
 			{
 				let a = 10
+
+				func nested(x = int64, y = int64)
+				{
+					return "test"
+				}
 			}
 		}
 	)SRC");
 
 	tester.test(L"let a = Foo.Bar.a",
 	{
-		LocalVariable(L"a"),
+		LocalVariable(L"a") > L"int64",
 		cap::BinaryOperator::Type::Access > L"int64",
 			cap::BinaryOperator::Type::Access > L"Foo.Bar",
 				Value(L"Foo") > L"Foo",
 				Value(L"Bar") > L"Foo.Bar",
 			Value(L"a", L"Foo.Bar.a") > L"int64"
+	});
+
+	tester.test(L"let b = Foo.Bar.nested",
+	{
+		LocalVariable(L"b") > L"func(int64, int64) -> string",
+		cap::BinaryOperator::Type::Access > L"func(int64, int64) -> string",
+			cap::BinaryOperator::Type::Access > L"Foo.Bar",
+				Value(L"Foo") > L"Foo",
+				Value(L"Bar") > L"Foo.Bar",
+			Value(L"nested", L"Foo.Bar.nested") > L"func(int64, int64) -> string"
 	});
 }
 
@@ -105,7 +120,7 @@ TEST(ValidationTests, InferredReturnType)
 	{
 		LocalVariable(L"a"),
 			cap::BracketOperator::Type::Call > L"int64",
-				Value(L"returnInt"),
+				Value(L"returnInt") > L"func() -> int64",
 				Expression()
 	});
 
@@ -113,7 +128,7 @@ TEST(ValidationTests, InferredReturnType)
 	{
 		LocalVariable(L"b"),
 			cap::BracketOperator::Type::Call > L"string",
-				Value(L"returnString"),
+				Value(L"returnString") > L"func() -> string",
 				Expression()
 	});
 
@@ -121,7 +136,7 @@ TEST(ValidationTests, InferredReturnType)
 	{
 		Expression(),
 			cap::BracketOperator::Type::Call > L"void",
-				Value(L"returnVoid"),
+				Value(L"returnVoid") > L"func() -> void",
 				Expression()
 	});
 
@@ -129,7 +144,7 @@ TEST(ValidationTests, InferredReturnType)
 	{
 		Expression(),
 			cap::BracketOperator::Type::Call > L"void",
-				Value(L"returnDefault"),
+				Value(L"returnDefault") > L"func() -> void",
 				Expression()
 	});
 }

@@ -173,14 +173,14 @@ Expression::Type Expression::getType()
 	return type;
 }
 
-const TypeContext& Expression::getResultType() const
+const std::optional <TypeContext>& Expression::getResultType() const
 {
 	return resultType;
 }
 
 void Expression::setResultType(const TypeContext& ctx)
 {
-	resultType = ctx;
+	resultType.emplace(ctx);
 }
 
 Expression::Expression(Type type)
@@ -190,8 +190,8 @@ Expression::Expression(Type type)
 
 std::weak_ptr <Node> Expression::exitExpression(ParserContext& ctx, Token& token)
 {
-	// If this closing bracket ends all subexpressions and is the final token
-	// on a line, recursively break out of the expression.
+	// If we're not inside a subexpression and there's no more relevant tokens
+	// on the current line, exit to a non-expression parent node.
 	bool recursive = ctx.subExpressionDepth == 0 && token.isLastOfLine(ctx);
 
 	auto exitedExpression = getExitedExpression(ctx, recursive);

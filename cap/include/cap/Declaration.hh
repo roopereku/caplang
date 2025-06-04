@@ -16,7 +16,7 @@ class Declaration : public Node
 public:
 	enum class Type
 	{
-		TypeDefinition,
+		Class,
 		Function,
 		Variable
 	};
@@ -35,8 +35,8 @@ public:
 
 	/// Gets the type referred to by this declaration.
 	///
-	/// \return The type referred to by this declaration.
-	const TypeContext& getReferredType() const;
+	/// \return The type referred to by this declaration if any.
+	const std::optional <TypeContext>& getReferredType() const;
 
 	/// Validates this declaration.
 	///

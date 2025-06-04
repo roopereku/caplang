@@ -53,9 +53,9 @@ Traverser::Result Validator::onFunction(std::shared_ptr <Function> node)
 			if(decl->getType() == Declaration::Type::Function)
 			{
 				auto function = std::static_pointer_cast <Function> (decl);
-				auto nodeParams = node->getSignature()->getParameterRoot();
+				auto nodeParams = node->getParameterRoot();
 
-				auto [compatible, unidentical] = function->getSignature()->matchParameters(ArgumentAccessor(nodeParams));
+				auto [compatible, unidentical] = function->matchParameters(ArgumentAccessor(nodeParams));
 				if(compatible && unidentical == 0)
 				{
 					// TODO: Give more context for the existing function?
@@ -98,7 +98,10 @@ Traverser::Result Validator::onExpressionRoot(std::shared_ptr <Expression::Root>
 			return Result::Stop;
 		}
 
-		node->setResultType(node->getFirst()->getResultType());
+		if(node->getFirst()->getResultType())
+		{
+			node->setResultType(*node->getFirst()->getResultType());
+		}
 	}
 
 	return Result::Exit;
@@ -125,8 +128,8 @@ Traverser::Result Validator::onBinaryOperator(std::shared_ptr <BinaryOperator> n
 	// the right node to consume.
 	if(node->getType() == BinaryOperator::Type::Access)
 	{
-		assert(node->getLeft()->getResultType().getReferenced());
-		resolverCtx.accessedFrom = node->getLeft()->getResultType();
+		assert(node->getLeft()->getResultType());
+		resolverCtx.accessedFrom.emplace(*node->getLeft()->getResultType());
 	}
 
 	if(!traverseExpression(node->getRight()))
@@ -134,20 +137,22 @@ Traverser::Result Validator::onBinaryOperator(std::shared_ptr <BinaryOperator> n
 		return Result::Stop;
 	}
 
-	resolverCtx = {};
+	resolverCtx.reset();
 
 	// Saving the result type doesn't make sense for commas.
 	if(node->getType() != BinaryOperator::Type::Comma)
 	{
+        assert(node->getRight()->getResultType());
+
 		// TODO: Forbid resetting of result type after initialization.
 		if(node->getType() == BinaryOperator::Type::Assign)
 		{
-			node->getLeft()->setResultType(node->getRight()->getResultType());
+			node->getLeft()->setResultType(*node->getRight()->getResultType());
 		}
 
 		// TODO: Check if there is a binary operator overload and set the result
 		// type based on that.
-		node->setResultType(node->getRight()->getResultType());
+		node->setResultType(*node->getRight()->getResultType());
 	}
 
 	return Result::Exit;
@@ -160,7 +165,8 @@ Traverser::Result Validator::onUnaryOperator(std::shared_ptr <UnaryOperator> nod
 		return Result::Stop;
 	}
 
-	node->setResultType(node->getExpression()->getResultType());
+    assert(node->getExpression()->getResultType());
+	node->setResultType(*node->getExpression()->getResultType());
 	return Result::Exit;
 }
 
@@ -196,16 +202,15 @@ Traverser::Result Validator::onBracketOperator(std::shared_ptr <BracketOperator>
 		return Result::Stop;
 	}
 
-	auto callable = node->getContext()->getResultType().getReferenced();
+	auto callable = node->getContext()->getResultType();
 	assert(callable);
-	assert(callable->getType() == TypeDefinition::Type::Callable);
+	assert(callable->referenced.getType() == TypeDefinition::Type::Callable);
 
 	// The call operator now results in the return type of the callable.
-	auto returnTypeRoot = std::static_pointer_cast <CallableType> (callable)->getReturnTypeRoot();
+	auto returnTypeRoot = static_cast <CallableType&> (callable->referenced).getReturnTypeRoot();
 	assert(returnTypeRoot);
-	node->setResultType(returnTypeRoot->getResultType());
-
-	assert(node->getResultType().getReferenced());
+	assert(returnTypeRoot->getResultType());
+	node->setResultType(*returnTypeRoot->getResultType());
 	return Result::Exit;
 }
 
@@ -266,22 +271,17 @@ Traverser::Result Validator::onReturn(std::shared_ptr <Return> node)
 
 Traverser::Result Validator::validateIdentifier(std::shared_ptr <Value> node, ResolverContext& resolve)
 {
-	auto parentFunction = node->getParentFunction();
-
 	Result result = Result::NotHandled;
-	auto accessContext = resolve.accessedFrom.getReferenced();
 
-	DBG_MESSAGE(ctx.client, "VALIDATE IDENTIFIER ", node->getValue());
-	if(accessContext)
+	if(resolve.accessedFrom)
 	{
-		DBG_MESSAGE(ctx.client, "HAS ACCESS CONTEXT IN ", node->getValue());
-		switch(resolve.accessedFrom.getReferenced()->getType())
+		switch(resolve.accessedFrom->referenced.getType())
 		{
 			case cap::TypeDefinition::Type::Class:
 			{
-				auto classType = std::static_pointer_cast <ClassType> (accessContext);
+                auto& classDecl = static_cast <ClassType&> (resolve.accessedFrom->referenced);
 
-				for(auto decl : classType->getBody()->declarations)
+				for(auto decl : classDecl.getBody()->declarations)
 				{
 					result = connectDeclaration(node, decl, resolve);
 					if(result != Result::Continue)
@@ -369,19 +369,19 @@ Traverser::Result Validator::connectDeclaration(std::shared_ptr <Value> node,
 	// Should parameters be matched as well?
 	if(resolve.parameters)
 	{
-		std::shared_ptr <CallableType> callable;
+        CallableType* callable = nullptr;
 
 		switch(decl->getType())
 		{
 			// Normal function calls.
 			case Declaration::Type::Function:
 			{
-				callable = std::static_pointer_cast <Function> (decl)->getSignature();
+				callable = std::static_pointer_cast <Function> (decl).get();
 				break;
 			}
 
 			// Constructor calls and type conversions.
-			case Declaration::Type::TypeDefinition:
+			case Declaration::Type::Class:
 			{
 				assert(false && "TODO: Find a constructor or a type conversion");
 				break;
@@ -405,6 +405,7 @@ Traverser::Result Validator::connectDeclaration(std::shared_ptr <Value> node,
 		if(compatible)
 		{
 			node->setReferred(decl);
+            node->updateResultType();
 			return Result::Exit;
 		}
 	}
@@ -412,6 +413,7 @@ Traverser::Result Validator::connectDeclaration(std::shared_ptr <Value> node,
 	else
 	{
 		node->setReferred(decl);
+        node->updateResultType();
 		return Result::Exit;
 	}
 

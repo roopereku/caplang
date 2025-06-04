@@ -26,18 +26,9 @@ Declaration::Type Declaration::getType()
 	return type;
 }
 
-const TypeContext& Declaration::getReferredType() const
+const std::optional <TypeContext>& Declaration::getReferredType() const
 {
-	// TODO: Should a declaration always have a referred type upon access?
-	// There seems to be none when making a name value refer to the declaration.
-
-	if(referredType.has_value())
-	{
-		return referredType.value();
-	}
-
-	static TypeContext empty;
-	return empty;
+	return referredType;
 }
 
 std::wstring Declaration::getLocation(wchar_t delimiter) const

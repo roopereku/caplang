@@ -11,7 +11,7 @@ namespace cap
 
 /// Function is a node representing a scope with a
 /// function signature.
-class Function : public Declaration
+class Function : public Declaration, public CallableType
 {
 public:
 	/// Constructs a function.
@@ -32,11 +32,6 @@ public:
 	/// \return This or the parent node.
 	std::weak_ptr <Node> invokedNodeExited(ParserContext& ctx, Token& token) override;
 
-	/// Gets the signature of this function.
-	///
-	/// \return The signature of this function.
-	std::shared_ptr <CallableType> getSignature() const;
-
 	/// Gets the function body.
 	///
 	/// \return The function body.
@@ -54,7 +49,6 @@ public:
 	DeclarationStorage parameters;
 
 private:
-	std::shared_ptr <CallableType> signature;
 	std::shared_ptr <Scope> body;
 };
 

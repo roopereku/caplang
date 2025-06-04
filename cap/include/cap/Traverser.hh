@@ -16,7 +16,6 @@ class CallableType;
 class BinaryOperator;
 class UnaryOperator;
 class BracketOperator;
-class TypeDefinition;
 class ModifierRoot;
 class Statement;
 class Return;
@@ -66,12 +65,6 @@ public:
 	/// \return False if the traversal was unsuccessful.
 	bool traverseDeclaration(std::shared_ptr <Declaration> node);
 
-	/// Performs depth first traversal on a type definition.
-	///
-	/// \param node The type definition to traverse.
-	/// \return False if the traversal was unsuccessful.
-	bool traverseTypeDefinition(std::shared_ptr <TypeDefinition> node);
-
 	/// Performs depth first traversal on a statement.
 	///
 	/// \param node The statement to traverse.
@@ -109,12 +102,6 @@ protected:
 	/// \param node The node representing a class type.
 	/// \return Continue if the traversal should continue to the nested nodes.
 	virtual Result onClassType(std::shared_ptr <ClassType> node);
-
-	/// Invoked upon hitting a callable type.
-	///
-	/// \param node The node representing a callable type.
-	/// \return Continue if the traversal should continue to the return type and parameters.
-	virtual Result onCallableType(std::shared_ptr <CallableType> node);
 
 	/// Invoked upon hitting an expression root.
 	///

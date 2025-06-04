@@ -9,7 +9,7 @@
 namespace cap
 {
 
-class ClassType : public TypeDefinition
+class ClassType : public Declaration, public TypeDefinition
 {
 public:
 	ClassType();
@@ -48,6 +48,12 @@ public:
 	/// \param validator The validator used for traversal.
 	/// \return True if validation succeeded.
 	bool validate(Validator& validator) override;
+
+	/// Gets the class type as a string.
+	///
+	/// \param detailed If true, the class type location is included.
+	/// \return The string representation of this class type.
+	std::wstring toString(bool detailed) const override;
 
 	const char* getTypeString() const override;
 

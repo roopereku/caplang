@@ -1,7 +1,6 @@
 #ifndef CAP_TYPE_CONTEXT_HH
 #define CAP_TYPE_CONTEXT_HH
 
-#include <memory>
 #include <string>
 
 namespace cap
@@ -14,8 +13,7 @@ class TypeDefinition;
 class TypeContext
 {
 public:
-	TypeContext(std::shared_ptr <TypeDefinition> referenced);
-	TypeContext();
+	TypeContext(TypeDefinition& referenced);
 
 	/// Determines whether this type context is compatible with another.
 	///
@@ -29,22 +27,20 @@ public:
 	/// \return True if identical.
 	bool isIdentical(const TypeContext& other) const;
 
-	std::shared_ptr <TypeDefinition> getReferenced() const;
 	std::wstring toString() const;
 
 	/// Is a type instance referred whose values are immutable?
-	bool isImmutable;
+	bool isImmutable = false;
 
 	/// Is a type instance referred to in a parse time context?
-	bool isParseTime;
+	bool isParseTime = false;
 
 	/// Is a type being referred to through its name?
-	bool isTypeName;
+	bool isTypeName = false;
 
 	// TODO: Add generic instantiation.
 
-private:
-	std::weak_ptr <TypeDefinition> referenced;
+	TypeDefinition& referenced;
 };
 
 }

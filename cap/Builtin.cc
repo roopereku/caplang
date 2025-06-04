@@ -1,5 +1,6 @@
 #include <cap/Builtin.hh>
 #include <cap/Source.hh>
+#include <cap/ClassType.hh>
 
 #include <cassert>
 
@@ -49,37 +50,37 @@ void Builtin::doCaching()
 	{
 		if(decl->getName() == L"void")
 		{
-			voidType = std::static_pointer_cast <TypeDefinition> (decl);
+			voidDecl = std::static_pointer_cast <ClassType> (decl);
 		}
 
 		else if(decl->getName() == L"int64")
 		{
-			defaultIntegerType = std::static_pointer_cast <TypeDefinition> (decl);
+			defaultIntegerDecl = std::static_pointer_cast <ClassType> (decl);
 		}
 
 		else if(decl->getName() == L"string")
 		{
-			stringType = std::static_pointer_cast <TypeDefinition> (decl);
+			stringDecl = std::static_pointer_cast <ClassType> (decl);
 		}
 	}
 }
 
-std::shared_ptr <TypeDefinition> Builtin::getVoidType() const
+TypeDefinition& Builtin::getVoidType() const
 {
-	assert(!voidType.expired());
-	return voidType.lock();
+	assert(!voidDecl.expired());
+	return *voidDecl.lock();
 }
 
-std::shared_ptr <TypeDefinition> Builtin::getDefaultIntegerType() const
+TypeDefinition& Builtin::getDefaultIntegerType() const
 {
-	assert(!defaultIntegerType.expired());
-	return defaultIntegerType.lock();
+	assert(!defaultIntegerDecl.expired());
+	return *defaultIntegerDecl.lock();
 }
 
-std::shared_ptr <TypeDefinition> Builtin::getStringType() const
+TypeDefinition& Builtin::getStringType() const
 {
-	assert(!stringType.expired());
-	return stringType.lock();
+	assert(!stringDecl.expired());
+	return *stringDecl.lock();
 }
 
 }

@@ -9,8 +9,8 @@
 namespace cap
 {
 
-Function::Function()
-	: Declaration(Type::Function, parameters), signature(std::make_shared <CallableType> ())
+Function::Function() :
+	Declaration(Declaration::Type::Function, parameters)
 {
 }
 
@@ -42,7 +42,7 @@ std::weak_ptr <Node> Function::handleToken(ParserContext& ctx, Token& token)
 	}
 
 	// Parse the function parameters.
-	else if(!signature->getParameterRoot())
+	else if(!getParameterRoot())
 	{
 		if(!token.isOpeningBracket(ctx, '('))
 		{
@@ -52,22 +52,21 @@ std::weak_ptr <Node> Function::handleToken(ParserContext& ctx, Token& token)
 			return {};
 		}
 
-		// TODO: Deallocate parameters if none are given.
-		signature->initializeParameters();
-		adopt(signature->getParameterRoot());
+		initializeParameters();
+		adopt(getParameterRoot());
 
 		ctx.declarationLocation = shared_from_this();
-		return signature->getParameterRoot();
+		return getParameterRoot();
 	}
 	
 	// Parse the function return type.
 	else if(token.getType() == Token::Type::Operator && ctx.source.match(token, L"->"))
 	{
-		assert(!signature->getReturnTypeRoot());
-		signature->initializeReturnType();
+		assert(!getReturnTypeRoot());
+		initializeReturnType();
 
-		adopt(signature->getReturnTypeRoot());
-		return signature->getReturnTypeRoot();
+		adopt(getReturnTypeRoot());
+		return getReturnTypeRoot();
 	}
 
 	else if(!body)
@@ -88,13 +87,13 @@ std::weak_ptr <Node> Function::handleToken(ParserContext& ctx, Token& token)
 
 std::weak_ptr <Node> Function::invokedNodeExited(ParserContext& ctx, Token&)
 {
-	if(ctx.exitedFrom == signature->getParameterRoot())
+	if(ctx.exitedFrom == getParameterRoot())
 	{
 		ctx.declarationLocation = nullptr;
 		return weak_from_this();
 	}
 
-	else if(ctx.exitedFrom == signature->getReturnTypeRoot())
+	else if(ctx.exitedFrom == getReturnTypeRoot())
 	{
 		return weak_from_this();
 	}
@@ -108,11 +107,6 @@ std::weak_ptr <Node> Function::invokedNodeExited(ParserContext& ctx, Token&)
 	return {};
 }
 
-std::shared_ptr <CallableType> Function::getSignature() const
-{
-	return signature;
-}
-
 std::shared_ptr <Scope> Function::getBody() const
 {
 	return body;
@@ -122,21 +116,25 @@ bool Function::validate(Validator& validator)
 {
 	if(!referredType.has_value())
 	{
-		referredType.emplace(TypeContext(signature));
-		referredType.value().isTypeName = true;
+		referredType.emplace(TypeContext(*this));
 
-		if(!signature->validate(validator) ||
+		if(!getReturnTypeRoot())
+		{
+			initializeReturnType();
+		}
+
+		if(!validator.traverseStatement(getParameterRoot()) ||
+			!validator.traverseExpression(getReturnTypeRoot()) ||
 			!validator.traverseScope(body))
 		{
 			return false;
 		}
 
 		// If no return type still exists, default to void.
-		auto returnType = signature->getReturnTypeRoot();
-		if(!returnType->getResultType().getReferenced())
+		if(!getReturnTypeRoot()->getResultType())
 		{
-			auto voidType = validator.getParserContext().client.getBuiltin().getVoidType();
-			returnType->setResultType(voidType);
+			auto& voidType = validator.getParserContext().client.getBuiltin().getVoidType();
+			getReturnTypeRoot()->setResultType(voidType);
 		}
 	}
 

@@ -44,26 +44,28 @@ bool Return::tryUpdatingReturnType(cap::ParserContext& ctx)
 	// TODO: Once non-functions can be returned from, don't assume function.
 
 	// Ensure that a type context exists for the function return type.
-	auto signature = std::static_pointer_cast <Function> (from)->getSignature();
-	assert(signature->getReturnTypeRoot());
+	auto func = std::static_pointer_cast <Function> (from);
+	assert(func->getReturnTypeRoot());
 
 	// If the returning expression doesn't exist, default to void.
 	auto& ret = expression->getFirst() ?
-		expression->getFirst()->getResultType() :
+		*expression->getFirst()->getResultType() :
 		ctx.client.getBuiltin().getVoidType();
 
 	// If no return type is set for what's being returned from, initialize
 	// to whatever this return statement wants to return.
-	if(!signature->getReturnTypeRoot()->getResultType().getReferenced())
+	if(!func->getReturnTypeRoot()->getResultType())
 	{
-		signature->getReturnTypeRoot()->setResultType(ret);
+		func->getReturnTypeRoot()->setResultType(ret);
 		return true;
 	}
 
 	// If what's being returned from has a return type, make sure that whatever
 	// this return statement returns is compatible.
-	auto& existing = signature->getReturnTypeRoot()->getResultType();
-	if(!ret.isCompatible(existing))
+	auto& existing = func->getReturnTypeRoot()->getResultType();
+	assert(existing);
+
+	if(!ret.isCompatible(*existing))
 	{
 		// TODO: Give more context in the error message.
 		SourceLocation location(ctx.source, getToken());

@@ -9,7 +9,6 @@
 #include <cap/BinaryOperator.hh>
 #include <cap/UnaryOperator.hh>
 #include <cap/BracketOperator.hh>
-#include <cap/TypeDefinition.hh>
 #include <cap/ModifierRoot.hh>
 #include <cap/Variable.hh>
 #include <cap/Return.hh>
@@ -176,9 +175,27 @@ bool Traverser::traverseDeclaration(std::shared_ptr <Declaration> node)
 
 	switch(node->getType())
 	{
-		case Declaration::Type::TypeDefinition:
+		case Declaration::Type::Class:
 		{
-			return traverseTypeDefinition(std::static_pointer_cast <TypeDefinition> (node));
+			auto classType = std::static_pointer_cast <ClassType> (node);
+			result = onClassType(classType);
+
+			// TODO: Traverse to the base classes?
+			if(shouldContinue(result))
+			{
+				// If there's no generic root, report success to skip it.
+				bool genericTraverseResult = !classType->getGenericRoot() ||
+					traverseStatement(classType->getGenericRoot());
+
+				if(!genericTraverseResult ||
+					!traverseScope(classType->getBody()))
+				{
+					onNodeExited(node, result);
+					return false;
+				}
+			}
+
+			break;
 		}
 
 		case Declaration::Type::Function:
@@ -188,7 +205,8 @@ bool Traverser::traverseDeclaration(std::shared_ptr <Declaration> node)
 
 			if(shouldContinue(result))
 			{
-				if(!traverseDeclaration(function->getSignature()) ||
+				if(!traverseStatement(function->getParameterRoot()) ||
+					(function->getReturnTypeRoot() && !traverseExpression(function->getReturnTypeRoot())) ||
 					!traverseScope(function->getBody()))
 				{
 					onNodeExited(node, result);
@@ -214,59 +232,6 @@ bool Traverser::traverseDeclaration(std::shared_ptr <Declaration> node)
 			}
 
 			break;
-		}
-	}
-
-	onNodeExited(node, result);
-	return result != Result::Stop;
-}
-
-bool Traverser::traverseTypeDefinition(std::shared_ptr <TypeDefinition> node)
-{
-	Result result;
-
-	switch(node->getType())
-	{
-		case TypeDefinition::Type::Class:
-		{
-			auto classType = std::static_pointer_cast <ClassType> (node);
-			result = onClassType(classType);
-
-			// TODO: Traverse to the base classes?
-			if(shouldContinue(result))
-			{
-				// If there's no generic root, report success to skip it.
-				bool genericTraverseResult = !classType->getGenericRoot() ||
-					traverseStatement(classType->getGenericRoot());
-
-				if(!genericTraverseResult ||
-					!traverseScope(classType->getBody()))
-				{
-					onNodeExited(node, result);
-					return false;
-				}
-			}
-
-			break;
-		}
-
-		case TypeDefinition::Type::Callable:
-		{
-			auto callable = std::static_pointer_cast <CallableType> (node);
-			result = onCallableType(callable);
-
-			if(shouldContinue(result))
-			{
-				auto ret = callable->getReturnTypeRoot();
-				auto param = callable->getParameterRoot();
-
-				if((param && !traverseStatement(param)) ||
-					(ret && !traverseExpression(ret)))
-				{
-					onNodeExited(node, result);
-					return false;
-				}
-			}
 		}
 	}
 
@@ -334,7 +299,6 @@ Traverser::Result Traverser::onCustomNode(std::shared_ptr <Node>) { return Resul
 Traverser::Result Traverser::onScope(std::shared_ptr <Scope>) { return Result::NotHandled; }
 Traverser::Result Traverser::onFunction(std::shared_ptr <Function>) { return Result::NotHandled; }
 Traverser::Result Traverser::onClassType(std::shared_ptr <ClassType>) { return Result::NotHandled; }
-Traverser::Result Traverser::onCallableType(std::shared_ptr <CallableType>) { return Result::NotHandled; }
 Traverser::Result Traverser::onExpressionRoot(std::shared_ptr <Expression::Root>) { return Result::NotHandled; }
 Traverser::Result Traverser::onModifierRoot(std::shared_ptr <ModifierRoot>) { return Result::NotHandled; }
 Traverser::Result Traverser::onBinaryOperator(std::shared_ptr <BinaryOperator>) { return Result::NotHandled; }

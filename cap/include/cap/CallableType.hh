@@ -39,16 +39,13 @@ public:
 	/// \return Whether the parameters are compatible and how many are unidentical.
 	std::pair <bool, size_t> matchParameters(ArgumentAccessor&& arguments) const;
 
-	/// Validates the return type and parameters of this callable type.
+	/// Gets the string representation of this callable type.
 	///
-	/// \param validator The validator used for traversal.
-	/// \return True if validation succeeded.
-	bool validate(Validator& validator) override;
-
-	const char* getTypeString() const override;
+	/// \param detailed Not applicable.
+	/// \return String containing the return type and the parameters.
+	std::wstring toString(bool detailed) const override;
 
 private:
-	// TODO: Function should be the one holding the variable root.
 	std::shared_ptr <Variable::Root> parameters;
 	std::shared_ptr <Expression::Root> returnType;
 };

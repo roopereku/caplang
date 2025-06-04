@@ -4,6 +4,8 @@
 #include <cap/Node.hh>
 #include <cap/TypeContext.hh>
 
+#include <optional>
+
 namespace cap
 {
 
@@ -57,7 +59,7 @@ public:
 	/// Gets the result type of this expression node.
 	///
 	/// \return The result type of this expression node.
-	const TypeContext& getResultType() const;
+	const std::optional <TypeContext>& getResultType() const;
 
 	/// Sets the result type of this expression node.
 	///
@@ -78,7 +80,7 @@ private:
 	std::weak_ptr <Node> getExitedExpression(ParserContext& ctx, bool recursive);
 
 	Type type;
-	TypeContext resultType;
+	std::optional <TypeContext> resultType;
 };
 
 class Expression::Root : public Expression

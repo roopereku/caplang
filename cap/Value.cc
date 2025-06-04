@@ -35,7 +35,15 @@ std::shared_ptr <Declaration> Value::getReferred()
 void Value::setReferred(std::shared_ptr <Declaration> node)
 {
 	referred = node;
-	setResultType(node->getReferredType());
+}
+
+void Value::updateResultType()
+{
+    assert(!referred.expired());
+    auto referredDecl = referred.lock();
+
+    assert(referredDecl->getReferredType());
+    setResultType(*referredDecl->getReferredType());
 }
 
 const char* Value::getTypeString() const

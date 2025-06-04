@@ -31,7 +31,9 @@ bool Variable::validate(Validator& validator)
 {
 	if(!referredType.has_value())
 	{
-		referredType.emplace(TypeContext());
+        // Temporarily refer to void. This is to stop recursive validation.
+        // TODO: Should there be an error type or similar to indicate uninitializated variables?
+		referredType.emplace(validator.getParserContext().client.getBuiltin().getVoidType());
 
 		assert(!initialization.expired());
 		auto init = initialization.lock();
@@ -43,7 +45,8 @@ bool Variable::validate(Validator& validator)
 		}
 
 		// TODO: Should a declaration be referred to in some case?
-		referredType.emplace(init->getResultType());
+        assert(init->getResultType());
+		referredType.emplace(*init->getResultType());
 	}
 
 	return true;

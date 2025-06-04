@@ -30,6 +30,9 @@ public:
 	/// \param node The declaration to refer to.
 	void setReferred(std::shared_ptr <Declaration> node);
 
+    /// Updates the result type to that of the referred declaration.
+    void updateResultType();
+
 	const char* getTypeString() const override;
 
 private:

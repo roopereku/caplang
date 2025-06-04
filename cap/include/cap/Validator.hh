@@ -29,8 +29,14 @@ protected:
 private:
 	struct ResolverContext
 	{
+		void reset()
+		{
+			accessedFrom.reset();
+			parameters.reset();
+		}
+
 		std::shared_ptr <Expression::Root> parameters;
-		TypeContext accessedFrom;
+		std::optional <TypeContext> accessedFrom;
 	};
 
 	Result validateIdentifier(std::shared_ptr <Value> node, ResolverContext& resolve);

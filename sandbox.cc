@@ -79,12 +79,6 @@ protected:
 		return Result::Continue;
 	}
 
-	Result onCallableType(std::shared_ptr <cap::CallableType> node) override
-	{
-		file << prefix() << node->getTypeString() << '\n';
-		return Result::Continue;
-	}
-
 	Result onFunction(std::shared_ptr <cap::Function> node) override
 	{
 		file << prefix() << node->getTypeString() << ": " << node->getName() << '\n';
@@ -150,22 +144,30 @@ private:
 	std::wstring getResultType(std::shared_ptr <cap::Node> node)
 	{
 		std::wstring str;
-		cap::TypeContext result;
+        std::optional <cap::TypeContext> result;
 
 		if(node->getType() == cap::Node::Type::Expression)
 		{
-			result = std::static_pointer_cast <cap::Expression> (node)->getResultType();
+            auto exprResult = std::static_pointer_cast <cap::Expression> (node)->getResultType();
+			if(exprResult)
+			{
+				result.emplace(*exprResult);
+			}
 		}
 
 		else if(node->getType() == cap::Node::Type::Declaration)
 		{
-			result = std::static_pointer_cast <cap::Declaration> (node)->getReferredType();
+            auto declResult = std::static_pointer_cast <cap::Declaration> (node)->getReferredType();
+			if(declResult)
+			{
+				result.emplace(*declResult);
+			}
 		}
 
-		if(result.getReferenced())
+		if(result)
 		{
 			// TODO: Add modifiers?
-			str += L"\\nResult -> " + result.toString();
+			str += L"\\nResult -> " + result->toString();
 		}
 
 		return str;
@@ -190,18 +192,20 @@ int main()
 	Sandbox client;
 	cap::Source entry(LR"SRC(
 
-		func foo()
+		func foo(v1 = int64, v2 = int64)
 		{
 		}
 
-		func test()
+		func main()
 		{
-			foo()
+			let x = 1
+			let y = 2
+			let b = foo(x, y)
 		}
 
 	)SRC");
 
-	if(!client.parse(entry))
+	if(!client.parse(entry, true))
 	{
 		return 1;
 	}

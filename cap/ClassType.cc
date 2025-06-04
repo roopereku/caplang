@@ -7,8 +7,9 @@
 namespace cap
 {
 
-ClassType::ClassType()
-	: TypeDefinition(Type::Class, generics)
+ClassType::ClassType() :
+	Declaration(Declaration::Type::Class, generics),
+	TypeDefinition(TypeDefinition::Type::Class)
 {
 }
 
@@ -112,11 +113,18 @@ bool ClassType::validate(Validator&)
 {
 	if(!referredType.has_value())
 	{
-		referredType = TypeContext(std::static_pointer_cast <ClassType> (shared_from_this()));
+		referredType.emplace(*this);
 		referredType.value().isTypeName = true;
 	}
 
 	return true;
+}
+
+std::wstring ClassType::toString(bool detailed) const
+{
+	// TODO: Include generics.
+	std::wstring result = detailed ? getLocation() : getName();
+	return result;
 }
 
 const char* ClassType::getTypeString() const

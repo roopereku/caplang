@@ -10,7 +10,6 @@ namespace cap
 CallableType::CallableType() :
 	TypeDefinition(Type::Callable)
 {
-	name = L"callable";
 }
 
 std::shared_ptr <Variable::Root> CallableType::getParameterRoot() const
@@ -49,8 +48,11 @@ std::pair <bool, size_t> CallableType::matchParameters(ArgumentAccessor&& argume
 			return { false, 0 };
 		}
 
-		bool identical = selfCurrent->getResultType().isIdentical(otherCurrent->getResultType());
-		bool compatible = selfCurrent->getResultType().isCompatible(otherCurrent->getResultType());
+		assert(selfCurrent->getResultType());
+		assert(otherCurrent->getResultType());
+
+		bool identical = selfCurrent->getResultType()->isIdentical(*otherCurrent->getResultType());
+		bool compatible = selfCurrent->getResultType()->isCompatible(*otherCurrent->getResultType());
 
 		if(!compatible)
 		{
@@ -64,27 +66,29 @@ std::pair <bool, size_t> CallableType::matchParameters(ArgumentAccessor&& argume
 	return { arguments.getNext() == nullptr, unidentical };
 }
 
-bool CallableType::validate(Validator& validator)
+std::wstring CallableType::toString(bool) const
 {
-	if(!referredType.has_value())
+	ArgumentAccessor params(parameters);
+	bool firstAdded = false;
+	std::wstring result(L"func(");
+
+	while(auto current = params.getNext())
 	{
-		if(!returnType)
+		if(firstAdded)
 		{
-			initializeReturnType();
+			result += L", ";
 		}
 
-		referredType = TypeContext(std::static_pointer_cast <CallableType> (shared_from_this()));
-		referredType.value().isTypeName = true;
+		else
+		{
+			firstAdded = true;
+		}
 
-		return validator.traverseTypeDefinition(std::static_pointer_cast <CallableType> (shared_from_this()));
+		assert(current->getResultType());
+		result += current->getResultType()->toString();
 	}
 
-	return true;
-}
-
-const char* CallableType::getTypeString() const
-{
-	return "Callable Type";
+	return result + L") -> " + returnType->getResultType()->toString();
 }
 
 }
