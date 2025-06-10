@@ -89,6 +89,21 @@ TEST(ValidationTests, AccessOperatorResultType)
 				Value(L"Bar") > L"Foo.Bar",
 			Value(L"nested", L"Foo.Bar.nested") > L"func(int64, int64) -> string"
 	});
+
+	tester.test(L"let b = Foo.Bar.nested(1, 2)",
+	{
+		LocalVariable(L"b") > L"string",
+			cap::BinaryOperator::Type::Access > L"string",
+				cap::BinaryOperator::Type::Access > L"Foo.Bar",
+					Value(L"Foo") > L"Foo",
+					Value(L"Bar") > L"Foo.Bar",
+			cap::BracketOperator::Type::Call > L"string",
+				Value(L"nested", L"Foo.Bar.nested") > L"func(int64, int64) -> string",
+				Expression(),
+					cap::BinaryOperator::Type::Comma,
+						Value(L"1") > L"int64",
+						Value(L"2") > L"int64"
+	});
 }
 
 TEST(ValidationTests, InferredReturnType)
@@ -147,4 +162,55 @@ TEST(ValidationTests, InferredReturnType)
 				Value(L"returnDefault") > L"func() -> void",
 				Expression()
 	});
+}
+
+TEST(ValidationTests, VariablesAsParameters)
+{
+	ValidationTester tester;
+
+	tester.setup(LR"SRC(
+		func foo(a = string, b = int64, c = int64)
+		{
+		}
+
+		type Foo
+		{
+			func foo(a = string, b = int64)
+			{
+			}
+		}
+
+		let x = 10
+		let y = 200
+		let str = "some string"
+
+	)SRC");
+
+	tester.test(L"foo(str, x, y)",
+	{
+		Expression() > L"void",
+			cap::BracketOperator::Type::Call > L"void",
+				Value(L"foo") > L"func(string, int64, int64) -> void",
+				Expression(),
+					cap::BinaryOperator::Type::Comma,
+						cap::BinaryOperator::Type::Comma,
+							Value(L"str") > L"string",
+							Value(L"x") > L"int64",
+						Value(L"y") > L"int64"
+	});
+
+	tester.test(L"Foo.foo(str, x)",
+	{
+		Expression() > L"void",
+			cap::BinaryOperator::Type::Access > L"void",
+				Value(L"Foo") > L"Foo",
+				cap::BracketOperator::Type::Call > L"void",
+					Value(L"foo") > L"func(string, int64) -> void",
+					Expression(),
+						cap::BinaryOperator::Type::Comma,
+							Value(L"str") > L"string",
+							Value(L"x") > L"int64",
+	});
+
+	// TODO: Add a test where function parameters are passed onwards?
 }

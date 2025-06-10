@@ -192,15 +192,21 @@ int main()
 	Sandbox client;
 	cap::Source entry(LR"SRC(
 
-		func foo(v1 = int64, v2 = int64)
+		type Foo
 		{
+			type Baz
+			{
+				func bar(a = int64, b = string)
+				{
+				}
+			}
 		}
 
 		func main()
 		{
-			let x = 1
-			let y = 2
-			let b = foo(x, y)
+			let x = 120
+			let str = "nonii"
+			Foo.Baz.bar(x, str)
 		}
 
 	)SRC");

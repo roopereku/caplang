@@ -29,11 +29,11 @@ protected:
 private:
 	struct ResolverContext
 	{
-		void reset()
-		{
-			accessedFrom.reset();
-			parameters.reset();
-		}
+		ResolverContext() = default;
+		ResolverContext(ResolverContext&& rhs);
+		ResolverContext& operator=(ResolverContext&& rhs);
+
+		void reset();
 
 		std::shared_ptr <Expression::Root> parameters;
 		std::optional <TypeContext> accessedFrom;

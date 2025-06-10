@@ -172,6 +172,10 @@ Traverser::Result Validator::onUnaryOperator(std::shared_ptr <UnaryOperator> nod
 
 Traverser::Result Validator::onBracketOperator(std::shared_ptr <BracketOperator> node)
 {
+	// Temporarily steal the resolver context to hide it from the inner expression.
+	auto contextResolver = std::move(resolverCtx);
+	assert(!resolverCtx.accessedFrom);
+
 	if(node->getType() != BracketOperator::Type::Call)
 	{
 		SourceLocation location(ctx.source, node->getToken());
@@ -196,6 +200,7 @@ Traverser::Result Validator::onBracketOperator(std::shared_ptr <BracketOperator>
 		return Result::Stop;
 	}
 
+	resolverCtx = std::move(contextResolver);
 	resolverCtx.parameters = node->getInnerRoot();
 	if(!traverseExpression(node->getContext()))
 	{
@@ -216,6 +221,7 @@ Traverser::Result Validator::onBracketOperator(std::shared_ptr <BracketOperator>
 
 Traverser::Result Validator::onValue(std::shared_ptr <Value> node)
 {
+	// Steal the resolver context so that it's not mistakenly used further on.
 	ResolverContext resolve = std::move(resolverCtx);
 
 	// TODO: Handle scope context change when binary operator encounters ".".
@@ -418,6 +424,32 @@ Traverser::Result Validator::connectDeclaration(std::shared_ptr <Value> node,
 	}
 
 	return Result::Continue;
+}
+
+Validator::ResolverContext::ResolverContext(ResolverContext&& rhs)
+{
+	this->operator=(std::move(rhs));
+}
+
+Validator::ResolverContext& Validator::ResolverContext::operator=(ResolverContext&& rhs)
+{
+	parameters = std::move(rhs.parameters);
+
+	// TODO: Is this really necessary. std::move would be nice but
+	// accessedFrom seems to report a valid value afterwards.
+	if(rhs.accessedFrom)
+	{
+		accessedFrom.emplace(*rhs.accessedFrom);
+		rhs.accessedFrom.reset();
+	}
+
+	return *this;
+}
+
+void Validator::ResolverContext::reset()
+{
+	accessedFrom.reset();
+	parameters.reset();
 }
 
 }
