@@ -31,47 +31,11 @@ void Validator::onNodeExited(std::shared_ptr <Node>, Result)
 
 Traverser::Result Validator::onFunction(std::shared_ptr <Function> node)
 {
-	auto& decls = node->getParentDeclarationStorage();
-
-	// TODO: Might be a good idea to make sure that a function in a base class
-	// isn't shadowed if no override is specified.
-
-	// Functions only care about duplicate names or other function in the same scope.
-	for(auto decl : decls)
+	// Validate the node and make sure that it's unique.
+	if(!node->validate(*this) ||
+		!checkUniqueDeclaration(node))
 	{
-		// Make sure that whatever is being matched against is validated.
-		// NOTE: The validation for the signature and body are done here.
-		if(!decl->validate(*this))
-		{
-			return Result::Stop;
-		}
-
-		if(decl->getName() == node->getName() && decl != node)
-		{
-			// If the declaration with the same name is a function,
-			// make sure that the parameters aren't identical.
-			if(decl->getType() == Declaration::Type::Function)
-			{
-				auto function = std::static_pointer_cast <Function> (decl);
-				auto nodeParams = node->getParameterRoot();
-
-				auto [compatible, unidentical] = function->matchParameters(ArgumentAccessor(nodeParams));
-				if(compatible && unidentical == 0)
-				{
-					// TODO: Give more context for the existing function?
-					SourceLocation location(ctx.source, node->getToken());
-					ctx.client.sourceError(location, "Function with the same parameters already exists");
-					return Result::Stop;
-				}
-			}
-
-			// Other declarations of the same name aren't allowed.
-			else
-			{
-				// TODO: Something here?
-				return Result::Stop;
-			}
-		}
+		return Result::Stop;
 	}
 
 	return Result::Exit;
@@ -79,6 +43,11 @@ Traverser::Result Validator::onFunction(std::shared_ptr <Function> node)
 
 Traverser::Result Validator::onClassType(std::shared_ptr <ClassType> node)
 {
+	if(!checkUniqueDeclaration(node))
+	{
+		return Result::Stop;
+	}
+
 	if(node->getBaseTypeRoot() &&
 		!traverseExpression(node->getBaseTypeRoot()))
 	{
@@ -109,6 +78,11 @@ Traverser::Result Validator::onExpressionRoot(std::shared_ptr <Expression::Root>
 
 Traverser::Result Validator::onVariable(std::shared_ptr <Variable> node)
 {
+	if(!checkUniqueDeclaration(node))
+	{
+		return Result::Stop;
+	}
+
 	if(!node->validate(*this))
 	{
 		return Result::Stop;
@@ -273,6 +247,32 @@ Traverser::Result Validator::onReturn(std::shared_ptr <Return> node)
 	}
 
 	return Result::Exit;
+}
+
+bool Validator::checkUniqueDeclaration(std::shared_ptr <Declaration> decl)
+{
+	auto current = std::static_pointer_cast <Node> (decl);
+
+	// Traverse the declaration storage hierarchy and check if something with
+	// the same name as the given declaration exists.
+	while(current)
+	{
+		// TODO: If we go beyond a named declaration, can there be any name shadowing?
+		// Note that this would require the ability to reference the global scope or parent scopes.
+		if(current->getDeclarationStorage().checkEquivalent(decl, *this))
+		{
+			return false;
+		}
+
+		// TODO: If current is a class type, check base classes here.
+		// Note that checkUniqueDeclaration cannot be directly called without
+		// fine tuning as then we'd implicitly check the parents of a base class
+		// which might be totally irrelevant
+
+		current = current->getParentWithDeclarationStorage();
+	}
+
+	return true;
 }
 
 Traverser::Result Validator::validateIdentifier(std::shared_ptr <Value> node, ResolverContext& resolve)

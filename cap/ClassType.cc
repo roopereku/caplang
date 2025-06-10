@@ -28,10 +28,7 @@ std::weak_ptr <Node> ClassType::handleToken(ParserContext& ctx, Token& token)
 		name = ctx.source.getString(token);
 
 		assert(getParentScope());
-		if(!getParentScope()->declarations.add(ctx, std::static_pointer_cast <ClassType> (shared_from_this())))
-		{
-			return {};
-		}
+		getParentScope()->declarations.add(std::static_pointer_cast <ClassType> (shared_from_this()));
 
 		return weak_from_this();
 	}

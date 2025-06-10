@@ -9,8 +9,8 @@ namespace cap
 {
 
 class Declaration;
-class ParserContext;
 class Expression;
+class Validator;
 
 class DeclarationStorage
 {
@@ -25,10 +25,16 @@ public:
 
 	/// Adds a new declaration into this scope.
 	///
-	/// \param ctx The context to get the source and client from.
 	/// \param node The declaration node to add.
-	/// \return True if the declaration was added successfully.
-	bool add(cap::ParserContext& ctx, std::shared_ptr <Declaration> node);
+	void add(std::shared_ptr <Declaration> node);
+
+	/// Checks if this declaration storage contains a declaration which
+	/// is equivalent to the given one. Error are logged if any.
+	///
+	/// \param node The declaration to match against.
+	/// \param validator Used to ensure that all compared declarations have been validated if needed.
+	/// \return True if an equivalent declaration is found.
+	bool checkEquivalent(std::shared_ptr <Declaration> node, Validator& validator) const;
 
 	/// Checks if this declaration storage is valid.
 	///
@@ -59,9 +65,6 @@ public:
 	{
 		return declarations.end();
 	}
-
-private:
-	bool canAddDeclaration(std::shared_ptr <Declaration> node);
 };
 
 }

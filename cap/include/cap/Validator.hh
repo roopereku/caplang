@@ -39,6 +39,9 @@ private:
 		std::optional <TypeContext> accessedFrom;
 	};
 
+	/// Makes sure that the given declaration respects the name shadowing rules.
+	bool checkUniqueDeclaration(std::shared_ptr <Declaration> decl);
+
 	Result validateIdentifier(std::shared_ptr <Value> node, ResolverContext& resolve);
 
 	Result connectDeclaration(std::shared_ptr <Value> node,

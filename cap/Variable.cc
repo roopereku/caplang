@@ -125,11 +125,7 @@ std::weak_ptr <Node> Variable::Root::invokedNodeExited(Node::ParserContext& ctx,
 				declContainer->adopt(decl);
 				name->setReferred(decl);
 
-				if(!declContainer->getDeclarationStorage().add(ctx, std::move(decl)))
-				{
-					return {};
-				}
-
+				declContainer->getDeclarationStorage().add(std::move(decl));
 				continue;
 			}
 		}

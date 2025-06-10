@@ -108,6 +108,11 @@ TEST(ErrorTests, DuplicateIdentifier)
 	tester.reportsError(L"let int32 = 10\n", L"'int32' already exists");
 	tester.reportsError(L"let uint16 = 10\n", L"'uint16' already exists");
 	tester.reportsError(L"let uint64 = 10\n", L"'uint64' already exists");
+
+	tester.reportsError(L"func foo(foo = int64)\n{\n}", L"'foo' already exists");
+	tester.reportsError(L"func foo(a = int64)\n{\nlet a = 10\n}", L"'a' already exists");
+	tester.reportsError(L"let a = 10\nfunc foo(a = int64)\n{\n}", L"'a' already exists");
+	tester.reportsError(L"let a = 10\nfunc foo()\n{\nlet a = 10\n}", L"'a' already exists");
 }
 
 TEST(ErrorTests, FunctionParameters)
