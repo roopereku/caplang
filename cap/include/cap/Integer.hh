@@ -20,10 +20,10 @@ public:
 	/// \return New integer or null.
 	static std::shared_ptr <Integer> parse(ParserContext& ctx, Token& token);
 
-	/// Gets the internal representation of the value.
+	/// Gets the integer value.
 	///
-	/// \return The internal representation of the value.
-	uint64_t getInternal() const;
+	/// \return Integer value.
+	uint64_t getValue() const;
 
 	/// Sets the result type to the minimum which can hold the contained value.
 	/// 

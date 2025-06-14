@@ -143,8 +143,7 @@ protected:
 
 	Result onInteger(std::shared_ptr <cap::Integer> node) override
 	{
-		// TODO: Check representation and output something based on that.
-		file << prefix() << node->getTypeString() << ": " << node->getInternal() << getResultType(node) << '\n';
+		file << prefix() << node->getTypeString() << ": " << node->getValue() << getResultType(node) << '\n';
 		return Result::Continue;
 	}
 

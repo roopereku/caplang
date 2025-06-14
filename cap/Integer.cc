@@ -38,7 +38,7 @@ std::shared_ptr <Integer> Integer::parse(ParserContext& ctx, Token& token)
 	return std::make_shared <Integer> (result);
 }
 
-uint64_t Integer::getInternal() const
+uint64_t Integer::getValue() const
 {
 	return value;
 }

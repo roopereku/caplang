@@ -5,7 +5,8 @@
 #include <cap/BracketOperator.hh>
 #include <cap/UnaryOperator.hh>
 #include <cap/Variable.hh>
-#include <cap/Value.hh>
+#include <cap/Identifier.hh>
+#include <cap/Integer.hh>
 #include <cap/Return.hh>
 
 #include <gtest/gtest.h>
@@ -49,11 +50,16 @@ ExpectedNode::ExpectedNode(cap::ModifierRoot::Type type)
 {
 }
 
-ExpectedNode Value(std::wstring&& value, std::wstring&& referred)
+ExpectedNode Identifier(std::wstring&& value, std::wstring&& referred)
 {
-	auto expected = ExpectedNode("Value", std::move(value));
+	auto expected = ExpectedNode("Identifier", std::move(value));
 	expected.referred = std::move(referred);
-	
+	return expected;
+}
+
+ExpectedNode Integer(uint64_t value)
+{
+	auto expected = ExpectedNode("Integer", std::to_wstring(value));
 	return expected;
 }
 
@@ -168,7 +174,7 @@ Traverser::Result NodeMatcher::onBracketOperator(std::shared_ptr <cap::BracketOp
 	return Traverser::Result::Continue;
 }
 
-Traverser::Result NodeMatcher::onValue(std::shared_ptr <cap::Value> node)
+Traverser::Result NodeMatcher::onIdentifier(std::shared_ptr <cap::Identifier> node)
 {
 	auto current = match(node);
 	EXPECT_STREQ(node->getValue().c_str(), current.context.c_str());
@@ -179,7 +185,15 @@ Traverser::Result NodeMatcher::onValue(std::shared_ptr <cap::Value> node)
 		EXPECT_STREQ(node->getReferred()->getLocation().c_str(), current.referred.c_str());
 	}
 
-	return Traverser::Result::Continue;
+	return Traverser::Result::Exit;
+}
+
+Traverser::Result NodeMatcher::onInteger(std::shared_ptr <cap::Integer> node)
+{
+	auto current = match(node);
+	uint64_t expectedInteger = std::stoull(current.context);
+	EXPECT_EQ(node->getValue(), expectedInteger);
+	return Traverser::Result::Exit;
 }
 
 Traverser::Result NodeMatcher::onReturn(std::shared_ptr <cap::Return> node)
