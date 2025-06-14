@@ -7,6 +7,7 @@
 #include <cap/UnaryOperator.hh>
 #include <cap/BracketOperator.hh>
 #include <cap/Value.hh>
+#include <cap/Identifier.hh>
 #include <cap/Variable.hh>
 #include <cap/Return.hh>
 
@@ -193,7 +194,7 @@ Traverser::Result Validator::onBracketOperator(std::shared_ptr <BracketOperator>
 	return Result::Exit;
 }
 
-Traverser::Result Validator::onValue(std::shared_ptr <Value> node)
+Traverser::Result Validator::onIdentifier(std::shared_ptr <Identifier> node)
 {
 	// Steal the resolver context so that it's not mistakenly used further on.
 	ResolverContext resolve = std::move(resolverCtx);
@@ -275,7 +276,7 @@ bool Validator::checkUniqueDeclaration(std::shared_ptr <Declaration> decl)
 	return true;
 }
 
-Traverser::Result Validator::validateIdentifier(std::shared_ptr <Value> node, ResolverContext& resolve)
+Traverser::Result Validator::validateIdentifier(std::shared_ptr <Identifier> node, ResolverContext& resolve)
 {
 	Result result = Result::NotHandled;
 
@@ -358,7 +359,7 @@ Traverser::Result Validator::validateIdentifier(std::shared_ptr <Value> node, Re
 	return Result::Exit;
 }
 
-Traverser::Result Validator::connectDeclaration(std::shared_ptr <Value> node,
+Traverser::Result Validator::connectDeclaration(std::shared_ptr <Identifier> node,
 		std::shared_ptr <Declaration> decl, ResolverContext& resolve)
 {
 	if(decl->getName() != node->getValue())
