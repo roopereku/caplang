@@ -37,20 +37,20 @@ public:
 	std::vector <ExpectedNode> base;
 };
 
-TEST(ExpressionTests, SingleValue)
+TEST(ExpressionTests, SingleIdentifier)
 {
 	ExpressionTester tester;
 
 	tester.test(L"0",
 	{
 		Expression(),
-			Value(L"0")
+			Integer(0)
 	});
 
 	tester.test(L"foo",
 	{
 		Expression(),
-			Value(L"foo")
+			Identifier(L"foo")
 	});
 
 }
@@ -63,18 +63,18 @@ TEST(ExpressionTests, BinaryOperators)
 	{
 		Expression(),
 			cap::BinaryOperator::Type::Add,
-				Value(L"1"),
-				Value(L"2")
+				Integer(1),
+				Integer(2)
 	});
 
 	tester.test(L"1+2*3",
 	{
 		Expression(),
 			cap::BinaryOperator::Type::Add,
-				Value(L"1"),
+				Integer(1),
 				cap::BinaryOperator::Type::Multiply,
-					Value(L"2"),
-					Value(L"3")
+					Integer(2),
+					Integer(3)
 	});
 }
 
@@ -86,7 +86,7 @@ TEST(ExpressionTests, UnaryOperators)
 	{
 		Expression(),
 			cap::UnaryOperator::Type::Negate,
-				Value(L"a")
+				Identifier(L"a")
 	});
 
 	tester.test(L"~(1)",
@@ -94,7 +94,7 @@ TEST(ExpressionTests, UnaryOperators)
 		Expression(),
 			cap::UnaryOperator::Type::BitwiseNot,
 				Expression(),
-					Value(L"1")
+					Integer(1)
 	});
 
 	tester.test(L"!(1)++",
@@ -103,7 +103,7 @@ TEST(ExpressionTests, UnaryOperators)
 			cap::UnaryOperator::Type::LogicalNot,
 				cap::UnaryOperator::Type::PostIncrement,
 					Expression(),
-						Value(L"1")
+						Integer(1)
 	});
 
 	tester.test(L"-10 * 80++ - 100",
@@ -112,10 +112,10 @@ TEST(ExpressionTests, UnaryOperators)
 			cap::BinaryOperator::Type::Subtract,
 				cap::BinaryOperator::Type::Multiply,
 					cap::UnaryOperator::Type::Negate,
-							Value(L"10"),
+							Integer(10),
 					cap::UnaryOperator::Type::PostIncrement,
-							Value(L"80"),
-				Value(L"100")
+							Integer(80),
+				Integer(100)
 	});
 
 	tester.test(L"- ++10-- / ~ ~(0xFF--)++",
@@ -125,13 +125,13 @@ TEST(ExpressionTests, UnaryOperators)
 				cap::UnaryOperator::Type::Negate,
 					cap::UnaryOperator::Type::PreIncrement,
 						cap::UnaryOperator::Type::PostDecrement,
-							Value(L"10"),
+							Integer(10),
 				cap::UnaryOperator::Type::BitwiseNot,
 					cap::UnaryOperator::Type::BitwiseNot,
 						cap::UnaryOperator::Type::PostIncrement,
 							Expression(),
 								cap::UnaryOperator::Type::PostDecrement,
-									Value(L"0xFF")
+									Integer(0xFF)
 	});
 
 	tester.test(L"-(*(~1 << --0xFF))",
@@ -143,9 +143,9 @@ TEST(ExpressionTests, UnaryOperators)
 						Expression(),
 							cap::BinaryOperator::Type::BitwiseShiftLeft,
 								cap::UnaryOperator::Type::BitwiseNot,
-									Value(L"1"),
+									Integer(1),
 								cap::UnaryOperator::Type::PreDecrement,
-									Value(L"0xFF"),
+									Integer(0xFF),
 	});
 
 	tester.test(L"a++ * 20",
@@ -153,8 +153,8 @@ TEST(ExpressionTests, UnaryOperators)
 		Expression(),
 			cap::BinaryOperator::Type::Multiply,
 				cap::UnaryOperator::Type::PostIncrement,
-					Value(L"a"),
-				Value(L"20")
+					Identifier(L"a"),
+				Integer(20)
 	});
 
 	tester.test(L"* ~foo()++",
@@ -164,7 +164,7 @@ TEST(ExpressionTests, UnaryOperators)
 				cap::UnaryOperator::Type::BitwiseNot,
 					cap::UnaryOperator::Type::PostIncrement,
 						cap::BracketOperator::Type::Call,
-							Value(L"foo"),
+							Identifier(L"foo"),
 							Expression()
 	});
 
@@ -183,22 +183,22 @@ TEST(ExpressionTests, BracketOperators)
 	{
 		Expression(),
 			cap::BracketOperator::Type::Call,
-				Value(L"foo"),
+				Identifier(L"foo"),
 				Expression(),
 
 		Expression(),
 			cap::BracketOperator::Type::Call,
-				Value(L"foo"),
+				Identifier(L"foo"),
 				Expression(),
-					Value(L"1"),
+					Integer(1),
 
 		Expression(),
 			cap::BracketOperator::Type::Call,
-				Value(L"foo"),
+				Identifier(L"foo"),
 				Expression(),
 					cap::BinaryOperator::Type::Add,
-					Value(L"1"),
-					Value(L"2")
+					Integer(1),
+					Integer(2)
 	});
 
 	// Test subscript operators.
@@ -210,22 +210,22 @@ TEST(ExpressionTests, BracketOperators)
 	{
 		Expression(),
 			cap::BracketOperator::Type::Subscript,
-				Value(L"foo"),
+				Identifier(L"foo"),
 				Expression(),
 
 		Expression(),
 			cap::BracketOperator::Type::Subscript,
-				Value(L"foo"),
+				Identifier(L"foo"),
 				Expression(),
-					Value(L"1"),
+					Integer(1),
 
 		Expression(),
 			cap::BracketOperator::Type::Subscript,
-				Value(L"foo"),
+				Identifier(L"foo"),
 				Expression(),
 					cap::BinaryOperator::Type::Add,
-					Value(L"1"),
-					Value(L"2")
+					Integer(1),
+					Integer(2)
 	});
 
 	// Test chained bracket operators.
@@ -237,20 +237,20 @@ TEST(ExpressionTests, BracketOperators)
 					cap::BracketOperator::Type::Call,
 						cap::BracketOperator::Type::Subscript,
 							cap::BracketOperator::Type::Call,
-								Value(L"foo"),
+								Identifier(L"foo"),
 								Expression(),
 							Expression(),
 								cap::BinaryOperator::Type::Add,
 									cap::BinaryOperator::Type::Exponent,
-										Value(L"6"),
-										Value(L"exp"),
+										Integer(6),
+										Identifier(L"exp"),
 									Expression(),
 										cap::BinaryOperator::Type::Subtract,
-											Value(L"1"),
-											Value(L"a"),
+											Integer(1),
+											Identifier(L"a"),
 						Expression(),
 					Expression(),
-						Value(L"20"),
+						Integer(20),
 				Expression(),
 	});
 
@@ -260,27 +260,27 @@ TEST(ExpressionTests, BracketOperators)
 		Expression(),
 			cap::BinaryOperator::Type::Multiply,
 				cap::BracketOperator::Type::Generic,
-					Value(L"foo"),
+					Identifier(L"foo"),
 					Expression(),
 						cap::BinaryOperator::Type::Comma,
-							Value(L"10"),
-							Value(L"20"),
+							Integer(10),
+							Integer(20),
 				Expression(),
 					cap::BinaryOperator::Type::Subtract,
 						cap::BracketOperator::Type::Generic,
-							Value(L"a"),
+							Identifier(L"a"),
 							Expression(),
-								Value(L"50"),
+								Integer(50),
 						cap::BinaryOperator::Type::Access,
 							cap::BracketOperator::Type::Call,
 								cap::BracketOperator::Type::Generic,
 									cap::BracketOperator::Type::Call,
-										Value(L"getType"),
+										Identifier(L"getType"),
 										Expression(),
 									Expression(),
-										Value(L"int"),
+										Identifier(L"int"),
 								Expression(),
-							Value(L"value"),
+							Identifier(L"value"),
 	});
 }
 
@@ -303,39 +303,39 @@ TEST(ExpressionTests, ExpressionEnds)
 		Expression(),
 			cap::BinaryOperator::Type::Add,
 				cap::BinaryOperator::Type::Multiply,
-					Value(L"5"),
-					Value(L"10"),
-			Value(L"20"),
+					Integer(5),
+					Integer(10),
+			Integer(20),
 
 		Expression(),
 			cap::BinaryOperator::Type::Equal,
 				cap::BinaryOperator::Type::Greater,
 					cap::BinaryOperator::Type::Divide,
-						Value(L"a"),
-						Value(L"b"),
-					Value(L"10"),
-				Value(L"true"),
+						Identifier(L"a"),
+						Identifier(L"b"),
+					Integer(10),
+				Identifier(L"true"),
 
 		Expression(),
 			cap::BinaryOperator::Type::Assign,
-				Value(L"x"),
+				Identifier(L"x"),
 				cap::UnaryOperator::Type::PostIncrement,
-					Value(L"a"),
+					Identifier(L"a"),
 
 		Expression(),
 			cap::BinaryOperator::Type::Assign,
-				Value(L"x"),
+				Identifier(L"x"),
 				cap::UnaryOperator::Type::PostDecrement,
-					Value(L"b"),
+					Identifier(L"b"),
 
 		Expression(),
 			cap::BinaryOperator::Type::Assign,
-				Value(L"c"),
+				Identifier(L"c"),
 				cap::BinaryOperator::Type::Multiply,
-					Value(L"a"),
+					Identifier(L"a"),
 					cap::BinaryOperator::Type::Exponent,
-						Value(L"b"),
-						Value(L"10"),
+						Identifier(L"b"),
+						Integer(10),
 	});
 
 	// Test that subexpressions can span over multiple lines.
@@ -359,34 +359,34 @@ TEST(ExpressionTests, ExpressionEnds)
 			cap::BinaryOperator::Type::BitwiseXor,
 				cap::BinaryOperator::Type::BitwiseShiftLeft,
 					cap::BinaryOperator::Type::Add,
-						Value(L"1"),
+						Integer(1),
 						cap::BinaryOperator::Type::Multiply,
-						Value(L"2"),
+						Integer(2),
 						Expression(),
 							cap::BinaryOperator::Type::Subtract,
-								Value(L"3"),
-								Value(L"4"),
+								Integer(3),
+								Integer(4),
 					Expression(),
 						cap::BinaryOperator::Type::Exponent,
-							Value(L"10"),
+							Integer(10),
 							Expression(),
 								cap::BinaryOperator::Type::Inequal,
-									Value(L"5"),
-									Value(L"2"),
+									Integer(5),
+									Integer(2),
 				Expression(),
 					cap::BinaryOperator::Type::BitwiseShiftRight,
 						cap::BinaryOperator::Type::Modulus,
-							Value(L"100"),
-							Value(L"20"),
-						Value(L"12"),
+							Integer(100),
+							Integer(20),
+						Integer(12),
 		Expression(),
 			cap::BinaryOperator::Type::Add,
 				cap::BinaryOperator::Type::Multiply,
-					Value(L"70"),
-					Value(L"80"),
+					Integer(70),
+					Integer(80),
 				cap::BinaryOperator::Type::Divide,
-					Value(L"50"),
-					Value(L"23")
+					Integer(50),
+					Integer(23)
 	});
 }
 
@@ -398,7 +398,7 @@ TEST(ExpressionTests, Declarations)
 	{
 		LocalVariable(L"a"),
 			cap::BinaryOperator::Type::Add,
-				Value(L"1"),
-				Value(L"2"),
+				Integer(1),
+				Integer(2),
 	});
 }

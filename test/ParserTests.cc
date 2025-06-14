@@ -42,9 +42,9 @@ TEST(ParserTests, FunctionDeclaration)
 	{
 		Function(L"foo"),
 			Parameter(L"a"),
-				Value(L"int64"),
+				Identifier(L"int64"),
 			Parameter(L"b"),
-				Value(L"uint32"),
+				Identifier(L"uint32"),
 			Scope()
 	});
 
@@ -62,7 +62,7 @@ TEST(ParserTests, FunctionDeclaration)
 	{
 		Function(L"foo"),
 			Expression(),
-				Value(L"SomeType"),
+				Identifier(L"SomeType"),
 			Scope()
 	});
 }
@@ -92,9 +92,9 @@ TEST(ParserTests, ClassTypeDeclaration)
 	{
 		ClassType(L"foo"),
 			Generic(L"T1"),
-				Value(L"int64"),
+				Identifier(L"int64"),
 			Generic(L"T2"),
-				Value(L"uint32"),
+				Identifier(L"uint32"),
 			Scope()
 	});
 }
@@ -107,7 +107,7 @@ TEST(ParserTests, Modifiers)
 	{
 		LocalVariable(L"T"),
 			cap::ModifierRoot::Type::Alias,
-				Value(L"int64")
+				Identifier(L"int64")
 	});
 }
 
@@ -121,7 +121,7 @@ TEST(ParserTests, ReturnStatement)
 			Scope(),
 				Return(),
 					Expression(),
-						Value(L"0")
+						Integer(0)
 	});
 
 	tester.test(L"func x()\n{\nreturn\n1 + 2\n}\n",
@@ -132,7 +132,7 @@ TEST(ParserTests, ReturnStatement)
 					Expression(),
 				Expression(),
 					cap::BinaryOperator::Type::Add,
-						Value(L"1"),
-						Value(L"2")
+						Integer(1),
+						Integer(2)
 	});
 }
