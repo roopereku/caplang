@@ -1,5 +1,6 @@
 #include <cap/Value.hh>
 #include <cap/Identifier.hh>
+#include <cap/Integer.hh>
 #include <cap/ParserContext.hh>
 #include <cap/Client.hh>
 #include <cap/Source.hh>
@@ -22,11 +23,8 @@ std::shared_ptr <Value> Value::create(ParserContext& ctx, Token& token)
 		case Token::Type::Binary:
 		case Token::Type::Octal:
 		case Token::Type::Integer:
-		case Token::Type::Float:
 		{
-			SourceLocation location(ctx.source, token);
-			ctx.client.sourceError(location, "TODO: Implement numeric value nodes");
-			return nullptr;
+			return Integer::parse(ctx, token);
 		}
 
 		// TODO: Include character?

@@ -14,7 +14,7 @@ public:
 	enum class Type
 	{
 		Identifier,
-		Numeric,
+		Integer,
 		String
 	};
 

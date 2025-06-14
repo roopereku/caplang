@@ -11,6 +11,7 @@
 #include <cap/ModifierRoot.hh>
 #include <cap/Return.hh>
 #include <cap/Identifier.hh>
+#include <cap/Integer.hh>
 
 #include <iostream>
 #include <fstream>
@@ -140,6 +141,13 @@ protected:
 		return Result::Continue;
 	}
 
+	Result onInteger(std::shared_ptr <cap::Integer> node) override
+	{
+		// TODO: Check representation and output something based on that.
+		file << prefix() << node->getTypeString() << ": " << node->getInternal() << getResultType(node) << '\n';
+		return Result::Continue;
+	}
+
 private:
 	std::wstring getResultType(std::shared_ptr <cap::Node> node)
 	{
@@ -194,12 +202,13 @@ int main()
 
 		func foo()
 		{
-			let arr = [1, 2, 3]
+			//let arr = [1, 2, 3]
+			let arr = 1 + 2 * 3
 		}
 
 	)SRC");
 
-	if(!client.parse(entry, false))
+	if(!client.parse(entry, true))
 	{
 		return 1;
 	}

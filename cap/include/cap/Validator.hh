@@ -24,6 +24,7 @@ protected:
 	Result onUnaryOperator(std::shared_ptr <UnaryOperator> node) override;
 	Result onBracketOperator(std::shared_ptr <BracketOperator> node) override;
 	Result onIdentifier(std::shared_ptr <Identifier> node) override;
+	Result onInteger(std::shared_ptr <Integer> node) override;
 	Result onReturn(std::shared_ptr <Return> node) override;
 
 private:

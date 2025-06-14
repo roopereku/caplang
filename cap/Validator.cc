@@ -8,6 +8,7 @@
 #include <cap/BracketOperator.hh>
 #include <cap/Value.hh>
 #include <cap/Identifier.hh>
+#include <cap/Integer.hh>
 #include <cap/Variable.hh>
 #include <cap/Return.hh>
 
@@ -198,40 +199,12 @@ Traverser::Result Validator::onIdentifier(std::shared_ptr <Identifier> node)
 {
 	// Steal the resolver context so that it's not mistakenly used further on.
 	ResolverContext resolve = std::move(resolverCtx);
+	return validateIdentifier(node, resolve);
+}
 
-	// TODO: Handle scope context change when binary operator encounters ".".
-	if(node->getToken().getType() == Token::Type::Identifier)
-	{
-		return validateIdentifier(node, resolve);
-	}
-
-	// Determine the result type of a literal.
-	else
-	{
-		switch(node->getToken().getType())
-		{
-			case Token::Type::Integer:
-			case Token::Type::Hexadecimal:
-			case Token::Type::Binary:
-			case Token::Type::Octal:
-			{
-				node->setResultType(TypeContext(ctx.client.getBuiltin().getDefaultIntegerType()));
-				break;
-			}
-
-			case Token::Type::String:
-			{
-				node->setResultType(TypeContext(ctx.client.getBuiltin().getStringType()));
-				break;
-			}
-
-			default:
-			{
-				assert("TODO: No matching type for literal" && false);
-			}
-		}
-	}
-
+Traverser::Result Validator::onInteger(std::shared_ptr <Integer> node)
+{
+	node->updateResultType(ctx);
 	return Result::Exit;
 }
 

@@ -21,6 +21,7 @@ class Statement;
 class Return;
 class Value;
 class Identifier;
+class Integer;
 
 class Traverser
 {
@@ -156,6 +157,13 @@ protected:
 	/// \param node The node representing an identifier.
 	/// \return Stop if traversal is to be stopped.
 	virtual Result onIdentifier(std::shared_ptr <Identifier> node);
+
+	/// Invoked upon hitting an integer in an expression.
+	///
+	/// \param node The node representing an integer.
+	/// \return Stop if traversal is to be stopped.
+	virtual Result onInteger(std::shared_ptr <Integer> node);
+
 };
 
 }

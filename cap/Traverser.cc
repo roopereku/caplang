@@ -14,6 +14,7 @@
 #include <cap/Return.hh>
 #include <cap/Value.hh>
 #include <cap/Identifier.hh>
+#include <cap/Integer.hh>
 
 #include <cassert>
 
@@ -178,15 +179,16 @@ bool Traverser::traverseValue(std::shared_ptr <Value> node)
 	{
 		case Value::Type::Identifier:
 		{
-			auto identifier = std::static_pointer_cast <Identifier> (node);
-			result = onIdentifier(identifier);
+			auto identifierValue = std::static_pointer_cast <Identifier> (node);
+			result = onIdentifier(identifierValue);
 			break;
 		}
 
-		case Value::Type::Numeric:
+		case Value::Type::Integer:
 		{
-			assert(false && "TODO: Traverse numeric values");
-			return false;
+			auto integerValue = std::static_pointer_cast <Integer> (node);
+			result = onInteger(integerValue);
+			break;
 		}
 
 		case Value::Type::String:
@@ -339,6 +341,7 @@ Traverser::Result Traverser::onBinaryOperator(std::shared_ptr <BinaryOperator>) 
 Traverser::Result Traverser::onUnaryOperator(std::shared_ptr <UnaryOperator>) { return Result::NotHandled; }
 Traverser::Result Traverser::onBracketOperator(std::shared_ptr <BracketOperator>) { return Result::NotHandled; }
 Traverser::Result Traverser::onIdentifier(std::shared_ptr <Identifier>) { return Result::NotHandled; }
+Traverser::Result Traverser::onInteger(std::shared_ptr <Integer>) { return Result::NotHandled; }
 Traverser::Result Traverser::onVariable(std::shared_ptr <Variable>) { return Result::NotHandled; }
 Traverser::Result Traverser::onReturn(std::shared_ptr <Return>) { return Result::NotHandled; }
 
