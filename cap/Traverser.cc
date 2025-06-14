@@ -13,6 +13,7 @@
 #include <cap/Variable.hh>
 #include <cap/Return.hh>
 #include <cap/Value.hh>
+#include <cap/Identifier.hh>
 
 #include <cassert>
 
@@ -90,8 +91,8 @@ bool Traverser::traverseExpression(std::shared_ptr <Expression> node)
 
 		case Expression::Type::Value:
 		{
-			result = onValue(std::static_pointer_cast <Value> (node));
-			break;
+			// Return here to prevent onNodeExited from being called.
+			return traverseValue(std::static_pointer_cast <Value> (node));
 		}
 
 		case Expression::Type::ModifierRoot:
@@ -162,6 +163,36 @@ bool Traverser::traverseExpression(std::shared_ptr <Expression> node)
 			}
 
 			break;
+		}
+	}
+
+	onNodeExited(node, result);
+	return result != Result::Stop;
+}
+
+bool Traverser::traverseValue(std::shared_ptr <Value> node)
+{
+	Result result;
+
+	switch(node->getType())
+	{
+		case Value::Type::Identifier:
+		{
+			auto identifier = std::static_pointer_cast <Identifier> (node);
+			result = onIdentifier(identifier);
+			break;
+		}
+
+		case Value::Type::Numeric:
+		{
+			assert(false && "TODO: Traverse numeric values");
+			return false;
+		}
+
+		case Value::Type::String:
+		{
+			assert(false && "TODO: Traverse string values");
+			return false;
 		}
 	}
 
@@ -259,8 +290,11 @@ bool Traverser::traverseStatement(std::shared_ptr <Statement> node)
 				assert(expr->getType() == Expression::Type::BinaryOperator);
 				auto op = std::static_pointer_cast <BinaryOperator> (expr);
 
+				// TODO: Something like ArgumentAccessor::getNextIdentifier might be useful.
 				assert(op->getLeft()->getType() == Expression::Type::Value);
-				auto name = std::static_pointer_cast <Value> (op->getLeft());
+				auto value = std::static_pointer_cast <Value> (op->getLeft());
+				assert(value->getType() == Value::Type::Identifier);
+				auto name = std::static_pointer_cast <Identifier> (value);
 
 				assert(name->getReferred());
 				if(!traverseDeclaration(name->getReferred()))
@@ -304,7 +338,7 @@ Traverser::Result Traverser::onModifierRoot(std::shared_ptr <ModifierRoot>) { re
 Traverser::Result Traverser::onBinaryOperator(std::shared_ptr <BinaryOperator>) { return Result::NotHandled; }
 Traverser::Result Traverser::onUnaryOperator(std::shared_ptr <UnaryOperator>) { return Result::NotHandled; }
 Traverser::Result Traverser::onBracketOperator(std::shared_ptr <BracketOperator>) { return Result::NotHandled; }
-Traverser::Result Traverser::onValue(std::shared_ptr <Value>) { return Result::NotHandled; }
+Traverser::Result Traverser::onIdentifier(std::shared_ptr <Identifier>) { return Result::NotHandled; }
 Traverser::Result Traverser::onVariable(std::shared_ptr <Variable>) { return Result::NotHandled; }
 Traverser::Result Traverser::onReturn(std::shared_ptr <Return>) { return Result::NotHandled; }
 

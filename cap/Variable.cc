@@ -2,6 +2,7 @@
 #include <cap/BinaryOperator.hh>
 #include <cap/Validator.hh>
 #include <cap/Value.hh>
+#include <cap/Identifier.hh>
 #include <cap/ArgumentAccessor.hh>
 #include <cap/Client.hh>
 
@@ -18,11 +19,12 @@ Variable::Variable(Type type, std::weak_ptr <BinaryOperator> initialization) :
 
 	auto node = initialization.lock();
 	assert(node->getLeft()->getType() == Expression::Type::Value);
+	auto value = std::static_pointer_cast <Value> (node->getLeft());
+	assert(value->getType() == Value::Type::Identifier);
+	auto nameIdentifier = std::static_pointer_cast <Identifier> (node->getLeft());
 
-	auto nameValue = std::static_pointer_cast <Value> (node->getLeft());
-	name = nameValue->getValue();
-
-	setToken(nameValue->getToken());
+	name = nameIdentifier->getValue();
+	setToken(nameIdentifier->getToken());
 
 	// TODO: If the initialization is prefixed with "type", set the type as a type alias.
 }
@@ -120,7 +122,12 @@ std::weak_ptr <Node> Variable::Root::invokedNodeExited(Node::ParserContext& ctx,
 				}
 
 				auto decl =  std::make_shared <Variable> (variableRoot->getType(), op);
-				auto name = std::static_pointer_cast <Value> (op->getLeft());
+
+				// TODO: Something like ArgumentAccessor::getNextIdentifier might be useful.
+				assert(op->getLeft()->getType() == Expression::Type::Value);
+				auto value = std::static_pointer_cast <Value> (op->getLeft());
+				assert(value->getType() == Value::Type::Identifier);
+				auto name = std::static_pointer_cast <Identifier> (value);
 
 				declContainer->adopt(decl);
 				name->setReferred(decl);

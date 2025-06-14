@@ -99,7 +99,7 @@ std::weak_ptr <Node> Expression::handleToken(Node::ParserContext& ctx, Token& to
 		// Anything else is a value.
 		else
 		{
-			newNode = std::make_shared <Value> (ctx.source.getString(token));
+			newNode = Value::create(ctx, token);
 		}
 	}
 

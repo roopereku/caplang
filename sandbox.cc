@@ -10,7 +10,7 @@
 #include <cap/Variable.hh>
 #include <cap/ModifierRoot.hh>
 #include <cap/Return.hh>
-#include <cap/Value.hh>
+#include <cap/Identifier.hh>
 
 #include <iostream>
 #include <fstream>
@@ -127,7 +127,7 @@ protected:
 		return Result::Continue;
 	}
 
-	Result onValue(std::shared_ptr <cap::Value> node) override
+	Result onIdentifier(std::shared_ptr <cap::Identifier> node) override
 	{
 		file << prefix() << node->getTypeString() << ": " << node->getValue() << getResultType(node);
 
@@ -192,14 +192,14 @@ int main()
 	Sandbox client;
 	cap::Source entry(LR"SRC(
 
-		func foo(a = string)
+		func foo()
 		{
-			let a = 10
+			let arr = [1, 2, 3]
 		}
 
 	)SRC");
 
-	if(!client.parse(entry, true))
+	if(!client.parse(entry, false))
 	{
 		return 1;
 	}
