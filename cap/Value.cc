@@ -1,6 +1,7 @@
 #include <cap/Value.hh>
 #include <cap/Identifier.hh>
 #include <cap/Integer.hh>
+#include <cap/String.hh>
 #include <cap/ParserContext.hh>
 #include <cap/Client.hh>
 #include <cap/Source.hh>
@@ -30,9 +31,7 @@ std::shared_ptr <Value> Value::create(ParserContext& ctx, Token& token)
 		// TODO: Include character?
 		case Token::Type::String:
 		{
-			SourceLocation location(ctx.source, token);
-			ctx.client.sourceError(location, "TODO: Implement string value nodes");
-			return nullptr;
+			return std::make_shared <String> (ctx.source.getString(token));
 		}
 
 		case Token::Type::Identifier:
@@ -45,9 +44,10 @@ std::shared_ptr <Value> Value::create(ParserContext& ctx, Token& token)
 		{
 			SourceLocation location(ctx.source, token);
 			ctx.client.sourceError(location, "FIXME: Unable to construct a value from '", ctx.source.getString(token), "'");
-			return nullptr;
 		}
 	}
+
+	return nullptr;
 }
 
 bool Value::isComplete() const

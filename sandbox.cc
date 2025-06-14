@@ -12,6 +12,7 @@
 #include <cap/Return.hh>
 #include <cap/Identifier.hh>
 #include <cap/Integer.hh>
+#include <cap/String.hh>
 
 #include <iostream>
 #include <fstream>
@@ -147,6 +148,13 @@ protected:
 		return Result::Continue;
 	}
 
+	Result onString(std::shared_ptr <cap::String> node) override
+	{
+		// TODO: If the string is interpolated, show the parts separately.
+		file << prefix() << node->getTypeString() << ": " << node->getValue() << getResultType(node) << '\n';
+		return Result::Continue;
+	}
+
 private:
 	std::wstring getResultType(std::shared_ptr <cap::Node> node)
 	{
@@ -202,7 +210,7 @@ int main()
 		func foo()
 		{
 			//let arr = [1, 2, 3]
-			let arr = 1 + 2 * 3
+			let arr = "this is a string"
 		}
 
 	)SRC");

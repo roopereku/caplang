@@ -9,6 +9,7 @@
 #include <cap/Value.hh>
 #include <cap/Identifier.hh>
 #include <cap/Integer.hh>
+#include <cap/String.hh>
 #include <cap/Variable.hh>
 #include <cap/Return.hh>
 
@@ -205,6 +206,12 @@ Traverser::Result Validator::onIdentifier(std::shared_ptr <Identifier> node)
 Traverser::Result Validator::onInteger(std::shared_ptr <Integer> node)
 {
 	node->updateResultType(ctx);
+	return Result::Exit;
+}
+
+Traverser::Result Validator::onString(std::shared_ptr <String> node)
+{
+	node->setResultType(ctx.client.getBuiltin().getStringType());
 	return Result::Exit;
 }
 

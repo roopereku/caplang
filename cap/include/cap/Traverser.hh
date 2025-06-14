@@ -22,6 +22,7 @@ class Return;
 class Value;
 class Identifier;
 class Integer;
+class String;
 
 class Traverser
 {
@@ -164,6 +165,11 @@ protected:
 	/// \return Stop if traversal is to be stopped.
 	virtual Result onInteger(std::shared_ptr <Integer> node);
 
+	/// Invoked upon hitting a string in an expression.
+	///
+	/// \param node The node representing a string.
+	/// \return Stop if traversal is to be stopped.
+	virtual Result onString(std::shared_ptr <String> node);
 };
 
 }

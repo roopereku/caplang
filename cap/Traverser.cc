@@ -12,9 +12,9 @@
 #include <cap/ModifierRoot.hh>
 #include <cap/Variable.hh>
 #include <cap/Return.hh>
-#include <cap/Value.hh>
 #include <cap/Identifier.hh>
 #include <cap/Integer.hh>
+#include <cap/String.hh>
 
 #include <cassert>
 
@@ -193,8 +193,9 @@ bool Traverser::traverseValue(std::shared_ptr <Value> node)
 
 		case Value::Type::String:
 		{
-			assert(false && "TODO: Traverse string values");
-			return false;
+			auto stringValue = std::static_pointer_cast <String> (node);
+			result = onString(stringValue);
+			break;
 		}
 	}
 
@@ -342,6 +343,7 @@ Traverser::Result Traverser::onUnaryOperator(std::shared_ptr <UnaryOperator>) { 
 Traverser::Result Traverser::onBracketOperator(std::shared_ptr <BracketOperator>) { return Result::NotHandled; }
 Traverser::Result Traverser::onIdentifier(std::shared_ptr <Identifier>) { return Result::NotHandled; }
 Traverser::Result Traverser::onInteger(std::shared_ptr <Integer>) { return Result::NotHandled; }
+Traverser::Result Traverser::onString(std::shared_ptr <String>) { return Result::NotHandled; }
 Traverser::Result Traverser::onVariable(std::shared_ptr <Variable>) { return Result::NotHandled; }
 Traverser::Result Traverser::onReturn(std::shared_ptr <Return>) { return Result::NotHandled; }
 
