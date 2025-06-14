@@ -62,7 +62,7 @@ TEST(ValidationTests, AccessOperatorResultType)
 			{
 				let a = 10
 
-				func nested(x = int64, y = int64)
+				func nested(x = int64, y = string)
 				{
 					return "test"
 				}
@@ -83,14 +83,14 @@ TEST(ValidationTests, AccessOperatorResultType)
 	tester.test(L"let b = Foo.Bar.nested",
 	{
 		LocalVariable(L"b") > L"func(int64, int64) -> string",
-		cap::BinaryOperator::Type::Access > L"func(int64, int64) -> string",
+		cap::BinaryOperator::Type::Access > L"func(int64, string) -> string",
 			cap::BinaryOperator::Type::Access > L"Foo.Bar",
 				Identifier(L"Foo") > L"Foo",
 				Identifier(L"Bar") > L"Foo.Bar",
-			Identifier(L"nested", L"Foo.Bar.nested") > L"func(int64, int64) -> string"
+			Identifier(L"nested", L"Foo.Bar.nested") > L"func(int64, string) -> string"
 	});
 
-	tester.test(L"let b = Foo.Bar.nested(1, 2)",
+	tester.test(L"let b = Foo.Bar.nested(1, \"test\")",
 	{
 		LocalVariable(L"b") > L"string",
 			cap::BinaryOperator::Type::Access > L"string",
@@ -98,11 +98,11 @@ TEST(ValidationTests, AccessOperatorResultType)
 					Identifier(L"Foo") > L"Foo",
 					Identifier(L"Bar") > L"Foo.Bar",
 			cap::BracketOperator::Type::Call > L"string",
-				Identifier(L"nested", L"Foo.Bar.nested") > L"func(int64, int64) -> string",
+				Identifier(L"nested", L"Foo.Bar.nested") > L"func(int64, string) -> string",
 				Expression(),
 					cap::BinaryOperator::Type::Comma,
 						Integer(1) > L"int64",
-						Integer(2) > L"int64"
+						String(L"test") > L"string"
 	});
 }
 

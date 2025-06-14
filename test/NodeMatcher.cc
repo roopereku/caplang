@@ -7,6 +7,7 @@
 #include <cap/Variable.hh>
 #include <cap/Identifier.hh>
 #include <cap/Integer.hh>
+#include <cap/String.hh>
 #include <cap/Return.hh>
 
 #include <gtest/gtest.h>
@@ -60,6 +61,12 @@ ExpectedNode Identifier(std::wstring&& value, std::wstring&& referred)
 ExpectedNode Integer(uint64_t value)
 {
 	auto expected = ExpectedNode("Integer", std::to_wstring(value));
+	return expected;
+}
+
+ExpectedNode String(std::wstring&& value)
+{
+	auto expected = ExpectedNode("String", std::move(value));
 	return expected;
 }
 
@@ -193,6 +200,13 @@ Traverser::Result NodeMatcher::onInteger(std::shared_ptr <cap::Integer> node)
 	auto current = match(node);
 	uint64_t expectedInteger = std::stoull(current.context);
 	EXPECT_EQ(node->getValue(), expectedInteger);
+	return Traverser::Result::Exit;
+}
+
+Traverser::Result NodeMatcher::onString(std::shared_ptr <cap::String> node)
+{
+	auto current = match(node);
+	EXPECT_STREQ(node->getValue().c_str(), current.context.c_str());
 	return Traverser::Result::Exit;
 }
 

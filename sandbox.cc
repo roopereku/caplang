@@ -209,8 +209,6 @@ int main()
 
 		func foo()
 		{
-			//let arr = [1, 2, 3]
-			let arr = "this is a string"
 		}
 
 	)SRC");

@@ -151,7 +151,7 @@ TEST(ErrorTests, FunctionParameters)
 	// Test that mismatching parameters fail.
 	tester.reportsError(testCall(L"foo(\"test\")"), L"No matching overload found for 'foo'");
 	tester.reportsError(testCall(L"foo(10, \"test\")"), L"No matching overload found for 'foo'");
-	//tester.reportsError(testCall(L"foo(10, \"test\", 20, 50)"), L"No matching overload found for 'foo'");
+	tester.reportsError(testCall(L"foo(10, \"test\", 20, 50)"), L"No matching overload found for 'foo'");
 }
 
 TEST(ErrorTests, UnexpectedReturn)
@@ -203,5 +203,13 @@ TEST(ErrorTests, MismatchingReturnType)
 			return 10
 		}
 	)SRC", L"Incompatible return type", true);
+}
 
+TEST(ErrorTests, TooLargeInteger)
+{
+	ErrorTester tester;
+
+	tester.reportsError(L"0xFFFFFFFFFFFFFFFF1", L"Integer too large to fit inside 64 bits");
+	tester.reportsError(L"0b11111111111111111111111111111111111111111111111111111111111111111", L"Integer too large to fit inside 64 bits");
+	tester.reportsError(L"18446744073709551616", L"Integer too large to fit inside 64 bits");
 }

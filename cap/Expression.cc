@@ -100,6 +100,10 @@ std::weak_ptr <Node> Expression::handleToken(Node::ParserContext& ctx, Token& to
 		else
 		{
 			newNode = Value::create(ctx, token);
+			if(!newNode)
+			{
+				return {};
+			}
 		}
 	}
 
