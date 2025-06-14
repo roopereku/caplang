@@ -11,33 +11,35 @@ class Declaration;
 class Value : public Expression
 {
 public:
-	Value(std::wstring&& value);
+	enum class Type
+	{
+		Identifier,
+		Integer,
+		String
+	};
+
+	/// Creates a new value node from the given token.
+	///
+	/// \param ctx The parsing context to get the source from.
+	/// \param token The token to parse a value from.
+	/// \return New value or null.
+	static std::shared_ptr <Value> create(ParserContext& ctx, Token& token);
 
 	/// Should never be called as values cannot be the "current node".
 	///
 	/// \return False.
 	bool isComplete() const override;
 
-	const std::wstring& getValue();
-
-	/// Returns the declaration that this value refers to if any.
+	/// Gets the type of this value node.
 	///
-	/// \return The referred declaration or null.
-	std::shared_ptr <Declaration> getReferred();
+	/// \return The type of this value node.
+	Type getType() const;
 
-	/// Sets the declaration that this value refers to.
-	///
-	/// \param node The declaration to refer to.
-	void setReferred(std::shared_ptr <Declaration> node);
-
-    /// Updates the result type to that of the referred declaration.
-    void updateResultType();
-
-	const char* getTypeString() const override;
+protected:
+	Value(Type type);
 
 private:
-	std::wstring value;
-	std::weak_ptr <Declaration> referred;
+	Type type;
 };
 
 }

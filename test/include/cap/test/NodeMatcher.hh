@@ -10,6 +10,7 @@
 #include <cap/ModifierRoot.hh>
 
 #include <vector>
+#include <cstdint>
 
 namespace cap::test
 {
@@ -31,7 +32,9 @@ public:
 	std::wstring context;
 };
 
-ExpectedNode Value(std::wstring&& value, std::wstring&& referred = L"");
+ExpectedNode Identifier(std::wstring&& value, std::wstring&& referred = L"");
+ExpectedNode Integer(uint64_t value);
+ExpectedNode String(std::wstring&& value);
 ExpectedNode Scope();
 ExpectedNode Function(std::wstring&& name);
 ExpectedNode ClassType(std::wstring&& name);
@@ -55,7 +58,9 @@ public:
 	Result onBinaryOperator(std::shared_ptr <cap::BinaryOperator> node) override;
 	Result onUnaryOperator(std::shared_ptr <cap::UnaryOperator> node) override;
 	Result onBracketOperator(std::shared_ptr <cap::BracketOperator> node) override;
-	Result onValue(std::shared_ptr <cap::Value> node) override;
+	Result onIdentifier(std::shared_ptr <cap::Identifier> node) override;
+	Result onInteger(std::shared_ptr <cap::Integer> node) override;
+	Result onString(std::shared_ptr <cap::String> node) override;
 	Result onReturn(std::shared_ptr <cap::Return> node) override;
 
 	ExpectedNode match(std::shared_ptr <cap::Node> node);

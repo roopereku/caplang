@@ -20,6 +20,9 @@ class ModifierRoot;
 class Statement;
 class Return;
 class Value;
+class Identifier;
+class Integer;
+class String;
 
 class Traverser
 {
@@ -58,6 +61,12 @@ public:
 	/// \param node The expression to traverse.
 	/// \return False if the traversal was unsuccessful.
 	bool traverseExpression(std::shared_ptr <Expression> node);
+
+	/// Performs depth first traversal on a value.
+	///
+	/// \param node The value to traverse.
+	/// \return False if the traversal was unsuccessful.
+	bool traverseValue(std::shared_ptr <Value> node);
 
 	/// Performs depth first traversal on a declaration.
 	///
@@ -144,11 +153,23 @@ protected:
 	/// \return Continue if the traversal should continue to the context and the inner expression.
 	virtual Result onBracketOperator(std::shared_ptr <BracketOperator> node);
 
-	/// Invoked upon hitting a value in an expression.
+	/// Invoked upon hitting an identifier in an expression.
 	///
-	/// \param node The node representing a value.
-	/// \return Stop if the value is invalid.
-	virtual Result onValue(std::shared_ptr <Value> node);
+	/// \param node The node representing an identifier.
+	/// \return Stop if traversal is to be stopped.
+	virtual Result onIdentifier(std::shared_ptr <Identifier> node);
+
+	/// Invoked upon hitting an integer in an expression.
+	///
+	/// \param node The node representing an integer.
+	/// \return Stop if traversal is to be stopped.
+	virtual Result onInteger(std::shared_ptr <Integer> node);
+
+	/// Invoked upon hitting a string in an expression.
+	///
+	/// \param node The node representing a string.
+	/// \return Stop if traversal is to be stopped.
+	virtual Result onString(std::shared_ptr <String> node);
 };
 
 }

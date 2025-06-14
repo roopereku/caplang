@@ -10,7 +10,9 @@
 #include <cap/Variable.hh>
 #include <cap/ModifierRoot.hh>
 #include <cap/Return.hh>
-#include <cap/Value.hh>
+#include <cap/Identifier.hh>
+#include <cap/Integer.hh>
+#include <cap/String.hh>
 
 #include <iostream>
 #include <fstream>
@@ -127,7 +129,7 @@ protected:
 		return Result::Continue;
 	}
 
-	Result onValue(std::shared_ptr <cap::Value> node) override
+	Result onIdentifier(std::shared_ptr <cap::Identifier> node) override
 	{
 		file << prefix() << node->getTypeString() << ": " << node->getValue() << getResultType(node);
 
@@ -137,6 +139,19 @@ protected:
 		}
 
 		file << '\n';
+		return Result::Continue;
+	}
+
+	Result onInteger(std::shared_ptr <cap::Integer> node) override
+	{
+		file << prefix() << node->getTypeString() << ": " << node->getValue() << getResultType(node) << '\n';
+		return Result::Continue;
+	}
+
+	Result onString(std::shared_ptr <cap::String> node) override
+	{
+		// TODO: If the string is interpolated, show the parts separately.
+		file << prefix() << node->getTypeString() << ": " << node->getValue() << getResultType(node) << '\n';
 		return Result::Continue;
 	}
 
@@ -192,9 +207,8 @@ int main()
 	Sandbox client;
 	cap::Source entry(LR"SRC(
 
-		func foo(a = string)
+		func foo()
 		{
-			let a = 10
 		}
 
 	)SRC");

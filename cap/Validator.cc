@@ -7,6 +7,9 @@
 #include <cap/UnaryOperator.hh>
 #include <cap/BracketOperator.hh>
 #include <cap/Value.hh>
+#include <cap/Identifier.hh>
+#include <cap/Integer.hh>
+#include <cap/String.hh>
 #include <cap/Variable.hh>
 #include <cap/Return.hh>
 
@@ -193,44 +196,22 @@ Traverser::Result Validator::onBracketOperator(std::shared_ptr <BracketOperator>
 	return Result::Exit;
 }
 
-Traverser::Result Validator::onValue(std::shared_ptr <Value> node)
+Traverser::Result Validator::onIdentifier(std::shared_ptr <Identifier> node)
 {
 	// Steal the resolver context so that it's not mistakenly used further on.
 	ResolverContext resolve = std::move(resolverCtx);
+	return validateIdentifier(node, resolve);
+}
 
-	// TODO: Handle scope context change when binary operator encounters ".".
-	if(node->getToken().getType() == Token::Type::Identifier)
-	{
-		return validateIdentifier(node, resolve);
-	}
+Traverser::Result Validator::onInteger(std::shared_ptr <Integer> node)
+{
+	node->updateResultType(ctx);
+	return Result::Exit;
+}
 
-	// Determine the result type of a literal.
-	else
-	{
-		switch(node->getToken().getType())
-		{
-			case Token::Type::Integer:
-			case Token::Type::Hexadecimal:
-			case Token::Type::Binary:
-			case Token::Type::Octal:
-			{
-				node->setResultType(TypeContext(ctx.client.getBuiltin().getDefaultIntegerType()));
-				break;
-			}
-
-			case Token::Type::String:
-			{
-				node->setResultType(TypeContext(ctx.client.getBuiltin().getStringType()));
-				break;
-			}
-
-			default:
-			{
-				assert("TODO: No matching type for literal" && false);
-			}
-		}
-	}
-
+Traverser::Result Validator::onString(std::shared_ptr <String> node)
+{
+	node->setResultType(ctx.client.getBuiltin().getStringType());
 	return Result::Exit;
 }
 
@@ -275,7 +256,7 @@ bool Validator::checkUniqueDeclaration(std::shared_ptr <Declaration> decl)
 	return true;
 }
 
-Traverser::Result Validator::validateIdentifier(std::shared_ptr <Value> node, ResolverContext& resolve)
+Traverser::Result Validator::validateIdentifier(std::shared_ptr <Identifier> node, ResolverContext& resolve)
 {
 	Result result = Result::NotHandled;
 
@@ -358,7 +339,7 @@ Traverser::Result Validator::validateIdentifier(std::shared_ptr <Value> node, Re
 	return Result::Exit;
 }
 
-Traverser::Result Validator::connectDeclaration(std::shared_ptr <Value> node,
+Traverser::Result Validator::connectDeclaration(std::shared_ptr <Identifier> node,
 		std::shared_ptr <Declaration> decl, ResolverContext& resolve)
 {
 	if(decl->getName() != node->getValue())

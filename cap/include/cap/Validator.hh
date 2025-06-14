@@ -23,7 +23,9 @@ protected:
 	Result onBinaryOperator(std::shared_ptr <BinaryOperator> node) override;
 	Result onUnaryOperator(std::shared_ptr <UnaryOperator> node) override;
 	Result onBracketOperator(std::shared_ptr <BracketOperator> node) override;
-	Result onValue(std::shared_ptr <Value> node) override;
+	Result onIdentifier(std::shared_ptr <Identifier> node) override;
+	Result onInteger(std::shared_ptr <Integer> node) override;
+	Result onString(std::shared_ptr <String> node) override;
 	Result onReturn(std::shared_ptr <Return> node) override;
 
 private:
@@ -42,9 +44,9 @@ private:
 	/// Makes sure that the given declaration respects the name shadowing rules.
 	bool checkUniqueDeclaration(std::shared_ptr <Declaration> decl);
 
-	Result validateIdentifier(std::shared_ptr <Value> node, ResolverContext& resolve);
+	Result validateIdentifier(std::shared_ptr <Identifier> node, ResolverContext& resolve);
 
-	Result connectDeclaration(std::shared_ptr <Value> node,
+	Result connectDeclaration(std::shared_ptr <Identifier> node,
 			std::shared_ptr <Declaration> decl, ResolverContext& resolve);
 
 	ResolverContext resolverCtx;

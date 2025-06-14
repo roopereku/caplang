@@ -62,7 +62,7 @@ TEST(ValidationTests, AccessOperatorResultType)
 			{
 				let a = 10
 
-				func nested(x = int64, y = int64)
+				func nested(x = int64, y = string)
 				{
 					return "test"
 				}
@@ -75,34 +75,34 @@ TEST(ValidationTests, AccessOperatorResultType)
 		LocalVariable(L"a") > L"int64",
 		cap::BinaryOperator::Type::Access > L"int64",
 			cap::BinaryOperator::Type::Access > L"Foo.Bar",
-				Value(L"Foo") > L"Foo",
-				Value(L"Bar") > L"Foo.Bar",
-			Value(L"a", L"Foo.Bar.a") > L"int64"
+				Identifier(L"Foo") > L"Foo",
+				Identifier(L"Bar") > L"Foo.Bar",
+			Identifier(L"a", L"Foo.Bar.a") > L"int64"
 	});
 
 	tester.test(L"let b = Foo.Bar.nested",
 	{
 		LocalVariable(L"b") > L"func(int64, int64) -> string",
-		cap::BinaryOperator::Type::Access > L"func(int64, int64) -> string",
+		cap::BinaryOperator::Type::Access > L"func(int64, string) -> string",
 			cap::BinaryOperator::Type::Access > L"Foo.Bar",
-				Value(L"Foo") > L"Foo",
-				Value(L"Bar") > L"Foo.Bar",
-			Value(L"nested", L"Foo.Bar.nested") > L"func(int64, int64) -> string"
+				Identifier(L"Foo") > L"Foo",
+				Identifier(L"Bar") > L"Foo.Bar",
+			Identifier(L"nested", L"Foo.Bar.nested") > L"func(int64, string) -> string"
 	});
 
-	tester.test(L"let b = Foo.Bar.nested(1, 2)",
+	tester.test(L"let b = Foo.Bar.nested(1, \"test\")",
 	{
 		LocalVariable(L"b") > L"string",
 			cap::BinaryOperator::Type::Access > L"string",
 				cap::BinaryOperator::Type::Access > L"Foo.Bar",
-					Value(L"Foo") > L"Foo",
-					Value(L"Bar") > L"Foo.Bar",
+					Identifier(L"Foo") > L"Foo",
+					Identifier(L"Bar") > L"Foo.Bar",
 			cap::BracketOperator::Type::Call > L"string",
-				Value(L"nested", L"Foo.Bar.nested") > L"func(int64, int64) -> string",
+				Identifier(L"nested", L"Foo.Bar.nested") > L"func(int64, string) -> string",
 				Expression(),
 					cap::BinaryOperator::Type::Comma,
-						Value(L"1") > L"int64",
-						Value(L"2") > L"int64"
+						Integer(1) > L"int64",
+						String(L"test") > L"string"
 	});
 }
 
@@ -135,7 +135,7 @@ TEST(ValidationTests, InferredReturnType)
 	{
 		LocalVariable(L"a"),
 			cap::BracketOperator::Type::Call > L"int64",
-				Value(L"returnInt") > L"func() -> int64",
+				Identifier(L"returnInt") > L"func() -> int64",
 				Expression()
 	});
 
@@ -143,7 +143,7 @@ TEST(ValidationTests, InferredReturnType)
 	{
 		LocalVariable(L"b"),
 			cap::BracketOperator::Type::Call > L"string",
-				Value(L"returnString") > L"func() -> string",
+				Identifier(L"returnString") > L"func() -> string",
 				Expression()
 	});
 
@@ -151,7 +151,7 @@ TEST(ValidationTests, InferredReturnType)
 	{
 		Expression(),
 			cap::BracketOperator::Type::Call > L"void",
-				Value(L"returnVoid") > L"func() -> void",
+				Identifier(L"returnVoid") > L"func() -> void",
 				Expression()
 	});
 
@@ -159,7 +159,7 @@ TEST(ValidationTests, InferredReturnType)
 	{
 		Expression(),
 			cap::BracketOperator::Type::Call > L"void",
-				Value(L"returnDefault") > L"func() -> void",
+				Identifier(L"returnDefault") > L"func() -> void",
 				Expression()
 	});
 }
@@ -190,26 +190,26 @@ TEST(ValidationTests, VariablesAsParameters)
 	{
 		Expression() > L"void",
 			cap::BracketOperator::Type::Call > L"void",
-				Value(L"foo") > L"func(string, int64, int64) -> void",
+				Identifier(L"foo") > L"func(string, int64, int64) -> void",
 				Expression(),
 					cap::BinaryOperator::Type::Comma,
 						cap::BinaryOperator::Type::Comma,
-							Value(L"str") > L"string",
-							Value(L"x") > L"int64",
-						Value(L"y") > L"int64"
+							Identifier(L"str") > L"string",
+							Identifier(L"x") > L"int64",
+						Identifier(L"y") > L"int64"
 	});
 
 	tester.test(L"Foo.foo(str, x)",
 	{
 		Expression() > L"void",
 			cap::BinaryOperator::Type::Access > L"void",
-				Value(L"Foo") > L"Foo",
+				Identifier(L"Foo") > L"Foo",
 				cap::BracketOperator::Type::Call > L"void",
-					Value(L"foo") > L"func(string, int64) -> void",
+					Identifier(L"foo") > L"func(string, int64) -> void",
 					Expression(),
 						cap::BinaryOperator::Type::Comma,
-							Value(L"str") > L"string",
-							Value(L"x") > L"int64",
+							Identifier(L"str") > L"string",
+							Identifier(L"x") > L"int64",
 	});
 
 	// TODO: Add a test where function parameters are passed onwards?
