@@ -18,11 +18,11 @@ FetchContent_MakeAvailable(googletest)
 
 enable_testing()
 
-add_subdirectory(../cap cap)
+add_subdirectory(.. caplang)
 
 file(GLOB Sources *.cc)
 add_executable(captests ${Sources})
-target_link_libraries(captests cap GTest::gtest_main)
+target_link_libraries(captests caplang GTest::gtest_main)
 target_include_directories(captests PRIVATE include)
 
 if(MSVC)
