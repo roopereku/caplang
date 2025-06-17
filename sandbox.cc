@@ -209,6 +209,7 @@ int main()
 
 		func foo()
 		{
+			let a = 1 + 2 * 10 << 0xFF
 		}
 
 	)SRC");

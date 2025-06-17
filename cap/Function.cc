@@ -129,7 +129,7 @@ bool Function::validate(Validator& validator)
 		// If no return type still exists, default to void.
 		if(!getReturnTypeRoot()->getResultType())
 		{
-			auto& voidType = validator.getParserContext().client.getBuiltin().getVoidType();
+			auto& voidType = validator.getParserContext().client.getBuiltin().get(Builtin::DataType::Void);
 			getReturnTypeRoot()->setResultType(voidType);
 		}
 	}

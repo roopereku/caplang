@@ -28,7 +28,7 @@ public:
 	/// Sets the result type to the minimum which can hold the contained value.
 	/// 
 	/// \param ctx The context to retrieve builtins from.
-	void updateResultType(cap::ParserContext& ctx);
+	void setInitialType(cap::ParserContext& ctx);
 
 	const char* getTypeString() const override;
 

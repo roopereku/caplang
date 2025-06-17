@@ -52,10 +52,12 @@ uint64_t Integer::getValue() const
 	return value;
 }
 
-void Integer::updateResultType(cap::ParserContext& ctx)
+void Integer::setInitialType(cap::ParserContext& ctx)
 {
-	// TODO: Check the initial value and determine a type based on that.
-	setResultType(ctx.client.getBuiltin().getDefaultIntegerType());
+	// TODO: Handle suffixes such as U and L.
+	// TODO: Pick a type depending on the type.
+
+	setResultType(ctx.client.getBuiltin().get(Builtin::DataType::Int64));
 }
 
 const char* Integer::getTypeString() const

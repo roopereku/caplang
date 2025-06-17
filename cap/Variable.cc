@@ -35,7 +35,7 @@ bool Variable::validate(Validator& validator)
 	{
         // Temporarily refer to void. This is to stop recursive validation.
         // TODO: Should there be an error type or similar to indicate uninitializated variables?
-		referredType.emplace(validator.getParserContext().client.getBuiltin().getVoidType());
+		referredType.emplace(validator.getParserContext().client.getBuiltin().get(Builtin::DataType::Void));
 
 		assert(!initialization.expired());
 		auto init = initialization.lock();

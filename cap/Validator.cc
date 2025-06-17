@@ -205,13 +205,15 @@ Traverser::Result Validator::onIdentifier(std::shared_ptr <Identifier> node)
 
 Traverser::Result Validator::onInteger(std::shared_ptr <Integer> node)
 {
-	node->updateResultType(ctx);
+	// Set the initial type to the minimum that can hold the immediate value.
+	// Outer operation such a negation can then alter this.
+	node->setInitialType(ctx);
 	return Result::Exit;
 }
 
 Traverser::Result Validator::onString(std::shared_ptr <String> node)
 {
-	node->setResultType(ctx.client.getBuiltin().getStringType());
+	node->setResultType(ctx.client.getBuiltin().get(Builtin::DataType::String));
 	return Result::Exit;
 }
 

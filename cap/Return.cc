@@ -50,7 +50,7 @@ bool Return::tryUpdatingReturnType(cap::ParserContext& ctx)
 	// If the returning expression doesn't exist, default to void.
 	auto& ret = expression->getFirst() ?
 		*expression->getFirst()->getResultType() :
-		ctx.client.getBuiltin().getVoidType();
+		ctx.client.getBuiltin().get(Builtin::DataType::Void);
 
 	// If no return type is set for what's being returned from, initialize
 	// to whatever this return statement wants to return.

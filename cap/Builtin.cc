@@ -9,19 +9,7 @@ namespace cap
 
 // TODO: Indicate type size somehow. Maybe attributes?
 Builtin::Builtin() : Source(LR"SRC(
-	type void
-	{
-	}
-
-	type int8
-	{
-	}
-
-	type int32
-	{
-	}
-
-	type int64
+	type uint8
 	{
 	}
 
@@ -37,7 +25,27 @@ Builtin::Builtin() : Source(LR"SRC(
 	{
 	}
 
+	type int8
+	{
+	}
+
+	type int16
+	{
+	}
+
+	type int32
+	{
+	}
+
+	type int64
+	{
+	}
+
 	type string
+	{
+	}
+
+	type void
 	{
 	}
 
@@ -46,41 +54,22 @@ Builtin::Builtin() : Source(LR"SRC(
 void Builtin::doCaching()
 {
 	assert(getGlobal());
+	size_t index = 0;
 	for(auto decl : getGlobal()->declarations)
 	{
-		if(decl->getName() == L"void")
-		{
-			voidDecl = std::static_pointer_cast <ClassType> (decl);
-		}
+		assert(decl->getType() == Declaration::Type::Class);
+		cachedDeclarations[index] = std::static_pointer_cast <ClassType> (decl);
 
-		else if(decl->getName() == L"int64")
-		{
-			defaultIntegerDecl = std::static_pointer_cast <ClassType> (decl);
-		}
-
-		else if(decl->getName() == L"string")
-		{
-			stringDecl = std::static_pointer_cast <ClassType> (decl);
-		}
+		index++;
 	}
 }
 
-TypeDefinition& Builtin::getVoidType() const
+TypeDefinition& Builtin::get(DataType type) const
 {
-	assert(!voidDecl.expired());
-	return *voidDecl.lock();
-}
-
-TypeDefinition& Builtin::getDefaultIntegerType() const
-{
-	assert(!defaultIntegerDecl.expired());
-	return *defaultIntegerDecl.lock();
-}
-
-TypeDefinition& Builtin::getStringType() const
-{
-	assert(!stringDecl.expired());
-	return *stringDecl.lock();
+	const size_t index = static_cast <size_t> (type);
+	assert(index < cachedDeclarations.size());
+	assert(!cachedDeclarations[index].expired());
+	return *cachedDeclarations[index].lock();
 }
 
 }

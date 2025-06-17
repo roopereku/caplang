@@ -3,6 +3,8 @@
 
 #include <cap/Source.hh>
 
+#include <array>
+
 namespace cap
 {
 
@@ -12,18 +14,27 @@ class TypeDefinition;
 class Builtin : public Source
 {
 public:
+	enum class DataType
+	{
+		Uint8,
+		Uint16,
+		Uint32,
+		Uint64,
+		Int8,
+		Int16,
+		Int32,
+		Int64,
+		String,
+		Void
+	};
+
 	Builtin();
 
 	void doCaching();
-
-	TypeDefinition& getVoidType() const;
-	TypeDefinition& getDefaultIntegerType() const;
-	TypeDefinition& getStringType() const;
+	TypeDefinition& get(DataType type) const;
 
 private:
-	std::weak_ptr <ClassType> voidDecl;
-	std::weak_ptr <ClassType> defaultIntegerDecl;
-	std::weak_ptr <ClassType> stringDecl;
+	std::array <std::weak_ptr <ClassType>, 10> cachedDeclarations;
 };
 
 }
