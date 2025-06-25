@@ -13,6 +13,7 @@
 #include <cap/Identifier.hh>
 #include <cap/Integer.hh>
 #include <cap/String.hh>
+#include <cap/execution/ExecutionContext.hh>
 
 #include <iostream>
 #include <fstream>
@@ -209,7 +210,9 @@ int main()
 
 		func foo()
 		{
-			let a = 1 + 2 * 10 << 0xFF
+			1 + 2 * 3 + 4
+			//(1 * 2 + 3 / 4) - (5 * 6 + 7 / 8)
+			//(1 * 2 + 3 / 4) - (5 * 6 + 7 / 8 & 9 / 10 << 11 * 22)
 		}
 
 	)SRC");
@@ -221,6 +224,28 @@ int main()
 
 	ASTDumper dumper("ast.puml");
 	dumper.traverseNode(entry.getGlobal());
+
+	auto foo = std::static_pointer_cast <cap::Function> (*entry.getGlobal()->declarations.begin());
+	cap::ExecutionSequence execSeq(foo);
+
+	for(auto& step : execSeq)
+	{
+		DBG_MESSAGE(client, "STEP ", step.action->getTypeString(), " -> ", step.resultIndex, step.isTrivial() ? " : trivial" : "");
+		for(auto& operand : step.operands)
+		{
+			if(operand.getType() == cap::ExecutionStep::Operand::Type::Immediate)
+			{
+				auto imm = operand.asImmediate();
+				DBG_MESSAGE(client, "- ", imm->getTypeString(), " -> ", entry.getString(imm->getToken()));
+			}
+
+			else
+			{
+				auto index = operand.asResultIndex();
+				DBG_MESSAGE(client, "- Result index ", index);
+			}
+		}
+	}
 
 	return 0;
 }

@@ -3,7 +3,7 @@ project(caplang)
 
 set(CMAKE_CXX_STANDARD 17)
 
-file(GLOB Sources src/*.cc)
+file(GLOB_RECURSE Sources src/*.cc)
 add_library(caplang SHARED ${Sources})
 target_include_directories(caplang PUBLIC include)
 
