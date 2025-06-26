@@ -4,7 +4,6 @@
 #include <cap/Node.hh>
 #include <cap/Value.hh>
 
-#include <variant>
 #include <vector>
 
 namespace cap
@@ -51,19 +50,22 @@ class ExecutionStep::Operand
 public:
 	enum class Type
 	{
-		ResultIndex,
+		Result,
 		Immediate
 	};
 
 	Operand(std::shared_ptr <Value> immediate);
-	Operand(size_t resultIndex);
+	Operand(size_t resultIndex, std::shared_ptr <Node> resultFrom);
+
+	std::shared_ptr <Node> getNode() const;
 
 	Type getType() const;
 	size_t asResultIndex() const;
 	std::shared_ptr <Value> asImmediate() const;
 
 private:
-	std::variant <std::shared_ptr <Value>, size_t> data;
+	std::shared_ptr <Node> node;
+	size_t resultIndex;
 	Type type;
 };
 

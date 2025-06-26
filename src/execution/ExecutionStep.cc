@@ -35,8 +35,6 @@ void ExecutionStep::addOperand(Operand&& operand)
 	{
 		trivial = false;
 		resultIndex = std::min(resultIndex, operand.asResultIndex());
-
-		printf("Add result operand %lu to %s. Minimum is %lu\n", operand.asResultIndex(), action->getTypeString(), resultIndex);
 	}
 
 	operands.emplace_back(std::move(operand));
@@ -53,12 +51,12 @@ bool ExecutionStep::isTrivial() const
 }
 
 ExecutionStep::Operand::Operand(std::shared_ptr <Value> immediate)
-	: data(immediate), type(Type::Immediate)
+	: node(immediate), resultIndex(-1), type(Type::Immediate)
 {
 }
 
-ExecutionStep::Operand::Operand(size_t resultIndex)
-	: data(resultIndex), type(Type::ResultIndex)
+ExecutionStep::Operand::Operand(size_t resultIndex, std::shared_ptr <Node> resultFrom)
+	: node(resultFrom), resultIndex(resultIndex), type(Type::Result)
 {
 }
 
@@ -69,14 +67,19 @@ ExecutionStep::Operand::Type ExecutionStep::Operand::getType() const
 
 size_t ExecutionStep::Operand::asResultIndex() const
 {
-	assert(type == Type::ResultIndex);
-	return std::get <size_t> (data);
+	assert(type == Type::Result);
+	return resultIndex;
 }
 
 std::shared_ptr <Value> ExecutionStep::Operand::asImmediate() const
 {
 	assert(type == Type::Immediate);
-	return std::get <std::shared_ptr <Value>> (data);
+	return std::static_pointer_cast <Value> (node);
+}
+
+std::shared_ptr <Node> ExecutionStep::Operand::getNode() const
+{
+	return node;
 }
 
 }

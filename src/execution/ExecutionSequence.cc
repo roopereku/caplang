@@ -35,7 +35,26 @@ public:
 		step.addOperand(std::move(right));
 
 		resultIndex = step.getResultIndex();
-		currentOperand.emplace(resultIndex);
+		currentOperand.emplace(resultIndex, node);
+		sequence.addStep(std::move(step));
+
+		return Result::Exit;
+	}
+
+	Result onUnaryOperator(std::shared_ptr <UnaryOperator> node) override
+	{
+		auto expr = getOperand(node->getExpression());
+
+		if(sequence.begin() != sequence.end())
+		{
+			resultIndex++;
+		}
+
+		ExecutionStep step(node, resultIndex);
+		step.addOperand(std::move(expr));
+
+		resultIndex = step.getResultIndex();
+		currentOperand.emplace(resultIndex, node);
 		sequence.addStep(std::move(step));
 
 		return Result::Exit;
