@@ -33,16 +33,18 @@ public:
 	ExecutionStep(std::shared_ptr <Statement> node, size_t resultIndex = -1);
 
 	void addOperand(Operand&& operand);
+	const std::vector <Operand>& getOperands() const;
 
 	size_t getResultIndex() const;
 	bool isTrivial() const;
 
+	const Type type;
+	const std::shared_ptr <Node> action;
+
 //private:
-	std::shared_ptr <Node> action;
 	std::vector <Operand> operands;
 	size_t resultIndex = 0;
 	bool trivial = true;
-	Type type;
 };
 
 class ExecutionStep::Operand

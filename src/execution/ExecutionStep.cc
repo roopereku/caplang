@@ -10,22 +10,22 @@ namespace cap
 {
 
 ExecutionStep::ExecutionStep(std::shared_ptr <BinaryOperator> node, size_t resultIndex)
-	: action(node), resultIndex(resultIndex), type(Type::BinaryOperator)
+	: type(Type::BinaryOperator), action(node), resultIndex(resultIndex)
 {
 }
 
 ExecutionStep::ExecutionStep(std::shared_ptr <UnaryOperator> node, size_t resultIndex)
-	: action(node), resultIndex(resultIndex), type(Type::UnaryOperator)
+	: type(Type::UnaryOperator), action(node), resultIndex(resultIndex)
 {
 }
 
 ExecutionStep::ExecutionStep(std::shared_ptr <BracketOperator> node, size_t resultIndex)
-	: action(node), resultIndex(resultIndex), type(Type::BracketOperator)
+	: type(Type::BracketOperator), action(node), resultIndex(resultIndex)
 {
 }
 
 ExecutionStep::ExecutionStep(std::shared_ptr <Statement> node, size_t resultIndex)
-	: action(node), resultIndex(resultIndex), type(Type::Statement)
+	: type(Type::Statement), action(node), resultIndex(resultIndex)
 {
 }
 
@@ -38,6 +38,11 @@ void ExecutionStep::addOperand(Operand&& operand)
 	}
 
 	operands.emplace_back(std::move(operand));
+}
+
+const std::vector <ExecutionStep::Operand>& ExecutionStep::getOperands() const
+{
+	return operands;
 }
 
 size_t ExecutionStep::getResultIndex() const

@@ -11,9 +11,14 @@ Identifier::Identifier(std::wstring&& value)
 {
 }
 
-const std::wstring& Identifier::getValue()
+const std::wstring& Identifier::getValue() const
 {
 	return value;
+}
+
+std::wstring Identifier::getString() const
+{
+	return getValue();
 }
 
 std::shared_ptr <Declaration> Identifier::getReferred()

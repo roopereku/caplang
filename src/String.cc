@@ -16,6 +16,11 @@ const std::wstring& String::getValue() const
 	return value;
 }
 
+std::wstring String::getString() const
+{
+	return getValue();
+}
+
 const char* String::getTypeString() const
 {
 	return "String";

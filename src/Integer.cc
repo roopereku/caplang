@@ -52,6 +52,11 @@ uint64_t Integer::getValue() const
 	return value;
 }
 
+std::wstring Integer::getString() const
+{
+	return std::to_wstring(value);
+}
+
 void Integer::setInitialType(cap::ParserContext& ctx)
 {
 	// TODO: Handle suffixes such as U and L.

@@ -1,49 +1,23 @@
 #include <gtest/gtest.h>
 
-#include <cap/test/DynamicSource.hh>
-#include <cap/test/NodeMatcher.hh>
+#include <cap/test/IsolatedTester.hh>
 #include <cap/Function.hh>
 #include <cap/Client.hh>
 
 using namespace cap::test;
 
-class ValidationTester : public cap::Client
+class ValidationTester : public IsolatedTester
 {
 public:
-	void setup(std::wstring&& src)
-	{
-		setupSrc = std::move(src);
-	}
-
 	void test(std::wstring&& src, std::vector <ExpectedNode>&& expectedExpr)
 	{
-		cap::test::DynamicSource source;
-		source += setupSrc;
-		source += L"\nfunc test()\n{\n";
-		source += std::move(src);
-		source += L"\n}\n";
-
-		ASSERT_TRUE(source.parse(*this, true));
+		auto isolated = getIsolatedFunction(std::move(src))->getBody();
 
 		expectedExpr.insert(expectedExpr.begin(), Scope());
 		NodeMatcher matcher(std::move(expectedExpr));
 
-		std::shared_ptr <cap::Scope> root;
-		for(auto decl : source.getGlobal()->declarations)
-		{
-			if(decl->getName() == L"test")
-			{
-				ASSERT_TRUE(decl->getType() == cap::Declaration::Type::Function);
-				auto func = std::static_pointer_cast <cap::Function> (decl);
-				root = func->getBody();
-			}
-		}
-
-		matcher.traverseNode(root);
+		matcher.traverseNode(isolated);
 	}
-
-private:
-	std::wstring setupSrc;
 };
 
 TEST(ValidationTests, AccessOperatorResultType)

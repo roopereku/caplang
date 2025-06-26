@@ -25,6 +25,11 @@ public:
 	/// \return Integer value.
 	uint64_t getValue() const;
 
+	/// Gets the contained integer value as a string.
+	///
+	/// \return The contained integer value as a string.
+	std::wstring getString() const override;
+
 	/// Sets the result type to the minimum which can hold the contained value.
 	/// 
 	/// \param ctx The context to retrieve builtins from.

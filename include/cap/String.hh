@@ -18,6 +18,12 @@ public:
 	/// \return String value.
 	const std::wstring& getValue() const;
 
+	/// Gets the contained string value.
+	/// Same as calling getValue.
+	///
+	/// \return The contained string value.
+	std::wstring getString() const override;
+
 	const char* getTypeString() const override;
 
 private:

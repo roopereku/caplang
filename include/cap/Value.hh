@@ -35,6 +35,11 @@ public:
 	/// \return The type of this value node.
 	Type getType() const;
 
+	/// Gets the contained value as a string.
+	///
+	/// \return The contained value as a string.
+	virtual std::wstring getString() const = 0;
+
 protected:
 	Value(Type type);
 

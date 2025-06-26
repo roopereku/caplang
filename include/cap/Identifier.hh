@@ -13,7 +13,16 @@ class Identifier : public Value
 public:
 	Identifier(std::wstring&& value);
 
-	const std::wstring& getValue();
+	/// Gets the identifier name as a string.
+	///
+	/// \return The identifier name as a string.
+	const std::wstring& getValue() const;
+
+	/// Gets the contained string value.
+	/// Same as calling getValue.
+	///
+	/// \return The contained string value.
+	std::wstring getString() const override;
 
 	/// Returns the declaration that this value refers to if any.
 	///
