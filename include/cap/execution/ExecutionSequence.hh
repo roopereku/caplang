@@ -36,10 +36,13 @@ public:
 	/// \return The added execution step.
 	ExecutionStep& addStep(ExecutionStep&& step);
 
-	decltype(steps)::iterator begin() { return steps.begin(); }
-	decltype(steps)::iterator end() { return steps.end(); }
-	decltype(steps)::const_iterator begin() const { return steps.begin(); }
-	decltype(steps)::const_iterator end() const { return steps.end(); }
+	using iterator = decltype(steps)::iterator;
+	using const_iterator = decltype(steps)::const_iterator;
+
+	iterator begin() { return steps.begin(); }
+	iterator end() { return steps.end(); }
+	const_iterator begin() const { return steps.begin(); }
+	const_iterator end() const { return steps.end(); }
 };
 
 }

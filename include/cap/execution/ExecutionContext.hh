@@ -15,17 +15,34 @@ class ExecutionContext
 public:
 	class Frame;
 
-	void tick();
+	bool isFinished() const;
+
+	void start(std::shared_ptr <Function> node);
+	void step();
 
 private:
+	std::unordered_map <std::shared_ptr <Node>, ExecutionSequence> sequenceLookup;
 	std::stack <Frame> frames;
 };
 
 class ExecutionContext::Frame
 {
 public:
+	Frame(ExecutionSequence& sequence);
+
+	bool step();
 
 private:
+	void executeBinaryOperator();
+	void executeUnaryOperator();
+	void executeBracketOperator();
+	void executeStatement();
+
+	ExecutionSequence& sequence;
+	ExecutionSequence::iterator pointer;
+
+	// TODO: How about member declarations in types?
+	// TODO: How about global declarations?
 	std::unordered_map <std::shared_ptr <Variable>, int> variables;
 };
 

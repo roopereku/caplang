@@ -248,5 +248,13 @@ int main()
 		}
 	}
 
+	cap::ExecutionContext execCtx;
+	execCtx.start(foo);
+
+	while(!execCtx.isFinished())
+	{
+		execCtx.step();
+	}
+
 	return 0;
 }
