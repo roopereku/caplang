@@ -29,6 +29,13 @@ ExecutionStep::ExecutionStep(std::shared_ptr <Statement> node, size_t resultInde
 {
 }
 
+ExecutionStep::ExecutionStep(Operand&& immediate, size_t resultIndex)
+	: type(Type::StoreImmediate), resultIndex(resultIndex)
+{
+	assert(immediate.getType() == Operand::Type::Immediate);
+	addOperand(std::move(immediate));
+}
+
 void ExecutionStep::addOperand(Operand&& operand)
 {
 	if(operand.getType() != Operand::Type::Immediate)

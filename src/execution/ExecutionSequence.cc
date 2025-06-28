@@ -4,10 +4,12 @@
 #include <cap/UnaryOperator.hh>
 #include <cap/BracketOperator.hh>
 #include <cap/Statement.hh>
+#include <cap/Identifier.hh>
 #include <cap/Integer.hh>
 #include <cap/String.hh>
 
 #include <cassert>
+#include <limits>
 
 namespace cap
 {
@@ -57,6 +59,52 @@ public:
 		currentOperand.emplace(resultIndex, node);
 		sequence.addStep(std::move(step));
 
+		return Result::Exit;
+	}
+
+	Result onBracketOperator(std::shared_ptr <BracketOperator> node) override
+	{
+		// Since the execution step is constructed before traversing to operands,
+		// use the max value possible for the index to make addOperand prioritize
+		// the result indices of the operands.
+		size_t initialResultindex = node->getInnerRoot()->getFirst() ?
+			std::numeric_limits <size_t>::max() : resultIndex;
+
+		ExecutionStep step(node, initialResultindex);
+		ArgumentAccessor parameters(node->getInnerRoot());
+
+		while(auto param = parameters.getNext())
+		{
+			auto operand = getOperand(param);
+
+			// Immediate operands become steps that store an immediate.
+			// This is for consistency as all parameters should be behind a result index.
+			if(operand.getType() == ExecutionStep::Operand::Type::Immediate)
+			{
+				if(sequence.begin() != sequence.end())
+				{
+					resultIndex++;
+				}
+
+				ExecutionStep immediateStore(std::move(operand), resultIndex);
+				operand = ExecutionStep::Operand(immediateStore.getResultIndex(), param);
+				sequence.addStep(std::move(immediateStore));
+			}
+
+			step.addOperand(std::move(operand));
+		}
+
+		resultIndex = step.getResultIndex();
+		currentOperand.emplace(resultIndex, node);
+		sequence.addStep(std::move(step));
+
+		return Result::Exit;
+
+	}
+
+	Result onIdentifier(std::shared_ptr <Identifier> node) override
+	{
+		currentOperand.emplace(node); 
 		return Result::Exit;
 	}
 

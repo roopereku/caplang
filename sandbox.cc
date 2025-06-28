@@ -15,6 +15,7 @@
 #include <cap/String.hh>
 #include <cap/execution/ExecutionContext.hh>
 
+#include <algorithm>
 #include <iostream>
 #include <fstream>
 #include <cassert>
@@ -208,10 +209,23 @@ int main()
 	Sandbox client;
 	cap::Source entry(LR"SRC(
 
-		func foo()
+		type A
 		{
+			let b = 0xFF
+		}
+
+		func foo(a = int64, b = string, c = int64)
+		{
+			return 10
+		}
+
+		func main()
+		{
+			1 * 2 & foo(100 + 200, "nonii", 400 * 500)
+			
+			//A.b
 			//1 + 2 * 3 + 4
-			-(1 * 2 + 3 / -4) - -(5 * 6 + 7 / 8)
+			//-(1 * 2 + 3 / -4) - -(5 * 6 + 7 / 8)
 			//(1 * 2 + 3 / 4) - (5 * 6 + 7 / 8)
 			//(1 * 2 + 3 / 4) - (5 * 6 + 7 / 8 & 9 / 10 << 11 * 22)
 		}
@@ -226,12 +240,19 @@ int main()
 	ASTDumper dumper("ast.puml");
 	dumper.traverseNode(entry.getGlobal());
 
-	auto foo = std::static_pointer_cast <cap::Function> (*entry.getGlobal()->declarations.begin());
+	auto global = entry.getGlobal();
+	auto fooDecl = std::find_if(global->declarations.begin(), global->declarations.end(), [](std::shared_ptr <cap::Declaration> decl)
+	{
+		return decl->getName() == L"main";
+	});
+
+	auto foo = std::static_pointer_cast <cap::Function> (*fooDecl);
 	cap::ExecutionSequence execSeq(foo);
 
 	for(auto& step : execSeq)
 	{
-		DBG_MESSAGE(client, "STEP ", step.action->getTypeString(), " -> ", step.resultIndex, step.isTrivial() ? " : trivial" : "");
+		const char* typeStr = step.type == cap::ExecutionStep::Type::StoreImmediate ? "Store immediate" : step.action->getTypeString();
+		DBG_MESSAGE(client, "STEP ", typeStr, " -> ", step.resultIndex, step.isTrivial() ? " : trivial" : "");
 		for(auto& operand : step.operands)
 		{
 			if(operand.getType() == cap::ExecutionStep::Operand::Type::Immediate)

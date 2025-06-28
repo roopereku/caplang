@@ -66,6 +66,11 @@ bool ExecutionContext::Frame::step()
 			executeStatement();
 			break;
 		}
+
+		case ExecutionStep::Type::StoreImmediate:
+		{
+			break;
+		}
 	}
 
 	pointer++;

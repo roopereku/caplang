@@ -23,6 +23,7 @@ public:
 		UnaryOperator,
 		BracketOperator,
 		Statement,
+		StoreImmediate
 	};
 
 	class Operand;
@@ -31,6 +32,7 @@ public:
 	ExecutionStep(std::shared_ptr <UnaryOperator> node, size_t resultIndex = -1);
 	ExecutionStep(std::shared_ptr <BracketOperator> node, size_t resultIndex = -1);
 	ExecutionStep(std::shared_ptr <Statement> node, size_t resultIndex = -1);
+	ExecutionStep(Operand&& immediate, size_t resultIndex = -1);
 
 	void addOperand(Operand&& operand);
 	const std::vector <Operand>& getOperands() const;
