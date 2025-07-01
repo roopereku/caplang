@@ -42,8 +42,8 @@ bool DeclarationStorage::checkEquivalent(std::shared_ptr <Declaration> node, Val
 				return false;
 			}
 
-			auto nodeParams = funcNode->getParameterRoot();
-			auto [compatible, unidentical] = funcDecl->matchParameters(ArgumentAccessor(nodeParams));
+			CommaAccessor nodeParams(funcNode->getParameterRoot());
+			auto [compatible, unidentical] = funcDecl->matchParameters(nodeParams);
 			if(compatible && unidentical == 0)
 			{
 				// TODO: Give more context for the existing function?

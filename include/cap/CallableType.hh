@@ -37,7 +37,7 @@ public:
 	///
 	/// \param arguments The arguments to match against.
 	/// \return Whether the parameters are compatible and how many are unidentical.
-	std::pair <bool, size_t> matchParameters(ArgumentAccessor&& arguments) const;
+	std::pair <bool, size_t> matchParameters(ArgumentAccessor& arguments) const;
 
 	/// Gets the string representation of this callable type.
 	///

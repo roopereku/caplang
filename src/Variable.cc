@@ -104,7 +104,7 @@ std::weak_ptr <Node> Variable::Root::invokedNodeExited(Node::ParserContext& ctx,
 	// TODO: Initializer instead?
 	auto variableRoot = std::static_pointer_cast <Variable::Root> (shared_from_this());
 
-	ArgumentAccessor declarations(variableRoot);
+	CommaAccessor declarations(variableRoot);
 	auto declContainer = getParentWithDeclarationStorage();
 
 	while(auto node = declarations.getNext())
@@ -123,7 +123,6 @@ std::weak_ptr <Node> Variable::Root::invokedNodeExited(Node::ParserContext& ctx,
 
 				auto decl =  std::make_shared <Variable> (variableRoot->getType(), op);
 
-				// TODO: Something like ArgumentAccessor::getNextIdentifier might be useful.
 				assert(op->getLeft()->getType() == Expression::Type::Value);
 				auto value = std::static_pointer_cast <Value> (op->getLeft());
 				assert(value->getType() == Value::Type::Identifier);

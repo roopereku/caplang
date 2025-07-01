@@ -390,7 +390,9 @@ Traverser::Result Validator::connectDeclaration(std::shared_ptr <Identifier> nod
 		// parameters select the most fitting one. This way more fitting function overloads
 		// can be prioritized over those where parameters are implicitly casted.
 
-		auto [compatible, unidentical] = callable->matchParameters(resolve.parameters);
+		CommaAccessor paramAccessor(resolve.parameters);
+		auto [compatible, unidentical] = callable->matchParameters(paramAccessor);
+
 		if(compatible)
 		{
 			node->setReferred(decl);

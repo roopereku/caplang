@@ -1,6 +1,7 @@
 #include <cap/Scope.hh>
 #include <cap/Client.hh>
 #include <cap/Function.hh>
+#include <cap/Conversion.hh>
 #include <cap/ClassType.hh>
 #include <cap/Expression.hh>
 #include <cap/ParserContext.hh>
@@ -28,6 +29,11 @@ std::weak_ptr <Node> Scope::handleToken(ParserContext& ctx, Token& token)
 	if(ctx.source.match(token, L"func"))
 	{
 		return appendNested(std::make_shared <Function> (), token);
+	}
+
+	else if(ctx.source.match(token, L"conversion"))
+	{
+		return appendNested(std::make_shared <Conversion> (), token);
 	}
 
 	else if(ctx.source.match(token, L"type"))
