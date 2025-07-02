@@ -128,6 +128,9 @@ const char* Scope::getTypeString() const
 
 std::weak_ptr <Node> Scope::appendNested(std::shared_ptr <Node> node, Token& token)
 {
+	// TODO: Make sure that the token isn't the last on the line.
+	// Might not make sense in the case of opening/closing brackets.
+
 	adopt(node);
 	node->setToken(token);
 	nested.emplace_back(std::move(node));

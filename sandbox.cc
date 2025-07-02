@@ -239,7 +239,7 @@ int main()
 		}
 		*/
 
-		conversion int64
+		conversion string + int64
 		{
 		}
 

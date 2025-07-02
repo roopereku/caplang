@@ -9,6 +9,15 @@ namespace cap
 class Conversion : public Function
 {
 public:
+	enum class Type
+	{
+		BinaryOperator,
+		UnaryOperator,
+		BracketOperator,
+		TypeConversion,
+		Invalid
+	};
+
 	/// Assigns the context of the conversion such as the operands and types.
 	///
 	/// \param ctx The parser context.
@@ -27,6 +36,7 @@ public:
 
 private:
 	std::shared_ptr <Expression::Root> context;
+	Type type = Type::Invalid;
 };
 
 }
