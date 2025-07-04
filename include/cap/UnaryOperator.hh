@@ -51,9 +51,9 @@ public:
 	/// \return True if this operator has values on both sides.
 	bool isComplete() const override;
 
-	/// Returns precedence values above 0.
+	/// Returns a predence value depending on the held type.
 	///
-	/// \return Value above 0 depending on the type.
+	/// \return preUnaryPrecedence or postUnaryPrecedence.
 	unsigned getPrecedence() override;
 
 	/// Gets the type of this unary operator.

@@ -11,7 +11,7 @@ class ModifierRoot : public Expression::Root
 public:
 	enum class Type
 	{
-		Alias
+		TypeReference
 	};
 
 	ModifierRoot(Type type);
@@ -27,6 +27,11 @@ public:
 	///
 	/// \return The type of this declaration root.
 	Type getType() const;
+
+	/// Gets the precedence value for modifiers roots.
+	///
+	/// \return modifierRootPrecedence.
+	unsigned getPrecedence() override;
 
 	static const char* getTypeString(Type type);
 	const char* getTypeString() const override;

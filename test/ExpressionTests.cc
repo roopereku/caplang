@@ -24,9 +24,6 @@ public:
 		source += std::move(expr);
 		source += L"\n}\n";
 
-		// TODO: When validation exists, disable it
-		// as a lot of the tests only make sure that the
-		// parsing phase works.
 		ASSERT_TRUE(source.parse(*this, false));
 
 		expectedExpr.insert(expectedExpr.begin(), base.begin(), base.end());
@@ -399,6 +396,67 @@ TEST(ExpressionTests, Declarations)
 		LocalVariable(L"a"),
 			cap::BinaryOperator::Type::Add,
 				Integer(1),
-				Integer(2),
+				Integer(2)
+	});
+}
+
+TEST(ExpressionTests, TypeReferenceAcceptsSingleValue)
+{
+	ExpressionTester tester;
+
+	tester.test(L"let a = type int64 + 2",
+	{
+		LocalVariable(L"a"),
+			cap::BinaryOperator::Type::Add,
+				cap::ModifierRoot::Type::TypeReference,
+					Identifier(L"int64"),
+				Integer(2)
+	});
+
+	tester.test(L"let a = type -int64",
+	{
+		LocalVariable(L"a"),
+			cap::ModifierRoot::Type::TypeReference,
+				cap::UnaryOperator::Type::Negate,
+					Identifier(L"int64")
+	});
+
+	tester.test(L"let a = type (int64 + int32)",
+	{
+		LocalVariable(L"a"),
+			cap::ModifierRoot::Type::TypeReference,
+				Expression(),
+					cap::BinaryOperator::Type::Add,
+						Identifier(L"int64"),
+						Identifier(L"int32")
+	});
+
+	tester.test(L"let a = type *(int64)",
+	{
+		LocalVariable(L"a"),
+			cap::ModifierRoot::Type::TypeReference,
+				cap::UnaryOperator::Type::ParseTime,
+					Expression(),
+						Identifier(L"int64")
+	});
+
+	tester.test(L"let a = type *getTypeDynamically()",
+	{
+		LocalVariable(L"a"),
+			cap::ModifierRoot::Type::TypeReference,
+				cap::UnaryOperator::Type::ParseTime,
+					cap::BracketOperator::Type::Call,
+						Identifier(L"getTypeDynamically"),
+						Expression()
+	});
+
+	tester.test(L"let a = type typeLookup[0]",
+	{
+		LocalVariable(L"a"),
+			cap::ModifierRoot::Type::TypeReference,
+				cap::BracketOperator::Type::Subscript,
+					Identifier(L"typeLookup"),
+					Expression(),
+						Integer(0)
 	});
 }

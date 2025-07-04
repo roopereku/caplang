@@ -35,9 +35,9 @@ public:
 	/// \return True if this bracket operator should steal a context.
 	bool isComplete() const override;
 
-	/// Returns 17.
+	/// Returns Expression::bracketPrecedence.
 	///
-	/// \return 17.
+	/// \return bracketPrecedence.
 	unsigned getPrecedence() override;
 
 	std::shared_ptr <Expression> getContext() const;

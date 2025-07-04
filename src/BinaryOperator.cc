@@ -61,40 +61,43 @@ unsigned BinaryOperator::getPrecedence()
 {
 	switch(type)
 	{
-		case Type::Comma: return 1;
-		case Type::Assign: return 2;
-		case Type::Or: return 3;
-		case Type::And: return 4;
-		case Type::BitwiseOr: return 5;
-		case Type::BitwiseXor: return 6;
-		case Type::BitwiseAnd: return 7;
+		case Type::Comma: return commaPrecedence;
+		case Type::Assign: return compoundPrecedence;
+		case Type::Or: return binaryPrecedenceStart + 0;
+		case Type::And: return binaryPrecedenceStart + 1;
+		case Type::BitwiseOr: return binaryPrecedenceStart + 2;
+		case Type::BitwiseXor: return binaryPrecedenceStart + 3;
+		case Type::BitwiseAnd: return binaryPrecedenceStart + 4;
 
 		case Type::Equal:
 		case Type::Inequal:
-			return 8;
+			return binaryPrecedenceStart + 5;
 
 		case Type::Less:
 		case Type::Greater:
 		case Type::LessEqual:
 		case Type::GreaterEqual:
-			return 9;
+			return binaryPrecedenceStart + 6;
 
 		case Type::BitwiseShiftLeft:
 		case Type::BitwiseShiftRight:
-			return 11;
+			return binaryPrecedenceStart + 7;
 
 		case Type::Add:
 		case Type::Subtract:
-			return 12;
+			return binaryPrecedenceStart + 8;
 
 		case Type::Multiply:
 		case Type::Divide:
 		case Type::Modulus:
-			return 13;
+			return binaryPrecedenceStart + 9;
 
-		case Type::Exponent: return 14;
-		case Type::Access: return 16;
+		case Type::Exponent: return binaryPrecedenceStart + 10;
+		case Type::Access: return binaryAccessPrecedence;
 	}
+
+	// Make sure that what's defined in Expression for the precedence boundaries is correct.
+	static_assert(binaryPrecedenceStart + 10 == binaryPrecedenceEnd, "The last operator using binaryPrecedenceStart as a base doesn't match binaryPrecedenceEnd");
 
 	assert(false);
 	return -1;

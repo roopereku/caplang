@@ -72,17 +72,17 @@ unsigned UnaryOperator::getPrecedence()
 {
 	switch(type)
 	{
-		case Type::Negate: return 15;
-		case Type::LogicalNot: return 15;
-		case Type::BitwiseNot: return 15;
-		case Type::ParseTime: return 15;
+		case Type::Negate: return preUnaryPrecedence;
+		case Type::LogicalNot: return preUnaryPrecedence;
+		case Type::BitwiseNot: return preUnaryPrecedence;
+		case Type::ParseTime: return preUnaryPrecedence;
 
-		case Type::PreIncrement: return 15;
-		case Type::PreDecrement: return 15;
+		case Type::PreIncrement: return preUnaryPrecedence;
+		case Type::PreDecrement: return preUnaryPrecedence;
 
 		// TODO: With this precedence it looks like post increment happens before pre increment.
-		case Type::PostIncrement: return 16;
-		case Type::PostDecrement: return 16;
+		case Type::PostIncrement: return postUnaryPrecedence;
+		case Type::PostDecrement: return postUnaryPrecedence;
 	}
 
 	assert(false);

@@ -34,11 +34,16 @@ ModifierRoot::Type ModifierRoot::getType() const
 	return type;
 }
 
+unsigned ModifierRoot::getPrecedence()
+{
+	return modifierPrecedence;
+}
+
 const char* ModifierRoot::getTypeString(Type type)
 {
 	switch(type)
 	{
-		case Type::Alias: return "Alias";
+		case Type::TypeReference: return "Type Reference";
 	}
 
 	return "(modifierroot) ???";
