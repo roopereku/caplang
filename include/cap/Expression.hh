@@ -66,6 +66,19 @@ public:
 	/// \param tc The result type of this expression node.
 	void setResultType(const TypeContext& ctx);
 
+	static constexpr unsigned commaPrecedence = 1;
+	static constexpr unsigned compoundPrecedence = commaPrecedence + 1;
+	static constexpr unsigned binaryPrecedenceStart = compoundPrecedence + 1;
+	static constexpr unsigned binaryPrecedenceEnd = binaryPrecedenceStart + 10;
+	static constexpr unsigned modifierPrecedence = binaryPrecedenceEnd + 1;
+	static constexpr unsigned preUnaryPrecedence = modifierPrecedence + 1;
+
+	// TODO: Should this be as high as bracketPrecedence?
+	static constexpr unsigned binaryAccessPrecedence = preUnaryPrecedence; // x.y
+
+	static constexpr unsigned postUnaryPrecedence = preUnaryPrecedence + 1; // x++, x--
+	static constexpr unsigned bracketPrecedence = postUnaryPrecedence; // x(), x[], x<>
+
 	class Root;
 
 protected:

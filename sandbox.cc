@@ -245,12 +245,13 @@ int main()
 
 		func foo()
 		{
-			let a = 1 + 2 * 10 << 0xFF
 		}
+
+		let a = type typeLookup[0]
 
 	)SRC");
 
-	if(!client.parse(entry, true))
+	if(!client.parse(entry, false))
 	{
 		return 1;
 	}

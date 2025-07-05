@@ -64,7 +64,7 @@ bool BracketOperator::isComplete() const
 
 unsigned BracketOperator::getPrecedence()
 {
-	return 17;
+	return bracketPrecedence;
 }
 
 std::shared_ptr <Expression> BracketOperator::getContext() const
