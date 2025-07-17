@@ -7,14 +7,28 @@
 namespace cap
 {
 
-/// ArgumentAccessor can be used to access arguments within an expression root.
+/// ArgumentAccessor is an interface used to retrieve argument expressions
+/// within some implementation defined context.
 class ArgumentAccessor
 {
 public:
-	ArgumentAccessor(std::shared_ptr <Expression::Root> root);
-	ArgumentAccessor(std::shared_ptr <Variable::Root> root);
+	/// Gets the next argument.
+	///
+	/// \return The next argument expression or null.
+	virtual std::shared_ptr <Expression> getNext() = 0;
+};
 
-	std::shared_ptr <Expression> getNext();
+/// CommaAccessor is used to retrieve expressions delimited by commas.
+class CommaAccessor : public ArgumentAccessor
+{
+public:
+	CommaAccessor(std::shared_ptr <Expression::Root> root);
+	CommaAccessor(std::shared_ptr <Variable::Root> root);
+
+	/// Gets the next argument delimited by a comma.
+	///
+	/// \return The next argument expression or null.
+	std::shared_ptr <Expression> getNext() override;
 
 private:
 	void locateFirst();

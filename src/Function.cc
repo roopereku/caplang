@@ -67,14 +67,7 @@ std::weak_ptr <Node> Function::handleToken(ParserContext& ctx, Token& token)
 
 	else if(!body)
 	{
-		body = Scope::startParsing(ctx, token, false);
-
-		if(body)
-		{
-			adopt(body);
-		}
-
-		return body;
+		return startParsingBody(ctx, token);
 	}
 
 	assert(false);
@@ -119,8 +112,15 @@ bool Function::validate(Validator& validator)
 			initializeReturnType();
 		}
 
-		if(!validator.traverseStatement(getParameterRoot()) ||
-			!validator.traverseExpression(getReturnTypeRoot()) ||
+		for(auto param : parameters)
+		{
+			if(!validator.traverseDeclaration(param))
+			{
+				return false;
+			}
+		}
+
+		if(!validator.traverseExpression(getReturnTypeRoot()) ||
 			!validator.traverseScope(body))
 		{
 			return false;
@@ -140,6 +140,18 @@ bool Function::validate(Validator& validator)
 const char* Function::getTypeString() const
 {
 	return "Function";
+}
+
+std::weak_ptr <Node> Function::startParsingBody(ParserContext& ctx, Token& token)
+{
+	body = Scope::startParsing(ctx, token, false);
+
+	if(body)
+	{
+		adopt(body);
+	}
+
+	return body;
 }
 
 }

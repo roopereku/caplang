@@ -2,6 +2,7 @@
 #define CAP_BINARY_OPERATOR_HH
 
 #include <cap/Expression.hh>
+#include <cap/ArgumentAccessor.hh>
 
 namespace cap
 {
@@ -76,6 +77,8 @@ public:
 	static const char* getTypeString(Type type);
 	const char* getTypeString() const override;
 
+	class ArgumentAccessor;
+
 protected:
 	std::shared_ptr <Expression> stealLatestValue() override;
 
@@ -85,6 +88,21 @@ private:
 
 	Type type;
 	bool compound;
+};
+
+class BinaryOperator::ArgumentAccessor : public cap::ArgumentAccessor
+{
+public:
+	ArgumentAccessor(std::shared_ptr <BinaryOperator> root);
+
+	/// Gets the left and right hand side expressions sequentially.
+	///
+	/// \return The binary operator operands sequentially.
+	std::shared_ptr <Expression> getNext() override;
+
+private:
+	std::shared_ptr <BinaryOperator> op;
+	std::shared_ptr <Expression> current;
 };
 
 }

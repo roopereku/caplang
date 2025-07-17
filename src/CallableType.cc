@@ -34,9 +34,9 @@ void CallableType::initializeReturnType()
 	returnType = std::make_shared <Expression::Root> ();
 }
 
-std::pair <bool, size_t> CallableType::matchParameters(ArgumentAccessor&& arguments) const
+std::pair <bool, size_t> CallableType::matchParameters(ArgumentAccessor& arguments) const
 {
-	ArgumentAccessor self(parameters);
+	CommaAccessor self(parameters);
 	size_t unidentical = 0;
 
 	while(auto selfCurrent = self.getNext())
@@ -68,7 +68,7 @@ std::pair <bool, size_t> CallableType::matchParameters(ArgumentAccessor&& argume
 
 std::wstring CallableType::toString(bool) const
 {
-	ArgumentAccessor params(parameters);
+	CommaAccessor params(parameters);
 	bool firstAdded = false;
 	std::wstring result(L"func(");
 

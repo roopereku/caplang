@@ -239,8 +239,16 @@ bool Traverser::traverseDeclaration(std::shared_ptr <Declaration> node)
 
 			if(shouldContinue(result))
 			{
-				if(!traverseStatement(function->getParameterRoot()) ||
-					(function->getReturnTypeRoot() && !traverseExpression(function->getReturnTypeRoot())) ||
+				for(auto param : function->parameters)
+				{
+					if(!traverseDeclaration(param))
+					{
+						onNodeExited(node, result);
+						return false;
+					}
+				}
+
+				if((function->getReturnTypeRoot() && !traverseExpression(function->getReturnTypeRoot())) ||
 					!traverseScope(function->getBody()))
 				{
 					onNodeExited(node, result);
@@ -282,7 +290,9 @@ bool Traverser::traverseStatement(std::shared_ptr <Statement> node)
 		case Statement::Type::VariableRoot:
 		{
 			auto variableRoot = std::static_pointer_cast <Variable::Root> (node);
-			ArgumentAccessor args(variableRoot);
+
+			// NameAccessor or Variable::Accessor.
+			CommaAccessor args(variableRoot);
 			result = Result::Exit;
 
 			// Instead of traversing through the expression nodes within the variable

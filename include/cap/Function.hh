@@ -48,6 +48,11 @@ public:
 	/// Declaration storage for function parameters.
 	DeclarationStorage parameters;
 
+protected:
+	std::weak_ptr <Node> startParsingBody(ParserContext& ctx, Token& token);
+
+	bool conversion = false;
+
 private:
 	std::shared_ptr <Scope> body;
 };

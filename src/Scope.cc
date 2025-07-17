@@ -1,6 +1,7 @@
 #include <cap/Scope.hh>
 #include <cap/Client.hh>
 #include <cap/Function.hh>
+#include <cap/Conversion.hh>
 #include <cap/ClassType.hh>
 #include <cap/Expression.hh>
 #include <cap/ParserContext.hh>
@@ -28,6 +29,11 @@ std::weak_ptr <Node> Scope::handleToken(ParserContext& ctx, Token& token)
 	if(ctx.source.match(token, L"func"))
 	{
 		return appendNested(std::make_shared <Function> (), token);
+	}
+
+	else if(ctx.source.match(token, L"conversion"))
+	{
+		return appendNested(std::make_shared <Conversion> (), token);
 	}
 
 	else if(ctx.source.match(token, L"type"))
@@ -122,6 +128,9 @@ const char* Scope::getTypeString() const
 
 std::weak_ptr <Node> Scope::appendNested(std::shared_ptr <Node> node, Token& token)
 {
+	// TODO: Make sure that the token isn't the last on the line.
+	// Might not make sense in the case of opening/closing brackets.
+
 	adopt(node);
 	node->setToken(token);
 	nested.emplace_back(std::move(node));

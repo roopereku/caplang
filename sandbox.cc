@@ -207,6 +207,42 @@ int main()
 	Sandbox client;
 	cap::Source entry(LR"SRC(
 
+		/*
+		conversion Vector2 + Vector2
+		{
+		}
+
+		conversion Vector2 + Vector3
+		{
+			return Vector2(
+				left.x + right.x,
+				left.y + right.y
+			)
+		}
+
+		conversion -Vector2
+		{
+			return Vector2(
+				-operand.x,
+				-operand.y
+			)
+		}
+
+		type Vector2
+		{
+			let x = int64
+			let y = int64
+
+			conversion this += Vector3
+			{
+			}
+		}
+		*/
+
+		conversion string + int64
+		{
+		}
+
 		func foo()
 		{
 		}

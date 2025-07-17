@@ -7,7 +7,7 @@
 namespace cap
 {
 
-ArgumentAccessor::ArgumentAccessor(std::shared_ptr <Expression::Root> root)
+CommaAccessor::CommaAccessor(std::shared_ptr <Expression::Root> root)
 {
 	assert(root);
 
@@ -17,7 +17,7 @@ ArgumentAccessor::ArgumentAccessor(std::shared_ptr <Expression::Root> root)
 	locateFirst();
 }
 
-ArgumentAccessor::ArgumentAccessor(std::shared_ptr <Variable::Root> root)
+CommaAccessor::CommaAccessor(std::shared_ptr <Variable::Root> root)
 {
 	assert(root);
 	assert(root->getInitializer());
@@ -28,7 +28,7 @@ ArgumentAccessor::ArgumentAccessor(std::shared_ptr <Variable::Root> root)
 	locateFirst();
 }
 
-std::shared_ptr <Expression> ArgumentAccessor::getNext()
+std::shared_ptr <Expression> CommaAccessor::getNext()
 {
 	// Are we at the stopping point?
 	if(current == origin)
@@ -57,7 +57,7 @@ std::shared_ptr <Expression> ArgumentAccessor::getNext()
 	return result;
 }
 
-void ArgumentAccessor::locateFirst()
+void CommaAccessor::locateFirst()
 {
 	// Nothing to locate.
 	if(current == nullptr)
