@@ -408,7 +408,7 @@ TEST(ExpressionTests, TypeReferenceAcceptsSingleValue)
 	{
 		LocalVariable(L"a"),
 			cap::BinaryOperator::Type::Add,
-				cap::ModifierRoot::Type::TypeReference,
+				TypeReference(),
 					Identifier(L"int64"),
 				Integer(2)
 	});
@@ -416,7 +416,7 @@ TEST(ExpressionTests, TypeReferenceAcceptsSingleValue)
 	tester.test(L"let a = type -int64",
 	{
 		LocalVariable(L"a"),
-			cap::ModifierRoot::Type::TypeReference,
+			TypeReference(),
 				cap::UnaryOperator::Type::Negate,
 					Identifier(L"int64")
 	});
@@ -424,7 +424,7 @@ TEST(ExpressionTests, TypeReferenceAcceptsSingleValue)
 	tester.test(L"let a = type (int64 + int32)",
 	{
 		LocalVariable(L"a"),
-			cap::ModifierRoot::Type::TypeReference,
+			TypeReference(),
 				Expression(),
 					cap::BinaryOperator::Type::Add,
 						Identifier(L"int64"),
@@ -434,7 +434,7 @@ TEST(ExpressionTests, TypeReferenceAcceptsSingleValue)
 	tester.test(L"let a = type *(int64)",
 	{
 		LocalVariable(L"a"),
-			cap::ModifierRoot::Type::TypeReference,
+			TypeReference(),
 				cap::UnaryOperator::Type::ParseTime,
 					Expression(),
 						Identifier(L"int64")
@@ -443,7 +443,7 @@ TEST(ExpressionTests, TypeReferenceAcceptsSingleValue)
 	tester.test(L"let a = type *getTypeDynamically()",
 	{
 		LocalVariable(L"a"),
-			cap::ModifierRoot::Type::TypeReference,
+			TypeReference(),
 				cap::UnaryOperator::Type::ParseTime,
 					cap::BracketOperator::Type::Call,
 						Identifier(L"getTypeDynamically"),
@@ -453,7 +453,7 @@ TEST(ExpressionTests, TypeReferenceAcceptsSingleValue)
 	tester.test(L"let a = type typeLookup[0]",
 	{
 		LocalVariable(L"a"),
-			cap::ModifierRoot::Type::TypeReference,
+			TypeReference(),
 				cap::BracketOperator::Type::Subscript,
 					Identifier(L"typeLookup"),
 					Expression(),

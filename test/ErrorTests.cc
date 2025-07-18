@@ -213,3 +213,23 @@ TEST(ErrorTests, TooLargeInteger)
 	tester.reportsError(L"0b11111111111111111111111111111111111111111111111111111111111111111", L"Integer too large to fit inside 64 bits");
 	tester.reportsError(L"18446744073709551616", L"Integer too large to fit inside 64 bits");
 }
+
+TEST(ErrorTests, TypeReferenceUsage)
+{
+	ErrorTester tester;
+
+	tester.reportsError(L"let a = int64", L"Type names must be preceded by 'type'");
+	tester.reportsError(L"let a = type 10", L"Value given to 'type' must be a type name");
+
+	// TODO: This might become valid at some point.
+	tester.reportsError(L"let x = (type string)", L"Type names must be preceded by 'type'");
+}
+
+TEST(ErrorTests, InvalidParameterDeclaration)
+{
+	ErrorTester tester;
+
+	tester.reportsError(L"func foo(a = int64, b = \"test\")\n{\n}", L"Parameters must be initialized with types");
+
+	// TODO: Add a test with function parameter "a = type int64".
+}

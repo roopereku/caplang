@@ -16,8 +16,9 @@ Variable::Variable(Type type, std::weak_ptr <BinaryOperator> initialization) :
 	type(type), initialization(initialization)
 {
 	assert(!initialization.expired());
-
 	auto node = initialization.lock();
+	assert(node->getType() == BinaryOperator::Type::Assign);
+
 	assert(node->getLeft()->getType() == Expression::Type::Value);
 	auto value = std::static_pointer_cast <Value> (node->getLeft());
 	assert(value->getType() == Value::Type::Identifier);
@@ -25,8 +26,6 @@ Variable::Variable(Type type, std::weak_ptr <BinaryOperator> initialization) :
 
 	name = nameIdentifier->getValue();
 	setToken(nameIdentifier->getToken());
-
-	// TODO: If the initialization is prefixed with "type", set the type as a type alias.
 }
 
 bool Variable::validate(Validator& validator)
@@ -40,8 +39,43 @@ bool Variable::validate(Validator& validator)
 		assert(!initialization.expired());
 		auto init = initialization.lock();
 
-		// Validate the name and the initialization.
-		if(!validator.traverseExpression(init))
+		if(type == Type::Parameter)
+		{
+			// Avoid calling Validator::onBinaryOperator as it would be unhappy
+			// with the right side operand resulting in a raw typename.
+			if(!validator.traverseExpression(init->getRight()))
+			{
+				return false;
+			}
+
+			if(!init->getRight()->getResultType()->isTypeName)
+			{
+				SourceLocation location(validator.getParserContext().source, init->getRight()->getToken());
+				validator.getParserContext().client.sourceError(location, "Parameters must be initialized with types");
+				return false;
+			}
+
+			// TODO Maybe here: Make sure that a parameter like "a = type int64" isn't allowed
+			// as it doesn't make any sense.
+
+			// While function parameters can be initialized with a raw type name,
+			// it doesn't mean that the parameter refers to such. Instead we want
+			// to treat it as a promise to the caller that this parameter is just
+			// a normal variable of some given type when a function starts execution.
+			auto nonTypeName = *init->getRight()->getResultType();
+			nonTypeName.isTypeName = false;
+
+			init->setResultType(nonTypeName);
+			referredType.emplace(nonTypeName);
+
+			// Finally validate the parameter name itself for completeness sake.
+			if(!validator.traverseExpression(init->getLeft()))
+			{
+				return false;
+			}
+		}
+
+		else if(!validator.traverseExpression(init))
 		{
 			return false;
 		}

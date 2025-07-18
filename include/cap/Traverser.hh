@@ -16,7 +16,7 @@ class CallableType;
 class BinaryOperator;
 class UnaryOperator;
 class BracketOperator;
-class ModifierRoot;
+class TypeReference;
 class Statement;
 class Return;
 class Value;
@@ -129,11 +129,11 @@ protected:
 	/// \param node The node representing a return.
 	virtual Result onReturn(std::shared_ptr <Return> node);
 
-	/// Invoked upon hitting a modifier root in an expression.
+	/// Invoked upon hitting a type reference in an expression.
 	///
-	/// \param node The node representing a modifier root.
+	/// \param node The node representing a type reference.
 	/// \return Continue if the traversal should continue to the underlying expression.
-	virtual Result onModifierRoot(std::shared_ptr <ModifierRoot> node);
+	virtual Result onTypeReference(std::shared_ptr <TypeReference> node);
 
 	/// Invoked upon hitting a binary operator in an expression.
 	///

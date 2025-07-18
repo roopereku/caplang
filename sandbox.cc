@@ -7,8 +7,8 @@
 #include <cap/BinaryOperator.hh>
 #include <cap/UnaryOperator.hh>
 #include <cap/BracketOperator.hh>
+#include <cap/TypeReference.hh>
 #include <cap/Variable.hh>
-#include <cap/ModifierRoot.hh>
 #include <cap/Return.hh>
 #include <cap/Identifier.hh>
 #include <cap/Integer.hh>
@@ -99,9 +99,9 @@ protected:
 		return Result::Continue;
 	}
 
-	Result onModifierRoot(std::shared_ptr <cap::ModifierRoot> node) override
+	Result onTypeReference(std::shared_ptr <cap::TypeReference> node) override
 	{
-		file << prefix() << node->getTypeString() << '\n';
+		file << prefix() << node->getTypeString() << getResultType(node) << '\n';
 		return Result::Continue;
 	}
 
@@ -181,7 +181,6 @@ private:
 
 		if(result)
 		{
-			// TODO: Add modifiers?
 			str += L"\\nResult -> " + result->toString();
 		}
 
@@ -207,15 +206,38 @@ int main()
 	Sandbox client;
 	cap::Source entry(LR"SRC(
 
-		func foo()
+		//let typeAlias = type int64
+		//let typeAlias = int64
+
+		type Foo
 		{
+			type Bar
+			{
+				let a = 10
+			}
 		}
 
-		let a = type typeLookup[0]
+		let alias = type int64
+
+		type Outer1
+		{
+			type Inner1
+			{
+				type Inner2
+				{
+					let a = 10
+				}
+			}
+		}
+
+		let Alias1 = type Outer1
+		let Alias2 = type Alias1.Inner1.Inner2
+
+		let value = Alias2.a
 
 	)SRC");
 
-	if(!client.parse(entry, false))
+	if(!client.parse(entry, true))
 	{
 		return 1;
 	}

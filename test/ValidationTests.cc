@@ -214,3 +214,77 @@ TEST(ValidationTests, VariablesAsParameters)
 
 	// TODO: Add a test where function parameters are passed onwards?
 }
+
+TEST(ValidationTests, TypeReferenceUsage)
+{
+	ValidationTester tester;
+
+	tester.test(L"let a = type int64",
+	{
+		LocalVariable(L"a") > L"type int64",
+			TypeReference() > L"type int64",
+				Identifier(L"int64") > L"int64"		
+	});
+
+	tester.setup(LR"SRC(
+		type Outer1
+		{
+			type Inner1
+			{
+				type Inner2
+				{
+					let a = "value"
+				}
+			}
+		}
+
+		let Alias1 = type Outer1
+		let Alias2 = type Alias1.Inner1.Inner2
+	)SRC");
+
+	tester.test(L"let accessedType = type Alias1.Inner1",
+	{
+		LocalVariable(L"accessedType") > L"type Outer1.Inner1",
+			TypeReference() > L"type Outer1.Inner1",
+				cap::BinaryOperator::Type::Access > L"Outer1.Inner1",
+					Identifier(L"Alias1") > L"type Outer1",
+					Identifier(L"Inner1") > L"Outer1.Inner1"
+	});
+
+	tester.test(L"let value = Alias2.a",
+	{
+		LocalVariable(L"value") > L"string",
+			cap::BinaryOperator::Type::Access > L"string",
+				Identifier(L"Alias2") > L"type Outer1.Inner1.Inner2",
+				Identifier(L"a") > L"string"
+	});
+
+}
+
+TEST(ValidationTests, ParameterDeclaration)
+{
+	ValidationTester tester;
+
+	tester.test(L"func foo(a = int64)\n{\n}",
+	{
+		Function(L"foo") > L"func(int64) -> void",
+			Parameter(L"a") > L"int64",
+				Identifier(L"int64") > L"int64",
+			Expression() > L"void",
+			Scope()
+	});
+
+	tester.test(L"func foo(a = int64, b = string)\n{\n}",
+	{
+		Function(L"foo") > L"func(int64, string) -> void",
+			Parameter(L"a") > L"int64",
+				Identifier(L"int64") > L"int64",
+			Parameter(L"b") > L"string",
+				Identifier(L"string") > L"string",
+			Expression() > L"void",
+			Scope()
+	});
+
+	// TODO: Tests for generic parameter types with constraints and interfaces.
+	// TODO: Tests for type references to generic parameter types with constraints and interfaces.
+}

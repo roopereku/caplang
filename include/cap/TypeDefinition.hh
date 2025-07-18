@@ -12,7 +12,8 @@ public:
 	enum class Type
 	{
 		Class,
-		Callable
+		Callable,
+		TypeReference
 	};
 
 	TypeDefinition(const TypeDefinition&) = delete;

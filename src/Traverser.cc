@@ -9,7 +9,7 @@
 #include <cap/BinaryOperator.hh>
 #include <cap/UnaryOperator.hh>
 #include <cap/BracketOperator.hh>
-#include <cap/ModifierRoot.hh>
+#include <cap/TypeReference.hh>
 #include <cap/Variable.hh>
 #include <cap/Return.hh>
 #include <cap/Identifier.hh>
@@ -96,10 +96,10 @@ bool Traverser::traverseExpression(std::shared_ptr <Expression> node)
 			return traverseValue(std::static_pointer_cast <Value> (node));
 		}
 
-		case Expression::Type::ModifierRoot:
+		case Expression::Type::TypeReference:
 		{
-			auto modifier = std::static_pointer_cast <ModifierRoot> (node);
-			result = onModifierRoot(modifier);
+			auto modifier = std::static_pointer_cast <TypeReference> (node);
+			result = onTypeReference(modifier);
 
 			if(shouldContinue(result) && modifier->getFirst())
 			{
@@ -337,7 +337,7 @@ Traverser::Result Traverser::onScope(std::shared_ptr <Scope>) { return Result::N
 Traverser::Result Traverser::onFunction(std::shared_ptr <Function>) { return Result::NotHandled; }
 Traverser::Result Traverser::onClassType(std::shared_ptr <ClassType>) { return Result::NotHandled; }
 Traverser::Result Traverser::onExpressionRoot(std::shared_ptr <Expression::Root>) { return Result::NotHandled; }
-Traverser::Result Traverser::onModifierRoot(std::shared_ptr <ModifierRoot>) { return Result::NotHandled; }
+Traverser::Result Traverser::onTypeReference(std::shared_ptr <TypeReference>) { return Result::NotHandled; }
 Traverser::Result Traverser::onBinaryOperator(std::shared_ptr <BinaryOperator>) { return Result::NotHandled; }
 Traverser::Result Traverser::onUnaryOperator(std::shared_ptr <UnaryOperator>) { return Result::NotHandled; }
 Traverser::Result Traverser::onBracketOperator(std::shared_ptr <BracketOperator>) { return Result::NotHandled; }

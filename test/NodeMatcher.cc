@@ -4,6 +4,7 @@
 #include <cap/ClassType.hh>
 #include <cap/BracketOperator.hh>
 #include <cap/UnaryOperator.hh>
+#include <cap/TypeReference.hh>
 #include <cap/Variable.hh>
 #include <cap/Identifier.hh>
 #include <cap/Integer.hh>
@@ -43,11 +44,6 @@ ExpectedNode::ExpectedNode(cap::BracketOperator::Type type)
 
 ExpectedNode::ExpectedNode(cap::Variable::Type type)
 	: ExpectedNode(cap::Variable::getTypeString(type))
-{
-}
-
-ExpectedNode::ExpectedNode(cap::ModifierRoot::Type type)
-	: ExpectedNode(cap::ModifierRoot::getTypeString(type))
 {
 }
 
@@ -105,6 +101,11 @@ ExpectedNode Generic(std::wstring&& name)
 	return ExpectedNode("Generic", std::move(name));
 }
 
+ExpectedNode TypeReference()
+{
+	return ExpectedNode("Type Reference");
+}
+
 ExpectedNode Return()
 {
 	return ExpectedNode("Return");
@@ -147,7 +148,7 @@ Traverser::Result NodeMatcher::onVariable(std::shared_ptr <cap::Variable> node)
 	return Traverser::Result::Continue;
 }
 
-Traverser::Result NodeMatcher::onModifierRoot(std::shared_ptr <cap::ModifierRoot> node)
+Traverser::Result NodeMatcher::onTypeReference(std::shared_ptr <cap::TypeReference> node)
 {
 	match(node);
 	return Traverser::Result::Continue;

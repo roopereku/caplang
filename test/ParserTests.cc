@@ -106,7 +106,7 @@ TEST(ParserTests, Modifiers)
 	tester.test(L"let T = type int64",
 	{
 		LocalVariable(L"T"),
-			cap::ModifierRoot::Type::TypeReference,
+			TypeReference(),
 				Identifier(L"int64")
 	});
 }

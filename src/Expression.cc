@@ -5,11 +5,11 @@
 #include <cap/UnaryOperator.hh>
 #include <cap/BracketOperator.hh>
 #include <cap/Declaration.hh>
+#include <cap/TypeReference.hh>
 #include <cap/Source.hh>
 #include <cap/Value.hh>
 #include <cap/Client.hh>
 #include <cap/ArgumentAccessor.hh>
-#include <cap/ModifierRoot.hh>
 #include <cap/Scope.hh>
 
 #include <cassert>
@@ -90,10 +90,9 @@ std::weak_ptr <Node> Expression::handleToken(Node::ParserContext& ctx, Token& to
 	// Treat anything else as a value or a keyword.
 	else
 	{
-		// Parse modifiers.
-		if(auto modifier = ModifierRoot::create(ctx, token))
+		if(ctx.source.match(token, L"type"))
 		{
-			newNode = modifier;
+			newNode = std::make_shared <TypeReference> ();
 		}
 
 		// Anything else is a value.
@@ -143,14 +142,6 @@ std::weak_ptr <Node> Expression::handleToken(Node::ParserContext& ctx, Token& to
 	// TODO: If the new node represents a binary operator, extend to the next line.
 	if(ctx.subExpressionDepth == 0 && token.isLastOfLine(ctx))
 	{
-		// Expressions cannot end at a modifier.
-		if(newNode->getType() == Type::ModifierRoot)
-		{
-			SourceLocation location(ctx.source, getToken());
-			ctx.client.sourceError(location, "Expected an expression after '", ctx.source.getString(newNode->getToken()), "'");
-			return {};
-		}
-
 		return exitExpression(ctx, token);
 	}
 

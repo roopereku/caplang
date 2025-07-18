@@ -23,8 +23,10 @@ bool TypeContext::isIdentical(const TypeContext& other) const
 
 std::wstring TypeContext::toString() const
 {
-	// TODO: Add modifiers as well.
-	return referenced.toString(true);
+	std::wstring modifiers;
+
+	// TODO: Add the rest of the modfiers.
+	return modifiers + referenced.toString(true);
 }
 
 }

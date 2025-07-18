@@ -19,6 +19,7 @@ protected:
 	Result onFunction(std::shared_ptr <Function> node) override;
 	Result onClassType(std::shared_ptr <ClassType> node) override;
 	Result onExpressionRoot(std::shared_ptr <Expression::Root> node) override;
+	Result onTypeReference(std::shared_ptr <TypeReference> node) override;
 	Result onVariable(std::shared_ptr <Variable> node) override;
 	Result onBinaryOperator(std::shared_ptr <BinaryOperator> node) override;
 	Result onUnaryOperator(std::shared_ptr <UnaryOperator> node) override;
@@ -43,6 +44,9 @@ private:
 
 	/// Makes sure that the given declaration respects the name shadowing rules.
 	bool checkUniqueDeclaration(std::shared_ptr <Declaration> decl);
+
+	/// Makes sure that a possible usage of a typename is wrapped inside a TypeReference node.
+	bool checkTypeNameUsage(std::shared_ptr <Expression> decl);
 
 	Result validateIdentifier(std::shared_ptr <Identifier> node, ResolverContext& resolve);
 

@@ -6,6 +6,7 @@
 #include <cap/BinaryOperator.hh>
 #include <cap/UnaryOperator.hh>
 #include <cap/BracketOperator.hh>
+#include <cap/TypeReference.hh>
 #include <cap/Value.hh>
 #include <cap/Identifier.hh>
 #include <cap/Integer.hh>
@@ -79,6 +80,28 @@ Traverser::Result Validator::onExpressionRoot(std::shared_ptr <Expression::Root>
 	return Result::Exit;
 }
 
+Traverser::Result Validator::onTypeReference(std::shared_ptr <TypeReference> node)
+{
+	auto held = node->getFirst();
+
+	assert(held);
+	if(!traverseExpression(held))
+	{
+		return Result::Stop;
+	}
+
+	assert(held->getResultType());
+	if(!held->getResultType()->isTypeName)
+	{
+		SourceLocation location(ctx.source, node->getToken());
+		ctx.client.sourceError(location, "Value given to 'type' must be a type name");
+		return Result::Stop;
+	}
+
+	node->setReferred(*held->getResultType());
+	return Result::Exit;
+}
+
 Traverser::Result Validator::onVariable(std::shared_ptr <Variable> node)
 {
 	if(!checkUniqueDeclaration(node))
@@ -101,15 +124,21 @@ Traverser::Result Validator::onBinaryOperator(std::shared_ptr <BinaryOperator> n
 		return Result::Stop;
 	}
 
+	bool shouldCheckTypeName = true;
+
 	// If something is being accessed, store some context for
 	// the right node to consume.
 	if(node->getType() == BinaryOperator::Type::Access)
 	{
 		assert(node->getLeft()->getResultType());
 		resolverCtx.accessedFrom.emplace(*node->getLeft()->getResultType());
+
+		// Having a type name as the right side operand is fine for binary access.
+		shouldCheckTypeName = false;
 	}
 
-	if(!traverseExpression(node->getRight()))
+	if(!traverseExpression(node->getRight()) ||
+		(shouldCheckTypeName && !checkTypeNameUsage(node->getRight())))
 	{
 		return Result::Stop;
 	}
@@ -258,6 +287,24 @@ bool Validator::checkUniqueDeclaration(std::shared_ptr <Declaration> decl)
 	return true;
 }
 
+bool Validator::checkTypeNameUsage(std::shared_ptr <Expression> decl)
+{
+	assert(decl->getResultType().has_value());
+	if(decl->getResultType()->isTypeName)
+	{
+		if(decl->getType() == Expression::Type::TypeReference)
+		{
+			return true;
+		}
+
+		SourceLocation location(ctx.source, decl->getToken());
+		ctx.client.sourceError(location, "Type names must be preceded by 'type'");
+		return false;
+	}
+
+	return true;
+}
+
 Traverser::Result Validator::validateIdentifier(std::shared_ptr <Identifier> node, ResolverContext& resolve)
 {
 	Result result = Result::NotHandled;
@@ -290,6 +337,14 @@ Traverser::Result Validator::validateIdentifier(std::shared_ptr <Identifier> nod
 				SourceLocation location(ctx.source, node->getToken());
 				ctx.client.sourceError(location, "Cannot access contents of a callable");
 				return Result::Stop;
+			}
+
+			case cap::TypeDefinition::Type::TypeReference:
+			{
+				// Recursively use the underlying type as the resolving context.
+                auto& typeRef = static_cast <TypeReference&> (resolve.accessedFrom->referenced);
+				resolve.accessedFrom.emplace(*typeRef.getReferred());
+				return validateIdentifier(node, resolve);
 			}
 		}
 	}

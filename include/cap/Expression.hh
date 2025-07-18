@@ -19,7 +19,7 @@ public:
 		UnaryOperator,
 		BinaryOperator,
 		BracketOperator,
-		ModifierRoot,
+		TypeReference,
 	};
 
 	/// Parses an expression.
