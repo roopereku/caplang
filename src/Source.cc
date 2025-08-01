@@ -32,7 +32,6 @@ bool Source::parse(Client& client, bool validate)
 
 	Token currentToken = Token::parseFirst(tokenCtx);
 	std::weak_ptr <Node> currentNode = global;
-	std::weak_ptr <Node> prevNode;
 
 	while(currentToken.isValid())
 	{
@@ -52,7 +51,6 @@ bool Source::parse(Client& client, bool validate)
 			return false;
 		}
 
-		prevNode = currentNode;
 		currentToken = Token::parseNext(tokenCtx, currentToken);
 		nodeCtx.canOpenSubexpression = true;
 		nodeCtx.exitedFrom = nullptr;
