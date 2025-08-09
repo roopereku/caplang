@@ -233,3 +233,16 @@ TEST(ErrorTests, InvalidParameterDeclaration)
 
 	// TODO: Add a test with function parameter "a = type int64".
 }
+
+TEST(ErrorTests, ConsecutiveValues)
+{
+	ErrorTester tester;
+
+	tester.reportsError(L"10 20", L"Consecutive values are not allowed");
+	tester.reportsError(L"a b", L"Consecutive values are not allowed");
+	tester.reportsError(L"10 b", L"Consecutive values are not allowed");
+	tester.reportsError(L"a 20", L"Consecutive values are not allowed");
+	tester.reportsError(L"a foo()", L"Consecutive values are not allowed");
+	tester.reportsError(L"bar(1 * 2 + 3) foo()", L"Consecutive values are not allowed");
+	tester.reportsError(L"bar(1 * 2 + 3) 20", L"Consecutive values are not allowed");
+}

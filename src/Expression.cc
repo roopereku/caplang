@@ -59,7 +59,7 @@ std::weak_ptr <Node> Expression::handleToken(Node::ParserContext& ctx, Token& to
 			newNode = UnaryOperator::createPrefix(ctx, token);
 		}
 	}
-	
+
 	else if(token.getType() == Token::Type::OpeningBracket)
 	{
 		// Prevent the depth from being increment in recursive calls.
@@ -131,10 +131,23 @@ std::weak_ptr <Node> Expression::handleToken(Node::ParserContext& ctx, Token& to
 	// to the parent expression until equal or lower precedence is found.
 	else
 	{
+		assert(!getParent().expired());
+		auto parent = getParent().lock();
+
+		// If we're leaving out of an expression, we've failed to find a node
+		// which has a lower precedence than the newly created node.
+		// This only makes sense with consecutive values as values have precedence 0
+		// and will never be above other nodes.
+		if(parent->getType() != Node::Type::Expression)
+		{
+			SourceLocation location(ctx.source, token);
+			ctx.client.sourceError(location, "Consecutive values are not allowed");
+			return {};
+		}
+
 		// TODO: Considering that newNode is set here, an optimization would be
 		// to pass it directly to the parent.
-		assert(!getParent().expired());
-		return getParent().lock()->handleToken(ctx, token);
+		return parent->handleToken(ctx, token);
 	}
 
 	// If the current token is the last of the line and no subexpressions
