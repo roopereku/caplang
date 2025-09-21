@@ -65,6 +65,7 @@ const char* Token::getTypeString(Type type)
 		case Type::String: return "String";
 		case Type::Operator: return "Operator";
 		case Type::Comment: return "Comment";
+		case Type::Attribute: return "Attribute";
 		case Type::Invalid: return "Invalid";
 	}
 
@@ -194,7 +195,8 @@ Token Token::parse(ParserContext& ctx, Token token)
 		token.setTypeIfMoved(ctx, i, &Token::parseString) ||
 		token.setTypeIfMoved(ctx, i, &Token::parseIdentifier) ||
 		token.setTypeIfMoved(ctx, i, &Token::parseComment) ||
-		token.setTypeIfMoved(ctx, i, &Token::parseOperator)
+		token.setTypeIfMoved(ctx, i, &Token::parseOperator) ||
+		token.setTypeIfMoved(ctx, i, &Token::parseAttribute)
 	);
 
 	if(!shorted && ctx.source[i] != 0)
@@ -422,6 +424,16 @@ Token::ParseResult Token::parseString(ParserContext& ctx, size_t& i)
 	}
 
 	return Type::String;
+}
+
+Token::ParseResult Token::parseAttribute(ParserContext& ctx, size_t& i)
+{
+	if(ctx.source[i] == '@')
+	{
+		i++;
+	}
+
+	return Type::Attribute;
 }
 
 Token::ParseResult Token::parseNumeric(ParserContext& ctx, size_t& i)

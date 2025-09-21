@@ -113,6 +113,24 @@ bool Traverser::traverseExpression(std::shared_ptr <Expression> node)
 			break;
 		}
 
+		case Expression::Type::Attribute:
+		{
+			result = Result::Stop;
+			//auto modifier = std::static_pointer_cast <TypeReference> (node);
+			//result = onTypeReference(modifier);
+
+			//if(shouldContinue(result) && modifier->getFirst())
+			//{
+			//	if(!traverseExpression(modifier->getFirst()))
+			//	{
+			//		onNodeExited(node, result);
+			//		return false;
+			//	}
+			//}
+
+			break;
+		}
+
 		case Expression::Type::BinaryOperator:
 		{
 			auto op = std::static_pointer_cast <BinaryOperator> (node);

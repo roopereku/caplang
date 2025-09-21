@@ -20,6 +20,7 @@ public:
 		BinaryOperator,
 		BracketOperator,
 		TypeReference,
+		Attribute
 	};
 
 	/// Parses an expression.

@@ -11,6 +11,7 @@
 #include <cap/Client.hh>
 #include <cap/ArgumentAccessor.hh>
 #include <cap/Scope.hh>
+#include <cap/Attribute.hh>
 
 #include <cassert>
 
@@ -58,6 +59,12 @@ std::weak_ptr <Node> Expression::handleToken(Node::ParserContext& ctx, Token& to
 		{
 			newNode = UnaryOperator::createPrefix(ctx, token);
 		}
+	}
+
+	else if(token.getType() == Token::Type::Attribute)
+	{
+		newNode = std::make_shared <Attribute> ();
+		ctx.inAttribute = true;
 	}
 
 	else if(token.getType() == Token::Type::OpeningBracket)
@@ -109,6 +116,28 @@ std::weak_ptr <Node> Expression::handleToken(Node::ParserContext& ctx, Token& to
 	assert(newNode);
 	newNode->setToken(token);
 
+	if(!ctx.attributeCheckpoints.empty() && ctx.attributeCheckpoints.top().expressionDepth == ctx.subExpressionDepth)
+	{
+		const unsigned newPrecedence = newNode->getPrecedence();
+
+		// Any non-value that's below the modifier precedence indicates that
+		// a part of an expression that can be interpreted as a single value
+		// (e.g. -foo.bar()[0].field()) has come to an end.
+		if(newPrecedence < modifierPrecedence && newPrecedence != 0)
+		{
+			DBG_MESSAGE(ctx.client, "REMOVE CHECKPOINT CHECKPOINT ", ctx.attributeCheckpoints.size(), " AT ", newNode->getTypeString());
+			ctx.attributeCheckpoints.pop();
+		}
+
+		// TODO: Check for depth.
+		else if(!ctx.inAttribute)
+		{
+			// TODO: Associate active attributes with the new node.
+			DBG_MESSAGE(ctx.client, "ASSOCIATE WITH CHECKPOINT ", ctx.attributeCheckpoints.size(), ": ", newNode->getTypeString());
+			newNode->setAttributeRange(ctx.attributeCheckpoints.top().range);
+		}
+	}
+
 	// If this node isn't complete, handle the new node as a value.
 	if(!complete)
 	{
@@ -134,11 +163,32 @@ std::weak_ptr <Node> Expression::handleToken(Node::ParserContext& ctx, Token& to
 		assert(!getParent().expired());
 		auto parent = getParent().lock();
 
+		// Save attributes upon leaving them and disconnect them from the node tree.
+		if(type == Type::Attribute)
+		{
+			assert(parent->getType() == Node::Type::Expression);
+			auto attribute = std::static_pointer_cast <Expression> (parent)->stealLatestValue();
+
+			assert(attribute->getType() == Expression::Type::Attribute);
+			size_t index = ctx.client.addAttribute(std::static_pointer_cast <Attribute> (attribute));
+
+			DBG_MESSAGE(ctx.client, "STORED ATTRIBUTE ", index);
+
+			if(ctx.attributeCheckpoints.empty() || ctx.attributeCheckpoints.top().expressionDepth != ctx.subExpressionDepth)
+			{
+				DBG_MESSAGE(ctx.client, "ADD ATTRIBUTE CHECKPOINT");
+				ctx.addAttributeCheckpoint(index);
+			}
+
+			ctx.attributeCheckpoints.top().range.second++;
+			ctx.inAttribute = false;
+		}
+
 		// If we're leaving out of an expression, we've failed to find a node
 		// which has a lower precedence than the newly created node.
 		// This only makes sense with consecutive values as values have precedence 0
 		// and will never be above other nodes.
-		if(parent->getType() != Node::Type::Expression)
+		else if(parent->getType() != Node::Type::Expression)
 		{
 			SourceLocation location(ctx.source, token);
 			ctx.client.sourceError(location, "Consecutive values are not allowed");

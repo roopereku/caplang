@@ -63,6 +63,16 @@ std::weak_ptr <Node> Scope::handleToken(ParserContext& ctx, Token& token)
 	// Parse anything else as expressions.
 	else
 	{
+		// TODO: Allow an expression that begins with an attribute.
+		// If the expression root contains something after parsing, throw an error.
+
+		if(token.getType() == Token::Type::Attribute)
+		{
+			// TODO: Allow expression. If only declarations are allowed
+			// the most recent node exiting can be caught in invokedNodeExited
+			// and if the expression root has something an error can be thrown.
+		}
+
 		// If only declarations are allowed, forbid a top level expression.
 		if(onlyDeclarations)
 		{

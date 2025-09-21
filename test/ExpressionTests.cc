@@ -460,3 +460,38 @@ TEST(ExpressionTests, TypeReferenceAcceptsSingleValue)
 						Integer(0)
 	});
 }
+
+TEST(ExpressionTests, ExpressionAttributesDisconnected)
+{
+	ExpressionTester tester;
+
+	tester.test(L"@debug something",
+	{
+		Expression(),
+			Identifier(L"something")
+	});
+
+	tester.test(L"@debug @otherAttr(1 + 2) something",
+	{
+		Expression(),
+			Identifier(L"something")
+	});
+
+	tester.test(L"@*dynamicAttr something\n@debug print(\"test\")",
+	{
+		Expression(),
+			Identifier(L"something"),
+
+		Expression(),
+			cap::BracketOperator::Type::Call,	
+				Identifier(L"print"),
+				Expression(),
+					String(L"test")
+	});
+}
+
+TEST(ExpressionTests, AttributesApplicableToBracketValues)
+{
+	// TODO: @attr (1 + 2)
+	// TODO: @attr [1 + 2]
+}

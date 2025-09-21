@@ -12,6 +12,7 @@ class Scope;
 class Function;
 class ParserContext;
 class DeclarationStorage;
+class Client;
 
 class Node : public std::enable_shared_from_this <Node>
 {
@@ -93,7 +94,15 @@ public:
 	/// \return The declaration storage associated with this node.
 	DeclarationStorage& getDeclarationStorage();
 
-	// TODO: DeclarationStorage should probably be a pointer or an optional.
+	/// Gets the range of attributes to use.
+	///
+	/// \return Pair of indices, position and count.
+	std::pair <size_t, size_t> getAttributeRange() const;
+
+	/// Sets the range of attributes to use.
+	///
+	/// \param range The start and count of attributes to use.
+	void setAttributeRange(std::pair <size_t, size_t> range);
 
 	virtual const char* getTypeString() const = 0;
 
@@ -106,6 +115,7 @@ private:
 
 	Type type;
 	DeclarationStorage& declStorage;
+	std::pair <size_t, size_t> attributeRange;
 	std::weak_ptr <Node> parent;
 	Token at;
 };
