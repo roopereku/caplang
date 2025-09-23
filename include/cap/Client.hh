@@ -3,9 +3,11 @@
 
 #include <cap/Source.hh>
 #include <cap/Builtin.hh>
+#include <cap/Attribute.hh>
 
 #include <string>
 #include <sstream>
+#include <vector>
 
 // TODO: Add DBG_MESSAGE_AT
 #ifdef CAP_DEBUG
@@ -50,6 +52,15 @@ public:
 		onDebugMessage(ss.str());
 	}
 
+	/// Adds an attribute to the attribute cache.
+	///
+	/// \param attr The attribute to add.
+	/// \return The index at which the attribute was added.
+	size_t addAttribute(std::shared_ptr <Attribute> attr);
+
+	class AttributeRange;
+	AttributeRange getAttributes(std::shared_ptr <Node> node) const;
+
 protected:
 	virtual void onSourceError(SourceLocation& at, const std::wstring& error);
 	virtual void onError(const std::wstring& error);
@@ -57,6 +68,27 @@ protected:
 
 private:
 	Builtin builtin;
+	std::vector <std::shared_ptr <Attribute>> attributes;
+};
+
+class Client::AttributeRange
+{
+public:
+	using iterator = std::vector <std::shared_ptr <Attribute>>::const_iterator;
+
+	AttributeRange(iterator start, iterator stop)
+		: start(start), stop(stop)
+	{
+	}
+
+	iterator cbegin() { return start; }
+	iterator cend() { return stop; }
+	iterator begin() { return start; }
+	iterator end() { return stop; }
+
+private:
+	iterator start;
+	iterator stop;
 };
 
 }

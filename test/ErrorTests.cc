@@ -245,4 +245,5 @@ TEST(ErrorTests, ConsecutiveValues)
 	tester.reportsError(L"a foo()", L"Consecutive values are not allowed");
 	tester.reportsError(L"bar(1 * 2 + 3) foo()", L"Consecutive values are not allowed");
 	tester.reportsError(L"bar(1 * 2 + 3) 20", L"Consecutive values are not allowed");
+	tester.reportsError(L"(1 * 2 + 3) foo", L"Consecutive values are not allowed");
 }

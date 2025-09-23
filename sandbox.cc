@@ -13,6 +13,7 @@
 #include <cap/Identifier.hh>
 #include <cap/Integer.hh>
 #include <cap/String.hh>
+#include <cap/Attribute.hh>
 
 #include <iostream>
 #include <fstream>
@@ -35,8 +36,8 @@ public:
 class ASTDumper : public cap::Traverser
 {
 public:
-	ASTDumper(std::string&& path)
-		: file(path)
+	ASTDumper(std::string&& path, cap::Client& client)
+		: file(path), client(client)
 	{
 		file << "@startmindmap\n";
 		file << "<style>\n";
@@ -65,6 +66,8 @@ protected:
 			printf("No handler defined for '%s'\n", node->getTypeString());
 			return;
 		}
+
+		getAttributes(node);
 
 		depth--;
 	}
@@ -156,6 +159,21 @@ protected:
 	}
 
 private:
+	void getAttributes(std::shared_ptr <cap::Node> node)
+	{
+		if(node->getAttributeRange().second > 0)
+		{
+			//file << prefix() << "Attributes\n";
+
+			for(auto& attribute : client.getAttributes(node))
+			{
+				traverseExpression(attribute->getFirst());
+			}
+
+			//depth--;
+		}
+	}
+
 	std::wstring getResultType(std::shared_ptr <cap::Node> node)
 	{
 		std::wstring str;
@@ -195,6 +213,8 @@ private:
 
 	unsigned depth = 0;
 	std::wofstream file;
+
+	cap::Client& client;
 };
 
 int main()
@@ -206,43 +226,26 @@ int main()
 	Sandbox client;
 	cap::Source entry(LR"SRC(
 
-		//let typeAlias = type int64
-		//let typeAlias = int64
-
-		type Foo
+		func main()
 		{
-			type Bar
-			{
-				let a = 10
-			}
+			msg = @localized "StringId" + "_1"
+			//ratio = @unsafe foo() + 10
+			//@assume(result < 0) -param ** 100
+			//@~nonii -getCallable("Name")().someField + 2
+
+			// IDEA: attributes are not carried inside subexpressions
+			//@unsafe a.b.c( /* Foo call is safe */ foo(), @unsafe bar())
+			@unsafe1 a.b.c(foo(), @unsafe2 bar()).d
 		}
-
-		let alias = type int64
-
-		type Outer1
-		{
-			type Inner1
-			{
-				type Inner2
-				{
-					let a = 10
-				}
-			}
-		}
-
-		let Alias1 = type Outer1
-		let Alias2 = type Alias1.Inner1.Inner2
-
-		let value = Alias2.a
 
 	)SRC");
 
-	if(!client.parse(entry, true))
+	if(!client.parse(entry, false))
 	{
 		return 1;
 	}
 
-	ASTDumper dumper("ast.puml");
+	ASTDumper dumper("ast.puml", client);
 	dumper.traverseNode(entry.getGlobal());
 
 	return 0;

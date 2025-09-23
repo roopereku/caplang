@@ -95,6 +95,16 @@ DeclarationStorage& Node::getDeclarationStorage()
 	return declStorage;
 }
 
+std::pair <size_t, size_t> Node::getAttributeRange() const
+{
+	return attributeRange;
+}
+
+void Node::setAttributeRange(std::pair <size_t, size_t> range)
+{
+	attributeRange = range;
+}
+
 std::shared_ptr <Node> Node::findParentNode(bool (*filter)(std::shared_ptr <Node>)) const
 {
 	// TODO: Avoid recursion?

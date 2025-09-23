@@ -58,6 +58,22 @@ public:
 
 	/// The node that is exited from as indicated by invokedNodeExited.
 	std::shared_ptr <Node> exitedFrom;
+
+	bool inAttribute = false;
+
+	struct AttributeCheckpoint
+	{
+		std::pair <size_t, size_t> range;
+		size_t expressionDepth = 0;
+	};
+
+	std::stack <AttributeCheckpoint> attributeCheckpoints;
+
+	void addAttributeCheckpoint(size_t start)
+	{
+		std::pair <size_t, size_t> range(start, 0);
+		attributeCheckpoints.emplace(AttributeCheckpoint{ range, subExpressionDepth });
+	}
 };
 
 }
