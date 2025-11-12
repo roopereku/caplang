@@ -67,8 +67,6 @@ protected:
 			return;
 		}
 
-		getAttributes(node);
-
 		depth--;
 	}
 
@@ -159,21 +157,6 @@ protected:
 	}
 
 private:
-	void getAttributes(std::shared_ptr <cap::Node> node)
-	{
-		if(node->getAttributeRange().second > 0)
-		{
-			//file << prefix() << "Attributes\n";
-
-			for(auto& attribute : client.getAttributes(node))
-			{
-				traverseExpression(attribute->getFirst());
-			}
-
-			//depth--;
-		}
-	}
-
 	std::wstring getResultType(std::shared_ptr <cap::Node> node)
 	{
 		std::wstring str;
@@ -228,14 +211,6 @@ int main()
 
 		func main()
 		{
-			msg = @localized "StringId" + "_1"
-			//ratio = @unsafe foo() + 10
-			//@assume(result < 0) -param ** 100
-			//@~nonii -getCallable("Name")().someField + 2
-
-			// IDEA: attributes are not carried inside subexpressions
-			//@unsafe a.b.c( /* Foo call is safe */ foo(), @unsafe bar())
-			@unsafe1 a.b.c(foo(), @unsafe2 bar()).d
 		}
 
 	)SRC");

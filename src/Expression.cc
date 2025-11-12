@@ -116,31 +116,16 @@ std::weak_ptr <Node> Expression::handleToken(Node::ParserContext& ctx, Token& to
 	assert(newNode);
 	newNode->setToken(token);
 
-	if(!ctx.attributeCheckpoints.empty() && ctx.attributeCheckpoints.top().expressionDepth == ctx.subExpressionDepth)
-	{
-		const unsigned newPrecedence = newNode->getPrecedence();
-
-		// Any non-value that's below the modifier precedence indicates that
-		// a part of an expression that can be interpreted as a single value
-		// (e.g. -foo.bar()[0].field()) has come to an end.
-		if(newPrecedence < modifierPrecedence && newPrecedence != 0)
-		{
-			DBG_MESSAGE(ctx.client, "REMOVE CHECKPOINT CHECKPOINT ", ctx.attributeCheckpoints.size(), " AT ", newNode->getTypeString());
-			ctx.attributeCheckpoints.pop();
-		}
-
-		// TODO: Check for depth.
-		else if(!ctx.inAttribute)
-		{
-			// TODO: Associate active attributes with the new node.
-			DBG_MESSAGE(ctx.client, "ASSOCIATE WITH CHECKPOINT ", ctx.attributeCheckpoints.size(), ": ", newNode->getTypeString());
-			newNode->setAttributeRange(ctx.attributeCheckpoints.top().range);
-		}
-	}
-
 	// If this node isn't complete, handle the new node as a value.
 	if(!complete)
 	{
+		// Apply previous attributes to the first value when outside an attribute.
+		if(!ctx.attributeCheckpoints.empty() && !ctx.inAttribute)
+		{
+			// TODO: Apply the attributes to newNode.
+			ctx.attributeCheckpoints.pop();
+		}
+
 		newCurrent = adoptValue(newNode);
 	}
 
@@ -172,11 +157,10 @@ std::weak_ptr <Node> Expression::handleToken(Node::ParserContext& ctx, Token& to
 			assert(attribute->getType() == Expression::Type::Attribute);
 			size_t index = ctx.client.addAttribute(std::static_pointer_cast <Attribute> (attribute));
 
-			DBG_MESSAGE(ctx.client, "STORED ATTRIBUTE ", index);
-
-			if(ctx.attributeCheckpoints.empty() || ctx.attributeCheckpoints.top().expressionDepth != ctx.subExpressionDepth)
+			// Make sure that attribute checkpoints exists when needed.
+			assert(ctx.attributeCheckpoints.empty() || ctx.attributeCheckpoints.top().expressionDepth >= ctx.subExpressionDepth);
+			if(ctx.attributeCheckpoints.empty() || ctx.attributeCheckpoints.top().expressionDepth < ctx.subExpressionDepth)
 			{
-				DBG_MESSAGE(ctx.client, "ADD ATTRIBUTE CHECKPOINT");
 				ctx.addAttributeCheckpoint(index);
 			}
 
@@ -248,6 +232,16 @@ Expression::Expression(Type type)
 
 std::weak_ptr <Node> Expression::exitExpression(ParserContext& ctx, Token& token)
 {
+	// TODO: Allow non-subexpressions ending with an attribute to support applying attributes to declarations
+
+	// Make sure that subexpressions don't end in attributes.
+	if(getType() == Expression::Type::Attribute)
+	{
+		SourceLocation location(ctx.source, token);
+		ctx.client.sourceError(location, "Subexpressions must not end in attributes");
+		return {};
+	}
+
 	// If we're not inside a subexpression and there's no more relevant tokens
 	// on the current line, exit to a non-expression parent node.
 	bool recursive = ctx.subExpressionDepth == 0 && token.isLastOfLine(ctx);

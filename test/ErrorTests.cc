@@ -247,3 +247,12 @@ TEST(ErrorTests, ConsecutiveValues)
 	tester.reportsError(L"bar(1 * 2 + 3) 20", L"Consecutive values are not allowed");
 	tester.reportsError(L"(1 * 2 + 3) foo", L"Consecutive values are not allowed");
 }
+
+TEST(ExpressionTests, CannotEndSubexpressionWithAttribute)
+{
+	ErrorTester tester;
+
+	tester.reportsError(L"(@foo)", L"Subexpressions must not end in attributes");
+	tester.reportsError(L"(@foo @bar)", L"Subexpressions must not end in attributes");
+	tester.reportsError(L"a + (@foo) - b", L"Subexpressions must not end in attributes");
+}
