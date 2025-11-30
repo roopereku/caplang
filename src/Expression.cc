@@ -43,6 +43,11 @@ std::weak_ptr <Node> Expression::handleToken(Node::ParserContext& ctx, Token& to
 
 	bool complete = isComplete();
 
+	if(!ctx.inAttribute && token.getType() != Token::Type::Attribute)
+	{
+		ctx.allowExpressionEndingInAttributes = false;
+	}
+
 	if(token.getType() == Token::Type::Operator)
 	{
 		if(complete)
@@ -119,12 +124,13 @@ std::weak_ptr <Node> Expression::handleToken(Node::ParserContext& ctx, Token& to
 	// If this node isn't complete, handle the new node as a value.
 	if(!complete)
 	{
-		// Apply previous attributes to the first value when outside an attribute.
-		if(!ctx.attributeCheckpoints.empty() && !ctx.inAttribute)
-		{
-			// TODO: Apply the attributes to newNode.
-			ctx.attributeCheckpoints.pop();
-		}
+		//// TODO: When attributes in expression are properly implemented the removal of attribute
+		//// checkpoints shouldn't be done here as attributes would only apply to the next single value.
+		//// Instead we might want to wait for the precedence to become such that a value such as -a.b.c().d has come to an end.
+		//if(!ctx.attributeCheckpoints.empty() && !ctx.inAttribute)
+		//{
+		//	ctx.attributeCheckpoints.pop();
+		//}
 
 		newCurrent = adoptValue(newNode);
 	}
@@ -148,24 +154,17 @@ std::weak_ptr <Node> Expression::handleToken(Node::ParserContext& ctx, Token& to
 		assert(!getParent().expired());
 		auto parent = getParent().lock();
 
+		const auto newPrecedence = newNode->getPrecedence();
+
+		// The new node is outside the current attribute if it breaks a larger value or starts an attribute.
+		// A larger value is broken if the precedence is below modifier precesence wich implies a binary operator
+		// excluding '.'. An example of a larger value would be -foo.bar().results[0]
+		const bool newOutsideCurrentAttribute = newPrecedence < modifierPrecedence || newNode->type == Type::Attribute;
+
 		// Save attributes upon leaving them and disconnect them from the node tree.
-		if(type == Type::Attribute)
+		if(type == Type::Attribute && newOutsideCurrentAttribute)
 		{
-			assert(parent->getType() == Node::Type::Expression);
-			auto attribute = std::static_pointer_cast <Expression> (parent)->stealLatestValue();
-
-			assert(attribute->getType() == Expression::Type::Attribute);
-			size_t index = ctx.client.addAttribute(std::static_pointer_cast <Attribute> (attribute));
-
-			// Make sure that attribute checkpoints exists when needed.
-			assert(ctx.attributeCheckpoints.empty() || ctx.attributeCheckpoints.top().expressionDepth >= ctx.subExpressionDepth);
-			if(ctx.attributeCheckpoints.empty() || ctx.attributeCheckpoints.top().expressionDepth < ctx.subExpressionDepth)
-			{
-				ctx.addAttributeCheckpoint(index);
-			}
-
-			ctx.attributeCheckpoints.top().range.second++;
-			ctx.inAttribute = false;
+			addCurrentAttribute(ctx);
 		}
 
 		// If we're leaving out of an expression, we've failed to find a node
@@ -193,6 +192,31 @@ std::weak_ptr <Node> Expression::handleToken(Node::ParserContext& ctx, Token& to
 	}
 
 	return newCurrent;
+}
+
+void Expression::addCurrentAttribute(ParserContext& ctx)
+{
+	DBG_MESSAGE(ctx.client, "ADDING ATTRIBUTE");
+
+	auto parent = getParent().lock();
+
+	assert(parent->getType() == Node::Type::Expression);
+	auto attribute = std::static_pointer_cast <Expression> (parent)->stealLatestValue();
+
+	assert(attribute->getType() == Expression::Type::Attribute);
+	size_t index = ctx.client.addAttribute(std::static_pointer_cast <Attribute> (attribute));
+	DBG_MESSAGE(ctx.client, "ADD ATTRIB");
+
+	// Make sure that attribute checkpoints exists when needed.
+	assert(ctx.attributeCheckpoints.empty() || ctx.attributeCheckpoints.top().expressionDepth >= ctx.subExpressionDepth);
+	if(ctx.attributeCheckpoints.empty() || ctx.attributeCheckpoints.top().expressionDepth < ctx.subExpressionDepth)
+	{
+		DBG_MESSAGE(ctx.client, "ADD CHECKPOINT");
+		ctx.addAttributeCheckpoint(index);
+	}
+
+	ctx.attributeCheckpoints.top().range.second++;
+	ctx.inAttribute = false;
 }
 
 void Expression::handleValue(std::shared_ptr <Expression>)
@@ -232,14 +256,15 @@ Expression::Expression(Type type)
 
 std::weak_ptr <Node> Expression::exitExpression(ParserContext& ctx, Token& token)
 {
-	// TODO: Allow non-subexpressions ending with an attribute to support applying attributes to declarations
-
-	// Make sure that subexpressions don't end in attributes.
-	if(getType() == Expression::Type::Attribute)
+	if(ctx.inAttribute)
 	{
-		SourceLocation location(ctx.source, token);
-		ctx.client.sourceError(location, "Subexpressions must not end in attributes");
-		return {};
+		// Make sure that expressions don't end in attributes when not allowed.
+		if(!ctx.allowExpressionEndingInAttributes)
+		{
+			SourceLocation location(ctx.source, token);
+			ctx.client.sourceError(location, "Expression must not end in an attribute here");
+			return {};
+		}
 	}
 
 	// If we're not inside a subexpression and there's no more relevant tokens
@@ -277,6 +302,11 @@ std::weak_ptr <Node> Expression::getExitedExpression(ParserContext& ctx, bool re
 		// If the parent isn't an expression, return this root.
 		// It should be the first expression node that parsing was invoked for.
 		return weak_from_this();
+	}
+
+	else if(type == Type::Attribute)
+	{
+		addCurrentAttribute(ctx);
 	}
 
 	assert(!getParent().expired());

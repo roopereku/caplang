@@ -59,7 +59,10 @@ public:
 	/// The node that is exited from as indicated by invokedNodeExited.
 	std::shared_ptr <Node> exitedFrom;
 
+	/// Is an attribute being parsed?
 	bool inAttribute = false;
+
+	bool allowExpressionEndingInAttributes = false;
 
 	struct AttributeCheckpoint
 	{

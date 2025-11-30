@@ -248,11 +248,14 @@ TEST(ErrorTests, ConsecutiveValues)
 	tester.reportsError(L"(1 * 2 + 3) foo", L"Consecutive values are not allowed");
 }
 
-TEST(ExpressionTests, CannotEndSubexpressionWithAttribute)
+TEST(ExpressionTests, CannotEndExpressionWithAttribute)
 {
 	ErrorTester tester;
 
-	tester.reportsError(L"(@foo)", L"Subexpressions must not end in attributes");
-	tester.reportsError(L"(@foo @bar)", L"Subexpressions must not end in attributes");
-	tester.reportsError(L"a + (@foo) - b", L"Subexpressions must not end in attributes");
+	tester.reportsError(L"(@foo)", L"Expression must not end in an attribute here");
+	tester.reportsError(L"(@foo @bar)", L"Expression must not end in an attribute here");
+	tester.reportsError(L"a + (@foo) - b", L"Expression must not end in an attribute here");
+	tester.reportsError(L"a (@foo)", L"Expression must not end in an attribute here");
+	tester.reportsError(L"func something(@foo) {\n}\n", L"Expression must not end in an attribute here");
+	tester.reportsError(L"@attr\nfunc something(@foo) {\n}\n", L"Expression must not end in an attribute here");
 }

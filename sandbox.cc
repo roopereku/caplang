@@ -209,7 +209,9 @@ int main()
 	Sandbox client;
 	cap::Source entry(LR"SRC(
 
-		func main()
+		//@*makeName()
+		@*makeName() @nii
+		func main(@foo)
 		{
 		}
 
@@ -218,6 +220,15 @@ int main()
 	if(!client.parse(entry, false))
 	{
 		return 1;
+	}
+
+	for (auto inGlobal : entry.getGlobal()->declarations)
+	{
+		printf("%s '%ls' %lu %lu\n", inGlobal->getTypeString(), inGlobal->getName().c_str(), inGlobal->getAttributeRange().first, inGlobal->getAttributeRange().second);
+		for (auto attribute : client.getAttributes(inGlobal))
+		{
+			printf("- %ls\n", entry.getString(attribute->getFirst()->getToken()).c_str());
+		}
 	}
 
 	ASTDumper dumper("ast.puml", client);

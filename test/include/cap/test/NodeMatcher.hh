@@ -42,6 +42,7 @@ ExpectedNode Parameter(std::wstring&& name);
 ExpectedNode Generic(std::wstring&& name);
 ExpectedNode TypeReference();
 ExpectedNode Return();
+ExpectedNode Attribute();
 
 class NodeMatcher : public cap::Traverser
 {

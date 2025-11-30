@@ -1,5 +1,6 @@
 #include <cap/Declaration.hh>
 #include <cap/Function.hh>
+#include <cap/ParserContext.hh>
 
 #include <cassert>
 

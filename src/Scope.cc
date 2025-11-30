@@ -27,25 +27,25 @@ std::weak_ptr <Node> Scope::handleToken(ParserContext& ctx, Token& token)
 {
 	if(ctx.source.match(token, L"func"))
 	{
-		return appendNested(std::make_shared <Function> (), token);
+		return consumeAttributes(appendNested(std::make_shared <Function> (), token), ctx);
 	}
 
 	else if(ctx.source.match(token, L"type"))
 	{
-		return appendNested(std::make_shared <ClassType> (), token);
+		return consumeAttributes(appendNested(std::make_shared <ClassType> (), token), ctx);
 	}
 
 	else if(ctx.source.match(token, L"let"))
 	{
 		// TODO: Do fields for class members?
-		auto varDecl = appendNested(std::make_shared <Variable::Root> (Variable::Type::Local), token);
-		return std::static_pointer_cast <Statement> (varDecl.lock())->getContinuation(ctx);
+		auto varDecl = consumeAttributes(appendNested(std::make_shared <Variable::Root> (Variable::Type::Local), token), ctx);
+		return std::static_pointer_cast <Statement> (varDecl)->getContinuation(ctx);
 	}
 
 	else if(ctx.source.match(token, L"return"))
 	{
-		auto ret = appendNested(std::make_shared <Return> (), token);
-		return std::static_pointer_cast <Statement> (ret.lock())->getContinuation(ctx);
+		auto ret = consumeAttributes(appendNested(std::make_shared <Return> (), token), ctx);
+		return std::static_pointer_cast <Statement> (ret)->getContinuation(ctx);
 	}
 
 	else if(token.isOpeningBracket(ctx, '{'))
@@ -63,31 +63,22 @@ std::weak_ptr <Node> Scope::handleToken(ParserContext& ctx, Token& token)
 	// Parse anything else as expressions.
 	else
 	{
-		// TODO: Allow an expression that begins with an attribute.
-		// If the expression root contains something after parsing, throw an error.
-
-		if(token.getType() == Token::Type::Attribute)
-		{
-			// TODO: Allow expression. If only declarations are allowed
-			// the most recent node exiting can be caught in invokedNodeExited
-			// and if the expression root has something an error can be thrown.
-		}
-
 		// If only declarations are allowed, forbid a top level expression.
-		if(onlyDeclarations)
+		// Attributes can be applied to declarations and thus are allowed.
+		if(onlyDeclarations && token.getType() != Token::Type::Attribute)
 		{
 			SourceLocation location(ctx.source, token);
 			ctx.client.sourceError(location, "Only declarations are allowed here");
 			return {};
 		}
 
+		ctx.allowExpressionEndingInAttributes = true;
+
 		// Adopt the expression root and delegate the first token of
 		// the expression to the root.
 		auto exprRoot = std::make_shared <Expression::Root> ();
 		appendNested(exprRoot, token);
-		auto ret = exprRoot->handleToken(ctx, token);
-
-		return ret;
+		return exprRoot->handleToken(ctx, token);
 	}
 
 	return weak_from_this();
@@ -95,6 +86,14 @@ std::weak_ptr <Node> Scope::handleToken(ParserContext& ctx, Token& token)
 
 std::weak_ptr <Node> Scope::invokedNodeExited(ParserContext& ctx, Token& token)
 {
+	// Expressions ending in attributes are only allowed when the expression is invoked
+	// from a scope context and only attributes are present. In such an exit the attributes
+	// are already stored and the corresponding expression root should be disposed of.
+	if(ctx.exitedFrom->getType() == Node::Type::Expression && ctx.allowExpressionEndingInAttributes)
+	{
+		nested.pop_back();
+	}
+
 	if(token.isClosingBracket(ctx, '}'))
 	{
 		DBG_MESSAGE(ctx.client, "HANDLE SCOPE EXIT. DELEGATE BRACKET TO ", getParent().lock()->getTypeString());
@@ -130,13 +129,25 @@ const char* Scope::getTypeString() const
 	return "Scope";
 }
 
-std::weak_ptr <Node> Scope::appendNested(std::shared_ptr <Node> node, Token& token)
+std::shared_ptr <Node> Scope::appendNested(std::shared_ptr <Node> node, Token& token)
 {
 	adopt(node);
 	node->setToken(token);
 	nested.emplace_back(std::move(node));
 
 	return nested.back();
+}
+
+std::shared_ptr <Node> Scope::consumeAttributes(std::shared_ptr <Node> node, ParserContext& ctx)
+{
+	if(!ctx.attributeCheckpoints.empty())
+	{
+		assert(ctx.attributeCheckpoints.size() == 1);
+		node->setAttributeRange(ctx.attributeCheckpoints.top().range);
+		ctx.attributeCheckpoints.pop();
+	}
+
+	return node;
 }
 
 }

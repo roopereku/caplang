@@ -90,6 +90,8 @@ protected:
 	virtual std::shared_ptr <Expression> stealLatestValue();
 
 private:
+	void addCurrentAttribute(ParserContext& ctx);
+
 	std::weak_ptr <Node> exitExpression(ParserContext& ctx, Token& token);
 	std::weak_ptr <Node> getExitedExpression(ParserContext& ctx, bool recursive);
 
