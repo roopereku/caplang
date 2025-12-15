@@ -488,10 +488,35 @@ TEST(ExpressionTests, ExpressionAttributesDisconnected)
 				Expression(),
 					String(L"test")
 	});
+
+	tester.test(L"@foo (@bar x) + @baz y", {
+		Expression(),
+			cap::BinaryOperator::Type::Add,
+			Expression(),
+				Identifier(L"x"),
+			Identifier(L"y")
+	});
+}
+
+TEST(ExpressionTests, TODO_NegativeTestForSeparateBracket)
+{
+	// TODO: Once e.g. "@foo() ()" can be differentiated from "@foo()()" this test can be
+	// replaced with a real test.
+	ExpressionTester tester;
+
+	tester.test(L"@foo () baz",
+	{
+		Expression(),
+			Identifier(L"baz")
+	});
+
+	// TODO: Make a similar error test testing that something like "@foo()()" isn't allowed.
+	// Calling an attribute doesn't make much sense.
 }
 
 TEST(ExpressionTests, AttributesApplicableToBracketValues)
 {
 	// TODO: @attr (1 + 2)
 	// TODO: @attr [1 + 2]
+	// TODO: @foo(1 + 2) (@bar)
 }

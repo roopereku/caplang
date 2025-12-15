@@ -25,9 +25,12 @@ std::weak_ptr <Node> Expression::handleToken(Node::ParserContext& ctx, Token& to
 
 	DBG_MESSAGE(ctx.client, "Expr token '", ctx.source.getString(token), "' handled by ", getTypeString());
 
+	DBG_MESSAGE(ctx.client, "CURRENT CHECKPOINTS ", ctx.activeAttributes.size());
+
 	if(token.getType() == Token::Type::ClosingBracket)
 	{
 		// The state can get messed up if this goes below 0.
+		size_t prevDepth = ctx.subExpressionDepth;
 		if(ctx.subExpressionDepth > 0)
 		{
 			ctx.subExpressionDepth--;
@@ -35,7 +38,7 @@ std::weak_ptr <Node> Expression::handleToken(Node::ParserContext& ctx, Token& to
 
 		// TODO: If the next token is an operator, maybe the expression should be continued?
 
-		return exitExpression(ctx, token);
+		return exitExpression(ctx, token, prevDepth);
 	}
 
 	std::weak_ptr <Node> newCurrent = weak_from_this();
@@ -43,9 +46,11 @@ std::weak_ptr <Node> Expression::handleToken(Node::ParserContext& ctx, Token& to
 
 	bool complete = isComplete();
 
+	// When outside an attribute, anything else but the beginning of an attribute
+	// requires that the expression contains things other than attributes.
 	if(!ctx.inAttribute && token.getType() != Token::Type::Attribute)
 	{
-		ctx.allowExpressionEndingInAttributes = false;
+		ctx.setMoreThanAttributes();
 	}
 
 	if(token.getType() == Token::Type::Operator)
@@ -95,6 +100,13 @@ std::weak_ptr <Node> Expression::handleToken(Node::ParserContext& ctx, Token& to
 		// the previous token should have been an operator.
 		else
 		{
+			// TODO: Once "@foo() ()" can be differentiated from "@foo()()" make sure that expressions
+			// don't end in attributes as there will be a regular value in the expression.
+			//if (!ctx.inAttribute)
+			//{
+			//	ctx.allowExpressionEndingInAttributes = false;
+			//}
+
 			newNode = std::make_shared <Root> ();
 		}
 	}
@@ -124,13 +136,15 @@ std::weak_ptr <Node> Expression::handleToken(Node::ParserContext& ctx, Token& to
 	// If this node isn't complete, handle the new node as a value.
 	if(!complete)
 	{
-		//// TODO: When attributes in expression are properly implemented the removal of attribute
-		//// checkpoints shouldn't be done here as attributes would only apply to the next single value.
-		//// Instead we might want to wait for the precedence to become such that a value such as -a.b.c().d has come to an end.
-		//if(!ctx.attributeCheckpoints.empty() && !ctx.inAttribute)
-		//{
-		//	ctx.attributeCheckpoints.pop();
-		//}
+		// TODO: Apply active attributes to upcoming expression nodes once decided how.
+		if(!ctx.inAttribute && !ctx.activeAttributes.empty())
+		{
+			// Consume attributes at the same depth.
+			if(ctx.activeAttributes.top().depth == ctx.subExpressionDepth)
+			{
+				ctx.activeAttributes.pop();
+			}
+		}
 
 		newCurrent = adoptValue(newNode);
 	}
@@ -164,7 +178,7 @@ std::weak_ptr <Node> Expression::handleToken(Node::ParserContext& ctx, Token& to
 		// Save attributes upon leaving them and disconnect them from the node tree.
 		if(type == Type::Attribute && newOutsideCurrentAttribute)
 		{
-			addCurrentAttribute(ctx);
+			finalizeCurrentAttribute(ctx);
 		}
 
 		// If we're leaving out of an expression, we've failed to find a node
@@ -188,35 +202,21 @@ std::weak_ptr <Node> Expression::handleToken(Node::ParserContext& ctx, Token& to
 	// TODO: If the new node represents a binary operator, extend to the next line.
 	if(ctx.subExpressionDepth == 0 && token.isLastOfLine(ctx))
 	{
-		return exitExpression(ctx, token);
+		return exitExpression(ctx, token, ctx.subExpressionDepth);
 	}
 
 	return newCurrent;
 }
 
-void Expression::addCurrentAttribute(ParserContext& ctx)
+void Expression::finalizeCurrentAttribute(ParserContext& ctx)
 {
-	DBG_MESSAGE(ctx.client, "ADDING ATTRIBUTE");
-
 	auto parent = getParent().lock();
 
 	assert(parent->getType() == Node::Type::Expression);
 	auto attribute = std::static_pointer_cast <Expression> (parent)->stealLatestValue();
 
 	assert(attribute->getType() == Expression::Type::Attribute);
-	size_t index = ctx.client.addAttribute(std::static_pointer_cast <Attribute> (attribute));
-	DBG_MESSAGE(ctx.client, "ADD ATTRIB");
-
-	// Make sure that attribute checkpoints exists when needed.
-	assert(ctx.attributeCheckpoints.empty() || ctx.attributeCheckpoints.top().expressionDepth >= ctx.subExpressionDepth);
-	if(ctx.attributeCheckpoints.empty() || ctx.attributeCheckpoints.top().expressionDepth < ctx.subExpressionDepth)
-	{
-		DBG_MESSAGE(ctx.client, "ADD CHECKPOINT");
-		ctx.addAttributeCheckpoint(index);
-	}
-
-	ctx.attributeCheckpoints.top().range.second++;
-	ctx.inAttribute = false;
+	ctx.storeAttribute(std::static_pointer_cast <Attribute> (attribute));
 }
 
 void Expression::handleValue(std::shared_ptr <Expression>)
@@ -254,18 +254,9 @@ Expression::Expression(Type type)
 {
 }
 
-std::weak_ptr <Node> Expression::exitExpression(ParserContext& ctx, Token& token)
+std::weak_ptr <Node> Expression::exitExpression(ParserContext& ctx, Token& token, size_t prevDepth)
 {
-	if(ctx.inAttribute)
-	{
-		// Make sure that expressions don't end in attributes when not allowed.
-		if(!ctx.allowExpressionEndingInAttributes)
-		{
-			SourceLocation location(ctx.source, token);
-			ctx.client.sourceError(location, "Expression must not end in an attribute here");
-			return {};
-		}
-	}
+	DBG_MESSAGE(ctx.client, "AT EXIT ALLOW ATTR AT EXPR END: ", ctx.allowExpressionEndingInAttributes, " CHECKPOINTS: ", ctx.activeAttributes.size());
 
 	// If we're not inside a subexpression and there's no more relevant tokens
 	// on the current line, exit to a non-expression parent node.
@@ -274,6 +265,15 @@ std::weak_ptr <Node> Expression::exitExpression(ParserContext& ctx, Token& token
 	auto exitedExpression = getExitedExpression(ctx, recursive);
 	if(exitedExpression.expired())
 	{
+		return {};
+	}
+
+	// Make sure that expressions don't end in attributes when not allowed.
+	const bool forbidEndingInAttribute = prevDepth > 0 || !ctx.allowExpressionEndingInAttributes;
+	if(!ctx.activeAttributes.empty() && forbidEndingInAttribute)
+	{
+		SourceLocation location(ctx.source, token);
+		ctx.client.sourceError(location, "Expression must not end in an attribute here");
 		return {};
 	}
 
@@ -306,7 +306,7 @@ std::weak_ptr <Node> Expression::getExitedExpression(ParserContext& ctx, bool re
 
 	else if(type == Type::Attribute)
 	{
-		addCurrentAttribute(ctx);
+		finalizeCurrentAttribute(ctx);
 	}
 
 	assert(!getParent().expired());

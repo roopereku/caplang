@@ -259,3 +259,9 @@ TEST(ExpressionTests, CannotEndExpressionWithAttribute)
 	tester.reportsError(L"func something(@foo) {\n}\n", L"Expression must not end in an attribute here");
 	tester.reportsError(L"@attr\nfunc something(@foo) {\n}\n", L"Expression must not end in an attribute here");
 }
+
+// TODO: Make an error test for the following attribute cases:
+// - @@foo
+// - @(@foo)
+// - @foo()
+// - @foo[]

@@ -209,11 +209,7 @@ int main()
 	Sandbox client;
 	cap::Source entry(LR"SRC(
 
-		//@*makeName()
-		@*makeName() @nii
-		func main(@foo)
-		{
-		}
+		@foo @otherAttr(1 + 2) something
 
 	)SRC");
 

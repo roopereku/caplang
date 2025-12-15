@@ -11,15 +11,13 @@ namespace cap
 
 class Client;
 class Source;
+class Attribute;
 class DeclarationStorage;
 
 class ParserContext
 {
 public:
-	ParserContext(Client& client, Source& source)
-		: client(client), source(source)
-	{
-	}
+	ParserContext(Client& client, Source& source);
 
 	Client& client;
 	Source& source;
@@ -28,10 +26,7 @@ public:
 class Token::ParserContext : public cap::ParserContext
 {
 public:
-	ParserContext(Client& client, Source& source)
-		: cap::ParserContext(client, source)
-	{
-	}
+	ParserContext(Client& client, Source& source);
 
 	std::stack <Token> openedBrackets;
 	wchar_t previous = 0;
@@ -40,10 +35,7 @@ public:
 class Node::ParserContext : public cap::ParserContext
 {
 public:
-	ParserContext(Client& client, Source& source)
-		: cap::ParserContext(client, source)
-	{
-	}
+	ParserContext(Client& client, Source& source);
 
 	/// How many nested subexpressions are there currently?
 	size_t subExpressionDepth = 0;
@@ -64,19 +56,18 @@ public:
 
 	bool allowExpressionEndingInAttributes = false;
 
-	struct AttributeCheckpoint
+	struct ActiveAttributes
 	{
+		ActiveAttributes(size_t start, size_t depth);
+
 		std::pair <size_t, size_t> range;
-		size_t expressionDepth = 0;
+		size_t depth = 0;
 	};
 
-	std::stack <AttributeCheckpoint> attributeCheckpoints;
+	std::stack <ActiveAttributes> activeAttributes;
 
-	void addAttributeCheckpoint(size_t start)
-	{
-		std::pair <size_t, size_t> range(start, 0);
-		attributeCheckpoints.emplace(AttributeCheckpoint{ range, subExpressionDepth });
-	}
+	void storeAttribute(std::shared_ptr <Attribute> attribute);
+	void setMoreThanAttributes();
 };
 
 }

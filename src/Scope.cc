@@ -63,16 +63,19 @@ std::weak_ptr <Node> Scope::handleToken(ParserContext& ctx, Token& token)
 	// Parse anything else as expressions.
 	else
 	{
-		// If only declarations are allowed, forbid a top level expression.
 		// Attributes can be applied to declarations and thus are allowed.
-		if(onlyDeclarations && token.getType() != Token::Type::Attribute)
+		if (token.getType() == Token::Type::Attribute)
+		{
+			ctx.allowExpressionEndingInAttributes = true;
+		}
+
+		// If only declarations are allowed, forbid a top level expression.
+		else if(onlyDeclarations)
 		{
 			SourceLocation location(ctx.source, token);
 			ctx.client.sourceError(location, "Only declarations are allowed here");
 			return {};
 		}
-
-		ctx.allowExpressionEndingInAttributes = true;
 
 		// Adopt the expression root and delegate the first token of
 		// the expression to the root.
@@ -92,6 +95,7 @@ std::weak_ptr <Node> Scope::invokedNodeExited(ParserContext& ctx, Token& token)
 	if(ctx.exitedFrom->getType() == Node::Type::Expression && ctx.allowExpressionEndingInAttributes)
 	{
 		nested.pop_back();
+		ctx.allowExpressionEndingInAttributes = false;
 	}
 
 	if(token.isClosingBracket(ctx, '}'))
@@ -140,11 +144,11 @@ std::shared_ptr <Node> Scope::appendNested(std::shared_ptr <Node> node, Token& t
 
 std::shared_ptr <Node> Scope::consumeAttributes(std::shared_ptr <Node> node, ParserContext& ctx)
 {
-	if(!ctx.attributeCheckpoints.empty())
+	if(!ctx.activeAttributes.empty())
 	{
-		assert(ctx.attributeCheckpoints.size() == 1);
-		node->setAttributeRange(ctx.attributeCheckpoints.top().range);
-		ctx.attributeCheckpoints.pop();
+		assert(ctx.activeAttributes.size() == 1);
+		node->setAttributeRange(ctx.activeAttributes.top().range);
+		ctx.activeAttributes.pop();
 	}
 
 	return node;
