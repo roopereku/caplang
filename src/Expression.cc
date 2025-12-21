@@ -30,7 +30,6 @@ std::weak_ptr <Node> Expression::handleToken(Node::ParserContext& ctx, Token& to
 	if(token.getType() == Token::Type::ClosingBracket)
 	{
 		// The state can get messed up if this goes below 0.
-		size_t prevDepth = ctx.subExpressionDepth;
 		if(ctx.subExpressionDepth > 0)
 		{
 			ctx.subExpressionDepth--;
@@ -38,7 +37,7 @@ std::weak_ptr <Node> Expression::handleToken(Node::ParserContext& ctx, Token& to
 
 		// TODO: If the next token is an operator, maybe the expression should be continued?
 
-		return exitExpression(ctx, token, prevDepth);
+		return exitExpression(ctx, token);
 	}
 
 	std::weak_ptr <Node> newCurrent = weak_from_this();
@@ -202,7 +201,7 @@ std::weak_ptr <Node> Expression::handleToken(Node::ParserContext& ctx, Token& to
 	// TODO: If the new node represents a binary operator, extend to the next line.
 	if(ctx.subExpressionDepth == 0 && token.isLastOfLine(ctx))
 	{
-		return exitExpression(ctx, token, ctx.subExpressionDepth);
+		return exitExpression(ctx, token);
 	}
 
 	return newCurrent;
@@ -254,7 +253,7 @@ Expression::Expression(Type type)
 {
 }
 
-std::weak_ptr <Node> Expression::exitExpression(ParserContext& ctx, Token& token, size_t prevDepth)
+std::weak_ptr <Node> Expression::exitExpression(ParserContext& ctx, Token& token)
 {
 	DBG_MESSAGE(ctx.client, "AT EXIT ALLOW ATTR AT EXPR END: ", ctx.allowExpressionEndingInAttributes, " CHECKPOINTS: ", ctx.activeAttributes.size());
 
@@ -269,12 +268,14 @@ std::weak_ptr <Node> Expression::exitExpression(ParserContext& ctx, Token& token
 	}
 
 	// Make sure that expressions don't end in attributes when not allowed.
-	const bool forbidEndingInAttribute = prevDepth > 0 || !ctx.allowExpressionEndingInAttributes;
-	if(!ctx.activeAttributes.empty() && forbidEndingInAttribute)
+	if(!ctx.activeAttributes.empty())
 	{
-		SourceLocation location(ctx.source, token);
-		ctx.client.sourceError(location, "Expression must not end in an attribute here");
-		return {};
+		if (ctx.activeAttributes.top().depth > 0 || !ctx.allowExpressionEndingInAttributes)
+		{
+			SourceLocation location(ctx.source, token);
+			ctx.client.sourceError(location, "Expression must not end in an attribute here");
+			return {};
+		}
 	}
 
 	ctx.exitedFrom = exitedExpression.lock();

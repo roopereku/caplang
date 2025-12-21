@@ -92,7 +92,7 @@ protected:
 private:
 	void finalizeCurrentAttribute(ParserContext& ctx);
 
-	std::weak_ptr <Node> exitExpression(ParserContext& ctx, Token& token, size_t prevDepth);
+	std::weak_ptr <Node> exitExpression(ParserContext& ctx, Token& token);
 	std::weak_ptr <Node> getExitedExpression(ParserContext& ctx, bool recursive);
 
 	Type type;

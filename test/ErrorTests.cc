@@ -265,3 +265,5 @@ TEST(ExpressionTests, CannotEndExpressionWithAttribute)
 // - @(@foo)
 // - @foo()
 // - @foo[]
+
+// TODO: Make an error test for when a scope ends with an attribute
