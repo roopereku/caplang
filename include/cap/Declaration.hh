@@ -18,7 +18,8 @@ public:
 	{
 		Class,
 		Function,
-		Variable
+		Variable,
+		Attribute
 	};
 
 	class Root;

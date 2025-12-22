@@ -11,6 +11,7 @@ namespace cap
 class Scope;
 class Class;
 class Function;
+class Attribute;
 class ClassType;
 class CallableType;
 class BinaryOperator;
@@ -118,11 +119,17 @@ protected:
 	/// \return Continue if the traversal should continue to the first expression node.
 	virtual Result onExpressionRoot(std::shared_ptr <Expression::Root> node);
 
-	/// Invoked upon hitting a declaration root in an expression.
+	/// Invoked upon hitting a variable declaration.
 	///
-	/// \param node The node representing a declaration root.
+	/// \param node The node representing a variable declaration.
 	/// \return Continue if the traversal should continue to the underlying expression.
 	virtual Result onVariable(std::shared_ptr <Variable> node);
+
+	/// Invoked upon hitting an attribute declaration.
+	///
+	/// \param node The node representing an attribute declaration.
+	/// \return Continue if the traversal should continue to the attribute details if any.
+	virtual Result onAttribute(std::shared_ptr <Attribute> node);
 
 	/// Invoked upon hitting a return.
 	///
