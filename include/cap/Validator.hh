@@ -21,7 +21,6 @@ protected:
 	Result onExpressionRoot(std::shared_ptr <Expression::Root> node) override;
 	Result onTypeReference(std::shared_ptr <TypeReference> node) override;
 	Result onVariable(std::shared_ptr <Variable> node) override;
-	Result onAttribute(std::shared_ptr <Attribute> node) override;
 	Result onBinaryOperator(std::shared_ptr <BinaryOperator> node) override;
 	Result onUnaryOperator(std::shared_ptr <UnaryOperator> node) override;
 	Result onBracketOperator(std::shared_ptr <BracketOperator> node) override;

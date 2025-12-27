@@ -48,11 +48,6 @@ std::weak_ptr <Node> Scope::handleToken(ParserContext& ctx, Token& token)
 		return std::static_pointer_cast <Statement> (ret)->getContinuation(ctx);
 	}
 
-	else if(ctx.source.match(token, L"attribute"))
-	{
-		return consumeAttributes(appendNested(std::make_shared <Attribute> (), token), ctx);
-	}
-
 	else if(token.isOpeningBracket(ctx, '{'))
 	{
 		// TODO: Implement subscopes.

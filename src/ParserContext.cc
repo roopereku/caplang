@@ -24,16 +24,16 @@ Node::ParserContext::ActiveAttributes::ActiveAttributes(size_t start, size_t dep
 {
 }
 
-void Node::ParserContext::storeAttributeUsage(std::shared_ptr <Attribute::Root> usage)
+void Node::ParserContext::storeAttribute(std::shared_ptr <Attribute> attribute)
 {
 	DBG_MESSAGE(client, "ADDING ATTRIBUTE");
-	size_t index = client.addAttributeUsage(usage);
+	size_t index = client.addAttribute(attribute);
 	inAttribute = false;
 
 	if(activeAttributes.empty() || activeAttributes.top().depth < subExpressionDepth)
 	{
 		DBG_MESSAGE(client, "ADD CHECKPOINT");
-		activeAttributes.emplace(index, subExpressionDepth);
+		activeAttributes.emplace(ActiveAttributes(index, subExpressionDepth));
 	}
 
 	activeAttributes.top().range.second++;

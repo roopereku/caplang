@@ -3,7 +3,6 @@
 
 #include <cap/Token.hh>
 #include <cap/Variable.hh>
-#include <cap/Attribute.hh>
 
 #include <stack>
 
@@ -12,6 +11,7 @@ namespace cap
 
 class Client;
 class Source;
+class Attribute;
 class DeclarationStorage;
 
 class ParserContext
@@ -66,7 +66,7 @@ public:
 
 	std::stack <ActiveAttributes> activeAttributes;
 
-	void storeAttributeUsage(std::shared_ptr <Attribute::Root> usage);
+	void storeAttribute(std::shared_ptr <Attribute> attribute);
 	void setMoreThanAttributes();
 };
 

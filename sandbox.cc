@@ -209,7 +209,7 @@ int main()
 	Sandbox client;
 	cap::Source entry(LR"SRC(
 
-		attribute testAttr
+		@foo @otherAttr(1 + 2) something
 
 	)SRC");
 

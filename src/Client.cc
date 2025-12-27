@@ -27,17 +27,17 @@ const Builtin& Client::getBuiltin()
 	return builtin;
 }
 
-size_t Client::addAttributeUsage(std::shared_ptr <Attribute::Root> usage)
+size_t Client::addAttribute(std::shared_ptr <Attribute> attr)
 {
-	size_t index = attributeUsages.size();
-	attributeUsages.emplace_back(std::move(usage));
+	size_t index = attributes.size();
+	attributes.emplace_back(std::move(attr));
 	return index;
 }
 
 Client::AttributeRange Client::getAttributes(std::shared_ptr <Node> node) const
 {
 	auto range = node->getAttributeRange();
-	auto start = attributeUsages.begin() + range.first;
+	auto start = attributes.begin() + range.first;
 
 	return AttributeRange(start, start + range.second);
 }

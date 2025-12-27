@@ -72,7 +72,7 @@ std::weak_ptr <Node> Expression::handleToken(Node::ParserContext& ctx, Token& to
 
 	else if(token.getType() == Token::Type::Attribute)
 	{
-		newNode = std::make_shared <Attribute::Root> ();
+		newNode = std::make_shared <Attribute> ();
 		ctx.inAttribute = true;
 	}
 
@@ -177,7 +177,7 @@ std::weak_ptr <Node> Expression::handleToken(Node::ParserContext& ctx, Token& to
 		// Save attributes upon leaving them and disconnect them from the node tree.
 		if(type == Type::Attribute && newOutsideCurrentAttribute)
 		{
-			finalizeCurrentAttributeUsage(ctx);
+			finalizeCurrentAttribute(ctx);
 		}
 
 		// If we're leaving out of an expression, we've failed to find a node
@@ -207,7 +207,7 @@ std::weak_ptr <Node> Expression::handleToken(Node::ParserContext& ctx, Token& to
 	return newCurrent;
 }
 
-void Expression::finalizeCurrentAttributeUsage(ParserContext& ctx)
+void Expression::finalizeCurrentAttribute(ParserContext& ctx)
 {
 	auto parent = getParent().lock();
 
@@ -215,7 +215,7 @@ void Expression::finalizeCurrentAttributeUsage(ParserContext& ctx)
 	auto attribute = std::static_pointer_cast <Expression> (parent)->stealLatestValue();
 
 	assert(attribute->getType() == Expression::Type::Attribute);
-	ctx.storeAttributeUsage(std::static_pointer_cast <Attribute::Root> (attribute));
+	ctx.storeAttribute(std::static_pointer_cast <Attribute> (attribute));
 }
 
 void Expression::handleValue(std::shared_ptr <Expression>)
@@ -307,7 +307,7 @@ std::weak_ptr <Node> Expression::getExitedExpression(ParserContext& ctx, bool re
 
 	else if(type == Type::Attribute)
 	{
-		finalizeCurrentAttributeUsage(ctx);
+		finalizeCurrentAttribute(ctx);
 	}
 
 	assert(!getParent().expired());

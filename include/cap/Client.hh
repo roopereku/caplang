@@ -52,11 +52,11 @@ public:
 		onDebugMessage(ss.str());
 	}
 
-	/// Adds an attribute usage to the attribute cache.
+	/// Adds an attribute to the attribute cache.
 	///
 	/// \param attr The attribute to add.
 	/// \return The index at which the attribute was added.
-	size_t addAttributeUsage(std::shared_ptr <Attribute::Root> usage);
+	size_t addAttribute(std::shared_ptr <Attribute> attr);
 
 	class AttributeRange;
 	AttributeRange getAttributes(std::shared_ptr <Node> node) const;
@@ -68,20 +68,19 @@ protected:
 
 private:
 	Builtin builtin;
-	std::vector <std::shared_ptr <Attribute::Root>> attributeUsages;
+	std::vector <std::shared_ptr <Attribute>> attributes;
 };
 
 class Client::AttributeRange
 {
 public:
-	using iterator = std::vector <std::shared_ptr <Attribute::Root>>::const_iterator;
+	using iterator = std::vector <std::shared_ptr <Attribute>>::const_iterator;
 
 	AttributeRange(iterator start, iterator stop)
 		: start(start), stop(stop)
 	{
 	}
 
-	// TODO: These should return an iterator type returning Attribute.
 	iterator cbegin() { return start; }
 	iterator cend() { return stop; }
 	iterator begin() { return start; }

@@ -117,21 +117,6 @@ Traverser::Result Validator::onVariable(std::shared_ptr <Variable> node)
 	return Result::Continue;
 }
 
-Traverser::Result Validator::onAttribute(std::shared_ptr <Attribute> node)
-{
-	if(!checkUniqueDeclaration(node))
-	{
-		return Result::Stop;
-	}
-
-	if(!node->validate(*this))
-	{
-		return Result::Stop;
-	}
-
-	return Result::Continue;
-}
-
 Traverser::Result Validator::onBinaryOperator(std::shared_ptr <BinaryOperator> node)
 {
 	if(!traverseExpression(node->getLeft()))
@@ -450,12 +435,6 @@ Traverser::Result Validator::connectDeclaration(std::shared_ptr <Identifier> nod
 			case Declaration::Type::Variable:
 			{
 				assert(false && "TODO: Find a callable in the context of an object");
-				break;
-			}
-
-			case Declaration::Type::Attribute:
-			{
-				assert(false && "TODO: Return the signature of the attribute if any. Else throw an error.");
 				break;
 			}
 		}

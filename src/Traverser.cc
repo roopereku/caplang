@@ -13,7 +13,6 @@
 #include <cap/Variable.hh>
 #include <cap/Return.hh>
 #include <cap/Identifier.hh>
-#include <cap/Attribute.hh>
 #include <cap/Integer.hh>
 #include <cap/String.hh>
 
@@ -286,19 +285,6 @@ bool Traverser::traverseDeclaration(std::shared_ptr <Declaration> node)
 
 			break;
 		}
-
-		case Declaration::Type::Attribute:
-		{
-			auto attribute = std::static_pointer_cast <Attribute> (node);
-			result = onAttribute(attribute);
-
-			if(shouldContinue(result))
-			{
-				// TODO: If the attribute is a callable, continue to the definition.
-			}
-
-			break;
-		}
 	}
 
 	onNodeExited(node, result);
@@ -377,7 +363,6 @@ Traverser::Result Traverser::onIdentifier(std::shared_ptr <Identifier>) { return
 Traverser::Result Traverser::onInteger(std::shared_ptr <Integer>) { return Result::NotHandled; }
 Traverser::Result Traverser::onString(std::shared_ptr <String>) { return Result::NotHandled; }
 Traverser::Result Traverser::onVariable(std::shared_ptr <Variable>) { return Result::NotHandled; }
-Traverser::Result Traverser::onAttribute(std::shared_ptr <Attribute>) { return Result::NotHandled; }
 Traverser::Result Traverser::onReturn(std::shared_ptr <Return>) { return Result::NotHandled; }
 
 }
