@@ -32,6 +32,11 @@ bool Variable::validate(Validator& validator)
 {
 	if(!referredType.has_value())
 	{
+		if(!Declaration::validate(validator))
+		{
+			return false;
+		}
+
         // Temporarily refer to void. This is to stop recursive validation.
         // TODO: Should there be an error type or similar to indicate uninitializated variables?
 		referredType.emplace(validator.getParserContext().client.getBuiltin().get(Builtin::DataType::Void));

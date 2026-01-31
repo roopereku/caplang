@@ -106,10 +106,15 @@ std::shared_ptr <Scope> ClassType::getBody()
 	return body;
 }
 
-bool ClassType::validate(Validator&)
+bool ClassType::validate(Validator& validator)
 {
 	if(!referredType.has_value())
 	{
+		if(!Declaration::validate(validator))
+		{
+			return false;
+		}
+
 		referredType.emplace(*this);
 		referredType.value().isTypeName = true;
 	}

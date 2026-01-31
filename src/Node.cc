@@ -2,6 +2,10 @@
 #include <cap/Scope.hh>
 #include <cap/Function.hh>
 #include <cap/DeclarationStorage.hh>
+#include <cap/ParserContext.hh>
+#include <cap/Validator.hh>
+#include <cap/Client.hh>
+#include <cap/Value.hh>
 
 #include <cassert>
 
@@ -103,6 +107,30 @@ std::pair <size_t, size_t> Node::getAttributeRange() const
 void Node::setAttributeRange(std::pair <size_t, size_t> range)
 {
 	attributeRange = range;
+}
+
+bool Node::validateAttributes(Validator& validator)
+{
+	auto& ctx = validator.getParserContext();
+	auto attributes = ctx.client.getAttributes(shared_from_this());
+
+	for(auto& attribute : attributes)
+	{
+		// Before validation someone has to adopt the attribute.
+		assert(!attribute->getParent().expired());
+
+		if(!attribute->validate(validator))
+		{
+			return false;
+		}
+	}
+
+	return true;
+}
+
+void Node::handleBuiltinAttribute(BuiltinAttribute, std::shared_ptr <Attribute>)
+{
+	// NOTE: This is an override which different node types can use to handle builtin attributes.
 }
 
 std::shared_ptr <Node> Node::findParentNode(bool (*filter)(std::shared_ptr <Node>)) const

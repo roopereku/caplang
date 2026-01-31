@@ -209,11 +209,24 @@ int main()
 	Sandbox client;
 	cap::Source entry(LR"SRC(
 
-		@foo @otherAttr(1 + 2) something
+		let a = 12
+
+		// TODO: This should result in an error since a is not marked as an attribute.
+		@a
+		func main()
+		{
+		}
+
+		// TODO: Negative test this scenario.
+		//@b
+		//func main()
+		//{
+		//	let b = 10
+		//}
 
 	)SRC");
 
-	if(!client.parse(entry, false))
+	if(!client.parse(entry, true))
 	{
 		return 1;
 	}
@@ -226,6 +239,7 @@ int main()
 			printf("- %ls\n", entry.getString(attribute->getFirst()->getToken()).c_str());
 		}
 	}
+
 
 	ASTDumper dumper("ast.puml", client);
 	dumper.traverseNode(entry.getGlobal());

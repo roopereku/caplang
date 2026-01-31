@@ -13,6 +13,9 @@ class Function;
 class ParserContext;
 class DeclarationStorage;
 class Client;
+class Validator;
+class Attribute;
+enum class BuiltinAttribute;
 
 class Node : public std::enable_shared_from_this <Node>
 {
@@ -109,6 +112,15 @@ public:
 protected:
 	Node(Type type);
 	Node(Type type, DeclarationStorage& declStorage);
+
+	// TODO: Should this be "validate"?
+	bool validateAttributes(Validator& validator);
+
+	/// Called upon a builtin attribute being found in the associated attributes.
+	///
+	/// \param type The type of the builtin attribute.
+	/// \param node The actual usage of the attribute from which additional context can be retrieved.
+	virtual void handleBuiltinAttribute(BuiltinAttribute type, std::shared_ptr <Attribute> node);
 
 private:
 	std::shared_ptr <Node> findParentNode(bool (*filter)(std::shared_ptr <Node>)) const;

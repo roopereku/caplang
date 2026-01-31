@@ -42,7 +42,7 @@ public:
 	///
 	/// \param validator The validator used for traversal.
 	/// \return True if validation succeeded.
-	virtual bool validate(Validator& validator) = 0;
+	virtual bool validate(Validator& validator);
 
 	/// Gets the full location of this declaration.
 	///
@@ -54,6 +54,11 @@ public:
 	///
 	/// \return The parent declaration if any.
 	std::shared_ptr <Declaration> getParentDeclaration() const;
+
+	/// Gets whether this declaration is a declaration of an attribute.
+	///
+	/// \return True if this declaration is an attribute.
+	bool isAttribute() const;
 
 protected:
 	Declaration(Type type);
@@ -67,6 +72,7 @@ protected:
 
 private:
 	Type type;
+	bool attribute = false;
 };
 
 }

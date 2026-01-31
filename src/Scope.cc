@@ -149,6 +149,14 @@ std::shared_ptr <Node> Scope::consumeAttributes(std::shared_ptr <Node> node, Par
 		assert(ctx.activeAttributes.size() == 1);
 		node->setAttributeRange(ctx.activeAttributes.top().range);
 		ctx.activeAttributes.pop();
+
+		// The node that consumes the attributes shall also adopt them
+		// in order for their validation to happen in the context of the given node.
+		auto attributes = ctx.client.getAttributes(node);
+		for(auto& attribute : attributes)
+		{
+			node->adopt(attribute);
+		}
 	}
 
 	return node;

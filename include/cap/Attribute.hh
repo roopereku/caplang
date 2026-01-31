@@ -2,6 +2,7 @@
 #define CAP_ATTRIBUTE_HH
 
 #include <cap/Expression.hh>
+#include <cap/Declaration.hh>
 
 namespace cap
 {
@@ -14,6 +15,13 @@ public:
 	unsigned getPrecedence() override;
 
 	const char* getTypeString() const override;
+
+	bool validate(Validator& validator);
+
+private:
+	std::shared_ptr <Declaration> findReferred(std::shared_ptr <Expression> node, Validator& validator) const;
+
+	std::weak_ptr <Declaration> referredDeclaration;
 };
 
 }
