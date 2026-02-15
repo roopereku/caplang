@@ -4,11 +4,13 @@
 #include <cap/Declaration.hh>
 #include <cap/Statement.hh>
 
+#include <vector>
+
 namespace cap
 {
 
 class BinaryOperator;
-class Value;
+class Identifier;
 
 class Variable : public Declaration
 {
@@ -20,7 +22,7 @@ public:
 		Parameter,
 	};
 
-	Variable(Type type, std::weak_ptr <BinaryOperator> initialization);
+	Variable(Type type, std::shared_ptr <Identifier> name, std::shared_ptr <Expression> initialization);
 
 	/// Validates the initialization of this variable.
 	///
@@ -40,11 +42,14 @@ public:
 
 private:
 	Type type;
-	std::weak_ptr <BinaryOperator> initialization;
+	std::weak_ptr <Expression> initialization;
 };
 
 class Variable::Root : public Statement
 {
+private:
+	std::vector <std::shared_ptr <Declaration>> declared;
+
 public:
 	Root(Variable::Type type);
 
@@ -73,6 +78,12 @@ public:
 	Variable::Type getType() const;
 
 	const char* getTypeString() const override;
+
+	/// Iterators for accessing declarations declared through this root.
+	auto begin() { return declared.begin(); }
+	auto end() { return declared.end(); }
+	auto cbegin() const { return declared.cbegin(); }
+	auto cend() const { return declared.cend(); }
 
 protected:
 	/// Makes sure that something will be declared when not declaring parameters.

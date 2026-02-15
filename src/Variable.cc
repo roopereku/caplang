@@ -11,21 +11,11 @@
 namespace cap
 {
 
-Variable::Variable(Type type, std::weak_ptr <BinaryOperator> initialization) :
-	Declaration(Declaration::Type::Variable),
-	type(type), initialization(initialization)
+Variable::Variable(Type type, std::shared_ptr <Identifier> name, std::shared_ptr <Expression> initialization)
+	: Declaration(Declaration::Type::Variable), type(type), initialization(initialization)
 {
-	assert(!initialization.expired());
-	auto node = initialization.lock();
-	assert(node->getType() == BinaryOperator::Type::Assign);
-
-	assert(node->getLeft()->getType() == Expression::Type::Value);
-	auto value = std::static_pointer_cast <Value> (node->getLeft());
-	assert(value->getType() == Value::Type::Identifier);
-	auto nameIdentifier = std::static_pointer_cast <Identifier> (node->getLeft());
-
-	name = nameIdentifier->getValue();
-	setToken(nameIdentifier->getToken());
+	this->name = name->getValue();
+	setToken(name->getToken());
 }
 
 bool Variable::validate(Validator& validator)
@@ -34,6 +24,15 @@ bool Variable::validate(Validator& validator)
 	{
 		if(!Declaration::validate(validator))
 		{
+			return false;
+		}
+
+		// TODO: Only local variables can be marked as attributes.
+
+		if(initialization.expired())
+		{
+			SourceLocation location(validator.getParserContext().source, getToken());
+			validator.getParserContext().client.sourceError(location, "Missing initialization for non-attribute '", getName(), "'");
 			return false;
 		}
 
@@ -46,16 +45,14 @@ bool Variable::validate(Validator& validator)
 
 		if(type == Type::Parameter)
 		{
-			// Avoid calling Validator::onBinaryOperator as it would be unhappy
-			// with the right side operand resulting in a raw typename.
-			if(!validator.traverseExpression(init->getRight()))
+			if(!validator.traverseExpression(init))
 			{
 				return false;
 			}
 
-			if(!init->getRight()->getResultType()->isTypeName)
+			if(!init->getResultType()->isTypeName)
 			{
-				SourceLocation location(validator.getParserContext().source, init->getRight()->getToken());
+				SourceLocation location(validator.getParserContext().source, init->getToken());
 				validator.getParserContext().client.sourceError(location, "Parameters must be initialized with types");
 				return false;
 			}
@@ -67,14 +64,14 @@ bool Variable::validate(Validator& validator)
 			// it doesn't mean that the parameter refers to such. Instead we want
 			// to treat it as a promise to the caller that this parameter is just
 			// a normal variable of some given type when a function starts execution.
-			auto nonTypeName = *init->getRight()->getResultType();
+			auto nonTypeName = *init->getResultType();
 			nonTypeName.isTypeName = false;
 
 			init->setResultType(nonTypeName);
 			referredType.emplace(nonTypeName);
 
 			// Finally validate the parameter name itself for completeness sake.
-			if(!validator.traverseExpression(init->getLeft()))
+			if(!validator.traverseExpression(init))
 			{
 				return false;
 			}
@@ -96,7 +93,7 @@ bool Variable::validate(Validator& validator)
 std::shared_ptr <Expression> Variable::getInitialization()
 {
 	assert(!initialization.expired());
-	return initialization.lock()->getRight();
+	return initialization.lock();
 }
 
 const char* Variable::getTypeString(Type type)
@@ -148,37 +145,59 @@ std::weak_ptr <Node> Variable::Root::invokedNodeExited(Node::ParserContext& ctx,
 
 	while(auto node = declarations.getNext())
 	{
+		std::shared_ptr <Expression> nameAt;
+		std::shared_ptr <Expression> initialization;
+
 		if(node->getType() == Expression::Type::BinaryOperator)
 		{
+			// TODO: Don't save the whole binary op but maybe just the left and right nodes.
 			auto op = std::static_pointer_cast <BinaryOperator> (node);
 			if(op->getType() == BinaryOperator::Type::Assign)
 			{
-				if(op->getLeft()->getToken().getType() != Token::Type::Identifier)
-				{
-					SourceLocation location(ctx.source, op->getLeft()->getToken());
-					ctx.client.sourceError(location, "Expected an identifier");
-					return {};
-				}
+				nameAt = op->getLeft();
+				initialization = op->getRight();
+			}
 
-				auto decl =  std::make_shared <Variable> (variableRoot->getType(), op);
-
-				// TODO: Something like ArgumentAccessor::getNextIdentifier might be useful.
-				assert(op->getLeft()->getType() == Expression::Type::Value);
-				auto value = std::static_pointer_cast <Value> (op->getLeft());
-				assert(value->getType() == Value::Type::Identifier);
-				auto name = std::static_pointer_cast <Identifier> (value);
-
-				declContainer->adopt(decl);
-				name->setReferred(decl);
-
-				declContainer->getDeclarationStorage().add(std::move(decl));
-				continue;
+			else
+			{
+				// If a binary operator exists for initialization, syntactically it has to be an assignment.
+				SourceLocation location(ctx.source, node->getToken());
+				ctx.client.sourceError(location, "Initialization must be done with '='");
+				return {};
 			}
 		}
 
-		SourceLocation location(ctx.source, node->getToken());
-		ctx.client.sourceError(location, "Expected '='");
-		return {};
+		else if (node->getType() == Expression::Type::Value)
+		{
+			nameAt = std::static_pointer_cast <Value> (node);
+		}
+
+		// TODO: Support "*foo" for name injection?
+		else
+		{
+			SourceLocation location(ctx.source, node->getToken());
+			ctx.client.sourceError(location, "Expected an assignment or an attribute declaration");
+			return {};
+		}
+
+		assert(nameAt);
+		if(nameAt->getToken().getType() != Token::Type::Identifier)
+		{
+			SourceLocation location(ctx.source, nameAt->getToken());
+			ctx.client.sourceError(location, "Expected an identifier");
+			return {};
+		}
+
+		// If the token type of the name is an identifier, the name should be an Identifier object.
+		assert(std::dynamic_pointer_cast <Identifier> (nameAt));
+		auto name = std::static_pointer_cast <Identifier> (nameAt);
+		auto decl = std::make_shared <Variable> (variableRoot->getType(), name, initialization);
+
+		declContainer->adopt(decl);
+		name->setReferred(decl);
+
+		declared.emplace_back(decl);
+		declContainer->getDeclarationStorage().add(std::move(decl));
 	}
 
 	return getParent();

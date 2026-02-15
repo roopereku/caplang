@@ -18,6 +18,11 @@ public:
 
 	bool validate(Validator& validator);
 
+	std::shared_ptr <Declaration> getReferred() const
+	{
+		return referredDeclaration.lock();
+	}
+
 private:
 	std::shared_ptr <Declaration> findReferred(std::shared_ptr <Expression> node, Validator& validator) const;
 

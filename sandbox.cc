@@ -209,13 +209,13 @@ int main()
 	Sandbox client;
 	cap::Source entry(LR"SRC(
 
-		let a = 12
+		let @attribute a = 10
 
-		// TODO: This should result in an error since a is not marked as an attribute.
-		@a
-		func main()
-		{
-		}
+		//// TODO: This should result in an error since a is not marked as an attribute.
+		//@a
+		//func main()
+		//{
+		//}
 
 		// TODO: Negative test this scenario.
 		//@b
@@ -236,7 +236,7 @@ int main()
 		printf("%s '%ls' %lu %lu\n", inGlobal->getTypeString(), inGlobal->getName().c_str(), inGlobal->getAttributeRange().first, inGlobal->getAttributeRange().second);
 		for (auto attribute : client.getAttributes(inGlobal))
 		{
-			printf("- %ls\n", entry.getString(attribute->getFirst()->getToken()).c_str());
+			printf("- %ls\n", attribute->getReferred()->getName().c_str());
 		}
 	}
 
