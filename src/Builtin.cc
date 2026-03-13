@@ -3,6 +3,7 @@
 #include <cap/ClassType.hh>
 
 #include <cassert>
+#include <unordered_map>
 
 namespace cap
 {
@@ -70,6 +71,22 @@ TypeDefinition& Builtin::get(DataType type) const
 	assert(index < cachedDeclarations.size());
 	assert(!cachedDeclarations[index].expired());
 	return *cachedDeclarations[index].lock();
+}
+
+std::optional<Builtin::AttributeType> Builtin::getAttributeType(std::wstring_view value)
+{
+	static std::unordered_map <std::wstring_view, AttributeType> lookup
+	{
+		{ L"attribute", AttributeType::Definition }
+	};
+
+	auto it = lookup.find(value);
+	if (it != lookup.end())
+	{
+		return it->second;
+	}
+
+	return std::nullopt;
 }
 
 }

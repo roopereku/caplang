@@ -64,6 +64,8 @@ protected:
 	Declaration(Type type);
 	Declaration(Type type, DeclarationStorage& declStorage);
 
+	bool handleBuiltinAttribute(Validator& validator, Builtin::AttributeType type, std::shared_ptr <Attribute> node) override;
+
 	/// Implementation defined type such as the referred type of an
 	/// alias, variable or a callable type with the signature for functions.
 	std::optional <TypeContext> referredType;

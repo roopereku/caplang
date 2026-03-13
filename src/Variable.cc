@@ -5,6 +5,7 @@
 #include <cap/Identifier.hh>
 #include <cap/ArgumentAccessor.hh>
 #include <cap/Client.hh>
+#include <cap/Scope.hh>
 
 #include <cassert>
 
@@ -27,12 +28,32 @@ bool Variable::validate(Validator& validator)
 			return false;
 		}
 
-		// TODO: Only local variables can be marked as attributes.
+		if(isAttribute())
+		{
+			if(type != Type::Local)
+			{
+				SourceLocation location(validator.getParserContext().source, getToken());
+				validator.getParserContext().client.sourceError(location, "Only local variables can be declared as attributes");
+				return false;
+			}
+
+			if(!initialization.expired())
+			{
+				SourceLocation location(validator.getParserContext().source, getToken());
+				validator.getParserContext().client.sourceError(location, "Attribute declarations cannot have an initializer");
+				return false;
+			}
+
+			// TODO: Should attribute names have a result type in case they are passed to a function or such?
+
+			// No more validation needed for attributes.
+			return true;
+		}
 
 		if(initialization.expired())
 		{
 			SourceLocation location(validator.getParserContext().source, getToken());
-			validator.getParserContext().client.sourceError(location, "Missing initialization for non-attribute '", getName(), "'");
+			validator.getParserContext().client.sourceError(location, "Expected '='");
 			return false;
 		}
 

@@ -123,14 +123,26 @@ bool Node::validateAttributes(Validator& validator)
 		{
 			return false;
 		}
+
+		// TODO: Make sure that an attribute whose declaration isn't a function isn't called.
+
+		// Let different node implementations handle builtin attribute types in their own way.
+		if(auto builtinAttr = Builtin::getAttributeType(attribute->getReferred()->getName()))
+		{
+			if(!handleBuiltinAttribute(validator, *builtinAttr, attribute))
+			{
+				return false;
+			}
+		}
 	}
 
 	return true;
 }
 
-void Node::handleBuiltinAttribute(BuiltinAttribute, std::shared_ptr <Attribute>)
+bool Node::handleBuiltinAttribute(Validator&, Builtin::AttributeType, std::shared_ptr <Attribute>)
 {
-	// NOTE: This is an override which different node types can use to handle builtin attributes.
+	assert(false);
+	return false;
 }
 
 std::shared_ptr <Node> Node::findParentNode(bool (*filter)(std::shared_ptr <Node>)) const

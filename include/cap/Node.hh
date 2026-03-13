@@ -2,6 +2,7 @@
 #define CAP_NODE_HH
 
 #include <cap/Token.hh>
+#include <cap/Builtin.hh>
 
 #include <memory>
 
@@ -15,7 +16,6 @@ class DeclarationStorage;
 class Client;
 class Validator;
 class Attribute;
-enum class BuiltinAttribute;
 
 class Node : public std::enable_shared_from_this <Node>
 {
@@ -120,7 +120,7 @@ protected:
 	///
 	/// \param type The type of the builtin attribute.
 	/// \param node The actual usage of the attribute from which additional context can be retrieved.
-	virtual void handleBuiltinAttribute(BuiltinAttribute type, std::shared_ptr <Attribute> node);
+	virtual bool handleBuiltinAttribute(Validator& validator, Builtin::AttributeType type, std::shared_ptr <Attribute> node);
 
 private:
 	std::shared_ptr <Node> findParentNode(bool (*filter)(std::shared_ptr <Node>)) const;

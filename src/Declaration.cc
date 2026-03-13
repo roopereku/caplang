@@ -75,4 +75,18 @@ bool Declaration::isAttribute() const
 	return attribute;
 }
 
+bool Declaration::handleBuiltinAttribute(Validator&, Builtin::AttributeType type, std::shared_ptr <Attribute>)
+{
+	switch(type)
+	{
+		case Builtin::AttributeType::Definition:
+		{
+			attribute = true;
+			break;
+		}
+	}
+
+	return true;
+}
+
 }

@@ -3,6 +3,7 @@
 #include <cap/test/NodeMatcher.hh>
 #include <cap/test/DynamicSource.hh>
 #include <cap/Client.hh>
+#include <cap/Scope.hh>
 
 using namespace cap::test;
 

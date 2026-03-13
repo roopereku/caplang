@@ -1,4 +1,5 @@
 #include <cap/Source.hh>
+#include <cap/Scope.hh>
 #include <cap/Client.hh>
 #include <cap/Validator.hh>
 
