@@ -1,6 +1,7 @@
 #include <cap/ClassType.hh>
 #include <cap/ParserContext.hh>
 #include <cap/Client.hh>
+#include <cap/Validator.hh>
 
 #include <cassert>
 
@@ -111,6 +112,12 @@ bool ClassType::validate(Validator& validator)
 	if(!referredType.has_value())
 	{
 		if(!Declaration::validate(validator))
+		{
+			return false;
+		}
+
+		if(getBaseTypeRoot() &&
+			!validator.traverseExpression(getBaseTypeRoot()))
 		{
 			return false;
 		}

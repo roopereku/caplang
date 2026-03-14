@@ -136,11 +136,13 @@ std::weak_ptr <Node> Expression::handleToken(Node::ParserContext& ctx, Token& to
 	if(!complete)
 	{
 		// TODO: Apply active attributes to upcoming expression nodes once decided how.
-		if(!ctx.inAttribute && !ctx.activeAttributes.empty())
+		if(!ctx.inAttribute)
 		{
-			// Consume attributes at the same depth.
-			if(ctx.activeAttributes.top().depth == ctx.subExpressionDepth)
+			// Assign attributes from the current depth to the new node.
+			while(!ctx.activeAttributes.empty() && ctx.activeAttributes.top().depth == ctx.subExpressionDepth)
 			{
+				// TODO: Somehow append instead of overwriting.
+				newNode->setAttributeRange(ctx.activeAttributes.top().range);
 				ctx.activeAttributes.pop();
 			}
 		}

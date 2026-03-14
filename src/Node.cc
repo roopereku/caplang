@@ -104,6 +104,11 @@ std::pair <size_t, size_t> Node::getAttributeRange() const
 	return attributeRange;
 }
 
+bool Node::hasAttributes() const
+{
+	return attributeRange.second > 0;
+}
+
 void Node::setAttributeRange(std::pair <size_t, size_t> range)
 {
 	attributeRange = range;
@@ -124,10 +129,18 @@ bool Node::validateAttributes(Validator& validator)
 			return false;
 		}
 
-		// TODO: Make sure that an attribute whose declaration isn't a function isn't called.
+		const auto referred = attribute->getReferred();
+		const bool isAttributeDefinition = Builtin::getAttributeType(referred->getName()) == Builtin::AttributeType::Definition;
+
+		if(!attribute->getReferred()->isAttribute() && !isAttributeDefinition)
+		{
+			SourceLocation location(ctx.source, attribute->getFirst()->getToken());
+			ctx.client.sourceError(location, "Declarations used as attributes must be declared as attributes");
+			return false;
+		}
 
 		// Let different node implementations handle builtin attribute types in their own way.
-		if(auto builtinAttr = Builtin::getAttributeType(attribute->getReferred()->getName()))
+		if(auto builtinAttr = Builtin::getAttributeType(referred->getName()))
 		{
 			if(!handleBuiltinAttribute(validator, *builtinAttr, attribute))
 			{

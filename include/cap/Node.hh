@@ -102,6 +102,11 @@ public:
 	/// \return Pair of indices, position and count.
 	std::pair <size_t, size_t> getAttributeRange() const;
 
+	/// Gets whether this node has attributes.
+	///
+	/// \return True if this node has attributes.
+	bool hasAttributes() const;
+
 	/// Sets the range of attributes to use.
 	///
 	/// \param range The start and count of attributes to use.

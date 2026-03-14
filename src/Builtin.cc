@@ -10,6 +10,10 @@ namespace cap
 
 // TODO: Indicate type size somehow. Maybe attributes?
 Builtin::Builtin() : Source(LR"SRC(
+	type attribute
+	{
+	}
+
 	type uint8
 	{
 	}
@@ -55,13 +59,23 @@ Builtin::Builtin() : Source(LR"SRC(
 void Builtin::doCaching()
 {
 	assert(getGlobal());
-	size_t index = 0;
+	size_t builtinTypeIndex = 0;
+
 	for(auto decl : getGlobal()->declarations)
 	{
-		assert(decl->getType() == Declaration::Type::Class);
-		cachedDeclarations[index] = std::static_pointer_cast <ClassType> (decl);
+		if(auto attributeType = getAttributeType(decl->getName()))
+		{
+			cachedAttributes[static_cast<size_t>(*attributeType)] = decl;
+		}
 
-		index++;
+		// TODO: Would name lookup be okay for builtin types in terms of performance?
+		else
+		{
+			assert(decl->getType() == Declaration::Type::Class);
+			cachedDeclarations[builtinTypeIndex] = std::static_pointer_cast <ClassType> (decl);
+
+			builtinTypeIndex++;
+		}
 	}
 }
 
@@ -87,6 +101,27 @@ std::optional<Builtin::AttributeType> Builtin::getAttributeType(std::wstring_vie
 	}
 
 	return std::nullopt;
+}
+
+std::shared_ptr<Declaration> Builtin::getAttributeTypeDeclaration(AttributeType type) const
+{
+	const size_t index = static_cast <size_t> (type);
+	assert(index < cachedAttributes.size());
+	assert(!cachedAttributes[index].expired());
+	return cachedAttributes[index].lock();
+
+}
+
+TypeContext Builtin::getTypeForAttributeDefinition() const
+{
+	assert(std::dynamic_pointer_cast <ClassType> (getAttributeTypeDeclaration(AttributeType::Definition)));
+	TypeContext ret(*std::static_pointer_cast <ClassType> (getAttributeTypeDeclaration(AttributeType::Definition)));
+
+	ret.isParseTime = true;
+	// TODO: Should there be some flag that can be used to avoid the usage of an attribute type outside
+	// of an attribute context?
+
+	return ret;
 }
 
 }

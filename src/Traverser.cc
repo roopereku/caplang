@@ -274,7 +274,7 @@ bool Traverser::traverseDeclaration(std::shared_ptr <Declaration> node)
 			auto variable = std::static_pointer_cast <Variable> (node);
 			result = onVariable(variable);
 
-			if(shouldContinue(result))
+			if(shouldContinue(result) && variable->getInitialization())
 			{
 				if(!traverseExpression(variable->getInitialization()))
 				{

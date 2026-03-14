@@ -260,6 +260,13 @@ TEST(ExpressionTests, CannotEndExpressionWithAttribute)
 	tester.reportsError(L"@attr\nfunc something(@foo) {\n}\n", L"Expression must not end in an attribute here");
 }
 
+TEST(ExpressionTests, AttributeFutureImprovement)
+{
+	ErrorTester tester;
+
+	tester.reportsError(L"@attribute\nlet a = 10", L"TODO: Figure out if attributes in Variable::Root are allowed");
+}
+
 // TODO: Make an error test for the following attribute cases:
 // - @@foo
 // - @(@foo)

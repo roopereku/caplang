@@ -23,6 +23,10 @@ bool Variable::validate(Validator& validator)
 {
 	if(!referredType.has_value())
 	{
+        // Temporarily refer to void. This is to stop recursive validation.
+        // TODO: Should there be an error type or similar to indicate uninitializated variables?
+		referredType.emplace(validator.getParserContext().client.getBuiltin().get(Builtin::DataType::Void));
+
 		if(!Declaration::validate(validator))
 		{
 			return false;
@@ -44,7 +48,7 @@ bool Variable::validate(Validator& validator)
 				return false;
 			}
 
-			// TODO: Should attribute names have a result type in case they are passed to a function or such?
+			referredType.emplace(validator.getParserContext().client.getBuiltin().getTypeForAttributeDefinition());
 
 			// No more validation needed for attributes.
 			return true;
@@ -56,10 +60,6 @@ bool Variable::validate(Validator& validator)
 			validator.getParserContext().client.sourceError(location, "Expected '='");
 			return false;
 		}
-
-        // Temporarily refer to void. This is to stop recursive validation.
-        // TODO: Should there be an error type or similar to indicate uninitializated variables?
-		referredType.emplace(validator.getParserContext().client.getBuiltin().get(Builtin::DataType::Void));
 
 		assert(!initialization.expired());
 		auto init = initialization.lock();
@@ -103,8 +103,14 @@ bool Variable::validate(Validator& validator)
 
 std::shared_ptr <Expression> Variable::getInitialization()
 {
-	assert(!initialization.expired());
-	return initialization.lock()->getRight();
+	if (!initialization.expired())
+	{
+		assert(!isAttribute());
+		return initialization.lock()->getRight();
+	}
+
+	assert(isAttribute());
+	return nullptr;
 }
 
 const char* Variable::getTypeString(Type type)
@@ -142,6 +148,21 @@ std::weak_ptr <Node> Variable::Root::handleToken(Node::ParserContext& ctx, Token
 std::weak_ptr <Node> Variable::Root::invokedNodeExited(Node::ParserContext& ctx, Token&)
 {
 	assert(ctx.exitedFrom == initializer);
+
+	if(hasAttributes())
+	{
+		// TODO:
+		// In the following case the concept of an attribute range doesn't work.
+		//
+		// @someAttr
+		// let @attr1 a = 10, @attr2 b = 20
+		//
+		// b cannot point to both someAttr and attr2 without pointing to attr1.
+
+		SourceLocation location(ctx.source, getToken());
+		ctx.client.sourceError(location, "TODO: Figure out if attributes in Variable::Root are allowed");
+		return {};
+	}
 
 	if(!initializer->getFirst() && requiresDeclaration(ctx))
 	{
@@ -201,6 +222,10 @@ std::weak_ptr <Node> Variable::Root::invokedNodeExited(Node::ParserContext& ctx,
 
 		declContainer->adopt(decl);
 		name->setReferred(decl);
+
+		// TODO: We need to append if attributes are inherited from some parent context.
+		// The declaration uses the same attributes as the name.
+		decl->setAttributeRange(name->getAttributeRange());
 
 		declared.emplace_back(decl);
 		declContainer->getDeclarationStorage().add(std::move(decl));

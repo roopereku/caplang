@@ -96,7 +96,13 @@ protected:
 
 	Result onVariable(std::shared_ptr <cap::Variable> node) override
 	{
-		file << prefix() << node->getTypeString() << " " << node->getName() << getResultType(node) << '\n';
+		file << prefix();
+		if(node->isAttribute())
+		{
+			file << " Attribute ";
+		}
+
+		file <<node->getTypeString() << " " << node->getName() << getResultType(node) << '\n';
 		return Result::Continue;
 	}
 
@@ -209,7 +215,18 @@ int main()
 	Sandbox client;
 	cap::Source entry(LR"SRC(
 
-		let @attribute a = 10
+		let @attribute a
+		let b = 10
+
+		@attribute
+		func moi()
+		{
+		}
+
+		@a
+		type Foo
+		{
+		}
 
 		//// TODO: This should result in an error since a is not marked as an attribute.
 		//@a
@@ -230,16 +247,6 @@ int main()
 	{
 		return 1;
 	}
-
-	for (auto inGlobal : entry.getGlobal()->declarations)
-	{
-		printf("%s '%ls' %lu %lu\n", inGlobal->getTypeString(), inGlobal->getName().c_str(), inGlobal->getAttributeRange().first, inGlobal->getAttributeRange().second);
-		for (auto attribute : client.getAttributes(inGlobal))
-		{
-			printf("- %ls\n", attribute->getReferred()->getName().c_str());
-		}
-	}
-
 
 	ASTDumper dumper("ast.puml", client);
 	dumper.traverseNode(entry.getGlobal());
