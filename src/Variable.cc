@@ -12,7 +12,7 @@
 namespace cap
 {
 
-Variable::Variable(Type type, std::shared_ptr <Identifier> name, std::shared_ptr <Expression> initialization)
+Variable::Variable(Type type, std::shared_ptr <Identifier> name, std::shared_ptr <BinaryOperator> initialization)
 	: Declaration(Declaration::Type::Variable), type(type), initialization(initialization)
 {
 	this->name = name->getValue();
@@ -66,36 +66,26 @@ bool Variable::validate(Validator& validator)
 
 		if(type == Type::Parameter)
 		{
-			if(!validator.traverseExpression(init))
+			// First validate the expression for the initializer value.
+			if(!validator.traverseExpression(init->getRight()))
 			{
 				return false;
 			}
 
-			if(!init->getResultType()->isTypeName)
+			if(!init->getRight()->getResultType()->isTypeName)
 			{
 				SourceLocation location(validator.getParserContext().source, init->getToken());
 				validator.getParserContext().client.sourceError(location, "Parameters must be initialized with types");
 				return false;
 			}
 
-			// TODO Maybe here: Make sure that a parameter like "a = type int64" isn't allowed
-			// as it doesn't make any sense.
-
-			// While function parameters can be initialized with a raw type name,
-			// it doesn't mean that the parameter refers to such. Instead we want
-			// to treat it as a promise to the caller that this parameter is just
-			// a normal variable of some given type when a function starts execution.
-			auto nonTypeName = *init->getResultType();
+			// While function parameters must be initialized with direct type names, the parameter
+			// doesn't actually hold the type itself but just hints that it accepts a value of that type.
+			auto nonTypeName = *init->getRight()->getResultType();
 			nonTypeName.isTypeName = false;
 
 			init->setResultType(nonTypeName);
-			referredType.emplace(nonTypeName);
-
-			// Finally validate the parameter name itself for completeness sake.
-			if(!validator.traverseExpression(init))
-			{
-				return false;
-			}
+			init->getLeft()->setResultType(*init->getResultType());
 		}
 
 		else if(!validator.traverseExpression(init))
@@ -114,7 +104,7 @@ bool Variable::validate(Validator& validator)
 std::shared_ptr <Expression> Variable::getInitialization()
 {
 	assert(!initialization.expired());
-	return initialization.lock();
+	return initialization.lock()->getRight();
 }
 
 const char* Variable::getTypeString(Type type)
@@ -167,25 +157,20 @@ std::weak_ptr <Node> Variable::Root::invokedNodeExited(Node::ParserContext& ctx,
 	while(auto node = declarations.getNext())
 	{
 		std::shared_ptr <Expression> nameAt;
-		std::shared_ptr <Expression> initialization;
+		std::shared_ptr <BinaryOperator> initialization;
 
 		if(node->getType() == Expression::Type::BinaryOperator)
 		{
-			// TODO: Don't save the whole binary op but maybe just the left and right nodes.
-			auto op = std::static_pointer_cast <BinaryOperator> (node);
-			if(op->getType() == BinaryOperator::Type::Assign)
-			{
-				nameAt = op->getLeft();
-				initialization = op->getRight();
-			}
-
-			else
+			initialization = std::static_pointer_cast <BinaryOperator> (node);
+			if(initialization->getType() != BinaryOperator::Type::Assign)
 			{
 				// If a binary operator exists for initialization, syntactically it has to be an assignment.
 				SourceLocation location(ctx.source, node->getToken());
 				ctx.client.sourceError(location, "Initialization must be done with '='");
 				return {};
 			}
+
+			nameAt = initialization->getLeft();
 		}
 
 		else if (node->getType() == Expression::Type::Value)

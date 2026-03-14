@@ -22,7 +22,7 @@ public:
 		Parameter,
 	};
 
-	Variable(Type type, std::shared_ptr <Identifier> name, std::shared_ptr <Expression> initialization);
+	Variable(Type type, std::shared_ptr <Identifier> name, std::shared_ptr <BinaryOperator> initialization);
 
 	/// Validates the initialization of this variable.
 	///
@@ -42,7 +42,7 @@ public:
 
 private:
 	Type type;
-	std::weak_ptr <Expression> initialization;
+	std::weak_ptr <BinaryOperator> initialization;
 };
 
 class Variable::Root : public Statement
