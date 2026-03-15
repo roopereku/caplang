@@ -39,7 +39,7 @@ public:
 			}
 		}
 
-		matcher.traverseNode(root);
+		matcher.traverseWithContext(root, this);
 	}
 
 private:
@@ -287,4 +287,64 @@ TEST(ValidationTests, ParameterDeclaration)
 
 	// TODO: Tests for generic parameter types with constraints and interfaces.
 	// TODO: Tests for type references to generic parameter types with constraints and interfaces.
+}
+
+TEST(ValidationTests, AttributeUsage)
+{
+	ValidationTester tester;
+	tester.setup(L"let @attribute foo, @attribute bar");
+
+	tester.test(L"let @foo a = 10",
+	{
+		LocalVariable(L"a") > L"int64",
+			AttributeUsage(),
+				Identifier(L"foo"),
+			Integer(10) > L"int64"
+	});
+
+	tester.test(L"let @foo @bar a = 10",
+	{
+		LocalVariable(L"a") > L"int64",
+			AttributeUsage(),
+				Identifier(L"foo"),
+			AttributeUsage(),
+				Identifier(L"bar"),
+			Integer(10) > L"int64"
+	});
+
+	tester.test(LR"SRC(
+		func a(@foo param1 = int64, @bar param2 = string)
+		{
+		}
+	)SRC",
+	{
+		Function(L"a"),
+			Parameter(L"param1") > L"int64",
+				AttributeUsage(),
+					Identifier(L"foo"),
+				Identifier(L"int64") > L"int64",
+			Parameter(L"param2") > L"string",
+				AttributeUsage(),
+					Identifier(L"bar"),
+				Identifier(L"string") > L"string",
+			Expression() > L"void",
+			Scope()
+	});
+
+	tester.test(LR"SRC(
+		@foo
+		func a(param1 = int64)
+		{
+		}
+	)SRC",
+	{
+		Function(L"a"),
+			AttributeUsage(),
+				Identifier(L"foo"),
+			Parameter(L"param1") > L"int64",
+				Identifier(L"int64") > L"int64",
+			Expression() > L"void",
+			Scope()
+	});
+
 }

@@ -10,6 +10,7 @@
 #include <cap/Integer.hh>
 #include <cap/String.hh>
 #include <cap/Return.hh>
+#include <cap/Client.hh>
 
 #include <gtest/gtest.h>
 
@@ -111,6 +112,11 @@ ExpectedNode Return()
 	return ExpectedNode("Return");
 }
 
+ExpectedNode AttributeUsage()
+{
+	return ExpectedNode("Attribute");
+}
+
 NodeMatcher::NodeMatcher(std::vector <ExpectedNode>&& expectation)
 	: expectation(std::move(expectation))
 {
@@ -125,6 +131,7 @@ Traverser::Result NodeMatcher::onScope(std::shared_ptr <cap::Scope> node)
 Traverser::Result NodeMatcher::onFunction(std::shared_ptr <cap::Function> node)
 {
 	auto current = match(node);
+	matchAttributes(node);
 	EXPECT_STREQ(node->getName().c_str(), current.context.c_str());
 	return Traverser::Result::Continue;
 }
@@ -145,6 +152,8 @@ Traverser::Result NodeMatcher::onExpressionRoot(std::shared_ptr <cap::Expression
 Traverser::Result NodeMatcher::onVariable(std::shared_ptr <cap::Variable> node)
 {
 	match(node);
+	matchAttributes(node);
+
 	return Traverser::Result::Continue;
 }
 
@@ -215,6 +224,24 @@ Traverser::Result NodeMatcher::onReturn(std::shared_ptr <cap::Return> node)
 {
 	match(node);
 	return Traverser::Result::Continue;
+}
+
+void NodeMatcher::traverseWithContext(std::shared_ptr <cap::Scope> root, cap::Client* client)
+{
+	ctx = client;
+	traverseNode(root);
+}
+
+void NodeMatcher::matchAttributes(std::shared_ptr <cap::Node> node)
+{
+	if(ctx)
+	{
+		for(auto& attr : ctx->getAttributes(node))
+		{
+			match(attr);
+			traverseNode(attr->getFirst());
+		}
+	}
 }
 
 ExpectedNode NodeMatcher::match(std::shared_ptr <cap::Node> node)

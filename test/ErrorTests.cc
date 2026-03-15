@@ -260,6 +260,48 @@ TEST(ExpressionTests, CannotEndExpressionWithAttribute)
 	tester.reportsError(L"@attr\nfunc something(@foo) {\n}\n", L"Expression must not end in an attribute here");
 }
 
+TEST(ExpressionTests, InvalidAttributeUsage)
+{
+	ErrorTester tester;
+
+	tester.reportsError(LR"SRC(
+		let foo = 10
+		let @foo bar = 20
+	)SRC", L"Declarations used as attributes must be declared as attributes");
+
+	tester.reportsError(LR"SRC(
+		func foo()
+		{
+		}
+
+		let @foo bar = 20
+	)SRC", L"Declarations used as attributes must be declared as attributes");
+
+	tester.reportsError(LR"SRC(
+		type foo
+		{
+		}
+
+		let @foo bar = 20
+	)SRC", L"Declarations used as attributes must be declared as attributes");
+
+	tester.reportsError(LR"SRC(
+		let foo = 10
+
+		@foo
+		func bar()
+		{
+		}
+	)SRC", L"Declarations used as attributes must be declared as attributes");
+
+	tester.reportsError(LR"SRC(
+		let @attribute valid
+		let invalid = 10
+
+		let @valid @invalid foo = 10
+	)SRC", L"Declarations used as attributes must be declared as attributes");
+}
+
 TEST(ExpressionTests, AttributeFutureImprovement)
 {
 	ErrorTester tester;

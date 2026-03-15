@@ -42,7 +42,7 @@ ExpectedNode Parameter(std::wstring&& name);
 ExpectedNode Generic(std::wstring&& name);
 ExpectedNode TypeReference();
 ExpectedNode Return();
-ExpectedNode Attribute();
+ExpectedNode AttributeUsage();
 
 class NodeMatcher : public cap::Traverser
 {
@@ -63,10 +63,13 @@ public:
 	Result onString(std::shared_ptr <cap::String> node) override;
 	Result onReturn(std::shared_ptr <cap::Return> node) override;
 
+	void traverseWithContext(std::shared_ptr <cap::Scope> root, cap::Client* client);
 	ExpectedNode match(std::shared_ptr <cap::Node> node);
+	void matchAttributes(std::shared_ptr <cap::Node> node);
 
 	std::vector <ExpectedNode> expectation;
 	size_t current = 0;
+	cap::Client* ctx = nullptr;
 };
 
 }
