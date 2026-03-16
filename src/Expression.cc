@@ -25,8 +25,6 @@ std::weak_ptr <Node> Expression::handleToken(Node::ParserContext& ctx, Token& to
 
 	DBG_MESSAGE(ctx.client, "Expr token '", ctx.source.getString(token), "' handled by ", getTypeString());
 
-	DBG_MESSAGE(ctx.client, "CURRENT CHECKPOINTS ", ctx.activeAttributes.size());
-
 	if(token.getType() == Token::Type::ClosingBracket)
 	{
 		// The state can get messed up if this goes below 0.
@@ -257,8 +255,6 @@ Expression::Expression(Type type)
 
 std::weak_ptr <Node> Expression::exitExpression(ParserContext& ctx, Token& token)
 {
-	DBG_MESSAGE(ctx.client, "AT EXIT ALLOW ATTR AT EXPR END: ", ctx.allowExpressionEndingInAttributes, " CHECKPOINTS: ", ctx.activeAttributes.size());
-
 	// If we're not inside a subexpression and there's no more relevant tokens
 	// on the current line, exit to a non-expression parent node.
 	bool recursive = ctx.subExpressionDepth == 0 && token.isLastOfLine(ctx);

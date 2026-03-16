@@ -102,7 +102,7 @@ protected:
 			file << " Attribute ";
 		}
 
-		file <<node->getTypeString() << " " << node->getName() << getResultType(node) << '\n';
+		file << node->getTypeString() << " " << node->getName() << getResultType(node) << '\n';
 		return Result::Continue;
 	}
 

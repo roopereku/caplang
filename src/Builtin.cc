@@ -72,7 +72,7 @@ void Builtin::doCaching()
 		else
 		{
 			assert(decl->getType() == Declaration::Type::Class);
-			cachedDeclarations[builtinTypeIndex] = std::static_pointer_cast <ClassType> (decl);
+			cachedTypes[builtinTypeIndex] = std::static_pointer_cast <ClassType> (decl);
 
 			builtinTypeIndex++;
 		}
@@ -82,9 +82,9 @@ void Builtin::doCaching()
 TypeDefinition& Builtin::get(DataType type) const
 {
 	const size_t index = static_cast <size_t> (type);
-	assert(index < cachedDeclarations.size());
-	assert(!cachedDeclarations[index].expired());
-	return *cachedDeclarations[index].lock();
+	assert(index < cachedTypes.size());
+	assert(!cachedTypes[index].expired());
+	return *cachedTypes[index].lock();
 }
 
 std::optional<Builtin::AttributeType> Builtin::getAttributeType(std::wstring_view value)
@@ -109,7 +109,6 @@ std::shared_ptr<Declaration> Builtin::getAttributeTypeDeclaration(AttributeType 
 	assert(index < cachedAttributes.size());
 	assert(!cachedAttributes[index].expired());
 	return cachedAttributes[index].lock();
-
 }
 
 TypeContext Builtin::getTypeForAttributeDefinition() const

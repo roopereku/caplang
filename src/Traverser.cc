@@ -115,19 +115,10 @@ bool Traverser::traverseExpression(std::shared_ptr <Expression> node)
 
 		case Expression::Type::Attribute:
 		{
+			// TODO: Is there any point to traversing attributes?
+			assert(false);
+
 			result = Result::Stop;
-			//auto modifier = std::static_pointer_cast <TypeReference> (node);
-			//result = onTypeReference(modifier);
-
-			//if(shouldContinue(result) && modifier->getFirst())
-			//{
-			//	if(!traverseExpression(modifier->getFirst()))
-			//	{
-			//		onNodeExited(node, result);
-			//		return false;
-			//	}
-			//}
-
 			break;
 		}
 

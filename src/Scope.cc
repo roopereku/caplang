@@ -100,8 +100,6 @@ std::weak_ptr <Node> Scope::invokedNodeExited(ParserContext& ctx, Token& token)
 
 	if(token.isClosingBracket(ctx, '}'))
 	{
-		DBG_MESSAGE(ctx.client, "HANDLE SCOPE EXIT. DELEGATE BRACKET TO ", getParent().lock()->getTypeString());
-
 		// Let the parent node handle the closing bracket.
 		assert(!getParent().expired());
 		ctx.exitedFrom = shared_from_this();

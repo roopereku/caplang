@@ -48,6 +48,7 @@ bool Variable::validate(Validator& validator)
 				return false;
 			}
 
+			// Some type needs to be associated. Use the "attribute" declaration.
 			referredType.emplace(validator.getParserContext().client.getBuiltin().getTypeForAttributeDefinition());
 
 			// No more validation needed for attributes.
@@ -74,7 +75,7 @@ bool Variable::validate(Validator& validator)
 
 			if(!init->getRight()->getResultType()->isTypeName)
 			{
-				SourceLocation location(validator.getParserContext().source, init->getToken());
+				SourceLocation location(validator.getParserContext().source, init->getRight()->getToken());
 				validator.getParserContext().client.sourceError(location, "Parameters must be initialized with types");
 				return false;
 			}
