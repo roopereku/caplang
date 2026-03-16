@@ -42,7 +42,7 @@ public:
 	///
 	/// \param validator The validator used for traversal.
 	/// \return True if validation succeeded.
-	virtual bool validate(Validator& validator);
+	virtual bool validate(Validator& validator) = 0;
 
 	/// Gets the full location of this declaration.
 	///
