@@ -2,13 +2,14 @@
 #define CAP_SOURCE_HH
 
 #include <cap/Token.hh>
-#include <cap/Scope.hh>
 
 #include <string_view>
 #include <memory>
 
 namespace cap
 {
+
+class Scope;
 
 class Source
 {

@@ -2,6 +2,7 @@
 #define CAP_NODE_HH
 
 #include <cap/Token.hh>
+#include <cap/Builtin.hh>
 
 #include <memory>
 
@@ -12,6 +13,9 @@ class Scope;
 class Function;
 class ParserContext;
 class DeclarationStorage;
+class Client;
+class Validator;
+class Attribute;
 
 class Node : public std::enable_shared_from_this <Node>
 {
@@ -93,7 +97,20 @@ public:
 	/// \return The declaration storage associated with this node.
 	DeclarationStorage& getDeclarationStorage();
 
-	// TODO: DeclarationStorage should probably be a pointer or an optional.
+	/// Gets the range of attributes to use.
+	///
+	/// \return Pair of indices, position and count.
+	std::pair <size_t, size_t> getAttributeRange() const;
+
+	/// Gets whether this node has attributes.
+	///
+	/// \return True if this node has attributes.
+	bool hasAttributes() const;
+
+	/// Sets the range of attributes to use.
+	///
+	/// \param range The start and count of attributes to use.
+	void setAttributeRange(std::pair <size_t, size_t> range);
 
 	virtual const char* getTypeString() const = 0;
 
@@ -101,11 +118,21 @@ protected:
 	Node(Type type);
 	Node(Type type, DeclarationStorage& declStorage);
 
+	// TODO: Should this be "validate"?
+	bool validateAttributes(Validator& validator);
+
+	/// Called upon a builtin attribute being found in the associated attributes.
+	///
+	/// \param type The type of the builtin attribute.
+	/// \param node The actual usage of the attribute from which additional context can be retrieved.
+	virtual bool handleBuiltinAttribute(Validator& validator, Builtin::AttributeType type, std::shared_ptr <Attribute> node);
+
 private:
 	std::shared_ptr <Node> findParentNode(bool (*filter)(std::shared_ptr <Node>)) const;
 
 	Type type;
 	DeclarationStorage& declStorage;
+	std::pair <size_t, size_t> attributeRange;
 	std::weak_ptr <Node> parent;
 	Token at;
 };

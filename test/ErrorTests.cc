@@ -245,4 +245,74 @@ TEST(ErrorTests, ConsecutiveValues)
 	tester.reportsError(L"a foo()", L"Consecutive values are not allowed");
 	tester.reportsError(L"bar(1 * 2 + 3) foo()", L"Consecutive values are not allowed");
 	tester.reportsError(L"bar(1 * 2 + 3) 20", L"Consecutive values are not allowed");
+	tester.reportsError(L"(1 * 2 + 3) foo", L"Consecutive values are not allowed");
 }
+
+TEST(ExpressionTests, CannotEndExpressionWithAttribute)
+{
+	ErrorTester tester;
+
+	tester.reportsError(L"(@foo)", L"Expression must not end in an attribute here");
+	tester.reportsError(L"(@foo @bar)", L"Expression must not end in an attribute here");
+	tester.reportsError(L"a + (@foo) - b", L"Expression must not end in an attribute here");
+	tester.reportsError(L"a (@foo)", L"Expression must not end in an attribute here");
+	tester.reportsError(L"func something(@foo) {\n}\n", L"Expression must not end in an attribute here");
+	tester.reportsError(L"@attr\nfunc something(@foo) {\n}\n", L"Expression must not end in an attribute here");
+}
+
+TEST(ExpressionTests, InvalidAttributeUsage)
+{
+	ErrorTester tester;
+
+	tester.reportsError(LR"SRC(
+		let foo = 10
+		let @foo bar = 20
+	)SRC", L"Declarations used as attributes must be declared as attributes");
+
+	tester.reportsError(LR"SRC(
+		func foo()
+		{
+		}
+
+		let @foo bar = 20
+	)SRC", L"Declarations used as attributes must be declared as attributes");
+
+	tester.reportsError(LR"SRC(
+		type foo
+		{
+		}
+
+		let @foo bar = 20
+	)SRC", L"Declarations used as attributes must be declared as attributes");
+
+	tester.reportsError(LR"SRC(
+		let foo = 10
+
+		@foo
+		func bar()
+		{
+		}
+	)SRC", L"Declarations used as attributes must be declared as attributes");
+
+	tester.reportsError(LR"SRC(
+		let @attribute valid
+		let invalid = 10
+
+		let @valid @invalid foo = 10
+	)SRC", L"Declarations used as attributes must be declared as attributes");
+}
+
+TEST(ExpressionTests, AttributeFutureImprovement)
+{
+	ErrorTester tester;
+
+	tester.reportsError(L"@attribute\nlet a = 10", L"TODO: Figure out if attributes in Variable::Root are allowed");
+}
+
+// TODO: Make an error test for the following attribute cases:
+// - @@foo
+// - @(@foo)
+// - @foo()
+// - @foo[]
+
+// TODO: Make an error test for when a scope ends with an attribute

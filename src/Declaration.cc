@@ -1,5 +1,8 @@
 #include <cap/Declaration.hh>
 #include <cap/Function.hh>
+#include <cap/ParserContext.hh>
+#include <cap/Validator.hh>
+#include <cap/Client.hh>
 
 #include <cassert>
 
@@ -31,6 +34,11 @@ const std::optional <TypeContext>& Declaration::getReferredType() const
 	return referredType;
 }
 
+bool Declaration::validate(Validator& validator)
+{
+	return validateAttributes(validator);
+}
+
 std::wstring Declaration::getLocation(wchar_t delimiter) const
 {
 	auto parentDecl = getParentDeclaration();
@@ -60,6 +68,25 @@ std::shared_ptr <Declaration> Declaration::getParentDeclaration() const
 	}
 
 	return nullptr;
+}
+
+bool Declaration::isAttribute() const
+{
+	return attribute;
+}
+
+bool Declaration::handleBuiltinAttribute(Validator&, Builtin::AttributeType type, std::shared_ptr <Attribute>)
+{
+	switch(type)
+	{
+		case Builtin::AttributeType::Definition:
+		{
+			attribute = true;
+			break;
+		}
+	}
+
+	return true;
 }
 
 }

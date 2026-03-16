@@ -13,6 +13,7 @@
 #include <cap/Identifier.hh>
 #include <cap/Integer.hh>
 #include <cap/String.hh>
+#include <cap/Attribute.hh>
 
 #include <iostream>
 #include <fstream>
@@ -35,8 +36,8 @@ public:
 class ASTDumper : public cap::Traverser
 {
 public:
-	ASTDumper(std::string&& path)
-		: file(path)
+	ASTDumper(std::string&& path, cap::Client& client)
+		: file(path), client(client)
 	{
 		file << "@startmindmap\n";
 		file << "<style>\n";
@@ -95,7 +96,13 @@ protected:
 
 	Result onVariable(std::shared_ptr <cap::Variable> node) override
 	{
-		file << prefix() << node->getTypeString() << " " << node->getName() << getResultType(node) << '\n';
+		file << prefix();
+		if(node->isAttribute())
+		{
+			file << " Attribute ";
+		}
+
+		file << node->getTypeString() << " " << node->getName() << getResultType(node) << '\n';
 		return Result::Continue;
 	}
 
@@ -195,6 +202,8 @@ private:
 
 	unsigned depth = 0;
 	std::wofstream file;
+
+	cap::Client& client;
 };
 
 int main()
@@ -206,34 +215,31 @@ int main()
 	Sandbox client;
 	cap::Source entry(LR"SRC(
 
-		//let typeAlias = type int64
-		//let typeAlias = int64
+		let @attribute a
+		let b = 10
 
+		@attribute
+		func moi()
+		{
+		}
+
+		@a
 		type Foo
 		{
-			type Bar
-			{
-				let a = 10
-			}
 		}
 
-		let alias = type int64
+		//// TODO: This should result in an error since a is not marked as an attribute.
+		//@a
+		//func main()
+		//{
+		//}
 
-		type Outer1
-		{
-			type Inner1
-			{
-				type Inner2
-				{
-					let a = 10
-				}
-			}
-		}
-
-		let Alias1 = type Outer1
-		let Alias2 = type Alias1.Inner1.Inner2
-
-		let value = Alias2.a
+		// TODO: Negative test this scenario.
+		//@b
+		//func main()
+		//{
+		//	let b = 10
+		//}
 
 	)SRC");
 
@@ -242,7 +248,7 @@ int main()
 		return 1;
 	}
 
-	ASTDumper dumper("ast.puml");
+	ASTDumper dumper("ast.puml", client);
 	dumper.traverseNode(entry.getGlobal());
 
 	return 0;

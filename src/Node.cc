@@ -2,6 +2,10 @@
 #include <cap/Scope.hh>
 #include <cap/Function.hh>
 #include <cap/DeclarationStorage.hh>
+#include <cap/ParserContext.hh>
+#include <cap/Validator.hh>
+#include <cap/Client.hh>
+#include <cap/Value.hh>
 
 #include <cassert>
 
@@ -93,6 +97,65 @@ DeclarationStorage& Node::getParentDeclarationStorage()
 DeclarationStorage& Node::getDeclarationStorage()
 {
 	return declStorage;
+}
+
+std::pair <size_t, size_t> Node::getAttributeRange() const
+{
+	return attributeRange;
+}
+
+bool Node::hasAttributes() const
+{
+	return attributeRange.second > 0;
+}
+
+void Node::setAttributeRange(std::pair <size_t, size_t> range)
+{
+	attributeRange = range;
+}
+
+bool Node::validateAttributes(Validator& validator)
+{
+	auto& ctx = validator.getParserContext();
+	auto attributes = ctx.client.getAttributes(shared_from_this());
+
+	for(auto& attribute : attributes)
+	{
+		// Before validation someone has to adopt the attribute.
+		assert(!attribute->getParent().expired());
+
+		if(!attribute->validate(validator))
+		{
+			return false;
+		}
+
+		const auto referred = attribute->getReferred();
+		const bool isAttributeDefinition = Builtin::getAttributeType(referred->getName()) == Builtin::AttributeType::Definition;
+
+		if(!attribute->getReferred()->isAttribute() && !isAttributeDefinition)
+		{
+			SourceLocation location(ctx.source, attribute->getFirst()->getToken());
+			ctx.client.sourceError(location, "Declarations used as attributes must be declared as attributes");
+			return false;
+		}
+
+		// Let different node implementations handle builtin attribute types in their own way.
+		if(auto builtinAttr = Builtin::getAttributeType(referred->getName()))
+		{
+			if(!handleBuiltinAttribute(validator, *builtinAttr, attribute))
+			{
+				return false;
+			}
+		}
+	}
+
+	return true;
+}
+
+bool Node::handleBuiltinAttribute(Validator&, Builtin::AttributeType, std::shared_ptr <Attribute>)
+{
+	assert(false);
+	return false;
 }
 
 std::shared_ptr <Node> Node::findParentNode(bool (*filter)(std::shared_ptr <Node>)) const

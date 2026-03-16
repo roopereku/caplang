@@ -11,6 +11,7 @@
 #include <cap/Client.hh>
 #include <cap/ArgumentAccessor.hh>
 #include <cap/Scope.hh>
+#include <cap/Attribute.hh>
 
 #include <cassert>
 
@@ -42,6 +43,13 @@ std::weak_ptr <Node> Expression::handleToken(Node::ParserContext& ctx, Token& to
 
 	bool complete = isComplete();
 
+	// When outside an attribute, anything else but the beginning of an attribute
+	// requires that the expression contains things other than attributes.
+	if(!ctx.inAttribute && token.getType() != Token::Type::Attribute)
+	{
+		ctx.setMoreThanAttributes();
+	}
+
 	if(token.getType() == Token::Type::Operator)
 	{
 		if(complete)
@@ -58,6 +66,12 @@ std::weak_ptr <Node> Expression::handleToken(Node::ParserContext& ctx, Token& to
 		{
 			newNode = UnaryOperator::createPrefix(ctx, token);
 		}
+	}
+
+	else if(token.getType() == Token::Type::Attribute)
+	{
+		newNode = std::make_shared <Attribute> ();
+		ctx.inAttribute = true;
 	}
 
 	else if(token.getType() == Token::Type::OpeningBracket)
@@ -83,6 +97,13 @@ std::weak_ptr <Node> Expression::handleToken(Node::ParserContext& ctx, Token& to
 		// the previous token should have been an operator.
 		else
 		{
+			// TODO: Once "@foo() ()" can be differentiated from "@foo()()" make sure that expressions
+			// don't end in attributes as there will be a regular value in the expression.
+			//if (!ctx.inAttribute)
+			//{
+			//	ctx.allowExpressionEndingInAttributes = false;
+			//}
+
 			newNode = std::make_shared <Root> ();
 		}
 	}
@@ -112,6 +133,18 @@ std::weak_ptr <Node> Expression::handleToken(Node::ParserContext& ctx, Token& to
 	// If this node isn't complete, handle the new node as a value.
 	if(!complete)
 	{
+		// TODO: Apply active attributes to upcoming expression nodes once decided how.
+		if(!ctx.inAttribute)
+		{
+			// Assign attributes from the current depth to the new node.
+			while(!ctx.activeAttributes.empty() && ctx.activeAttributes.top().depth == ctx.subExpressionDepth)
+			{
+				// TODO: Somehow append instead of overwriting.
+				newNode->setAttributeRange(ctx.activeAttributes.top().range);
+				ctx.activeAttributes.pop();
+			}
+		}
+
 		newCurrent = adoptValue(newNode);
 	}
 
@@ -134,11 +167,24 @@ std::weak_ptr <Node> Expression::handleToken(Node::ParserContext& ctx, Token& to
 		assert(!getParent().expired());
 		auto parent = getParent().lock();
 
+		const auto newPrecedence = newNode->getPrecedence();
+
+		// The new node is outside the current attribute if it breaks a larger value or starts an attribute.
+		// A larger value is broken if the precedence is below modifier precesence wich implies a binary operator
+		// excluding '.'. An example of a larger value would be -foo.bar().results[0]
+		const bool newOutsideCurrentAttribute = newPrecedence < modifierPrecedence || newNode->type == Type::Attribute;
+
+		// Save attributes upon leaving them and disconnect them from the node tree.
+		if(type == Type::Attribute && newOutsideCurrentAttribute)
+		{
+			finalizeCurrentAttribute(ctx);
+		}
+
 		// If we're leaving out of an expression, we've failed to find a node
 		// which has a lower precedence than the newly created node.
 		// This only makes sense with consecutive values as values have precedence 0
 		// and will never be above other nodes.
-		if(parent->getType() != Node::Type::Expression)
+		else if(parent->getType() != Node::Type::Expression)
 		{
 			SourceLocation location(ctx.source, token);
 			ctx.client.sourceError(location, "Consecutive values are not allowed");
@@ -159,6 +205,17 @@ std::weak_ptr <Node> Expression::handleToken(Node::ParserContext& ctx, Token& to
 	}
 
 	return newCurrent;
+}
+
+void Expression::finalizeCurrentAttribute(ParserContext& ctx)
+{
+	auto parent = getParent().lock();
+
+	assert(parent->getType() == Node::Type::Expression);
+	auto attribute = std::static_pointer_cast <Expression> (parent)->stealLatestValue();
+
+	assert(attribute->getType() == Expression::Type::Attribute);
+	ctx.storeAttribute(std::static_pointer_cast <Attribute> (attribute));
 }
 
 void Expression::handleValue(std::shared_ptr <Expression>)
@@ -208,6 +265,17 @@ std::weak_ptr <Node> Expression::exitExpression(ParserContext& ctx, Token& token
 		return {};
 	}
 
+	// Make sure that expressions don't end in attributes when not allowed.
+	if(!ctx.activeAttributes.empty())
+	{
+		if (ctx.activeAttributes.top().depth > 0 || !ctx.allowExpressionEndingInAttributes)
+		{
+			SourceLocation location(ctx.source, token);
+			ctx.client.sourceError(location, "Expression must not end in an attribute here");
+			return {};
+		}
+	}
+
 	ctx.exitedFrom = exitedExpression.lock();
 	auto exitNode = ctx.exitedFrom->getParent();
 
@@ -233,6 +301,11 @@ std::weak_ptr <Node> Expression::getExitedExpression(ParserContext& ctx, bool re
 		// If the parent isn't an expression, return this root.
 		// It should be the first expression node that parsing was invoked for.
 		return weak_from_this();
+	}
+
+	else if(type == Type::Attribute)
+	{
+		finalizeCurrentAttribute(ctx);
 	}
 
 	assert(!getParent().expired());

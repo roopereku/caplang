@@ -27,25 +27,25 @@ std::weak_ptr <Node> Scope::handleToken(ParserContext& ctx, Token& token)
 {
 	if(ctx.source.match(token, L"func"))
 	{
-		return appendNested(std::make_shared <Function> (), token);
+		return consumeAttributes(appendNested(std::make_shared <Function> (), token), ctx);
 	}
 
 	else if(ctx.source.match(token, L"type"))
 	{
-		return appendNested(std::make_shared <ClassType> (), token);
+		return consumeAttributes(appendNested(std::make_shared <ClassType> (), token), ctx);
 	}
 
 	else if(ctx.source.match(token, L"let"))
 	{
 		// TODO: Do fields for class members?
-		auto varDecl = appendNested(std::make_shared <Variable::Root> (Variable::Type::Local), token);
-		return std::static_pointer_cast <Statement> (varDecl.lock())->getContinuation(ctx);
+		auto varDecl = consumeAttributes(appendNested(std::make_shared <Variable::Root> (Variable::Type::Local), token), ctx);
+		return std::static_pointer_cast <Statement> (varDecl)->getContinuation(ctx);
 	}
 
 	else if(ctx.source.match(token, L"return"))
 	{
-		auto ret = appendNested(std::make_shared <Return> (), token);
-		return std::static_pointer_cast <Statement> (ret.lock())->getContinuation(ctx);
+		auto ret = consumeAttributes(appendNested(std::make_shared <Return> (), token), ctx);
+		return std::static_pointer_cast <Statement> (ret)->getContinuation(ctx);
 	}
 
 	else if(token.isOpeningBracket(ctx, '{'))
@@ -63,8 +63,14 @@ std::weak_ptr <Node> Scope::handleToken(ParserContext& ctx, Token& token)
 	// Parse anything else as expressions.
 	else
 	{
+		// Attributes can be applied to declarations and thus are allowed.
+		if (token.getType() == Token::Type::Attribute)
+		{
+			ctx.allowExpressionEndingInAttributes = true;
+		}
+
 		// If only declarations are allowed, forbid a top level expression.
-		if(onlyDeclarations)
+		else if(onlyDeclarations)
 		{
 			SourceLocation location(ctx.source, token);
 			ctx.client.sourceError(location, "Only declarations are allowed here");
@@ -75,9 +81,7 @@ std::weak_ptr <Node> Scope::handleToken(ParserContext& ctx, Token& token)
 		// the expression to the root.
 		auto exprRoot = std::make_shared <Expression::Root> ();
 		appendNested(exprRoot, token);
-		auto ret = exprRoot->handleToken(ctx, token);
-
-		return ret;
+		return exprRoot->handleToken(ctx, token);
 	}
 
 	return weak_from_this();
@@ -85,10 +89,17 @@ std::weak_ptr <Node> Scope::handleToken(ParserContext& ctx, Token& token)
 
 std::weak_ptr <Node> Scope::invokedNodeExited(ParserContext& ctx, Token& token)
 {
+	// Expressions ending in attributes are only allowed when the expression is invoked
+	// from a scope context and only attributes are present. In such an exit the attributes
+	// are already stored and the corresponding expression root should be disposed of.
+	if(ctx.exitedFrom->getType() == Node::Type::Expression && ctx.allowExpressionEndingInAttributes)
+	{
+		nested.pop_back();
+		ctx.allowExpressionEndingInAttributes = false;
+	}
+
 	if(token.isClosingBracket(ctx, '}'))
 	{
-		DBG_MESSAGE(ctx.client, "HANDLE SCOPE EXIT. DELEGATE BRACKET TO ", getParent().lock()->getTypeString());
-
 		// Let the parent node handle the closing bracket.
 		assert(!getParent().expired());
 		ctx.exitedFrom = shared_from_this();
@@ -120,13 +131,33 @@ const char* Scope::getTypeString() const
 	return "Scope";
 }
 
-std::weak_ptr <Node> Scope::appendNested(std::shared_ptr <Node> node, Token& token)
+std::shared_ptr <Node> Scope::appendNested(std::shared_ptr <Node> node, Token& token)
 {
 	adopt(node);
 	node->setToken(token);
 	nested.emplace_back(std::move(node));
 
 	return nested.back();
+}
+
+std::shared_ptr <Node> Scope::consumeAttributes(std::shared_ptr <Node> node, ParserContext& ctx)
+{
+	if(!ctx.activeAttributes.empty())
+	{
+		assert(ctx.activeAttributes.size() == 1);
+		node->setAttributeRange(ctx.activeAttributes.top().range);
+		ctx.activeAttributes.pop();
+
+		// The node that consumes the attributes shall also adopt them
+		// in order for their validation to happen in the context of the given node.
+		auto attributes = ctx.client.getAttributes(node);
+		for(auto& attribute : attributes)
+		{
+			node->adopt(attribute);
+		}
+	}
+
+	return node;
 }
 
 }

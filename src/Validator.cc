@@ -47,18 +47,11 @@ Traverser::Result Validator::onFunction(std::shared_ptr <Function> node)
 
 Traverser::Result Validator::onClassType(std::shared_ptr <ClassType> node)
 {
-	if(!checkUniqueDeclaration(node))
+	if(!checkUniqueDeclaration(node) || !node->validate(*this))
 	{
 		return Result::Stop;
 	}
 
-	if(node->getBaseTypeRoot() &&
-		!traverseExpression(node->getBaseTypeRoot()))
-	{
-		return Result::Stop;
-	}
-
-	auto scope = node->getParentScope();
 	return Result::Continue;
 }
 

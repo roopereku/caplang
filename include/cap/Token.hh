@@ -27,6 +27,7 @@ public:
 		String,
 		Operator,
 		Comment,
+		Attribute,
 		Invalid,
 	};
 
@@ -75,6 +76,7 @@ private:
 	ParseResult parseComment(ParserContext& ctx, size_t& i);
 	ParseResult parseComment(cap::ParserContext& ctx, size_t& i, bool& isMultiline, bool& lineChanged);
 	ParseResult parseString(ParserContext& ctx, size_t& i);
+	ParseResult parseAttribute(ParserContext& ctx, size_t& i);
 
 	ParseResult parseNumeric(ParserContext& ctx, size_t& i);
 	ParseResult parseDecimal(ParserContext& ctx, size_t& i);

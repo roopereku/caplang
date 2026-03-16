@@ -3,6 +3,7 @@
 #include <cap/test/NodeMatcher.hh>
 #include <cap/test/DynamicSource.hh>
 #include <cap/Client.hh>
+#include <cap/Scope.hh>
 
 using namespace cap::test;
 
@@ -459,4 +460,65 @@ TEST(ExpressionTests, TypeReferenceAcceptsSingleValue)
 					Expression(),
 						Integer(0)
 	});
+}
+
+TEST(ExpressionTests, ExpressionAttributesDisconnected)
+{
+	ExpressionTester tester;
+
+	tester.test(L"@debug something",
+	{
+		Expression(),
+			Identifier(L"something")
+	});
+
+	tester.test(L"@debug @otherAttr(1 + 2) something",
+	{
+		Expression(),
+			Identifier(L"something")
+	});
+
+	tester.test(L"@*dynamicAttr something\n@debug print(\"test\")",
+	{
+		Expression(),
+			Identifier(L"something"),
+
+		Expression(),
+			cap::BracketOperator::Type::Call,	
+				Identifier(L"print"),
+				Expression(),
+					String(L"test")
+	});
+
+	// TODO: Enable this once the expression is no longer interpreted as @foo(...) + ...
+	//tester.test(L"@foo (@bar x) + @baz y", {
+	//	Expression(),
+	//		cap::BinaryOperator::Type::Add,
+	//		Expression(),
+	//			Identifier(L"x"),
+	//		Identifier(L"y")
+	//});
+}
+
+TEST(ExpressionTests, TODO_NegativeTestForSeparateBracket)
+{
+	// TODO: Once e.g. "@foo() ()" can be differentiated from "@foo()()" this test can be
+	// replaced with a real test.
+	ExpressionTester tester;
+
+	tester.test(L"@foo () baz",
+	{
+		Expression(),
+			Identifier(L"baz")
+	});
+
+	// TODO: Make a similar error test testing that something like "@foo()()" isn't allowed.
+	// Calling an attribute doesn't make much sense.
+}
+
+TEST(ExpressionTests, AttributesApplicableToBracketValues)
+{
+	// TODO: @attr (1 + 2)
+	// TODO: @attr [1 + 2]
+	// TODO: @foo(1 + 2) (@bar)
 }

@@ -55,9 +55,16 @@ public:
 	/// \return The parent declaration if any.
 	std::shared_ptr <Declaration> getParentDeclaration() const;
 
+	/// Gets whether this declaration is a declaration of an attribute.
+	///
+	/// \return True if this declaration is an attribute.
+	bool isAttribute() const;
+
 protected:
 	Declaration(Type type);
 	Declaration(Type type, DeclarationStorage& declStorage);
+
+	bool handleBuiltinAttribute(Validator& validator, Builtin::AttributeType type, std::shared_ptr <Attribute> node) override;
 
 	/// Implementation defined type such as the referred type of an
 	/// alias, variable or a callable type with the signature for functions.
@@ -67,6 +74,7 @@ protected:
 
 private:
 	Type type;
+	bool attribute = false;
 };
 
 }

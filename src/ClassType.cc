@@ -1,6 +1,7 @@
 #include <cap/ClassType.hh>
 #include <cap/ParserContext.hh>
 #include <cap/Client.hh>
+#include <cap/Validator.hh>
 
 #include <cassert>
 
@@ -106,10 +107,21 @@ std::shared_ptr <Scope> ClassType::getBody()
 	return body;
 }
 
-bool ClassType::validate(Validator&)
+bool ClassType::validate(Validator& validator)
 {
 	if(!referredType.has_value())
 	{
+		if(!Declaration::validate(validator))
+		{
+			return false;
+		}
+
+		if(getBaseTypeRoot() &&
+			!validator.traverseExpression(getBaseTypeRoot()))
+		{
+			return false;
+		}
+
 		referredType.emplace(*this);
 		referredType.value().isTypeName = true;
 	}

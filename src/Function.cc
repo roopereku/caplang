@@ -112,6 +112,11 @@ bool Function::validate(Validator& validator)
 {
 	if(!referredType.has_value())
 	{
+		if(!Declaration::validate(validator))
+		{
+			return false;
+		}
+
 		referredType.emplace(TypeContext(*this));
 
 		if(!getReturnTypeRoot())

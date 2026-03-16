@@ -113,6 +113,15 @@ bool Traverser::traverseExpression(std::shared_ptr <Expression> node)
 			break;
 		}
 
+		case Expression::Type::Attribute:
+		{
+			// TODO: Is there any point to traversing attributes?
+			assert(false);
+
+			result = Result::Stop;
+			break;
+		}
+
 		case Expression::Type::BinaryOperator:
 		{
 			auto op = std::static_pointer_cast <BinaryOperator> (node);
@@ -256,7 +265,7 @@ bool Traverser::traverseDeclaration(std::shared_ptr <Declaration> node)
 			auto variable = std::static_pointer_cast <Variable> (node);
 			result = onVariable(variable);
 
-			if(shouldContinue(result))
+			if(shouldContinue(result) && variable->getInitialization())
 			{
 				if(!traverseExpression(variable->getInitialization()))
 				{
@@ -282,25 +291,15 @@ bool Traverser::traverseStatement(std::shared_ptr <Statement> node)
 		case Statement::Type::VariableRoot:
 		{
 			auto variableRoot = std::static_pointer_cast <Variable::Root> (node);
-			ArgumentAccessor args(variableRoot);
 			result = Result::Exit;
 
 			// Instead of traversing through the expression nodes within the variable
 			// root, just traverse through the variable declarations to exclude
 			// commas and assignments. This makes the AST a bit clearer.
-			while(auto expr = args.getNext())
+			for(auto decl : *variableRoot)
 			{
-				assert(expr->getType() == Expression::Type::BinaryOperator);
-				auto op = std::static_pointer_cast <BinaryOperator> (expr);
-
-				// TODO: Something like ArgumentAccessor::getNextIdentifier might be useful.
-				assert(op->getLeft()->getType() == Expression::Type::Value);
-				auto value = std::static_pointer_cast <Value> (op->getLeft());
-				assert(value->getType() == Value::Type::Identifier);
-				auto name = std::static_pointer_cast <Identifier> (value);
-
-				assert(name->getReferred());
-				if(!traverseDeclaration(name->getReferred()))
+				assert(decl);
+				if(!traverseDeclaration(decl))
 				{
 					onNodeExited(node, result);
 					return false;
