@@ -67,8 +67,8 @@ protected:
 	virtual void onDebugMessage(const std::wstring& msg);
 
 private:
-	Builtin builtin;
-	std::vector <std::shared_ptr <Attribute>> attributes;
+	Builtin m_builtin;
+	std::vector <std::shared_ptr <Attribute>> m_attributes;
 };
 
 class Client::AttributeRange
@@ -77,18 +77,18 @@ public:
 	using iterator = std::vector <std::shared_ptr <Attribute>>::const_iterator;
 
 	AttributeRange(iterator start, iterator stop)
-		: start(start), stop(stop)
+		: m_start(start), m_stop(stop)
 	{
 	}
 
-	iterator cbegin() { return start; }
-	iterator cend() { return stop; }
-	iterator begin() { return start; }
-	iterator end() { return stop; }
+	iterator cbegin() { return m_start; }
+	iterator cend() { return m_stop; }
+	iterator begin() { return m_start; }
+	iterator end() { return m_stop; }
 
 private:
-	iterator start;
-	iterator stop;
+	iterator m_start;
+	iterator m_stop;
 };
 
 }

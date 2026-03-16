@@ -53,10 +53,10 @@ public:
 	bool match(Token token, std::wstring_view value) const;
 
 protected:
-	std::wstring src;
+	std::wstring m_src;
 
 private:
-	std::shared_ptr <Scope> global;
+	std::shared_ptr <Scope> m_global;
 };
 
 class SourceLocation
@@ -75,11 +75,11 @@ public:
 	const Source& getSource() const;
 
 private:
-	const Source& source;
-	Token at;
+	const Source& m_source;
+	Token m_at;
 
-	unsigned row;
-	unsigned column;
+	unsigned m_row;
+	unsigned m_column;
 };
 
 }

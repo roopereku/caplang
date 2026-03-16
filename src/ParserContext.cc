@@ -5,7 +5,7 @@ namespace cap
 {
 
 ParserContext::ParserContext(Client& client, Source& source)
-	: client(client), source(source)
+	: m_client(client), m_source(source)
 {
 }
 
@@ -20,30 +20,30 @@ Node::ParserContext::ParserContext(Client& client, Source& source)
 }
 
 Node::ParserContext::ActiveAttributes::ActiveAttributes(size_t start, size_t depth)
-	: range(start, 0), depth(depth)
+	: m_range(start, 0), m_depth(depth)
 {
 }
 
 void Node::ParserContext::storeAttribute(std::shared_ptr <Attribute> attribute)
 {
-	size_t index = client.addAttribute(attribute);
-	inAttribute = false;
+	size_t index = m_client.addAttribute(attribute);
+	m_inAttribute = false;
 
-	if(activeAttributes.empty() || activeAttributes.top().depth < subExpressionDepth)
+	if(m_activeAttributes.empty() || m_activeAttributes.top().m_depth < m_subExpressionDepth)
 	{
-		activeAttributes.emplace(ActiveAttributes(index, subExpressionDepth));
+		m_activeAttributes.emplace(ActiveAttributes(index, m_subExpressionDepth));
 	}
 
-	activeAttributes.top().range.second++;
+	m_activeAttributes.top().m_range.second++;
 }
 
 void Node::ParserContext::setMoreThanAttributes()
 {
 	// allowExpressionEndingInAttributes only makes a difference
 	// at the root level of an expression.
-	if(subExpressionDepth == 0)
+	if(m_subExpressionDepth == 0)
 	{
-		allowExpressionEndingInAttributes = false;
+		m_allowExpressionEndingInAttributes = false;
 	}
 }
 

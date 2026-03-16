@@ -9,7 +9,7 @@ namespace cap
 {
 
 BracketOperator::BracketOperator(Type type)
-	: Expression(Expression::Type::BracketOperator), innerRoot(std::make_shared <Root> ()), type(type)
+	: Expression(Expression::Type::BracketOperator), m_innerRoot(std::make_shared <Root> ()), m_type(type)
 {
 }
 
@@ -24,10 +24,10 @@ std::shared_ptr <BracketOperator> BracketOperator::create(cap::ParserContext& ct
 
 	for(size_t i = 0; i < ops.size(); i++)
 	{
-		if(ctx.source.match(token, ops[i]))
+		if(ctx.m_source.match(token, ops[i]))
 		{
 			auto op = std::make_shared <BracketOperator> (static_cast <Type> (i));
-			op->adopt(op->innerRoot);
+			op->adopt(op->m_innerRoot);
 			return op;
 		}
 	}
@@ -37,15 +37,15 @@ std::shared_ptr <BracketOperator> BracketOperator::create(cap::ParserContext& ct
 
 void BracketOperator::handleValue(std::shared_ptr <Expression> node)
 {
-	if(!context)
+	if(!m_context)
 	{
-		context = node;
+		m_context = node;
 	}
 
 	else
 	{
-		innerRoot->adopt(node);
-		innerRoot->handleValue(node);
+		m_innerRoot->adopt(node);
+		m_innerRoot->handleValue(node);
 	}
 }
 
@@ -69,17 +69,17 @@ unsigned BracketOperator::getPrecedence()
 
 std::shared_ptr <Expression> BracketOperator::getContext() const
 {
-	return context;
+	return m_context;
 }
 
 std::shared_ptr <Expression::Root> BracketOperator::getInnerRoot() const
 {
-	return innerRoot;
+	return m_innerRoot;
 }
 
 BracketOperator::Type BracketOperator::getType() const
 {
-	return type;
+	return m_type;
 }
 
 const char* BracketOperator::getTypeString(Type type)
@@ -96,7 +96,7 @@ const char* BracketOperator::getTypeString(Type type)
 
 const char* BracketOperator::getTypeString() const
 {
-	return getTypeString(type);
+	return getTypeString(m_type);
 }
 
 }

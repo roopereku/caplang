@@ -22,7 +22,7 @@ public:
 
 private:
 	/// The string vallue with the outer quotes removed.
-	std::wstring value;
+	std::wstring m_value;
 };
 
 }

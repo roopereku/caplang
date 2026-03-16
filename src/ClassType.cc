@@ -9,24 +9,24 @@ namespace cap
 {
 
 ClassType::ClassType() :
-	Declaration(Declaration::Type::Class, generics),
+	Declaration(Declaration::Type::Class, m_generics),
 	TypeDefinition(TypeDefinition::Type::Class)
 {
 }
 
 std::weak_ptr <Node> ClassType::handleToken(ParserContext& ctx, Token& token)
 {
-	if(name.empty())
+	if(m_name.empty())
 	{
 		if(token.getType() != Token::Type::Identifier)
 		{
-			SourceLocation location(ctx.source, token);
-			ctx.client.sourceError(location, "Expected an identifier after 'type'");
+			SourceLocation location(ctx.m_source, token);
+			ctx.m_client.sourceError(location, "Expected an identifier after 'type'");
 			return {};
 		}
 
 		setToken(token);
-		name = ctx.source.getString(token);
+		m_name = ctx.m_source.getString(token);
 
 		assert(getParentScope());
 		getParentScope()->declarations.add(std::static_pointer_cast <ClassType> (shared_from_this()));
@@ -39,31 +39,31 @@ std::weak_ptr <Node> ClassType::handleToken(ParserContext& ctx, Token& token)
 	{
 		// TODO: Check for this again in cases like "type T <a> <b>"?
 
-		generic = std::make_shared <Variable::Root> (Variable::Type::Generic);
-		adopt(generic);
-		return generic;
+		m_generic = std::make_shared <Variable::Root> (Variable::Type::Generic);
+		adopt(m_generic);
+		return m_generic;
 	}
 
 	// Parse base types.
-	else if(ctx.source[token.getIndex()] == ':')
+	else if(ctx.m_source[token.getIndex()] == ':')
 	{
 		// TODO: Check for this again in cases like "type T : a : b"?
 		// Mostly applies if there is a way to end the first expression.
 
-		baseTypes = std::make_shared <Expression::Root> ();
-		adopt(baseTypes);
-		return baseTypes;
+		m_baseTypes = std::make_shared <Expression::Root> ();
+		adopt(m_baseTypes);
+		return m_baseTypes;
 	}
 
-	else if(!body)
+	else if(!m_body)
 	{
-		body = Scope::startParsing(ctx, token, true);
-		if(body)
+		m_body = Scope::startParsing(ctx, token, true);
+		if(m_body)
 		{
-			adopt(body);
+			adopt(m_body);
 		}
 
-		return body;
+		return m_body;
 	}
 
 	assert(false);
@@ -72,18 +72,18 @@ std::weak_ptr <Node> ClassType::handleToken(ParserContext& ctx, Token& token)
 
 std::weak_ptr <Node> ClassType::invokedNodeExited(ParserContext& ctx, Token&)
 {
-	if(ctx.exitedFrom == generic)
+	if(ctx.m_exitedFrom == m_generic)
 	{
-		ctx.declarationLocation = nullptr;
+		ctx.m_declarationLocation = nullptr;
 		return weak_from_this();
 	}
 
-	else if(ctx.exitedFrom == baseTypes)
+	else if(ctx.m_exitedFrom == m_baseTypes)
 	{
 		return weak_from_this();
 	}
 
-	else if(ctx.exitedFrom == body)
+	else if(ctx.m_exitedFrom == m_body)
 	{
 		return getParent();
 	}
@@ -94,22 +94,22 @@ std::weak_ptr <Node> ClassType::invokedNodeExited(ParserContext& ctx, Token&)
 
 std::shared_ptr <Expression::Root> ClassType::getBaseTypeRoot()
 {
-	return baseTypes;
+	return m_baseTypes;
 }
 
 std::shared_ptr <Variable::Root> ClassType::getGenericRoot()
 {
-	return generic;
+	return m_generic;
 }
 
 std::shared_ptr <Scope> ClassType::getBody()
 {
-	return body;
+	return m_body;
 }
 
 bool ClassType::validate(Validator& validator)
 {
-	if(!referredType.has_value())
+	if(!m_referredType.has_value())
 	{
 		if(!Declaration::validate(validator))
 		{
@@ -122,8 +122,8 @@ bool ClassType::validate(Validator& validator)
 			return false;
 		}
 
-		referredType.emplace(*this);
-		referredType.value().isTypeName = true;
+		m_referredType.emplace(*this);
+		m_referredType.value().m_isTypeName = true;
 	}
 
 	return true;

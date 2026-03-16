@@ -10,28 +10,28 @@ namespace cap
 {
 
 Declaration::Declaration(Type type)
-	: Node(Node::Type::Declaration), type(type)
+	: Node(Node::Type::Declaration), m_type(type)
 {
 }
 
 Declaration::Declaration(Type type, DeclarationStorage& declStorage)
-	: Node(Node::Type::Declaration, declStorage), type(type)
+	: Node(Node::Type::Declaration, declStorage), m_type(type)
 {
 }
 
 const std::wstring& Declaration::getName() const
 {
-	return name;
+	return m_name;
 }
 
 Declaration::Type Declaration::getType()
 {
-	return type;
+	return m_type;
 }
 
 const std::optional <TypeContext>& Declaration::getReferredType() const
 {
-	return referredType;
+	return m_referredType;
 }
 
 bool Declaration::validate(Validator& validator)
@@ -72,7 +72,7 @@ std::shared_ptr <Declaration> Declaration::getParentDeclaration() const
 
 bool Declaration::isAttribute() const
 {
-	return attribute;
+	return m_attribute;
 }
 
 bool Declaration::handleBuiltinAttribute(Validator&, Builtin::AttributeType type, std::shared_ptr <Attribute>)
@@ -81,7 +81,7 @@ bool Declaration::handleBuiltinAttribute(Validator&, Builtin::AttributeType type
 	{
 		case Builtin::AttributeType::Definition:
 		{
-			attribute = true;
+			m_attribute = true;
 			break;
 		}
 	}

@@ -33,7 +33,7 @@ protected:
 	virtual bool onInitialize(cap::ParserContext& ctx, bool expectsTokens) = 0;
 
 private:
-	Type type;
+	Type m_type;
 };
 
 }

@@ -14,29 +14,29 @@ CallableType::CallableType() :
 
 std::shared_ptr <Variable::Root> CallableType::getParameterRoot() const
 {
-	return parameters;
+	return m_parameters;
 }
 
 std::shared_ptr <Expression::Root> CallableType::getReturnTypeRoot() const
 {
-	return returnType;
+	return m_returnType;
 }
 
 void CallableType::initializeParameters()
 {
-	assert(!parameters);
-	parameters = std::make_shared <Variable::Root> (Variable::Type::Parameter);
+	assert(!m_parameters);
+	m_parameters = std::make_shared <Variable::Root> (Variable::Type::Parameter);
 }
 
 void CallableType::initializeReturnType()
 {
-	assert(!returnType);
-	returnType = std::make_shared <Expression::Root> ();
+	assert(!m_returnType);
+	m_returnType = std::make_shared <Expression::Root> ();
 }
 
 std::pair <bool, size_t> CallableType::matchParameters(ArgumentAccessor&& arguments) const
 {
-	ArgumentAccessor self(parameters);
+	ArgumentAccessor self(m_parameters);
 	size_t unidentical = 0;
 
 	while(auto selfCurrent = self.getNext())
@@ -68,7 +68,7 @@ std::pair <bool, size_t> CallableType::matchParameters(ArgumentAccessor&& argume
 
 std::wstring CallableType::toString(bool) const
 {
-	ArgumentAccessor params(parameters);
+	ArgumentAccessor params(m_parameters);
 	bool firstAdded = false;
 	std::wstring result(L"func(");
 
@@ -88,7 +88,7 @@ std::wstring CallableType::toString(bool) const
 		result += current->getResultType()->toString();
 	}
 
-	return result + L") -> " + returnType->getResultType()->toString();
+	return result + L") -> " + m_returnType->getResultType()->toString();
 }
 
 }

@@ -13,19 +13,19 @@ namespace cap
 {
 
 Variable::Variable(Type type, std::shared_ptr <Identifier> name, std::shared_ptr <BinaryOperator> initialization)
-	: Declaration(Declaration::Type::Variable), type(type), initialization(initialization)
+	: Declaration(Declaration::Type::Variable), m_type(type), m_initialization(initialization)
 {
-	this->name = name->getValue();
+	m_name = name->getValue();
 	setToken(name->getToken());
 }
 
 bool Variable::validate(Validator& validator)
 {
-	if(!referredType.has_value())
+	if(!m_referredType.has_value())
 	{
         // Temporarily refer to void. This is to stop recursive validation.
         // TODO: Should there be an error type or similar to indicate uninitializated variables?
-		referredType.emplace(validator.getParserContext().client.getBuiltin().get(Builtin::DataType::Void));
+		m_referredType.emplace(validator.getParserContext().m_client.getBuiltin().get(Builtin::DataType::Void));
 
 		if(!Declaration::validate(validator))
 		{
@@ -34,38 +34,38 @@ bool Variable::validate(Validator& validator)
 
 		if(isAttribute())
 		{
-			if(type != Type::Local)
+			if(m_type != Type::Local)
 			{
-				SourceLocation location(validator.getParserContext().source, getToken());
-				validator.getParserContext().client.sourceError(location, "Only local variables can be declared as attributes");
+				SourceLocation location(validator.getParserContext().m_source, getToken());
+				validator.getParserContext().m_client.sourceError(location, "Only local variables can be declared as attributes");
 				return false;
 			}
 
-			if(!initialization.expired())
+			if(!m_initialization.expired())
 			{
-				SourceLocation location(validator.getParserContext().source, getToken());
-				validator.getParserContext().client.sourceError(location, "Attribute declarations cannot have an initializer");
+				SourceLocation location(validator.getParserContext().m_source, getToken());
+				validator.getParserContext().m_client.sourceError(location, "Attribute declarations cannot have an initializer");
 				return false;
 			}
 
 			// Some type needs to be associated. Use the "attribute" declaration.
-			referredType.emplace(validator.getParserContext().client.getBuiltin().getTypeForAttributeDefinition());
+			m_referredType.emplace(validator.getParserContext().m_client.getBuiltin().getTypeForAttributeDefinition());
 
 			// No more validation needed for attributes.
 			return true;
 		}
 
-		if(initialization.expired())
+		if(m_initialization.expired())
 		{
-			SourceLocation location(validator.getParserContext().source, getToken());
-			validator.getParserContext().client.sourceError(location, "Expected '='");
+			SourceLocation location(validator.getParserContext().m_source, getToken());
+			validator.getParserContext().m_client.sourceError(location, "Expected '='");
 			return false;
 		}
 
-		assert(!initialization.expired());
-		auto init = initialization.lock();
+		assert(!m_initialization.expired());
+		auto init = m_initialization.lock();
 
-		if(type == Type::Parameter)
+		if(m_type == Type::Parameter)
 		{
 			// First validate the expression for the initializer value.
 			if(!validator.traverseExpression(init->getRight()))
@@ -73,17 +73,17 @@ bool Variable::validate(Validator& validator)
 				return false;
 			}
 
-			if(!init->getRight()->getResultType()->isTypeName)
+			if(!init->getRight()->getResultType()->m_isTypeName)
 			{
-				SourceLocation location(validator.getParserContext().source, init->getRight()->getToken());
-				validator.getParserContext().client.sourceError(location, "Parameters must be initialized with types");
+				SourceLocation location(validator.getParserContext().m_source, init->getRight()->getToken());
+				validator.getParserContext().m_client.sourceError(location, "Parameters must be initialized with types");
 				return false;
 			}
 
 			// While function parameters must be initialized with direct type names, the parameter
 			// doesn't actually hold the type itself but just hints that it accepts a value of that type.
 			auto nonTypeName = *init->getRight()->getResultType();
-			nonTypeName.isTypeName = false;
+			nonTypeName.m_isTypeName = false;
 
 			init->setResultType(nonTypeName);
 			init->getLeft()->setResultType(*init->getResultType());
@@ -96,7 +96,7 @@ bool Variable::validate(Validator& validator)
 
 		// TODO: Should a declaration be referred to in some case?
         assert(init->getResultType());
-		referredType.emplace(*init->getResultType());
+		m_referredType.emplace(*init->getResultType());
 	}
 
 	return true;
@@ -104,10 +104,10 @@ bool Variable::validate(Validator& validator)
 
 std::shared_ptr <Expression> Variable::getInitialization()
 {
-	if (!initialization.expired())
+	if (!m_initialization.expired())
 	{
 		assert(!isAttribute());
-		return initialization.lock()->getRight();
+		return m_initialization.lock()->getRight();
 	}
 
 	assert(isAttribute());
@@ -130,25 +130,25 @@ const char* Variable::getTypeString(Type type)
 
 const char* Variable::getTypeString() const
 {
-	return getTypeString(type);
+	return getTypeString(m_type);
 }
 
 Variable::Root::Root(Variable::Type type)
-	: Statement(Statement::Type::VariableRoot), type(type)
+	: Statement(Statement::Type::VariableRoot), m_type(type)
 {
 }
 
 std::weak_ptr <Node> Variable::Root::handleToken(Node::ParserContext& ctx, Token& token)
 {
-	assert(!initializer);
-	initializer = std::make_shared <Expression::Root> ();
-	adopt(initializer);
-	return initializer->handleToken(ctx, token);
+	assert(!m_initializer);
+	m_initializer = std::make_shared <Expression::Root> ();
+	adopt(m_initializer);
+	return m_initializer->handleToken(ctx, token);
 }
 
 std::weak_ptr <Node> Variable::Root::invokedNodeExited(Node::ParserContext& ctx, Token&)
 {
-	assert(ctx.exitedFrom == initializer);
+	assert(ctx.m_exitedFrom == m_initializer);
 
 	if(hasAttributes())
 	{
@@ -160,12 +160,12 @@ std::weak_ptr <Node> Variable::Root::invokedNodeExited(Node::ParserContext& ctx,
 		//
 		// b cannot point to both someAttr and attr2 without pointing to attr1.
 
-		SourceLocation location(ctx.source, getToken());
-		ctx.client.sourceError(location, "TODO: Figure out if attributes in Variable::Root are allowed");
+		SourceLocation location(ctx.m_source, getToken());
+		ctx.m_client.sourceError(location, "TODO: Figure out if attributes in Variable::Root are allowed");
 		return {};
 	}
 
-	if(!initializer->getFirst() && requiresDeclaration(ctx))
+	if(!m_initializer->getFirst() && requiresDeclaration(ctx))
 	{
 		return {};
 	}
@@ -187,8 +187,8 @@ std::weak_ptr <Node> Variable::Root::invokedNodeExited(Node::ParserContext& ctx,
 			if(initialization->getType() != BinaryOperator::Type::Assign)
 			{
 				// If a binary operator exists for initialization, syntactically it has to be an assignment.
-				SourceLocation location(ctx.source, node->getToken());
-				ctx.client.sourceError(location, "Initialization must be done with '='");
+				SourceLocation location(ctx.m_source, node->getToken());
+				ctx.m_client.sourceError(location, "Initialization must be done with '='");
 				return {};
 			}
 
@@ -203,16 +203,16 @@ std::weak_ptr <Node> Variable::Root::invokedNodeExited(Node::ParserContext& ctx,
 		// TODO: Support "*foo" for name injection?
 		else
 		{
-			SourceLocation location(ctx.source, node->getToken());
-			ctx.client.sourceError(location, "Expected an assignment or an attribute declaration");
+			SourceLocation location(ctx.m_source, node->getToken());
+			ctx.m_client.sourceError(location, "Expected an assignment or an attribute declaration");
 			return {};
 		}
 
 		assert(nameAt);
 		if(nameAt->getToken().getType() != Token::Type::Identifier)
 		{
-			SourceLocation location(ctx.source, nameAt->getToken());
-			ctx.client.sourceError(location, "Expected an identifier");
+			SourceLocation location(ctx.m_source, nameAt->getToken());
+			ctx.m_client.sourceError(location, "Expected an identifier");
 			return {};
 		}
 
@@ -228,7 +228,7 @@ std::weak_ptr <Node> Variable::Root::invokedNodeExited(Node::ParserContext& ctx,
 		// The declaration uses the same attributes as the name.
 		decl->setAttributeRange(name->getAttributeRange());
 
-		declared.emplace_back(decl);
+		m_declared.emplace_back(decl);
 		declContainer->getDeclarationStorage().add(std::move(decl));
 	}
 
@@ -237,12 +237,12 @@ std::weak_ptr <Node> Variable::Root::invokedNodeExited(Node::ParserContext& ctx,
 
 std::shared_ptr <Expression::Root> Variable::Root::getInitializer() const
 {
-	return initializer;
+	return m_initializer;
 }
 
 Variable::Type Variable::Root::getType() const
 {
-	return type;
+	return m_type;
 }
 
 const char* Variable::Root::getTypeString() const
@@ -259,7 +259,7 @@ bool Variable::Root::onInitialize(cap::ParserContext& ctx, bool expectsToken)
 bool Variable::Root::requiresDeclaration(cap::ParserContext& ctx)
 {
 	std::string_view error;
-	switch(type)
+	switch(m_type)
 	{
 		case cap::Variable::Type::Generic: error = "Expected a generic"; break;
 		case cap::Variable::Type::Local: error = "Expected a variable"; break;
@@ -270,8 +270,8 @@ bool Variable::Root::requiresDeclaration(cap::ParserContext& ctx)
 
 	if(!error.empty())
 	{
-		SourceLocation location(ctx.source, getToken());
-		ctx.client.sourceError(location, error.data());
+		SourceLocation location(ctx.m_source, getToken());
+		ctx.m_client.sourceError(location, error.data());
 		return true;
 	}
 

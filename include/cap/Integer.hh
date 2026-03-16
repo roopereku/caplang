@@ -33,7 +33,7 @@ public:
 	const char* getTypeString() const override;
 
 private:
-	uint64_t value = 0;
+	uint64_t m_value = 0;
 };
 
 }

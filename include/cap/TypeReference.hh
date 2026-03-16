@@ -28,19 +28,19 @@ public:
 	{
 		TypeContext typeRef(*this);
 
-		referred.emplace(ctx);
-		typeRef.isTypeName = true;
+		m_referred.emplace(ctx);
+		typeRef.m_isTypeName = true;
 		setResultType(typeRef);
 	}
 
 	const std::optional <TypeContext>& getReferred() const
 	{
-		return referred;
+		return m_referred;
 	}
 
 	std::wstring toString(bool) const override
 	{
-		return L"type " + referred->toString();
+		return L"type " + m_referred->toString();
 	}
 
 	const char* getTypeString() const override
@@ -49,7 +49,7 @@ public:
 	}
 
 private:
-	std::optional <TypeContext> referred;
+	std::optional <TypeContext> m_referred;
 };
 
 }

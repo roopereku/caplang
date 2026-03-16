@@ -4,13 +4,13 @@ namespace cap
 {
 
 Statement::Statement(Type type)
-	: Node(Node::Type::Statement), type(type)
+	: Node(Node::Type::Statement), m_type(type)
 {
 }
 
 Statement::Type Statement::getType() const
 {
-	return type;
+	return m_type;
 }
 
 std::weak_ptr <Node> Statement::getContinuation(cap::ParserContext& ctx)

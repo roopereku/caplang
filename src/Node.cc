@@ -18,7 +18,7 @@ Node::Node(Type type)
 }
 
 Node::Node(Type type, DeclarationStorage& declStorage)
-	: type(type), declStorage(declStorage)
+	: m_type(type), m_declStorage(declStorage)
 {
 }
 
@@ -34,35 +34,35 @@ std::weak_ptr <Node> Node::invokedNodeExited(Node::ParserContext&, Token&)
 
 std::weak_ptr <Node> Node::getParent() const
 {
-	return parent;
+	return m_parent;
 }
 
 void Node::adopt(std::shared_ptr <Node> node)
 {
 	assert(node);
-	node->parent = shared_from_this();
+	node->m_parent = shared_from_this();
 }
 
 Node::Type Node::getType()
 {
-	return type;
+	return m_type;
 }
 
 void Node::setToken(Token token)
 {
-	at = token;
+	m_at = token;
 }
 
 Token Node::getToken()
 {
-	return at;
+	return m_at;
 }
 
 std::shared_ptr <Scope> Node::getParentScope() const
 {
 	auto result = findParentNode([](std::shared_ptr <Node> node) -> bool
 	{
-		return node->type == Type::Scope;
+		return node->m_type == Type::Scope;
 	});
 
 	return result ? std::static_pointer_cast <Scope> (result) : nullptr;
@@ -72,7 +72,7 @@ std::shared_ptr <Function> Node::getParentFunction() const
 {
 	auto result = findParentNode([](std::shared_ptr <Node> node) -> bool
 	{
-		return node->type == Type::Declaration &&
+		return node->m_type == Type::Declaration &&
 			std::static_pointer_cast <Declaration> (node)->getType() == Declaration::Type::Function;
 	});
 
@@ -83,7 +83,7 @@ std::shared_ptr <Node> Node::getParentWithDeclarationStorage() const
 {
 	auto result = findParentNode([](std::shared_ptr <Node> node) -> bool
 	{
-		return node->declStorage.isValid();
+		return node->m_declStorage.isValid();
 	});
 
 	return result;
@@ -91,33 +91,33 @@ std::shared_ptr <Node> Node::getParentWithDeclarationStorage() const
 
 DeclarationStorage& Node::getParentDeclarationStorage()
 {
-	return getParentWithDeclarationStorage()->declStorage;
+	return getParentWithDeclarationStorage()->m_declStorage;
 }
 
 DeclarationStorage& Node::getDeclarationStorage()
 {
-	return declStorage;
+	return m_declStorage;
 }
 
 std::pair <size_t, size_t> Node::getAttributeRange() const
 {
-	return attributeRange;
+	return m_attributeRange;
 }
 
 bool Node::hasAttributes() const
 {
-	return attributeRange.second > 0;
+	return m_attributeRange.second > 0;
 }
 
 void Node::setAttributeRange(std::pair <size_t, size_t> range)
 {
-	attributeRange = range;
+	m_attributeRange = range;
 }
 
 bool Node::validateAttributes(Validator& validator)
 {
 	auto& ctx = validator.getParserContext();
-	auto attributes = ctx.client.getAttributes(shared_from_this());
+	auto attributes = ctx.m_client.getAttributes(shared_from_this());
 
 	for(auto& attribute : attributes)
 	{
@@ -134,8 +134,8 @@ bool Node::validateAttributes(Validator& validator)
 
 		if(!attribute->getReferred()->isAttribute() && !isAttributeDefinition)
 		{
-			SourceLocation location(ctx.source, attribute->getFirst()->getToken());
-			ctx.client.sourceError(location, "Declarations used as attributes must be declared as attributes");
+			SourceLocation location(ctx.m_source, attribute->getFirst()->getToken());
+			ctx.m_client.sourceError(location, "Declarations used as attributes must be declared as attributes");
 			return false;
 		}
 
@@ -162,9 +162,9 @@ std::shared_ptr <Node> Node::findParentNode(bool (*filter)(std::shared_ptr <Node
 {
 	// TODO: Avoid recursion?
 
-	if(!parent.expired())
+	if(!m_parent.expired())
 	{
-		auto next = parent.lock();
+		auto next = m_parent.lock();
 
 		// If the parent node is of desired type, return it.
 		// Alternatively recurse further.

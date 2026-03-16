@@ -130,11 +130,11 @@ protected:
 private:
 	std::shared_ptr <Node> findParentNode(bool (*filter)(std::shared_ptr <Node>)) const;
 
-	Type type;
-	DeclarationStorage& declStorage;
-	std::pair <size_t, size_t> attributeRange;
-	std::weak_ptr <Node> parent;
-	Token at;
+	Type m_type;
+	DeclarationStorage& m_declStorage;
+	std::pair <size_t, size_t> m_attributeRange;
+	std::weak_ptr <Node> m_parent;
+	Token m_at;
 };
 
 }

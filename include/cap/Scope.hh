@@ -65,8 +65,8 @@ private:
 	/// Consumes active attributes and assigns them to the given node.
 	std::shared_ptr <Node> consumeAttributes(std::shared_ptr <Node> node, ParserContext& ctx);
 
-	std::vector <std::shared_ptr <Node>> nested;
-	bool onlyDeclarations;
+	std::vector <std::shared_ptr <Node>> m_nested;
+	bool m_onlyDeclarations;
 };
 
 }

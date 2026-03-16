@@ -60,12 +60,12 @@ public:
 private:
 	struct ParseResult
 	{
-		ParseResult(Token::Type result) : tokenType(result) {}
+		ParseResult(Token::Type result) : m_tokenType(result) {}
 		ParseResult(std::wstring&& error)
-			: tokenType(Type::Invalid), error(std::move(error)) {}
+			: m_tokenType(Type::Invalid), m_error(std::move(error)) {}
 
-		Token::Type tokenType;
-		std::wstring error;
+		Token::Type m_tokenType;
+		std::wstring m_error;
 	};
 
 	static Token parse(ParserContext& ctx, Token token);
@@ -86,10 +86,10 @@ private:
 
 	bool setTypeIfMoved(ParserContext& ctx, size_t& i, ParseResult(Token::*callback)(ParserContext&, size_t&));
 
-	size_t index;
-	size_t length;
+	size_t m_index;
+	size_t m_length;
 
-	Type type = Type::Invalid;
+	Type m_type = Type::Invalid;
 };
 
 

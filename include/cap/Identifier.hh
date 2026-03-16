@@ -31,8 +31,8 @@ public:
 	const char* getTypeString() const override;
 
 private:
-	std::wstring value;
-	std::weak_ptr <Declaration> referred;
+	std::wstring m_value;
+	std::weak_ptr <Declaration> m_referred;
 };
 
 }

@@ -20,7 +20,7 @@ std::shared_ptr <UnaryOperator> UnaryOperator::createPrefix(cap::ParserContext& 
 
 	for(size_t i = 0; i < ops.size(); i++)
 	{
-		if(ctx.source.match(token, ops[i]))
+		if(ctx.m_source.match(token, ops[i]))
 		{
 			return std::make_shared <UnaryOperator> (static_cast <Type> (i));
 		}
@@ -40,7 +40,7 @@ std::shared_ptr <UnaryOperator> UnaryOperator::createPostfix(cap::ParserContext&
 
 	for(size_t i = 0; i < ops.size(); i++)
 	{
-		if(ctx.source.match(token, ops[i]))
+		if(ctx.m_source.match(token, ops[i]))
 		{
 			constexpr size_t offset = static_cast <size_t> (Type::PostIncrement);
 			return std::make_shared <UnaryOperator> (static_cast <Type> (offset + i));
@@ -52,9 +52,9 @@ std::shared_ptr <UnaryOperator> UnaryOperator::createPostfix(cap::ParserContext&
 
 void UnaryOperator::handleValue(std::shared_ptr <Expression> node)
 {
-	if(!expression)
+	if(!m_expression)
 	{
-		expression = node;
+		m_expression = node;
 	}
 
 	else
@@ -65,12 +65,12 @@ void UnaryOperator::handleValue(std::shared_ptr <Expression> node)
 
 bool UnaryOperator::isComplete() const
 {
-	return static_cast <bool> (expression);
+	return static_cast <bool> (m_expression);
 }
 
 unsigned UnaryOperator::getPrecedence()
 {
-	switch(type)
+	switch(m_type)
 	{
 		case Type::Negate: return preUnaryPrecedence;
 		case Type::LogicalNot: return preUnaryPrecedence;
@@ -91,12 +91,12 @@ unsigned UnaryOperator::getPrecedence()
 
 UnaryOperator::Type UnaryOperator::getType()
 {
-	return type;
+	return m_type;
 }
 
 std::shared_ptr <Expression> UnaryOperator::getExpression()
 {
-	return expression;
+	return m_expression;
 }
 
 const char* UnaryOperator::getTypeString(Type type)
@@ -119,14 +119,14 @@ const char* UnaryOperator::getTypeString(Type type)
 
 const char* UnaryOperator::getTypeString() const
 {
-	return getTypeString(type);
+	return getTypeString(m_type);
 }
 
 std::shared_ptr <Expression> UnaryOperator::stealLatestValue()
 {
-	if(expression)
+	if(m_expression)
 	{
-		return std::move(expression);
+		return std::move(m_expression);
 	}
 
 	assert(false && "Cannot steal value from UnaryOperator since it has nothing");

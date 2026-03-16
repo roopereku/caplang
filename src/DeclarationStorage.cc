@@ -17,12 +17,12 @@ void DeclarationStorage::add(std::shared_ptr <Declaration> node)
 
 	// TODO: Should callers always be responsible of adoption?
 	assert(!node->getParent().expired());
-	declarations.emplace_back(std::move(node));
+	m_declarations.emplace_back(std::move(node));
 }
 
 bool DeclarationStorage::checkEquivalent(std::shared_ptr <Declaration> node, Validator& validator) const
 {
-	for(const auto& decl : declarations)
+	for(const auto& decl : m_declarations)
 	{
 		if(decl == node || decl->getName() != node->getName())
 		{
@@ -47,8 +47,8 @@ bool DeclarationStorage::checkEquivalent(std::shared_ptr <Declaration> node, Val
 			if(compatible && unidentical == 0)
 			{
 				// TODO: Give more context for the existing function?
-				SourceLocation location(validator.getParserContext().source, node->getToken());
-				validator.getParserContext().client.sourceError(location, "Function with the same parameters already exists");
+				SourceLocation location(validator.getParserContext().m_source, node->getToken());
+				validator.getParserContext().m_client.sourceError(location, "Function with the same parameters already exists");
 				return true;
 			}
 		}
@@ -56,8 +56,8 @@ bool DeclarationStorage::checkEquivalent(std::shared_ptr <Declaration> node, Val
 		else
 		{
 			// TODO: Indicate where the declaration already exists?
-			SourceLocation location(validator.getParserContext().source, node->getToken());
-			validator.getParserContext().client.sourceError(location, "'", node->getName(), "' already exists");
+			SourceLocation location(validator.getParserContext().m_source, node->getToken());
+			validator.getParserContext().m_client.sourceError(location, "'", node->getName(), "' already exists");
 			return true;
 		}
 	}

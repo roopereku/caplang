@@ -7,13 +7,13 @@ namespace cap
 // depending on how they are implemented.
 String::String(std::wstring&& value) :
 	Value(Type::String),
-	value(value.begin() + 1, value.end() - 1)
+	m_value(value.begin() + 1, value.end() - 1)
 {
 }
 
 const std::wstring& String::getValue() const
 {
-	return value;
+	return m_value;
 }
 
 const char* String::getTypeString() const

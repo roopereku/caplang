@@ -57,8 +57,8 @@ public:
 	TypeContext getTypeForAttributeDefinition() const;
 
 private:
-	std::array <std::weak_ptr <ClassType>, 10> cachedTypes;
-	std::array <std::weak_ptr <Declaration>, 1> cachedAttributes;
+	std::array <std::weak_ptr <ClassType>, 10> m_cachedTypes;
+	std::array <std::weak_ptr <Declaration>, 1> m_cachedAttributes;
 };
 
 }

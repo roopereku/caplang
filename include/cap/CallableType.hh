@@ -46,8 +46,8 @@ public:
 	std::wstring toString(bool detailed) const override;
 
 private:
-	std::shared_ptr <Variable::Root> parameters;
-	std::shared_ptr <Expression::Root> returnType;
+	std::shared_ptr <Variable::Root> m_parameters;
+	std::shared_ptr <Expression::Root> m_returnType;
 };
 
 }

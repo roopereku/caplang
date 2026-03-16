@@ -30,17 +30,17 @@ public:
 	std::wstring toString() const;
 
 	/// Is a type instance referred whose values are immutable?
-	bool isImmutable = false;
+	bool m_isImmutable = false;
 
 	/// Is a type instance referred to in a parse time context?
-	bool isParseTime = false;
+	bool m_isParseTime = false;
 
 	/// Is a type being referred to through its name?
-	bool isTypeName = false;
+	bool m_isTypeName = false;
 
 	// TODO: Add generic instantiation.
 
-	TypeDefinition& referenced;
+	TypeDefinition& m_referenced;
 };
 
 }

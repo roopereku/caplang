@@ -95,8 +95,8 @@ private:
 	std::weak_ptr <Node> exitExpression(ParserContext& ctx, Token& token);
 	std::weak_ptr <Node> getExitedExpression(ParserContext& ctx, bool recursive);
 
-	Type type;
-	std::optional <TypeContext> resultType;
+	Type m_type;
+	std::optional <TypeContext> m_resultType;
 };
 
 class Expression::Root : public Expression
@@ -123,7 +123,7 @@ protected:
 
 	std::shared_ptr <Expression> stealLatestValue() override;
 
-	std::shared_ptr <Expression> first;
+	std::shared_ptr <Expression> m_first;
 };
 
 }

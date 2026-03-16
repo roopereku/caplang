@@ -14,17 +14,17 @@ DynamicSource::DynamicSource(std::wstring&& src)
 
 void DynamicSource::operator+=(std::wstring&& value)
 {
-	src += std::move(value);
+	m_src += std::move(value);
 }
 
 void DynamicSource::operator+=(const std::wstring& value)
 {
-	src += value;
+	m_src += value;
 }
 
 size_t DynamicSource::getLength() const
 {
-	return src.length();
+	return m_src.length();
 }
 
 }

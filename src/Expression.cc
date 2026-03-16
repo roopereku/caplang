@@ -21,16 +21,16 @@ namespace cap
 std::weak_ptr <Node> Expression::handleToken(Node::ParserContext& ctx, Token& token)
 {
 	// handleToken should never be called for a value.
-	assert(type != Type::Value);
+	assert(m_type != Type::Value);
 
-	DBG_MESSAGE(ctx.client, "Expr token '", ctx.source.getString(token), "' handled by ", getTypeString());
+	DBG_MESSAGE(ctx.m_client, "Expr token '", ctx.m_source.getString(token), "' handled by ", getTypeString());
 
 	if(token.getType() == Token::Type::ClosingBracket)
 	{
 		// The state can get messed up if this goes below 0.
-		if(ctx.subExpressionDepth > 0)
+		if(ctx.m_subExpressionDepth > 0)
 		{
-			ctx.subExpressionDepth--;
+			ctx.m_subExpressionDepth--;
 		}
 
 		// TODO: If the next token is an operator, maybe the expression should be continued?
@@ -45,7 +45,7 @@ std::weak_ptr <Node> Expression::handleToken(Node::ParserContext& ctx, Token& to
 
 	// When outside an attribute, anything else but the beginning of an attribute
 	// requires that the expression contains things other than attributes.
-	if(!ctx.inAttribute && token.getType() != Token::Type::Attribute)
+	if(!ctx.m_inAttribute && token.getType() != Token::Type::Attribute)
 	{
 		ctx.setMoreThanAttributes();
 	}
@@ -71,16 +71,16 @@ std::weak_ptr <Node> Expression::handleToken(Node::ParserContext& ctx, Token& to
 	else if(token.getType() == Token::Type::Attribute)
 	{
 		newNode = std::make_shared <Attribute> ();
-		ctx.inAttribute = true;
+		ctx.m_inAttribute = true;
 	}
 
 	else if(token.getType() == Token::Type::OpeningBracket)
 	{
 		// Prevent the depth from being increment in recursive calls.
-		if(ctx.canOpenSubexpression)
+		if(ctx.m_canOpenSubexpression)
 		{
-			ctx.subExpressionDepth++;
-			ctx.canOpenSubexpression = false;
+			ctx.m_subExpressionDepth++;
+			ctx.m_canOpenSubexpression = false;
 		}
 
 		// If the current expression node (Presumably an operator),
@@ -111,7 +111,7 @@ std::weak_ptr <Node> Expression::handleToken(Node::ParserContext& ctx, Token& to
 	// Treat anything else as a value or a keyword.
 	else
 	{
-		if(ctx.source.match(token, L"type"))
+		if(ctx.m_source.match(token, L"type"))
 		{
 			newNode = std::make_shared <TypeReference> ();
 		}
@@ -134,14 +134,14 @@ std::weak_ptr <Node> Expression::handleToken(Node::ParserContext& ctx, Token& to
 	if(!complete)
 	{
 		// TODO: Apply active attributes to upcoming expression nodes once decided how.
-		if(!ctx.inAttribute)
+		if(!ctx.m_inAttribute)
 		{
 			// Assign attributes from the current depth to the new node.
-			while(!ctx.activeAttributes.empty() && ctx.activeAttributes.top().depth == ctx.subExpressionDepth)
+			while(!ctx.m_activeAttributes.empty() && ctx.m_activeAttributes.top().m_depth == ctx.m_subExpressionDepth)
 			{
 				// TODO: Somehow append instead of overwriting.
-				newNode->setAttributeRange(ctx.activeAttributes.top().range);
-				ctx.activeAttributes.pop();
+				newNode->setAttributeRange(ctx.m_activeAttributes.top().m_range);
+				ctx.m_activeAttributes.pop();
 			}
 		}
 
@@ -172,10 +172,10 @@ std::weak_ptr <Node> Expression::handleToken(Node::ParserContext& ctx, Token& to
 		// The new node is outside the current attribute if it breaks a larger value or starts an attribute.
 		// A larger value is broken if the precedence is below modifier precesence wich implies a binary operator
 		// excluding '.'. An example of a larger value would be -foo.bar().results[0]
-		const bool newOutsideCurrentAttribute = newPrecedence < modifierPrecedence || newNode->type == Type::Attribute;
+		const bool newOutsideCurrentAttribute = newPrecedence < modifierPrecedence || newNode->m_type == Type::Attribute;
 
 		// Save attributes upon leaving them and disconnect them from the node tree.
-		if(type == Type::Attribute && newOutsideCurrentAttribute)
+		if(m_type == Type::Attribute && newOutsideCurrentAttribute)
 		{
 			finalizeCurrentAttribute(ctx);
 		}
@@ -186,8 +186,8 @@ std::weak_ptr <Node> Expression::handleToken(Node::ParserContext& ctx, Token& to
 		// and will never be above other nodes.
 		else if(parent->getType() != Node::Type::Expression)
 		{
-			SourceLocation location(ctx.source, token);
-			ctx.client.sourceError(location, "Consecutive values are not allowed");
+			SourceLocation location(ctx.m_source, token);
+			ctx.m_client.sourceError(location, "Consecutive values are not allowed");
 			return {};
 		}
 
@@ -199,7 +199,7 @@ std::weak_ptr <Node> Expression::handleToken(Node::ParserContext& ctx, Token& to
 	// If the current token is the last of the line and no subexpressions
 	// are active, end the expression.
 	// TODO: If the new node represents a binary operator, extend to the next line.
-	if(ctx.subExpressionDepth == 0 && token.isLastOfLine(ctx))
+	if(ctx.m_subExpressionDepth == 0 && token.isLastOfLine(ctx))
 	{
 		return exitExpression(ctx, token);
 	}
@@ -235,21 +235,21 @@ unsigned Expression::getPrecedence()
 
 Expression::Type Expression::getType()
 {
-	return type;
+	return m_type;
 }
 
 const std::optional <TypeContext>& Expression::getResultType() const
 {
-	return resultType;
+	return m_resultType;
 }
 
 void Expression::setResultType(const TypeContext& ctx)
 {
-	resultType.emplace(ctx);
+	m_resultType.emplace(ctx);
 }
 
 Expression::Expression(Type type)
-	: Node(Node::Type::Expression), type(type)
+	: Node(Node::Type::Expression), m_type(type)
 {
 }
 
@@ -257,7 +257,7 @@ std::weak_ptr <Node> Expression::exitExpression(ParserContext& ctx, Token& token
 {
 	// If we're not inside a subexpression and there's no more relevant tokens
 	// on the current line, exit to a non-expression parent node.
-	bool recursive = ctx.subExpressionDepth == 0 && token.isLastOfLine(ctx);
+	bool recursive = ctx.m_subExpressionDepth == 0 && token.isLastOfLine(ctx);
 
 	auto exitedExpression = getExitedExpression(ctx, recursive);
 	if(exitedExpression.expired())
@@ -266,18 +266,18 @@ std::weak_ptr <Node> Expression::exitExpression(ParserContext& ctx, Token& token
 	}
 
 	// Make sure that expressions don't end in attributes when not allowed.
-	if(!ctx.activeAttributes.empty())
+	if(!ctx.m_activeAttributes.empty())
 	{
-		if (ctx.activeAttributes.top().depth > 0 || !ctx.allowExpressionEndingInAttributes)
+		if (ctx.m_activeAttributes.top().m_depth > 0 || !ctx.m_allowExpressionEndingInAttributes)
 		{
-			SourceLocation location(ctx.source, token);
-			ctx.client.sourceError(location, "Expression must not end in an attribute here");
+			SourceLocation location(ctx.m_source, token);
+			ctx.m_client.sourceError(location, "Expression must not end in an attribute here");
 			return {};
 		}
 	}
 
-	ctx.exitedFrom = exitedExpression.lock();
-	auto exitNode = ctx.exitedFrom->getParent();
+	ctx.m_exitedFrom = exitedExpression.lock();
+	auto exitNode = ctx.m_exitedFrom->getParent();
 
 	assert(!exitNode.expired());
 	return exitNode.lock()->invokedNodeExited(ctx, token);
@@ -286,7 +286,7 @@ std::weak_ptr <Node> Expression::exitExpression(ParserContext& ctx, Token& token
 std::weak_ptr <Node> Expression::getExitedExpression(ParserContext& ctx, bool recursive)
 {
 	// Expression root is the only exit point.
-	if(type == Type::Root)
+	if(m_type == Type::Root)
 	{
 		if(recursive)
 		{
@@ -303,7 +303,7 @@ std::weak_ptr <Node> Expression::getExitedExpression(ParserContext& ctx, bool re
 		return weak_from_this();
 	}
 
-	else if(type == Type::Attribute)
+	else if(m_type == Type::Attribute)
 	{
 		finalizeCurrentAttribute(ctx);
 	}
@@ -319,7 +319,7 @@ std::weak_ptr <Node> Expression::adoptValue(std::shared_ptr <Expression> node)
 	handleValue(node);
 
 	// Anything but values can be the new "current node".
-	if(node->type != Type::Value)
+	if(node->m_type != Type::Value)
 	{
 		// Bracket operators are special. Instead of returning itself as
 		// the new "current node", the underlying root is returned itself
@@ -327,7 +327,7 @@ std::weak_ptr <Node> Expression::adoptValue(std::shared_ptr <Expression> node)
 		// After the bracketed subexpression ends, control will go back to
 		// the bracket operator and to its parent as the bracket operator
 		// should always have the highest possible precedence.
-		if(node->type == Type::BracketOperator)
+		if(node->m_type == Type::BracketOperator)
 		{
 			return std::static_pointer_cast <BracketOperator> (node)->getInnerRoot();
 		}
@@ -357,23 +357,23 @@ Expression::Root::Root(Type type)
 
 bool Expression::Root::isComplete() const
 {
-	return static_cast <bool> (first);
+	return static_cast <bool> (m_first);
 }
 
 void Expression::Root::handleValue(std::shared_ptr <Expression> node)
 {
-	assert(!first);
-	first = std::move(node);
+	assert(!m_first);
+	m_first = std::move(node);
 }
 
 std::shared_ptr <Expression> Expression::Root::getFirst()
 {
-	return first;
+	return m_first;
 }
 
 std::shared_ptr <Expression> Expression::Root::stealLatestValue()
 {
-	auto ret = std::move(first);
+	auto ret = std::move(m_first);
 	return ret;
 }
 

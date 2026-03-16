@@ -20,13 +20,13 @@ namespace cap
 {
 
 Validator::Validator(ParserContext& ctx)
-	: ctx(ctx)
+	: m_ctx(ctx)
 {
 }
 
 ParserContext& Validator::getParserContext() const
 {
-	return ctx;
+	return m_ctx;
 }
 
 void Validator::onNodeExited(std::shared_ptr <Node>, Result)
@@ -84,10 +84,10 @@ Traverser::Result Validator::onTypeReference(std::shared_ptr <TypeReference> nod
 	}
 
 	assert(held->getResultType());
-	if(!held->getResultType()->isTypeName)
+	if(!held->getResultType()->m_isTypeName)
 	{
-		SourceLocation location(ctx.source, node->getToken());
-		ctx.client.sourceError(location, "Value given to 'type' must be a type name");
+		SourceLocation location(m_ctx.m_source, node->getToken());
+		m_ctx.m_client.sourceError(location, "Value given to 'type' must be a type name");
 		return Result::Stop;
 	}
 
@@ -124,7 +124,7 @@ Traverser::Result Validator::onBinaryOperator(std::shared_ptr <BinaryOperator> n
 	if(node->getType() == BinaryOperator::Type::Access)
 	{
 		assert(node->getLeft()->getResultType());
-		resolverCtx.accessedFrom.emplace(*node->getLeft()->getResultType());
+		m_resolverCtx.m_accessedFrom.emplace(*node->getLeft()->getResultType());
 
 		// Having a type name as the right side operand is fine for binary access.
 		shouldCheckTypeName = false;
@@ -136,7 +136,7 @@ Traverser::Result Validator::onBinaryOperator(std::shared_ptr <BinaryOperator> n
 		return Result::Stop;
 	}
 
-	resolverCtx.reset();
+	m_resolverCtx.reset();
 
 	// Saving the result type doesn't make sense for commas.
 	if(node->getType() != BinaryOperator::Type::Comma)
@@ -172,13 +172,13 @@ Traverser::Result Validator::onUnaryOperator(std::shared_ptr <UnaryOperator> nod
 Traverser::Result Validator::onBracketOperator(std::shared_ptr <BracketOperator> node)
 {
 	// Temporarily steal the resolver context to hide it from the inner expression.
-	auto contextResolver = std::move(resolverCtx);
-	assert(!resolverCtx.accessedFrom);
+	auto contextResolver = std::move(m_resolverCtx);
+	assert(!m_resolverCtx.m_accessedFrom);
 
 	if(node->getType() != BracketOperator::Type::Call)
 	{
-		SourceLocation location(ctx.source, node->getToken());
-		ctx.client.sourceError(location, "TODO: Bracket operator validation implemented for call operators only");
+		SourceLocation location(m_ctx.m_source, node->getToken());
+		m_ctx.m_client.sourceError(location, "TODO: Bracket operator validation implemented for call operators only");
 		return Result::Stop;
 	}
 
@@ -187,8 +187,8 @@ Traverser::Result Validator::onBracketOperator(std::shared_ptr <BracketOperator>
 		auto value = std::static_pointer_cast <Value> (node->getContext());
 		if(value->getToken().getType() != Token::Type::Identifier)
 		{
-			SourceLocation location(ctx.source, value->getToken());
-			ctx.client.sourceError(location, "Literal values cannot be called");
+			SourceLocation location(m_ctx.m_source, value->getToken());
+			m_ctx.m_client.sourceError(location, "Literal values cannot be called");
 			return Result::Stop;
 		}
 	}
@@ -199,8 +199,8 @@ Traverser::Result Validator::onBracketOperator(std::shared_ptr <BracketOperator>
 		return Result::Stop;
 	}
 
-	resolverCtx = std::move(contextResolver);
-	resolverCtx.parameters = node->getInnerRoot();
+	m_resolverCtx = std::move(contextResolver);
+	m_resolverCtx.m_parameters = node->getInnerRoot();
 	if(!traverseExpression(node->getContext()))
 	{
 		return Result::Stop;
@@ -208,10 +208,10 @@ Traverser::Result Validator::onBracketOperator(std::shared_ptr <BracketOperator>
 
 	auto callable = node->getContext()->getResultType();
 	assert(callable);
-	assert(callable->referenced.getType() == TypeDefinition::Type::Callable);
+	assert(callable->m_referenced.getType() == TypeDefinition::Type::Callable);
 
 	// The call operator now results in the return type of the callable.
-	auto returnTypeRoot = static_cast <CallableType&> (callable->referenced).getReturnTypeRoot();
+	auto returnTypeRoot = static_cast <CallableType&> (callable->m_referenced).getReturnTypeRoot();
 	assert(returnTypeRoot);
 	assert(returnTypeRoot->getResultType());
 	node->setResultType(*returnTypeRoot->getResultType());
@@ -221,7 +221,7 @@ Traverser::Result Validator::onBracketOperator(std::shared_ptr <BracketOperator>
 Traverser::Result Validator::onIdentifier(std::shared_ptr <Identifier> node)
 {
 	// Steal the resolver context so that it's not mistakenly used further on.
-	ResolverContext resolve = std::move(resolverCtx);
+	ResolverContext resolve = std::move(m_resolverCtx);
 	return validateIdentifier(node, resolve);
 }
 
@@ -229,13 +229,13 @@ Traverser::Result Validator::onInteger(std::shared_ptr <Integer> node)
 {
 	// Set the initial type to the minimum that can hold the immediate value.
 	// Outer operation such a negation can then alter this.
-	node->setInitialType(ctx);
+	node->setInitialType(m_ctx);
 	return Result::Exit;
 }
 
 Traverser::Result Validator::onString(std::shared_ptr <String> node)
 {
-	node->setResultType(ctx.client.getBuiltin().get(Builtin::DataType::String));
+	node->setResultType(m_ctx.m_client.getBuiltin().get(Builtin::DataType::String));
 	return Result::Exit;
 }
 
@@ -246,7 +246,7 @@ Traverser::Result Validator::onReturn(std::shared_ptr <Return> node)
 		return Result::Stop;
 	}
 
-	if(!node->tryUpdatingReturnType(ctx))
+	if(!node->tryUpdatingReturnType(m_ctx))
 	{
 		return Result::Stop;
 	}
@@ -283,15 +283,15 @@ bool Validator::checkUniqueDeclaration(std::shared_ptr <Declaration> decl)
 bool Validator::checkTypeNameUsage(std::shared_ptr <Expression> decl)
 {
 	assert(decl->getResultType().has_value());
-	if(decl->getResultType()->isTypeName)
+	if(decl->getResultType()->m_isTypeName)
 	{
 		if(decl->getType() == Expression::Type::TypeReference)
 		{
 			return true;
 		}
 
-		SourceLocation location(ctx.source, decl->getToken());
-		ctx.client.sourceError(location, "Type names must be preceded by 'type'");
+		SourceLocation location(m_ctx.m_source, decl->getToken());
+		m_ctx.m_client.sourceError(location, "Type names must be preceded by 'type'");
 		return false;
 	}
 
@@ -302,13 +302,13 @@ Traverser::Result Validator::validateIdentifier(std::shared_ptr <Identifier> nod
 {
 	Result result = Result::NotHandled;
 
-	if(resolve.accessedFrom)
+	if(resolve.m_accessedFrom)
 	{
-		switch(resolve.accessedFrom->referenced.getType())
+		switch(resolve.m_accessedFrom->m_referenced.getType())
 		{
 			case cap::TypeDefinition::Type::Class:
 			{
-                auto& classDecl = static_cast <ClassType&> (resolve.accessedFrom->referenced);
+                auto& classDecl = static_cast <ClassType&> (resolve.m_accessedFrom->m_referenced);
 
 				for(auto decl : classDecl.getBody()->declarations)
 				{
@@ -327,16 +327,16 @@ Traverser::Result Validator::validateIdentifier(std::shared_ptr <Identifier> nod
 
 			case cap::TypeDefinition::Type::Callable:
 			{
-				SourceLocation location(ctx.source, node->getToken());
-				ctx.client.sourceError(location, "Cannot access contents of a callable");
+				SourceLocation location(m_ctx.m_source, node->getToken());
+				m_ctx.m_client.sourceError(location, "Cannot access contents of a callable");
 				return Result::Stop;
 			}
 
 			case cap::TypeDefinition::Type::TypeReference:
 			{
 				// Recursively use the underlying type as the resolving context.
-                auto& typeRef = static_cast <TypeReference&> (resolve.accessedFrom->referenced);
-				resolve.accessedFrom.emplace(*typeRef.getReferred());
+                auto& typeRef = static_cast <TypeReference&> (resolve.m_accessedFrom->m_referenced);
+				resolve.m_accessedFrom.emplace(*typeRef.getReferred());
 				return validateIdentifier(node, resolve);
 			}
 		}
@@ -377,12 +377,12 @@ Traverser::Result Validator::validateIdentifier(std::shared_ptr <Identifier> nod
 		// stored in ResolverContext.
 
 		// If pararameters are supplied, we're looking for something more specific.
-		const char* msg = resolve.parameters ?
+		const char* msg = resolve.m_parameters ?
 			"No matching overload found for" :
 			"Undeclared identifier";
 
-		SourceLocation location(ctx.source, node->getToken());
-		ctx.client.sourceError(location, msg, " '", node->getValue(), '\'');
+		SourceLocation location(m_ctx.m_source, node->getToken());
+		m_ctx.m_client.sourceError(location, msg, " '", node->getValue(), '\'');
 		return Result::Stop;
 	}
 
@@ -404,7 +404,7 @@ Traverser::Result Validator::connectDeclaration(std::shared_ptr <Identifier> nod
 	}
 
 	// Should parameters be matched as well?
-	if(resolve.parameters)
+	if(resolve.m_parameters)
 	{
         CallableType* callable = nullptr;
 
@@ -438,7 +438,7 @@ Traverser::Result Validator::connectDeclaration(std::shared_ptr <Identifier> nod
 		// parameters select the most fitting one. This way more fitting function overloads
 		// can be prioritized over those where parameters are implicitly casted.
 
-		auto [compatible, unidentical] = callable->matchParameters(resolve.parameters);
+		auto [compatible, unidentical] = callable->matchParameters(resolve.m_parameters);
 		if(compatible)
 		{
 			node->setReferred(decl);
@@ -464,14 +464,14 @@ Validator::ResolverContext::ResolverContext(ResolverContext&& rhs)
 
 Validator::ResolverContext& Validator::ResolverContext::operator=(ResolverContext&& rhs)
 {
-	parameters = std::move(rhs.parameters);
+	m_parameters = std::move(rhs.m_parameters);
 
 	// TODO: Is this really necessary. std::move would be nice but
 	// accessedFrom seems to report a valid value afterwards.
-	if(rhs.accessedFrom)
+	if(rhs.m_accessedFrom)
 	{
-		accessedFrom.emplace(*rhs.accessedFrom);
-		rhs.accessedFrom.reset();
+		m_accessedFrom.emplace(*rhs.m_accessedFrom);
+		rhs.m_accessedFrom.reset();
 	}
 
 	return *this;
@@ -479,8 +479,8 @@ Validator::ResolverContext& Validator::ResolverContext::operator=(ResolverContex
 
 void Validator::ResolverContext::reset()
 {
-	accessedFrom.reset();
-	parameters.reset();
+	m_accessedFrom.reset();
+	m_parameters.reset();
 }
 
 }

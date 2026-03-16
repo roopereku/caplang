@@ -68,13 +68,13 @@ protected:
 
 	/// Implementation defined type such as the referred type of an
 	/// alias, variable or a callable type with the signature for functions.
-	std::optional <TypeContext> referredType;
+	std::optional <TypeContext> m_referredType;
 
-	std::wstring name;
+	std::wstring m_name;
 
 private:
-	Type type;
-	bool attribute = false;
+	Type m_type;
+	bool m_attribute = false;
 };
 
 }

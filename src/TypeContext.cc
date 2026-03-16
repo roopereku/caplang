@@ -5,7 +5,7 @@ namespace cap
 {
 
 TypeContext::TypeContext(TypeDefinition& referenced)
-	: referenced(referenced)
+	: m_referenced(referenced)
 {
 }
 
@@ -18,7 +18,7 @@ bool TypeContext::isCompatible(const TypeContext& other) const
 bool TypeContext::isIdentical(const TypeContext& other) const
 {
 	// TODO: Account for modifiers such as mutability.
-	return &referenced == &other.referenced;
+	return &m_referenced == &other.m_referenced;
 }
 
 std::wstring TypeContext::toString() const
@@ -26,7 +26,7 @@ std::wstring TypeContext::toString() const
 	std::wstring modifiers;
 
 	// TODO: Add the rest of the modfiers.
-	return modifiers + referenced.toString(true);
+	return modifiers + m_referenced.toString(true);
 }
 
 }

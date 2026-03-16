@@ -52,10 +52,10 @@ public:
 	const char* getTypeString() const override;
 
 private:
-	std::shared_ptr <Expression> context;
-	std::shared_ptr <Root> innerRoot;
+	std::shared_ptr <Expression> m_context;
+	std::shared_ptr <Root> m_innerRoot;
 
-	Type type;
+	Type m_type;
 };
 
 }

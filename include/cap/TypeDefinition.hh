@@ -33,7 +33,7 @@ protected:
 	TypeDefinition(Type type);
 
 private:
-	Type type;
+	Type m_type;
 };
 
 }

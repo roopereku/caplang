@@ -39,8 +39,8 @@ bool Attribute::validate(Validator& validator)
 
 	// Try to find a valid reference to a declaration.
 	// Errors like "Unknown identifier" should already be handled by the validator.
-	referredDeclaration = findReferred(root, validator);
-	assert(!referredDeclaration.expired());
+	m_referredDeclaration = findReferred(root, validator);
+	assert(!m_referredDeclaration.expired());
 
 	return true;
 }
@@ -62,8 +62,8 @@ std::shared_ptr <Declaration> Attribute::findReferred(std::shared_ptr <Expressio
 		const auto value = std::static_pointer_cast <Value> (node);
 		if(value->getType() != Value::Type::Identifier)
 		{
-			SourceLocation location(ctx.source, node->getToken());
-			ctx.client.sourceError(location, "Values used as attributes must be identifiers");
+			SourceLocation location(ctx.m_source, node->getToken());
+			ctx.m_client.sourceError(location, "Values used as attributes must be identifiers");
 			return {};
 		}
 
@@ -80,16 +80,16 @@ std::shared_ptr <Declaration> Attribute::findReferred(std::shared_ptr <Expressio
 		// TODO: What about generics? "@foo <int>". Do they make any sense?
 		if(op->getType() != BracketOperator::Type::Call)
 		{
-			SourceLocation location(ctx.source, node->getToken());
-			ctx.client.sourceError(location, "Bracket operators used as attributes must be function calls");
+			SourceLocation location(ctx.m_source, node->getToken());
+			ctx.m_client.sourceError(location, "Bracket operators used as attributes must be function calls");
 			return {};
 		}
 
 		return findReferred(op->getContext(), validator);
 	}
 
-	SourceLocation location(ctx.source, node->getToken());
-	ctx.client.sourceError(location, "Attributes usages must be identifiers or function calls");
+	SourceLocation location(ctx.m_source, node->getToken());
+	ctx.m_client.sourceError(location, "Attributes usages must be identifiers or function calls");
 	return {};
 }
 

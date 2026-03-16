@@ -57,10 +57,10 @@ protected:
 private:
 	bool findReturnedFrom();
 
-	std::weak_ptr <Node> returnedFrom;
-	FromType fromType = FromType::None;
+	std::weak_ptr <Node> m_returnedFrom;
+	FromType m_fromType = FromType::None;
 
-	std::shared_ptr <Expression::Root> expression;
+	std::shared_ptr <Expression::Root> m_expression;
 };
 
 }

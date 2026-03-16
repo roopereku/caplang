@@ -39,7 +39,7 @@ public:
 	};
 
 	BinaryOperator(Type type, bool compound = false)
-		: Expression(Expression::Type::BinaryOperator), type(type), compound(compound)
+		: Expression(Expression::Type::BinaryOperator), m_type(type), m_compound(compound)
 	{
 	}
 
@@ -80,11 +80,11 @@ protected:
 	std::shared_ptr <Expression> stealLatestValue() override;
 
 private:
-	std::shared_ptr <Expression> left;
-	std::shared_ptr <Expression> right;
+	std::shared_ptr <Expression> m_left;
+	std::shared_ptr <Expression> m_right;
 
-	Type type;
-	bool compound;
+	Type m_type;
+	bool m_compound;
 };
 
 }

@@ -46,10 +46,10 @@ public:
 	const char* getTypeString() const override;
 
 	/// Declaration storage for function parameters.
-	DeclarationStorage parameters;
+	DeclarationStorage m_parameters;
 
 private:
-	std::shared_ptr <Scope> body;
+	std::shared_ptr <Scope> m_body;
 };
 
 }

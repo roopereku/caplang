@@ -19,8 +19,8 @@ public:
 private:
 	void locateFirst();
 
-	std::shared_ptr <Expression> origin;
-	std::shared_ptr <Expression> current;
+	std::shared_ptr <Expression> m_origin;
+	std::shared_ptr <Expression> m_current;
 };
 
 }

@@ -25,7 +25,7 @@ std::shared_ptr <BinaryOperator> BinaryOperator::create(cap::ParserContext& ctx,
 
 	for(size_t i = 0; i < ops.size(); i++)
 	{
-		if(ctx.source.match(token, ops[i]))
+		if(ctx.m_source.match(token, ops[i]))
 		{
 			return std::make_shared <BinaryOperator> (static_cast <Type> (i));
 		}
@@ -36,14 +36,14 @@ std::shared_ptr <BinaryOperator> BinaryOperator::create(cap::ParserContext& ctx,
 
 void BinaryOperator::handleValue(std::shared_ptr <Expression> node)
 {
-	if(!left)
+	if(!m_left)
 	{
-		left = node;
+		m_left = node;
 	}
 
-	else if(!right)
+	else if(!m_right)
 	{
-		right = node;
+		m_right = node;
 	}
 
 	else
@@ -54,12 +54,12 @@ void BinaryOperator::handleValue(std::shared_ptr <Expression> node)
 
 bool BinaryOperator::isComplete() const
 {
-	return left && right;
+	return m_left && m_right;
 }
 
 unsigned BinaryOperator::getPrecedence()
 {
-	switch(type)
+	switch(m_type)
 	{
 		case Type::Comma: return commaPrecedence;
 		case Type::Assign: return compoundPrecedence;
@@ -105,17 +105,17 @@ unsigned BinaryOperator::getPrecedence()
 
 BinaryOperator::Type BinaryOperator::getType()
 {
-	return type;
+	return m_type;
 }
 
 std::shared_ptr <Expression> BinaryOperator::getLeft()
 {
-	return left;
+	return m_left;
 }
 
 std::shared_ptr <Expression> BinaryOperator::getRight()
 {
-	return right;
+	return m_right;
 }
 
 const char* BinaryOperator::getTypeString(Type type)
@@ -151,19 +151,19 @@ const char* BinaryOperator::getTypeString(Type type)
 
 const char* BinaryOperator::getTypeString() const
 {
-	return getTypeString(type);
+	return getTypeString(m_type);
 }
 
 std::shared_ptr <Expression> BinaryOperator::stealLatestValue()
 {
-	if(right)
+	if(m_right)
 	{
-		return std::move(right);
+		return std::move(m_right);
 	}
 
-	else if(left)
+	else if(m_left)
 	{
-		return std::move(left);
+		return std::move(m_left);
 	}
 
 	assert(false && "Cannot steal value from BinaryOperator since it has nothing");

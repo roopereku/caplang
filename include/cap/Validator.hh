@@ -38,8 +38,8 @@ private:
 
 		void reset();
 
-		std::shared_ptr <Expression::Root> parameters;
-		std::optional <TypeContext> accessedFrom;
+		std::shared_ptr <Expression::Root> m_parameters;
+		std::optional <TypeContext> m_accessedFrom;
 	};
 
 	/// Makes sure that the given declaration respects the name shadowing rules.
@@ -53,8 +53,8 @@ private:
 	Result connectDeclaration(std::shared_ptr <Identifier> node,
 			std::shared_ptr <Declaration> decl, ResolverContext& resolve);
 
-	ResolverContext resolverCtx;
-	ParserContext& ctx;
+	ResolverContext m_resolverCtx;
+	ParserContext& m_ctx;
 };
 
 }

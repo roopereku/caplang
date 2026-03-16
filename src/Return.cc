@@ -16,30 +16,30 @@ Return::Return()
 
 std::weak_ptr <Node> Return::handleToken(Node::ParserContext& ctx, Token& token)
 {
-	return expression->handleToken(ctx, token);
+	return m_expression->handleToken(ctx, token);
 }
 
 std::weak_ptr <Node> Return::invokedNodeExited(Node::ParserContext& ctx, Token&)
 {
-	assert(ctx.exitedFrom == expression);
+	assert(ctx.m_exitedFrom == m_expression);
 	return getParent();
 }
 
 std::shared_ptr <Expression::Root> Return::getExpression() const
 {
-	return expression;
+	return m_expression;
 }
 
 std::shared_ptr <Node> Return::getReturnedFrom() const
 {
-	assert(!returnedFrom.expired());
-	return returnedFrom.lock();
+	assert(!m_returnedFrom.expired());
+	return m_returnedFrom.lock();
 }
 
 bool Return::tryUpdatingReturnType(cap::ParserContext& ctx)
 {
 	auto from = getReturnedFrom();
-	assert(fromType != FromType::None);
+	assert(m_fromType != FromType::None);
 
 	// TODO: Once non-functions can be returned from, don't assume function.
 
@@ -48,9 +48,9 @@ bool Return::tryUpdatingReturnType(cap::ParserContext& ctx)
 	assert(func->getReturnTypeRoot());
 
 	// If the returning expression doesn't exist, default to void.
-	auto& ret = expression->getFirst() ?
-		*expression->getFirst()->getResultType() :
-		ctx.client.getBuiltin().get(Builtin::DataType::Void);
+	auto& ret = m_expression->getFirst() ?
+		*m_expression->getFirst()->getResultType() :
+		ctx.m_client.getBuiltin().get(Builtin::DataType::Void);
 
 	// If no return type is set for what's being returned from, initialize
 	// to whatever this return statement wants to return.
@@ -68,8 +68,8 @@ bool Return::tryUpdatingReturnType(cap::ParserContext& ctx)
 	if(!ret.isCompatible(*existing))
 	{
 		// TODO: Give more context in the error message.
-		SourceLocation location(ctx.source, getToken());
-		ctx.client.sourceError(location, "Incompatible return type");
+		SourceLocation location(ctx.m_source, getToken());
+		ctx.m_client.sourceError(location, "Incompatible return type");
 		return false;
 	}
 
@@ -83,19 +83,19 @@ const char* Return::getTypeString() const
 
 bool Return::onInitialize(cap::ParserContext& ctx, bool)
 {
-	assert(returnedFrom.expired());
+	assert(m_returnedFrom.expired());
 	if(!findReturnedFrom())
 	{
-		SourceLocation location(ctx.source, getToken());
-		ctx.client.sourceError(location, "Cannot return here");
+		SourceLocation location(ctx.m_source, getToken());
+		ctx.m_client.sourceError(location, "Cannot return here");
 		return false;
 	}
 
 	// Initialize the expression here to make the assumption
 	// of its existence valid.
-	assert(!expression);
-	expression = std::make_shared <Expression::Root> ();
-	adopt(expression);
+	assert(!m_expression);
+	m_expression = std::make_shared <Expression::Root> ();
+	adopt(m_expression);
 
 	return true;
 }
@@ -116,8 +116,8 @@ bool Return::findReturnedFrom()
 			// In the case of declarations only functions can be returned from.
 			if(decl->getType() == Declaration::Type::Function)
 			{
-				fromType = FromType::Function;
-				returnedFrom = decl;
+				m_fromType = FromType::Function;
+				m_returnedFrom = decl;
 			}
 
 			// If returnedFrom wasn't set, this function will now return false.
@@ -127,7 +127,7 @@ bool Return::findReturnedFrom()
 		current = node->getParent();
 	}
 
-	return !returnedFrom.expired();
+	return !m_returnedFrom.expired();
 }
 
 }

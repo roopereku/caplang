@@ -23,7 +23,7 @@ public:
 	};
 
 	UnaryOperator(Type type)
-		: Expression(Expression::Type::UnaryOperator), type(type)
+		: Expression(Expression::Type::UnaryOperator), m_type(type)
 	{
 	}
 
@@ -70,8 +70,8 @@ protected:
 	std::shared_ptr <Expression> stealLatestValue() override;
 
 private:
-	std::shared_ptr <Expression> expression;
-	Type type;
+	std::shared_ptr <Expression> m_expression;
+	Type m_type;
 };
 
 }

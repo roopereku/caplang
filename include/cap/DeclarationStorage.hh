@@ -15,7 +15,7 @@ class Validator;
 class DeclarationStorage
 {
 private:
-	std::vector <std::shared_ptr <Declaration>> declarations;
+	std::vector <std::shared_ptr <Declaration>> m_declarations;
 
 public:
 	DeclarationStorage() {}
@@ -46,24 +46,24 @@ public:
 	/// \return An invalid declaration storage.
 	static DeclarationStorage& getInvalid();
 
-	decltype(declarations)::iterator begin()
+	decltype(m_declarations)::iterator begin()
 	{
-		return declarations.begin();
+		return m_declarations.begin();
 	}
 
-	decltype(declarations)::iterator end()
+	decltype(m_declarations)::iterator end()
 	{
-		return declarations.end();
+		return m_declarations.end();
 	}
 
-	decltype(declarations)::const_iterator begin() const
+	decltype(m_declarations)::const_iterator begin() const
 	{
-		return declarations.begin();
+		return m_declarations.begin();
 	}
 
-	decltype(declarations)::const_iterator end() const
+	decltype(m_declarations)::const_iterator end() const
 	{
-		return declarations.end();
+		return m_declarations.end();
 	}
 };
 

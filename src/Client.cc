@@ -18,26 +18,26 @@ bool Client::parse(Source& source, bool validate)
 const Builtin& Client::getBuiltin()
 {
 	// Make sure that the builtins are ready.
-	if(!builtin.getGlobal())
+	if(!m_builtin.getGlobal())
 	{
-		assert(parse(builtin));
-		builtin.doCaching();
+		assert(parse(m_builtin));
+		m_builtin.doCaching();
 	}
 
-	return builtin;
+	return m_builtin;
 }
 
 size_t Client::addAttribute(std::shared_ptr <Attribute> attr)
 {
-	size_t index = attributes.size();
-	attributes.emplace_back(std::move(attr));
+	size_t index = m_attributes.size();
+	m_attributes.emplace_back(std::move(attr));
 	return index;
 }
 
 Client::AttributeRange Client::getAttributes(std::shared_ptr <Node> node) const
 {
 	auto range = node->getAttributeRange();
-	auto start = attributes.begin() + range.first;
+	auto start = m_attributes.begin() + range.first;
 
 	return AttributeRange(start, start + range.second);
 }

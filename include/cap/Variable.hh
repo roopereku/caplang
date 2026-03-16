@@ -41,15 +41,12 @@ public:
 	class Root;
 
 private:
-	Type type;
-	std::weak_ptr <BinaryOperator> initialization;
+	Type m_type;
+	std::weak_ptr <BinaryOperator> m_initialization;
 };
 
 class Variable::Root : public Statement
 {
-private:
-	std::vector <std::shared_ptr <Declaration>> declared;
-
 public:
 	Root(Variable::Type type);
 
@@ -80,10 +77,10 @@ public:
 	const char* getTypeString() const override;
 
 	/// Iterators for accessing declarations declared through this root.
-	auto begin() { return declared.begin(); }
-	auto end() { return declared.end(); }
-	auto cbegin() const { return declared.cbegin(); }
-	auto cend() const { return declared.cend(); }
+	auto begin() { return m_declared.begin(); }
+	auto end() { return m_declared.end(); }
+	auto cbegin() const { return m_declared.cbegin(); }
+	auto cend() const { return m_declared.cend(); }
 
 protected:
 	/// Makes sure that something will be declared when not declaring parameters.
@@ -92,8 +89,9 @@ protected:
 	bool requiresDeclaration(cap::ParserContext& ctx);
 
 private:
-	std::shared_ptr <Expression::Root> initializer;
-	Variable::Type type;
+	std::vector <std::shared_ptr <Declaration>> m_declared;
+	std::shared_ptr <Expression::Root> m_initializer;
+	Variable::Type m_type;
 };
 
 }

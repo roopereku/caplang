@@ -12,7 +12,7 @@ namespace cap
 {
 
 Value::Value(Type type)
-	: Expression(Expression::Type::Value), type(type)
+	: Expression(Expression::Type::Value), m_type(type)
 {
 }
 
@@ -31,19 +31,19 @@ std::shared_ptr <Value> Value::create(ParserContext& ctx, Token& token)
 		// TODO: Include character?
 		case Token::Type::String:
 		{
-			return std::make_shared <String> (ctx.source.getString(token));
+			return std::make_shared <String> (ctx.m_source.getString(token));
 		}
 
 		case Token::Type::Identifier:
 		{
-			return std::make_shared <Identifier> (ctx.source.getString(token));
+			return std::make_shared <Identifier> (ctx.m_source.getString(token));
 		}
 
 		// TODO: Parse arrays and tuples from opening brackets here?
 		default:
 		{
-			SourceLocation location(ctx.source, token);
-			ctx.client.sourceError(location, "FIXME: Unable to construct a value from '", ctx.source.getString(token), "'");
+			SourceLocation location(ctx.m_source, token);
+			ctx.m_client.sourceError(location, "FIXME: Unable to construct a value from '", ctx.m_source.getString(token), "'");
 		}
 	}
 
@@ -58,7 +58,7 @@ bool Value::isComplete() const
 
 Value::Type Value::getType() const
 {
-	return type;
+	return m_type;
 }
 
 }

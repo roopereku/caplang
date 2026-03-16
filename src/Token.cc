@@ -26,28 +26,28 @@ static bool isNumeric(wchar_t ch)
 }
 
 Token::Token(size_t index, size_t length)
-	: index(index), length(length)
+	: m_index(index), m_length(length)
 {
 }
 
 Token::Token()
-	: index(0), length(0), type(Type::Invalid)
+	: m_index(0), m_length(0), m_type(Type::Invalid)
 {
 }
 
 size_t Token::getIndex() const
 {
-	return index;
+	return m_index;
 }
 
 size_t Token::getLength() const
 {
-	return length;
+	return m_length;
 }
 
 Token::Type Token::getType() const
 {
-	return type;
+	return m_type;
 }
 
 const char* Token::getTypeString(Type type)
@@ -74,17 +74,17 @@ const char* Token::getTypeString(Type type)
 
 const char* Token::getTypeString() const
 {
-	return Token::getTypeString(type);
+	return Token::getTypeString(m_type);
 }
 
 bool Token::isValid() const
 {
-	return type != Type::Invalid;
+	return m_type != Type::Invalid;
 }
 
 bool Token::isReservedIdentifier(cap::ParserContext& ctx) const
 {
-	auto& source = ctx.source;
+	auto& source = ctx.m_source;
 
 	return (
 		source.match(*this, L"func") ||
@@ -95,27 +95,27 @@ bool Token::isReservedIdentifier(cap::ParserContext& ctx) const
 
 bool Token::isOpeningBracket(cap::ParserContext& ctx, wchar_t ch) const
 {
-	return type == Type::OpeningBracket && ctx.source[index] == ch;
+	return m_type == Type::OpeningBracket && ctx.m_source[m_index] == ch;
 }
 
 bool Token::isClosingBracket(cap::ParserContext& ctx, wchar_t ch) const
 {
-	return type == Type::ClosingBracket && ctx.source[index] == ch;
+	return m_type == Type::ClosingBracket && ctx.m_source[m_index] == ch;
 }
 
 bool Token::isLastOfLine(cap::ParserContext& ctx)
 {
-	size_t i = index + length;
+	size_t i = m_index + m_length;
 	while(true)
 	{
 		// TODO: Handle windows linebreaks.
-		if(ctx.source[i] == '\n' || ctx.source[i] == 0)
+		if(ctx.m_source[i] == '\n' || ctx.m_source[i] == 0)
 		{
 			return true;
 		}
 
 		// Check if a comment comes after this token.
-		else if(ctx.source[i] == '/')
+		else if(ctx.m_source[i] == '/')
 		{
 			size_t temp = i;
 			bool multiline;
@@ -141,7 +141,7 @@ bool Token::isLastOfLine(cap::ParserContext& ctx)
 			}
 		}
 
-		else if(!isspace(ctx.source[i]))
+		else if(!isspace(ctx.m_source[i]))
 		{
 			break;
 		}
@@ -155,7 +155,7 @@ bool Token::isLastOfLine(cap::ParserContext& ctx)
 Token Token::parseFirst(ParserContext& ctx)
 {
 	Token first(0, 0);
-	skipWhitespace(ctx, first.index);	
+	skipWhitespace(ctx, first.m_index);	
 	return parse(ctx, first);
 }
 
@@ -163,27 +163,27 @@ Token Token::parseNext(ParserContext& ctx, Token token)
 {
 	// Get the beginning of the next token.
 	Token next = token;
-	next.index += token.length;
+	next.m_index += token.m_length;
 
-	skipWhitespace(ctx, next.index);	
-	ctx.previous = ctx.source[next.index - 1];
+	skipWhitespace(ctx, next.m_index);	
+	ctx.m_previous = ctx.m_source[next.m_index - 1];
 	return parse(ctx, next);
 }
 
 Token Token::parse(ParserContext& ctx, Token token)
 {
-	token.type = Type::Invalid;
-	size_t i = token.index;
+	token.m_type = Type::Invalid;
+	size_t i = token.m_index;
 
 	// Every source should stop at a null terminator.
-	if(ctx.source[i] == 0)
+	if(ctx.m_source[i] == 0)
 	{
 		// All opening brackets must be terminated.
-		if(!ctx.openedBrackets.empty())
+		if(!ctx.m_openedBrackets.empty())
 		{
-			wchar_t prevOpener = ctx.source[ctx.openedBrackets.top().index];
-			SourceLocation location(ctx.source, ctx.openedBrackets.top());
-			ctx.client.sourceError(location, "Unterminated bracket '", prevOpener, "'");
+			wchar_t prevOpener = ctx.m_source[ctx.m_openedBrackets.top().m_index];
+			SourceLocation location(ctx.m_source, ctx.m_openedBrackets.top());
+			ctx.m_client.sourceError(location, "Unterminated bracket '", prevOpener, "'");
 		}
 
 		return token;
@@ -199,11 +199,11 @@ Token Token::parse(ParserContext& ctx, Token token)
 		token.setTypeIfMoved(ctx, i, &Token::parseAttribute)
 	);
 
-	if(!shorted && ctx.source[i] != 0)
+	if(!shorted && ctx.m_source[i] != 0)
 	{
-		token.length = 1;
-		SourceLocation location(ctx.source, token);
-		ctx.client.sourceError(location, "Invalid character");
+		token.m_length = 1;
+		SourceLocation location(ctx.m_source, token);
+		ctx.m_client.sourceError(location, "Invalid character");
 	}
 
 	return token;
@@ -211,17 +211,17 @@ Token Token::parse(ParserContext& ctx, Token token)
 
 void Token::skipWhitespace(ParserContext& ctx, size_t& i)
 {
-	wchar_t ch = ctx.source[i];
+	wchar_t ch = ctx.m_source[i];
 	while(ch != 0 && isspace(ch))
 	{
 		i++;
-		ch = ctx.source[i];
+		ch = ctx.m_source[i];
 	}
 }
 
 Token::ParseResult Token::parseBracket(ParserContext& ctx, size_t& i)
 {
-	wchar_t ch = ctx.source[i];
+	wchar_t ch = ctx.m_source[i];
 	wchar_t expectedOpener = 0;
 
 	if(ch == '<')
@@ -229,7 +229,7 @@ Token::ParseResult Token::parseBracket(ParserContext& ctx, size_t& i)
 		// "<" is treated as an opening bracket if something immediately
 		// follows it that doesn't make an operator.
 		// Example: foo <5, 10>. foo < 5 would indicate an operator.
-		wchar_t next = ctx.source[i + 1];
+		wchar_t next = ctx.m_source[i + 1];
 		if(next == '<' || next == '=' || isspace(next) || next == 0)
 		{
 			return Type::Invalid;
@@ -240,7 +240,7 @@ Token::ParseResult Token::parseBracket(ParserContext& ctx, size_t& i)
 	{
 		case '(': case '{': case '[': case '<':
 		{
-			ctx.openedBrackets.push(Token(i, 1));
+			ctx.m_openedBrackets.push(Token(i, 1));
 			i++;
 
 			return Type::OpeningBracket;
@@ -255,7 +255,7 @@ Token::ParseResult Token::parseBracket(ParserContext& ctx, size_t& i)
 			// ">" is treated as a closing bracket if it immediately follows
 			// something else. Example foo <5, 10> (x). 10 > (x) would indicate an operator.
 			// TODO: Check for "-" to support "->" properly.
-			if(ctx.previous != '>' && !isspace(ctx.previous))
+			if(ctx.m_previous != '>' && !isspace(ctx.m_previous))
 			{
 				expectedOpener = '<';
 				break;
@@ -272,31 +272,31 @@ Token::ParseResult Token::parseBracket(ParserContext& ctx, size_t& i)
 	i++;
 
 	// All closing brackets should be have a corresponding opening bracket.
-	if(ctx.openedBrackets.empty())
+	if(ctx.m_openedBrackets.empty())
 	{
-		SourceLocation location(ctx.source, at);
-		ctx.client.sourceError(location, "Closing bracket '", ch, "' never opened");
+		SourceLocation location(ctx.m_source, at);
+		ctx.m_client.sourceError(location, "Closing bracket '", ch, "' never opened");
 		return Type::Invalid;
 	}
 
 	// TODO: Could the actual opener be cached?
-	wchar_t actualOpener = ctx.source[ctx.openedBrackets.top().index];
+	wchar_t actualOpener = ctx.m_source[ctx.m_openedBrackets.top().m_index];
 
 	// All closing brackets must match theie corresponding opening bracket.
 	if(actualOpener != expectedOpener)
 	{
-		SourceLocation location(ctx.source, at);
-		ctx.client.sourceError(location, "Mismatching closing bracket '", ch, "'");
+		SourceLocation location(ctx.m_source, at);
+		ctx.m_client.sourceError(location, "Mismatching closing bracket '", ch, "'");
 		return Type::Invalid;
 	}
 
-	ctx.openedBrackets.pop();
+	ctx.m_openedBrackets.pop();
 	return Type::ClosingBracket;
 }
 
 Token::ParseResult Token::parseIdentifier(ParserContext& ctx, size_t& i)
 {
-	while(isIdentifierCharacter(ctx.source[i]))
+	while(isIdentifierCharacter(ctx.m_source[i]))
 	{
 		i++;
 	}
@@ -313,7 +313,7 @@ Token::ParseResult Token::parseOperator(ParserContext& ctx, size_t& i)
 		'=', '!', '.', ',', ':'
 	};
 
-	while(std::find(opChars.begin(), opChars.end(), ctx.source[i]) != opChars.end())
+	while(std::find(opChars.begin(), opChars.end(), ctx.m_source[i]) != opChars.end())
 	{
 		i++;
 	}
@@ -330,11 +330,11 @@ Token::ParseResult Token::parseComment(ParserContext& ctx, size_t& i)
 
 Token::ParseResult Token::parseComment(cap::ParserContext& ctx, size_t& i, bool& isMultiline, bool& lineChanged)
 {
-	if(ctx.source[i] == '/')
+	if(ctx.m_source[i] == '/')
 	{
 		i++;
 
-		switch(ctx.source[i])
+		switch(ctx.m_source[i])
 		{
 			// Single line comment.
 			case '/':
@@ -342,7 +342,7 @@ Token::ParseResult Token::parseComment(cap::ParserContext& ctx, size_t& i, bool&
 				isMultiline = false;
 
 				// TODO: Handle windows linebreaks.
-				while(ctx.source[i] != '\n' && ctx.source[i] != 0)
+				while(ctx.m_source[i] != '\n' && ctx.m_source[i] != 0)
 				{
 					i++;
 				}
@@ -358,17 +358,17 @@ Token::ParseResult Token::parseComment(cap::ParserContext& ctx, size_t& i, bool&
 				std::wstring_view toMatch(L"*/");
 				size_t current = 0;
 
-				for(++i; current < toMatch.length() && ctx.source[i] != 0; i++)
+				for(++i; current < toMatch.length() && ctx.m_source[i] != 0; i++)
 				{
 					// If a character matches, move on to the next one.
-					if(ctx.source[i] == toMatch[current])
+					if(ctx.m_source[i] == toMatch[current])
 					{
 						current++;
 						continue;
 					}
 
 					// TODO: Handle windows linebreaks.
-					else if(ctx.source[i] == '\n')
+					else if(ctx.m_source[i] == '\n')
 					{
 						lineChanged = true;
 					}
@@ -396,25 +396,25 @@ Token::ParseResult Token::parseString(ParserContext& ctx, size_t& i)
 {
 	// TODO: String prefixes?
 
-	if(ctx.source[i] == '"')
+	if(ctx.m_source[i] == '"')
 	{
 		bool escaped = false;
 		bool matched = false;
 
-		for(++i; !matched && ctx.source[i] != 0; i++)
+		for(++i; !matched && ctx.m_source[i] != 0; i++)
 		{
 			// TODO: Handle windows linebreaks.
 			// TODO: Support multiline strings.
-			if(ctx.source[i] == '\n')
+			if(ctx.m_source[i] == '\n')
 			{
 				break;
 			}
 
 			// Exit on a non-escaped quote.
-			matched = (ctx.source[i] == '"' && !escaped);
+			matched = (ctx.m_source[i] == '"' && !escaped);
 
 			// In case of consecutive backslashes, toggle to escape status.
-			escaped = ctx.source[i] == '\\' ? !escaped : false;
+			escaped = ctx.m_source[i] == '\\' ? !escaped : false;
 		}
 
 		if(!matched)
@@ -428,7 +428,7 @@ Token::ParseResult Token::parseString(ParserContext& ctx, size_t& i)
 
 Token::ParseResult Token::parseAttribute(ParserContext& ctx, size_t& i)
 {
-	if(ctx.source[i] == '@')
+	if(ctx.m_source[i] == '@')
 	{
 		i++;
 	}
@@ -438,10 +438,10 @@ Token::ParseResult Token::parseAttribute(ParserContext& ctx, size_t& i)
 
 Token::ParseResult Token::parseNumeric(ParserContext& ctx, size_t& i)
 {
-	if(ctx.source[i] == '0')
+	if(ctx.m_source[i] == '0')
 	{
 		i++;
-		switch(tolower(ctx.source[i]))
+		switch(tolower(ctx.m_source[i]))
 		{
 			// Hexadecimal.
 			case 'x':
@@ -459,7 +459,7 @@ Token::ParseResult Token::parseNumeric(ParserContext& ctx, size_t& i)
 		}
 
 		// Any numeric value after "0" indicates octal.
-		if(isNumeric(ctx.source[i]))
+		if(isNumeric(ctx.m_source[i]))
 		{
 			i++;
 			return parseOctal(ctx, i);
@@ -470,7 +470,7 @@ Token::ParseResult Token::parseNumeric(ParserContext& ctx, size_t& i)
 	}
 
 	// TODO: Allow floats written as ".2f"
-	else if(isNumeric(ctx.source[i]))
+	else if(isNumeric(ctx.m_source[i]))
 	{
 		return parseDecimal(ctx, i);
 	}
@@ -485,7 +485,7 @@ Token::ParseResult Token::parseDecimal(ParserContext& ctx, size_t& i)
 
 	for(; i != 0; i++)
 	{
-		wchar_t ch = ctx.source[i];
+		wchar_t ch = ctx.m_source[i];
 
 		if(ch == '.')
 		{
@@ -506,7 +506,7 @@ Token::ParseResult Token::parseDecimal(ParserContext& ctx, size_t& i)
 
 		else if(!isNumeric(ch))
 		{
-			if(isIdentifierCharacter(ctx.source[i]))
+			if(isIdentifierCharacter(ctx.m_source[i]))
 			{
 				// TODO: Parse identifier to get the whole suffix.
 				return ParseResult(L"Invalid decimal suffix");
@@ -526,11 +526,11 @@ Token::ParseResult Token::parseDecimal(ParserContext& ctx, size_t& i)
 
 Token::ParseResult Token::parseHexadecimal(ParserContext& ctx, size_t& i)
 {
-	wchar_t ch = tolower(ctx.source[i]);
+	wchar_t ch = tolower(ctx.m_source[i]);
 	while(isNumeric(ch) || (ch >= 'a' && ch <= 'f'))
 	{
 		i++;
-		ch = tolower(ctx.source[i]);
+		ch = tolower(ctx.m_source[i]);
 	}
 
 	if(isIdentifierCharacter(ch))
@@ -545,12 +545,12 @@ Token::ParseResult Token::parseHexadecimal(ParserContext& ctx, size_t& i)
 
 Token::ParseResult Token::parseBinary(ParserContext& ctx, size_t& i)
 {
-	while(ctx.source[i] == '0' || ctx.source[i] == '1')
+	while(ctx.m_source[i] == '0' || ctx.m_source[i] == '1')
 	{
 		i++;
 	}
 
-	if(isIdentifierCharacter(ctx.source[i]))
+	if(isIdentifierCharacter(ctx.m_source[i]))
 	{
 		// TODO: Parse identifier to get the whole suffix.
 		i++;
@@ -570,20 +570,20 @@ bool Token::setTypeIfMoved(ParserContext& ctx, size_t& i, ParseResult(Token::*ca
 {
 	size_t origin = i;
 	auto result = (this->*callback)(ctx, i);
-	length = i - index;
+	m_length = i - m_index;
 
-	if(!result.error.empty())
+	if(!result.m_error.empty())
 	{
-		SourceLocation location(ctx.source, *this);
-		ctx.client.sourceError(location, result.error);
+		SourceLocation location(ctx.m_source, *this);
+		ctx.m_client.sourceError(location, result.m_error);
 
-		type = Type::Invalid;
+		m_type = Type::Invalid;
 		return true;
 	}
 
 	if(i != origin)
 	{
-		type = result.tokenType;
+		m_type = result.m_tokenType;
 		return true;
 	}
 

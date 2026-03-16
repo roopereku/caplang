@@ -10,27 +10,27 @@ namespace cap
 {
 
 Function::Function() :
-	Declaration(Declaration::Type::Function, parameters)
+	Declaration(Declaration::Type::Function, m_parameters)
 {
 }
 
 std::weak_ptr <Node> Function::handleToken(ParserContext& ctx, Token& token)
 {
 	// Parse the function name.
-	if(name.empty())
+	if(m_name.empty())
 	{
 		// TODO: Check if there is no name but the token is an
 		// opening parenthesis, go straight to signature parsing.
 		
 		if(token.getType() != Token::Type::Identifier)
 		{
-			SourceLocation location(ctx.source, token);
-			ctx.client.sourceError(location, "Expected an identifier after 'func'");
+			SourceLocation location(ctx.m_source, token);
+			ctx.m_client.sourceError(location, "Expected an identifier after 'func'");
 			return {};
 		}
 
 		setToken(token);
-		name = ctx.source.getString(token);
+		m_name = ctx.m_source.getString(token);
 
 		assert(getParentScope());
 		getParentScope()->declarations.add(std::static_pointer_cast <Function> (shared_from_this()));
@@ -43,20 +43,20 @@ std::weak_ptr <Node> Function::handleToken(ParserContext& ctx, Token& token)
 		if(!token.isOpeningBracket(ctx, '('))
 		{
 			// TODO: How about anonymous functions?
-			SourceLocation location(ctx.source, token);
-			ctx.client.sourceError(location, "Expected '(' after function name");
+			SourceLocation location(ctx.m_source, token);
+			ctx.m_client.sourceError(location, "Expected '(' after function name");
 			return {};
 		}
 
 		initializeParameters();
 		adopt(getParameterRoot());
 
-		ctx.declarationLocation = shared_from_this();
+		ctx.m_declarationLocation = shared_from_this();
 		return getParameterRoot();
 	}
 	
 	// Parse the function return type.
-	else if(token.getType() == Token::Type::Operator && ctx.source.match(token, L"->"))
+	else if(token.getType() == Token::Type::Operator && ctx.m_source.match(token, L"->"))
 	{
 		assert(!getReturnTypeRoot());
 		initializeReturnType();
@@ -65,16 +65,16 @@ std::weak_ptr <Node> Function::handleToken(ParserContext& ctx, Token& token)
 		return getReturnTypeRoot();
 	}
 
-	else if(!body)
+	else if(!m_body)
 	{
-		body = Scope::startParsing(ctx, token, false);
+		m_body = Scope::startParsing(ctx, token, false);
 
-		if(body)
+		if(m_body)
 		{
-			adopt(body);
+			adopt(m_body);
 		}
 
-		return body;
+		return m_body;
 	}
 
 	assert(false);
@@ -83,18 +83,18 @@ std::weak_ptr <Node> Function::handleToken(ParserContext& ctx, Token& token)
 
 std::weak_ptr <Node> Function::invokedNodeExited(ParserContext& ctx, Token&)
 {
-	if(ctx.exitedFrom == getParameterRoot())
+	if(ctx.m_exitedFrom == getParameterRoot())
 	{
-		ctx.declarationLocation = nullptr;
+		ctx.m_declarationLocation = nullptr;
 		return weak_from_this();
 	}
 
-	else if(ctx.exitedFrom == getReturnTypeRoot())
+	else if(ctx.m_exitedFrom == getReturnTypeRoot())
 	{
 		return weak_from_this();
 	}
 
-	else if(ctx.exitedFrom == body)
+	else if(ctx.m_exitedFrom == m_body)
 	{
 		return getParent();
 	}
@@ -105,19 +105,19 @@ std::weak_ptr <Node> Function::invokedNodeExited(ParserContext& ctx, Token&)
 
 std::shared_ptr <Scope> Function::getBody() const
 {
-	return body;
+	return m_body;
 }
 
 bool Function::validate(Validator& validator)
 {
-	if(!referredType.has_value())
+	if(!m_referredType.has_value())
 	{
 		if(!Declaration::validate(validator))
 		{
 			return false;
 		}
 
-		referredType.emplace(TypeContext(*this));
+		m_referredType.emplace(TypeContext(*this));
 
 		if(!getReturnTypeRoot())
 		{
@@ -126,7 +126,7 @@ bool Function::validate(Validator& validator)
 
 		if(!validator.traverseStatement(getParameterRoot()) ||
 			!validator.traverseExpression(getReturnTypeRoot()) ||
-			!validator.traverseScope(body))
+			!validator.traverseScope(m_body))
 		{
 			return false;
 		}
@@ -134,7 +134,7 @@ bool Function::validate(Validator& validator)
 		// If no return type still exists, default to void.
 		if(!getReturnTypeRoot()->getResultType())
 		{
-			auto& voidType = validator.getParserContext().client.getBuiltin().get(Builtin::DataType::Void);
+			auto& voidType = validator.getParserContext().m_client.getBuiltin().get(Builtin::DataType::Void);
 			getReturnTypeRoot()->setResultType(voidType);
 		}
 	}

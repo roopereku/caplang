@@ -20,13 +20,13 @@ public:
 
 	std::shared_ptr <Declaration> getReferred() const
 	{
-		return referredDeclaration.lock();
+		return m_referredDeclaration.lock();
 	}
 
 private:
 	std::shared_ptr <Declaration> findReferred(std::shared_ptr <Expression> node, Validator& validator) const;
 
-	std::weak_ptr <Declaration> referredDeclaration;
+	std::weak_ptr <Declaration> m_referredDeclaration;
 };
 
 }
