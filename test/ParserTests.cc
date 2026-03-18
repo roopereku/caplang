@@ -1,31 +1,31 @@
 #include <gtest/gtest.h>
 
-#include <cap/test/NodeMatcher.hh>
-#include <cap/test/DynamicSource.hh>
 #include <cap/Client.hh>
 #include <cap/Scope.hh>
+#include <cap/test/DynamicSource.hh>
+#include <cap/test/NodeMatcher.hh>
 
 using namespace cap::test;
 
 class ParserTester : public cap::Client
 {
 public:
-	ParserTester()
-	{
-	}
+    ParserTester() {}
 
-	void test(std::wstring&& str, std::vector <ExpectedNode>&& expected)
-	{
-		cap::test::DynamicSource source;
-		source += std::move(str);
+    void test(std::wstring&& str, std::vector<ExpectedNode>&& expected)
+    {
+        cap::test::DynamicSource source;
+        source += std::move(str);
 
-		ASSERT_TRUE(source.parse(*this, false));
+        ASSERT_TRUE(source.parse(*this, false));
 
-		expected.insert(expected.begin(), Scope());
-		NodeMatcher matcher(std::move(expected));
-		matcher.traverseNode(source.getGlobal());
-	}
+        expected.insert(expected.begin(), Scope());
+        NodeMatcher matcher(std::move(expected));
+        matcher.traverseNode(source.getGlobal());
+    }
 };
+
+// clang-format off
 
 TEST(ParserTests, FunctionDeclaration)
 {
@@ -56,7 +56,7 @@ TEST(ParserTests, FunctionDeclaration)
 			Scope(),
 				Function(L"bar"),
 					Scope()
-	});	
+	});
 
 	// Function with an explicit return type
 	tester.test(L"func foo() -> SomeType\n{\n}\n",
@@ -77,7 +77,7 @@ TEST(ParserTests, ClassTypeDeclaration)
 	{
 		ClassType(L"foo"),
 			Scope()
-	});	
+	});
 
 	// Test nested class type without base classes.
 	tester.test(L"type foo\n{\ntype bar\n{\n}\n}",
@@ -86,7 +86,7 @@ TEST(ParserTests, ClassTypeDeclaration)
 			Scope(),
 				ClassType(L"bar"),
 					Scope()
-	});	
+	});
 
 	// Test a generics with initializations.
 	tester.test(L"type foo <T1 = int64, T2 = uint32>\n{\n}",

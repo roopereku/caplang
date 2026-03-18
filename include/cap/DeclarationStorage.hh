@@ -15,58 +15,46 @@ class Validator;
 class DeclarationStorage
 {
 private:
-	std::vector <std::shared_ptr <Declaration>> m_declarations;
+    std::vector<std::shared_ptr<Declaration>> m_declarations;
 
 public:
-	DeclarationStorage() {}
+    DeclarationStorage() {}
 
-	// Forbid copying.
-	DeclarationStorage(const DeclarationStorage& rhs) = delete;
+    // Forbid copying.
+    DeclarationStorage(const DeclarationStorage& rhs) = delete;
 
-	/// Adds a new declaration into this scope.
-	///
-	/// \param node The declaration node to add.
-	void add(std::shared_ptr <Declaration> node);
+    /// Adds a new declaration into this scope.
+    ///
+    /// \param node The declaration node to add.
+    void add(std::shared_ptr<Declaration> node);
 
-	/// Checks if this declaration storage contains a declaration which
-	/// is equivalent to the given one. Error are logged if any.
-	///
-	/// \param node The declaration to match against.
-	/// \param validator Used to ensure that all compared declarations have been validated if needed.
-	/// \return True if an equivalent declaration is found.
-	bool checkEquivalent(std::shared_ptr <Declaration> node, Validator& validator) const;
+    /// Checks if this declaration storage contains a declaration which
+    /// is equivalent to the given one. Error are logged if any.
+    ///
+    /// \param node The declaration to match against.
+    /// \param validator Used to ensure that all compared declarations have been validated if needed.
+    /// \return True if an equivalent declaration is found.
+    bool checkEquivalent(std::shared_ptr<Declaration> node, Validator& validator) const;
 
-	/// Checks if this declaration storage is valid.
-	///
-	/// \return True if this declaration storage isn't the invalid representation.
-	bool isValid();
+    /// Checks if this declaration storage is valid.
+    ///
+    /// \return True if this declaration storage isn't the invalid representation.
+    bool isValid();
 
-	/// Gets a declaration storage that represents an invalid state.
-	///
-	/// \return An invalid declaration storage.
-	static DeclarationStorage& getInvalid();
+    /// Gets a declaration storage that represents an invalid state.
+    ///
+    /// \return An invalid declaration storage.
+    static DeclarationStorage& getInvalid();
 
-	decltype(m_declarations)::iterator begin()
-	{
-		return m_declarations.begin();
-	}
+    decltype(m_declarations)::iterator begin() { return m_declarations.begin(); }
 
-	decltype(m_declarations)::iterator end()
-	{
-		return m_declarations.end();
-	}
+    decltype(m_declarations)::iterator end() { return m_declarations.end(); }
 
-	decltype(m_declarations)::const_iterator begin() const
-	{
-		return m_declarations.begin();
-	}
+    decltype(m_declarations)::const_iterator begin() const { return m_declarations.begin(); }
 
-	decltype(m_declarations)::const_iterator end() const
-	{
-		return m_declarations.end();
-	}
+    decltype(m_declarations)::const_iterator end() const { return m_declarations.end(); }
 };
 
-}
+} // namespace cap
 
 #endif

@@ -1,39 +1,41 @@
 #include <gtest/gtest.h>
 
-#include <cap/test/NodeMatcher.hh>
-#include <cap/test/DynamicSource.hh>
 #include <cap/Client.hh>
 #include <cap/Scope.hh>
+#include <cap/test/DynamicSource.hh>
+#include <cap/test/NodeMatcher.hh>
 
 using namespace cap::test;
 
 class ExpressionTester : public cap::Client
 {
 public:
-	ExpressionTester()
-		: base({ Scope(), Function(L"test"), Scope() })
-	{
-	}
+    ExpressionTester() :
+        base({Scope(), Function(L"test"), Scope()})
+    {
+    }
 
-	void test(std::wstring&& expr, std::vector <ExpectedNode>&& expectedExpr)
-	{
-		std::wstring context = L"Testing expression: " + expr;
-		SCOPED_TRACE(context.c_str());
+    void test(std::wstring&& expr, std::vector<ExpectedNode>&& expectedExpr)
+    {
+        std::wstring context = L"Testing expression: " + expr;
+        SCOPED_TRACE(context.c_str());
 
-		cap::test::DynamicSource source;
-		source += L"func test()\n{\n";
-		source += std::move(expr);
-		source += L"\n}\n";
+        cap::test::DynamicSource source;
+        source += L"func test()\n{\n";
+        source += std::move(expr);
+        source += L"\n}\n";
 
-		ASSERT_TRUE(source.parse(*this, false));
+        ASSERT_TRUE(source.parse(*this, false));
 
-		expectedExpr.insert(expectedExpr.begin(), base.begin(), base.end());
-		NodeMatcher matcher(std::move(expectedExpr));
-		matcher.traverseNode(source.getGlobal());
-	}
+        expectedExpr.insert(expectedExpr.begin(), base.begin(), base.end());
+        NodeMatcher matcher(std::move(expectedExpr));
+        matcher.traverseNode(source.getGlobal());
+    }
 
-	std::vector <ExpectedNode> base;
+    std::vector<ExpectedNode> base;
 };
+
+// clang-format off
 
 TEST(ExpressionTests, SingleIdentifier)
 {
@@ -344,7 +346,7 @@ TEST(ExpressionTests, ExpressionEnds)
 			!= 2
 			)
 				) ^ (
-			
+
 					100 %
 					20
 			>>
@@ -484,7 +486,7 @@ TEST(ExpressionTests, ExpressionAttributesDisconnected)
 			Identifier(L"something"),
 
 		Expression(),
-			cap::BracketOperator::Type::Call,	
+			cap::BracketOperator::Type::Call,
 				Identifier(L"print"),
 				Expression(),
 					String(L"test")

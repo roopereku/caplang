@@ -9,84 +9,86 @@ namespace cap
 class BinaryOperator : public Expression
 {
 public:
-	enum class Type
-	{
-		Assign,
-		Access,
-		Comma,
+    enum class Type
+    {
+        Assign,
+        Access,
+        Comma,
 
-		Add,
-		Subtract,
-		Multiply,
-		Divide,
-		Modulus,
-		Exponent,
+        Add,
+        Subtract,
+        Multiply,
+        Divide,
+        Modulus,
+        Exponent,
 
-		Or,
-		And,
-		Less,
-		Greater,
-		LessEqual,
-		GreaterEqual,
-		Equal,
-		Inequal,
+        Or,
+        And,
+        Less,
+        Greater,
+        LessEqual,
+        GreaterEqual,
+        Equal,
+        Inequal,
 
-		BitwiseShiftLeft,
-		BitwiseShiftRight,
-		BitwiseAnd,
-		BitwiseOr,
-		BitwiseXor
-	};
+        BitwiseShiftLeft,
+        BitwiseShiftRight,
+        BitwiseAnd,
+        BitwiseOr,
+        BitwiseXor
+    };
 
-	BinaryOperator(Type type, bool compound = false)
-		: Expression(Expression::Type::BinaryOperator), m_type(type), m_compound(compound)
-	{
-	}
+    BinaryOperator(Type type, bool compound = false) :
+        Expression(Expression::Type::BinaryOperator),
+        m_type(type),
+        m_compound(compound)
+    {
+    }
 
-	/// Creates a binary operator based on the given token.
-	///
-	/// \param ctx The parsing context to get the source from.
-	/// \param token The token to parse a binary operator from.
-	/// \return New binary operator or null.
-	static std::shared_ptr <BinaryOperator> create(cap::ParserContext& ctx, Token token);
+    /// Creates a binary operator based on the given token.
+    ///
+    /// \param ctx The parsing context to get the source from.
+    /// \param token The token to parse a binary operator from.
+    /// \return New binary operator or null.
+    static std::shared_ptr<BinaryOperator> create(cap::ParserContext& ctx, Token token);
 
-	/// Sets the left hand side and right hand side values.
-	///
-	/// \param node The left hand side or the right hand side value.
-	void handleValue(std::shared_ptr <Expression> node) override;
+    /// Sets the left hand side and right hand side values.
+    ///
+    /// \param node The left hand side or the right hand side value.
+    void handleValue(std::shared_ptr<Expression> node) override;
 
-	/// Checks whether this operator has values on both sides.
-	///
-	/// \return True if this operator has values on both sides.
-	bool isComplete() const override;
+    /// Checks whether this operator has values on both sides.
+    ///
+    /// \return True if this operator has values on both sides.
+    bool isComplete() const override;
 
-	/// Returns the precedence value for the held binary operator type.
-	///
-	/// \return Something between binaryPrecedenceStart and binaryPrecendenceEnd or binaryAccessPrecedence
-	unsigned getPrecedence() override;
+    /// Returns the precedence value for the held binary operator type.
+    ///
+    /// \return Something between binaryPrecedenceStart and binaryPrecendenceEnd or binaryAccessPrecedence
+    unsigned getPrecedence() override;
 
-	/// Gets the type of this binary operator.
-	///
-	/// \return The type of this binary operator.
-	Type getType();
+    /// Gets the type of this binary operator.
+    ///
+    /// \return The type of this binary operator.
+    Type getType();
 
-	std::shared_ptr <Expression> getLeft();
-	std::shared_ptr <Expression> getRight();
+    std::shared_ptr<Expression> getLeft();
+    std::shared_ptr<Expression> getRight();
 
-	static const char* getTypeString(Type type);
-	const char* getTypeString() const override;
+    static const char* getTypeString(Type type);
+    const char* getTypeString() const override;
 
 protected:
-	std::shared_ptr <Expression> stealLatestValue() override;
+    std::shared_ptr<Expression> stealLatestValue() override;
 
 private:
-	std::shared_ptr <Expression> m_left;
-	std::shared_ptr <Expression> m_right;
+    std::shared_ptr<Expression> m_left;
+    std::shared_ptr<Expression> m_right;
 
-	Type m_type;
-	bool m_compound;
+    Type m_type;
+    bool m_compound;
 };
 
-}
+} // namespace cap
 
 #endif

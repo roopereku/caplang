@@ -14,69 +14,70 @@ class Validator;
 class Declaration : public Node
 {
 public:
-	enum class Type
-	{
-		Class,
-		Function,
-		Variable
-	};
+    enum class Type
+    {
+        Class,
+        Function,
+        Variable
+    };
 
-	class Root;
+    class Root;
 
-	/// Gets the name of this declaration.
-	///
-	/// \return The name of this declaration.
-	const std::wstring& getName() const;
+    /// Gets the name of this declaration.
+    ///
+    /// \return The name of this declaration.
+    const std::wstring& getName() const;
 
-	/// Gets the type of this declaration.
-	///
-	/// \return The type of this declaration.
-	Type getType();
+    /// Gets the type of this declaration.
+    ///
+    /// \return The type of this declaration.
+    Type getType();
 
-	/// Gets the type referred to by this declaration.
-	///
-	/// \return The type referred to by this declaration if any.
-	const std::optional <TypeContext>& getReferredType() const;
+    /// Gets the type referred to by this declaration.
+    ///
+    /// \return The type referred to by this declaration if any.
+    const std::optional<TypeContext>& getReferredType() const;
 
-	/// Validates this declaration.
-	///
-	/// \param validator The validator used for traversal.
-	/// \return True if validation succeeded.
-	virtual bool validate(Validator& validator) = 0;
+    /// Validates this declaration.
+    ///
+    /// \param validator The validator used for traversal.
+    /// \return True if validation succeeded.
+    virtual bool validate(Validator& validator) = 0;
 
-	/// Gets the full location of this declaration.
-	///
-	/// \param delimiter The delimiter to put between names.
-	/// \return The full location delimited by a delimiter.
-	std::wstring getLocation(wchar_t delimiter = '.') const;
+    /// Gets the full location of this declaration.
+    ///
+    /// \param delimiter The delimiter to put between names.
+    /// \return The full location delimited by a delimiter.
+    std::wstring getLocation(wchar_t delimiter = '.') const;
 
-	/// Gets the declaration that this declaration resides in.
-	///
-	/// \return The parent declaration if any.
-	std::shared_ptr <Declaration> getParentDeclaration() const;
+    /// Gets the declaration that this declaration resides in.
+    ///
+    /// \return The parent declaration if any.
+    std::shared_ptr<Declaration> getParentDeclaration() const;
 
-	/// Gets whether this declaration is a declaration of an attribute.
-	///
-	/// \return True if this declaration is an attribute.
-	bool isAttribute() const;
+    /// Gets whether this declaration is a declaration of an attribute.
+    ///
+    /// \return True if this declaration is an attribute.
+    bool isAttribute() const;
 
 protected:
-	Declaration(Type type);
-	Declaration(Type type, DeclarationStorage& declStorage);
+    Declaration(Type type);
+    Declaration(Type type, DeclarationStorage& declStorage);
 
-	bool handleBuiltinAttribute(Validator& validator, Builtin::AttributeType type, std::shared_ptr <Attribute> node) override;
+    bool handleBuiltinAttribute(Validator& validator, Builtin::AttributeType type,
+                                std::shared_ptr<Attribute> node) override;
 
-	/// Implementation defined type such as the referred type of an
-	/// alias, variable or a callable type with the signature for functions.
-	std::optional <TypeContext> m_referredType;
+    /// Implementation defined type such as the referred type of an
+    /// alias, variable or a callable type with the signature for functions.
+    std::optional<TypeContext> m_referredType;
 
-	std::wstring m_name;
+    std::wstring m_name;
 
 private:
-	Type m_type;
-	bool m_attribute = false;
+    Type m_type;
+    bool m_attribute = false;
 };
 
-}
+} // namespace cap
 
 #endif

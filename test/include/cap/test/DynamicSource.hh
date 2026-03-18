@@ -9,14 +9,14 @@ namespace cap::test
 class DynamicSource : public cap::Source
 {
 public:
-	DynamicSource();
-	DynamicSource(std::wstring&& src);
+    DynamicSource();
+    DynamicSource(std::wstring&& src);
 
-	void operator+=(std::wstring&& value);
-	void operator+=(const std::wstring& value);
-	size_t getLength() const;
+    void operator+=(std::wstring&& value);
+    void operator+=(const std::wstring& value);
+    size_t getLength() const;
 };
 
-}
+} // namespace cap::test
 
 #endif

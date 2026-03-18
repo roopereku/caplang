@@ -1,50 +1,49 @@
 #include <gtest/gtest.h>
 
+#include <cap/Client.hh>
+#include <cap/Function.hh>
 #include <cap/test/DynamicSource.hh>
 #include <cap/test/NodeMatcher.hh>
-#include <cap/Function.hh>
-#include <cap/Client.hh>
 
 using namespace cap::test;
 
 class ValidationTester : public cap::Client
 {
 public:
-	void setup(std::wstring&& src)
-	{
-		setupSrc = std::move(src);
-	}
+    void setup(std::wstring&& src) { setupSrc = std::move(src); }
 
-	void test(std::wstring&& src, std::vector <ExpectedNode>&& expectedExpr)
-	{
-		cap::test::DynamicSource source;
-		source += setupSrc;
-		source += L"\nfunc test()\n{\n";
-		source += std::move(src);
-		source += L"\n}\n";
+    void test(std::wstring&& src, std::vector<ExpectedNode>&& expectedExpr)
+    {
+        cap::test::DynamicSource source;
+        source += setupSrc;
+        source += L"\nfunc test()\n{\n";
+        source += std::move(src);
+        source += L"\n}\n";
 
-		ASSERT_TRUE(source.parse(*this, true));
+        ASSERT_TRUE(source.parse(*this, true));
 
-		expectedExpr.insert(expectedExpr.begin(), Scope());
-		NodeMatcher matcher(std::move(expectedExpr));
+        expectedExpr.insert(expectedExpr.begin(), Scope());
+        NodeMatcher matcher(std::move(expectedExpr));
 
-		std::shared_ptr <cap::Scope> root;
-		for(auto decl : source.getGlobal()->declarations)
-		{
-			if(decl->getName() == L"test")
-			{
-				ASSERT_TRUE(decl->getType() == cap::Declaration::Type::Function);
-				auto func = std::static_pointer_cast <cap::Function> (decl);
-				root = func->getBody();
-			}
-		}
+        std::shared_ptr<cap::Scope> root;
+        for (auto decl : source.getGlobal()->declarations)
+        {
+            if (decl->getName() == L"test")
+            {
+                ASSERT_TRUE(decl->getType() == cap::Declaration::Type::Function);
+                auto func = std::static_pointer_cast<cap::Function>(decl);
+                root = func->getBody();
+            }
+        }
 
-		matcher.traverseWithContext(root, this);
-	}
+        matcher.traverseWithContext(root, this);
+    }
 
 private:
-	std::wstring setupSrc;
+    std::wstring setupSrc;
 };
+
+// clang-format off
 
 TEST(ValidationTests, AccessOperatorResultType)
 {
@@ -223,7 +222,7 @@ TEST(ValidationTests, TypeReferenceUsage)
 	{
 		LocalVariable(L"a") > L"type int64",
 			TypeReference() > L"type int64",
-				Identifier(L"int64") > L"int64"		
+				Identifier(L"int64") > L"int64"
 	});
 
 	tester.setup(LR"SRC(

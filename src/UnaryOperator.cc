@@ -1,136 +1,130 @@
-#include <cap/UnaryOperator.hh>
 #include <cap/ParserContext.hh>
 #include <cap/Source.hh>
+#include <cap/UnaryOperator.hh>
 
-#include <string_view>
-#include <cassert>
 #include <array>
+#include <cassert>
+#include <string_view>
 
 namespace cap
 {
 
-std::shared_ptr <UnaryOperator> UnaryOperator::createPrefix(cap::ParserContext& ctx, Token token)
+std::shared_ptr<UnaryOperator> UnaryOperator::createPrefix(cap::ParserContext& ctx, Token token)
 {
-	// TODO: It could be faster if source provided a way to match against a list of strings.
+    // TODO: It could be faster if source provided a way to match against a list of strings.
 
-	std::array <std::wstring_view, 6> ops
-	{
-		L"-", L"!", L"~", L"*", L"++", L"--"
-	};
+    std::array<std::wstring_view, 6> ops{L"-", L"!", L"~", L"*", L"++", L"--"};
 
-	for(size_t i = 0; i < ops.size(); i++)
-	{
-		if(ctx.m_source.match(token, ops[i]))
-		{
-			return std::make_shared <UnaryOperator> (static_cast <Type> (i));
-		}
-	}
-	
-	return nullptr;
+    for (size_t i = 0; i < ops.size(); i++)
+    {
+        if (ctx.m_source.match(token, ops[i]))
+        {
+            return std::make_shared<UnaryOperator>(static_cast<Type>(i));
+        }
+    }
+
+    return nullptr;
 }
 
-std::shared_ptr <UnaryOperator> UnaryOperator::createPostfix(cap::ParserContext& ctx, Token token)
+std::shared_ptr<UnaryOperator> UnaryOperator::createPostfix(cap::ParserContext& ctx, Token token)
 {
-	// TODO: It could be faster if source provided a way to match against a list of strings.
+    // TODO: It could be faster if source provided a way to match against a list of strings.
 
-	std::array <std::wstring_view, 2> ops
-	{
-		L"++", L"--"
-	};
+    std::array<std::wstring_view, 2> ops{L"++", L"--"};
 
-	for(size_t i = 0; i < ops.size(); i++)
-	{
-		if(ctx.m_source.match(token, ops[i]))
-		{
-			constexpr size_t offset = static_cast <size_t> (Type::PostIncrement);
-			return std::make_shared <UnaryOperator> (static_cast <Type> (offset + i));
-		}
-	}
-	
-	return nullptr;
+    for (size_t i = 0; i < ops.size(); i++)
+    {
+        if (ctx.m_source.match(token, ops[i]))
+        {
+            constexpr size_t offset = static_cast<size_t>(Type::PostIncrement);
+            return std::make_shared<UnaryOperator>(static_cast<Type>(offset + i));
+        }
+    }
+
+    return nullptr;
 }
 
-void UnaryOperator::handleValue(std::shared_ptr <Expression> node)
+void UnaryOperator::handleValue(std::shared_ptr<Expression> node)
 {
-	if(!m_expression)
-	{
-		m_expression = node;
-	}
+    if (!m_expression)
+    {
+        m_expression = node;
+    }
 
-	else
-	{
-		assert(false && "Tried to set a value for unary operator after expression was set");
-	}
+    else
+    {
+        assert(false && "Tried to set a value for unary operator after expression was set");
+    }
 }
 
 bool UnaryOperator::isComplete() const
 {
-	return static_cast <bool> (m_expression);
+    return static_cast<bool>(m_expression);
 }
 
 unsigned UnaryOperator::getPrecedence()
 {
-	switch(m_type)
-	{
-		case Type::Negate: return preUnaryPrecedence;
-		case Type::LogicalNot: return preUnaryPrecedence;
-		case Type::BitwiseNot: return preUnaryPrecedence;
-		case Type::ParseTime: return preUnaryPrecedence;
+    switch (m_type)
+    {
+        case Type::Negate: return preUnaryPrecedence;
+        case Type::LogicalNot: return preUnaryPrecedence;
+        case Type::BitwiseNot: return preUnaryPrecedence;
+        case Type::ParseTime: return preUnaryPrecedence;
 
-		case Type::PreIncrement: return preUnaryPrecedence;
-		case Type::PreDecrement: return preUnaryPrecedence;
+        case Type::PreIncrement: return preUnaryPrecedence;
+        case Type::PreDecrement: return preUnaryPrecedence;
 
-		// TODO: With this precedence it looks like post increment happens before pre increment.
-		case Type::PostIncrement: return postUnaryPrecedence;
-		case Type::PostDecrement: return postUnaryPrecedence;
-	}
+        // TODO: With this precedence it looks like post increment happens before pre increment.
+        case Type::PostIncrement: return postUnaryPrecedence;
+        case Type::PostDecrement: return postUnaryPrecedence;
+    }
 
-	assert(false);
-	return -1;
+    assert(false);
+    return -1;
 }
 
 UnaryOperator::Type UnaryOperator::getType()
 {
-	return m_type;
+    return m_type;
 }
 
-std::shared_ptr <Expression> UnaryOperator::getExpression()
+std::shared_ptr<Expression> UnaryOperator::getExpression()
 {
-	return m_expression;
+    return m_expression;
 }
 
 const char* UnaryOperator::getTypeString(Type type)
 {
-	switch(type)
-	{
-		case Type::Negate: return "Negate";
-		case Type::LogicalNot: return "LogicalNot";
-		case Type::BitwiseNot: return "BitwiseNot";
-		case Type::ParseTime: return "ParseTime";
+    switch (type)
+    {
+        case Type::Negate: return "Negate";
+        case Type::LogicalNot: return "LogicalNot";
+        case Type::BitwiseNot: return "BitwiseNot";
+        case Type::ParseTime: return "ParseTime";
 
-		case Type::PreIncrement: return "PreIncrement";
-		case Type::PreDecrement: return "PreDecrement";
-		case Type::PostIncrement: return "PostIncrement";
-		case Type::PostDecrement: return "PostDecrement";
-	}
+        case Type::PreIncrement: return "PreIncrement";
+        case Type::PreDecrement: return "PreDecrement";
+        case Type::PostIncrement: return "PostIncrement";
+        case Type::PostDecrement: return "PostDecrement";
+    }
 
-	return "(unaryop) ???";
+    return "(unaryop) ???";
 }
 
 const char* UnaryOperator::getTypeString() const
 {
-	return getTypeString(m_type);
+    return getTypeString(m_type);
 }
 
-std::shared_ptr <Expression> UnaryOperator::stealLatestValue()
+std::shared_ptr<Expression> UnaryOperator::stealLatestValue()
 {
-	if(m_expression)
-	{
-		return std::move(m_expression);
-	}
+    if (m_expression)
+    {
+        return std::move(m_expression);
+    }
 
-	assert(false && "Cannot steal value from UnaryOperator since it has nothing");
-	return nullptr;
+    assert(false && "Cannot steal value from UnaryOperator since it has nothing");
+    return nullptr;
 }
 
-}
+} // namespace cap

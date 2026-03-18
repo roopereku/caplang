@@ -6,19 +6,19 @@ namespace cap
 // TODO: The value initialization might not be enough for multiline strings
 // depending on how they are implemented.
 String::String(std::wstring&& value) :
-	Value(Type::String),
-	m_value(value.begin() + 1, value.end() - 1)
+    Value(Type::String),
+    m_value(value.begin() + 1, value.end() - 1)
 {
 }
 
 const std::wstring& String::getValue() const
 {
-	return m_value;
+    return m_value;
 }
 
 const char* String::getTypeString() const
 {
-	return "String";
+    return "String";
 }
 
-}
+} // namespace cap

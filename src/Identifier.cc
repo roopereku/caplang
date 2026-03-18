@@ -1,34 +1,35 @@
-#include <cap/Identifier.hh>
 #include <cap/Declaration.hh>
+#include <cap/Identifier.hh>
 
 #include <cassert>
 
 namespace cap
 {
 
-Identifier::Identifier(std::wstring&& value)
-	: Value(Type::Identifier), m_value(std::move(value))
+Identifier::Identifier(std::wstring&& value) :
+    Value(Type::Identifier),
+    m_value(std::move(value))
 {
 }
 
 const std::wstring& Identifier::getValue()
 {
-	return m_value;
+    return m_value;
 }
 
-std::shared_ptr <Declaration> Identifier::getReferred()
+std::shared_ptr<Declaration> Identifier::getReferred()
 {
-	if(!m_referred.expired())
-	{
-		return m_referred.lock();
-	}
+    if (!m_referred.expired())
+    {
+        return m_referred.lock();
+    }
 
-	return nullptr;
+    return nullptr;
 }
 
-void Identifier::setReferred(std::shared_ptr <Declaration> node)
+void Identifier::setReferred(std::shared_ptr<Declaration> node)
 {
-	m_referred = node;
+    m_referred = node;
 }
 
 void Identifier::updateResultType()
@@ -42,7 +43,7 @@ void Identifier::updateResultType()
 
 const char* Identifier::getTypeString() const
 {
-	return "Identifier";
+    return "Identifier";
 }
 
-}
+} // namespace cap

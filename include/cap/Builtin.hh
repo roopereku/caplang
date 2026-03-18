@@ -17,50 +17,50 @@ class TypeDefinition;
 class Builtin : public Source
 {
 public:
-	enum class DataType
-	{
-		Uint8,
-		Uint16,
-		Uint32,
-		Uint64,
-		Int8,
-		Int16,
-		Int32,
-		Int64,
-		String,
-		Void
-	};
+    enum class DataType
+    {
+        Uint8,
+        Uint16,
+        Uint32,
+        Uint64,
+        Int8,
+        Int16,
+        Int32,
+        Int64,
+        String,
+        Void
+    };
 
-	enum class AttributeType
-	{
-		Definition
-	};
+    enum class AttributeType
+    {
+        Definition
+    };
 
-	Builtin();
+    Builtin();
 
-	void doCaching();
-	TypeDefinition& get(DataType type) const;
+    void doCaching();
+    TypeDefinition& get(DataType type) const;
 
-	/// Gets the attribute type that corresponds to the given string if any.
-	/// \param value The string value to match a builtin attribute type to.
-	/// \return The corresponding attribute type if any.
-	static std::optional<AttributeType> getAttributeType(std::wstring_view value);
+    /// Gets the attribute type that corresponds to the given string if any.
+    /// \param value The string value to match a builtin attribute type to.
+    /// \return The corresponding attribute type if any.
+    static std::optional<AttributeType> getAttributeType(std::wstring_view value);
 
-	/// Gets the declaration of the given builtin attribute type.
-	/// \param The builtin attribute type to retrieve.
-	/// \return The declaration of the given builtin attribute type.
-	std::shared_ptr<Declaration> getAttributeTypeDeclaration(AttributeType type) const;
+    /// Gets the declaration of the given builtin attribute type.
+    /// \param The builtin attribute type to retrieve.
+    /// \return The declaration of the given builtin attribute type.
+    std::shared_ptr<Declaration> getAttributeTypeDeclaration(AttributeType type) const;
 
-	/// Gets a datatype that can be associated with attribute definitions.
-	///
-	/// \return Datatype that can be associated with attribute definitions.
-	TypeContext getTypeForAttributeDefinition() const;
+    /// Gets a datatype that can be associated with attribute definitions.
+    ///
+    /// \return Datatype that can be associated with attribute definitions.
+    TypeContext getTypeForAttributeDefinition() const;
 
 private:
-	std::array <std::weak_ptr <ClassType>, 10> m_cachedTypes;
-	std::array <std::weak_ptr <Declaration>, 1> m_cachedAttributes;
+    std::array<std::weak_ptr<ClassType>, 10> m_cachedTypes;
+    std::array<std::weak_ptr<Declaration>, 1> m_cachedAttributes;
 };
 
-}
+} // namespace cap
 
 #endif

@@ -11,18 +11,18 @@ namespace cap
 class ArgumentAccessor
 {
 public:
-	ArgumentAccessor(std::shared_ptr <Expression::Root> root);
-	ArgumentAccessor(std::shared_ptr <Variable::Root> root);
+    ArgumentAccessor(std::shared_ptr<Expression::Root> root);
+    ArgumentAccessor(std::shared_ptr<Variable::Root> root);
 
-	std::shared_ptr <Expression> getNext();
+    std::shared_ptr<Expression> getNext();
 
 private:
-	void locateFirst();
+    void locateFirst();
 
-	std::shared_ptr <Expression> m_origin;
-	std::shared_ptr <Expression> m_current;
+    std::shared_ptr<Expression> m_origin;
+    std::shared_ptr<Expression> m_current;
 };
 
-}
+} // namespace cap
 
 #endif

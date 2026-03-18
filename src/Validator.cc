@@ -1,486 +1,480 @@
-#include <cap/Validator.hh>
-#include <cap/Source.hh>
+#include <cap/BinaryOperator.hh>
+#include <cap/BracketOperator.hh>
+#include <cap/ClassType.hh>
 #include <cap/Client.hh>
 #include <cap/Function.hh>
-#include <cap/ClassType.hh>
-#include <cap/BinaryOperator.hh>
-#include <cap/UnaryOperator.hh>
-#include <cap/BracketOperator.hh>
-#include <cap/TypeReference.hh>
-#include <cap/Value.hh>
 #include <cap/Identifier.hh>
 #include <cap/Integer.hh>
-#include <cap/String.hh>
-#include <cap/Variable.hh>
 #include <cap/Return.hh>
+#include <cap/Source.hh>
+#include <cap/String.hh>
+#include <cap/TypeReference.hh>
+#include <cap/UnaryOperator.hh>
+#include <cap/Validator.hh>
+#include <cap/Value.hh>
+#include <cap/Variable.hh>
 
 #include <cassert>
 
 namespace cap
 {
 
-Validator::Validator(ParserContext& ctx)
-	: m_ctx(ctx)
+Validator::Validator(ParserContext& ctx) :
+    m_ctx(ctx)
 {
 }
 
 ParserContext& Validator::getParserContext() const
 {
-	return m_ctx;
+    return m_ctx;
 }
 
-void Validator::onNodeExited(std::shared_ptr <Node>, Result)
+void Validator::onNodeExited(std::shared_ptr<Node>, Result) {}
+
+Traverser::Result Validator::onFunction(std::shared_ptr<Function> node)
 {
+    // Validate the node and make sure that it's unique.
+    if (!node->validate(*this) || !checkUniqueDeclaration(node))
+    {
+        return Result::Stop;
+    }
+
+    return Result::Exit;
 }
 
-Traverser::Result Validator::onFunction(std::shared_ptr <Function> node)
+Traverser::Result Validator::onClassType(std::shared_ptr<ClassType> node)
 {
-	// Validate the node and make sure that it's unique.
-	if(!node->validate(*this) ||
-		!checkUniqueDeclaration(node))
-	{
-		return Result::Stop;
-	}
+    if (!checkUniqueDeclaration(node) || !node->validate(*this))
+    {
+        return Result::Stop;
+    }
 
-	return Result::Exit;
+    return Result::Continue;
 }
 
-Traverser::Result Validator::onClassType(std::shared_ptr <ClassType> node)
+Traverser::Result Validator::onExpressionRoot(std::shared_ptr<Expression::Root> node)
 {
-	if(!checkUniqueDeclaration(node) || !node->validate(*this))
-	{
-		return Result::Stop;
-	}
+    if (node->getFirst())
+    {
+        if (!traverseExpression(node->getFirst()))
+        {
+            return Result::Stop;
+        }
 
-	return Result::Continue;
+        if (node->getFirst()->getResultType())
+        {
+            node->setResultType(*node->getFirst()->getResultType());
+        }
+    }
+
+    return Result::Exit;
 }
 
-Traverser::Result Validator::onExpressionRoot(std::shared_ptr <Expression::Root> node)
+Traverser::Result Validator::onTypeReference(std::shared_ptr<TypeReference> node)
 {
-	if(node->getFirst())
-	{
-		if(!traverseExpression(node->getFirst()))
-		{
-			return Result::Stop;
-		}
+    auto held = node->getFirst();
 
-		if(node->getFirst()->getResultType())
-		{
-			node->setResultType(*node->getFirst()->getResultType());
-		}
-	}
+    assert(held);
+    if (!traverseExpression(held))
+    {
+        return Result::Stop;
+    }
 
-	return Result::Exit;
+    assert(held->getResultType());
+    if (!held->getResultType()->m_isTypeName)
+    {
+        SourceLocation location(m_ctx.m_source, node->getToken());
+        m_ctx.m_client.sourceError(location, "Value given to 'type' must be a type name");
+        return Result::Stop;
+    }
+
+    node->setReferred(*held->getResultType());
+    return Result::Exit;
 }
 
-Traverser::Result Validator::onTypeReference(std::shared_ptr <TypeReference> node)
+Traverser::Result Validator::onVariable(std::shared_ptr<Variable> node)
 {
-	auto held = node->getFirst();
+    if (!checkUniqueDeclaration(node))
+    {
+        return Result::Stop;
+    }
 
-	assert(held);
-	if(!traverseExpression(held))
-	{
-		return Result::Stop;
-	}
+    if (!node->validate(*this))
+    {
+        return Result::Stop;
+    }
 
-	assert(held->getResultType());
-	if(!held->getResultType()->m_isTypeName)
-	{
-		SourceLocation location(m_ctx.m_source, node->getToken());
-		m_ctx.m_client.sourceError(location, "Value given to 'type' must be a type name");
-		return Result::Stop;
-	}
-
-	node->setReferred(*held->getResultType());
-	return Result::Exit;
+    return Result::Continue;
 }
 
-Traverser::Result Validator::onVariable(std::shared_ptr <Variable> node)
+Traverser::Result Validator::onBinaryOperator(std::shared_ptr<BinaryOperator> node)
 {
-	if(!checkUniqueDeclaration(node))
-	{
-		return Result::Stop;
-	}
+    if (!traverseExpression(node->getLeft()))
+    {
+        return Result::Stop;
+    }
 
-	if(!node->validate(*this))
-	{
-		return Result::Stop;
-	}
+    bool shouldCheckTypeName = true;
 
-	return Result::Continue;
-}
+    // If something is being accessed, store some context for
+    // the right node to consume.
+    if (node->getType() == BinaryOperator::Type::Access)
+    {
+        assert(node->getLeft()->getResultType());
+        m_resolverCtx.m_accessedFrom.emplace(*node->getLeft()->getResultType());
 
-Traverser::Result Validator::onBinaryOperator(std::shared_ptr <BinaryOperator> node)
-{
-	if(!traverseExpression(node->getLeft()))
-	{
-		return Result::Stop;
-	}
+        // Having a type name as the right side operand is fine for binary access.
+        shouldCheckTypeName = false;
+    }
 
-	bool shouldCheckTypeName = true;
+    if (!traverseExpression(node->getRight()) || (shouldCheckTypeName && !checkTypeNameUsage(node->getRight())))
+    {
+        return Result::Stop;
+    }
 
-	// If something is being accessed, store some context for
-	// the right node to consume.
-	if(node->getType() == BinaryOperator::Type::Access)
-	{
-		assert(node->getLeft()->getResultType());
-		m_resolverCtx.m_accessedFrom.emplace(*node->getLeft()->getResultType());
+    m_resolverCtx.reset();
 
-		// Having a type name as the right side operand is fine for binary access.
-		shouldCheckTypeName = false;
-	}
-
-	if(!traverseExpression(node->getRight()) ||
-		(shouldCheckTypeName && !checkTypeNameUsage(node->getRight())))
-	{
-		return Result::Stop;
-	}
-
-	m_resolverCtx.reset();
-
-	// Saving the result type doesn't make sense for commas.
-	if(node->getType() != BinaryOperator::Type::Comma)
-	{
+    // Saving the result type doesn't make sense for commas.
+    if (node->getType() != BinaryOperator::Type::Comma)
+    {
         assert(node->getRight()->getResultType());
 
-		// TODO: Forbid resetting of result type after initialization.
-		if(node->getType() == BinaryOperator::Type::Assign)
-		{
-			node->getLeft()->setResultType(*node->getRight()->getResultType());
-		}
+        // TODO: Forbid resetting of result type after initialization.
+        if (node->getType() == BinaryOperator::Type::Assign)
+        {
+            node->getLeft()->setResultType(*node->getRight()->getResultType());
+        }
 
-		// TODO: Check if there is a binary operator overload and set the result
-		// type based on that.
-		node->setResultType(*node->getRight()->getResultType());
-	}
+        // TODO: Check if there is a binary operator overload and set the result
+        // type based on that.
+        node->setResultType(*node->getRight()->getResultType());
+    }
 
-	return Result::Exit;
+    return Result::Exit;
 }
 
-Traverser::Result Validator::onUnaryOperator(std::shared_ptr <UnaryOperator> node)
+Traverser::Result Validator::onUnaryOperator(std::shared_ptr<UnaryOperator> node)
 {
-	if(!traverseExpression(node->getExpression()))
-	{
-		return Result::Stop;
-	}
+    if (!traverseExpression(node->getExpression()))
+    {
+        return Result::Stop;
+    }
 
     assert(node->getExpression()->getResultType());
-	node->setResultType(*node->getExpression()->getResultType());
-	return Result::Exit;
+    node->setResultType(*node->getExpression()->getResultType());
+    return Result::Exit;
 }
 
-Traverser::Result Validator::onBracketOperator(std::shared_ptr <BracketOperator> node)
+Traverser::Result Validator::onBracketOperator(std::shared_ptr<BracketOperator> node)
 {
-	// Temporarily steal the resolver context to hide it from the inner expression.
-	auto contextResolver = std::move(m_resolverCtx);
-	assert(!m_resolverCtx.m_accessedFrom);
+    // Temporarily steal the resolver context to hide it from the inner expression.
+    auto contextResolver = std::move(m_resolverCtx);
+    assert(!m_resolverCtx.m_accessedFrom);
 
-	if(node->getType() != BracketOperator::Type::Call)
-	{
-		SourceLocation location(m_ctx.m_source, node->getToken());
-		m_ctx.m_client.sourceError(location, "TODO: Bracket operator validation implemented for call operators only");
-		return Result::Stop;
-	}
+    if (node->getType() != BracketOperator::Type::Call)
+    {
+        SourceLocation location(m_ctx.m_source, node->getToken());
+        m_ctx.m_client.sourceError(location, "TODO: Bracket operator validation implemented for call operators only");
+        return Result::Stop;
+    }
 
-	if(node->getContext()->getType() == Expression::Type::Value)
-	{
-		auto value = std::static_pointer_cast <Value> (node->getContext());
-		if(value->getToken().getType() != Token::Type::Identifier)
-		{
-			SourceLocation location(m_ctx.m_source, value->getToken());
-			m_ctx.m_client.sourceError(location, "Literal values cannot be called");
-			return Result::Stop;
-		}
-	}
+    if (node->getContext()->getType() == Expression::Type::Value)
+    {
+        auto value = std::static_pointer_cast<Value>(node->getContext());
+        if (value->getToken().getType() != Token::Type::Identifier)
+        {
+            SourceLocation location(m_ctx.m_source, value->getToken());
+            m_ctx.m_client.sourceError(location, "Literal values cannot be called");
+            return Result::Stop;
+        }
+    }
 
-	// First validate the parameters so that they can be used for matching.
-	if(!traverseExpression(node->getInnerRoot()))
-	{
-		return Result::Stop;
-	}
+    // First validate the parameters so that they can be used for matching.
+    if (!traverseExpression(node->getInnerRoot()))
+    {
+        return Result::Stop;
+    }
 
-	m_resolverCtx = std::move(contextResolver);
-	m_resolverCtx.m_parameters = node->getInnerRoot();
-	if(!traverseExpression(node->getContext()))
-	{
-		return Result::Stop;
-	}
+    m_resolverCtx = std::move(contextResolver);
+    m_resolverCtx.m_parameters = node->getInnerRoot();
+    if (!traverseExpression(node->getContext()))
+    {
+        return Result::Stop;
+    }
 
-	auto callable = node->getContext()->getResultType();
-	assert(callable);
-	assert(callable->m_referenced.getType() == TypeDefinition::Type::Callable);
+    auto callable = node->getContext()->getResultType();
+    assert(callable);
+    assert(callable->m_referenced.getType() == TypeDefinition::Type::Callable);
 
-	// The call operator now results in the return type of the callable.
-	auto returnTypeRoot = static_cast <CallableType&> (callable->m_referenced).getReturnTypeRoot();
-	assert(returnTypeRoot);
-	assert(returnTypeRoot->getResultType());
-	node->setResultType(*returnTypeRoot->getResultType());
-	return Result::Exit;
+    // The call operator now results in the return type of the callable.
+    auto returnTypeRoot = static_cast<CallableType&>(callable->m_referenced).getReturnTypeRoot();
+    assert(returnTypeRoot);
+    assert(returnTypeRoot->getResultType());
+    node->setResultType(*returnTypeRoot->getResultType());
+    return Result::Exit;
 }
 
-Traverser::Result Validator::onIdentifier(std::shared_ptr <Identifier> node)
+Traverser::Result Validator::onIdentifier(std::shared_ptr<Identifier> node)
 {
-	// Steal the resolver context so that it's not mistakenly used further on.
-	ResolverContext resolve = std::move(m_resolverCtx);
-	return validateIdentifier(node, resolve);
+    // Steal the resolver context so that it's not mistakenly used further on.
+    ResolverContext resolve = std::move(m_resolverCtx);
+    return validateIdentifier(node, resolve);
 }
 
-Traverser::Result Validator::onInteger(std::shared_ptr <Integer> node)
+Traverser::Result Validator::onInteger(std::shared_ptr<Integer> node)
 {
-	// Set the initial type to the minimum that can hold the immediate value.
-	// Outer operation such a negation can then alter this.
-	node->setInitialType(m_ctx);
-	return Result::Exit;
+    // Set the initial type to the minimum that can hold the immediate value.
+    // Outer operation such a negation can then alter this.
+    node->setInitialType(m_ctx);
+    return Result::Exit;
 }
 
-Traverser::Result Validator::onString(std::shared_ptr <String> node)
+Traverser::Result Validator::onString(std::shared_ptr<String> node)
 {
-	node->setResultType(m_ctx.m_client.getBuiltin().get(Builtin::DataType::String));
-	return Result::Exit;
+    node->setResultType(m_ctx.m_client.getBuiltin().get(Builtin::DataType::String));
+    return Result::Exit;
 }
 
-Traverser::Result Validator::onReturn(std::shared_ptr <Return> node)
+Traverser::Result Validator::onReturn(std::shared_ptr<Return> node)
 {
-	if(!traverseExpression(node->getExpression()))
-	{
-		return Result::Stop;
-	}
+    if (!traverseExpression(node->getExpression()))
+    {
+        return Result::Stop;
+    }
 
-	if(!node->tryUpdatingReturnType(m_ctx))
-	{
-		return Result::Stop;
-	}
+    if (!node->tryUpdatingReturnType(m_ctx))
+    {
+        return Result::Stop;
+    }
 
-	return Result::Exit;
+    return Result::Exit;
 }
 
-bool Validator::checkUniqueDeclaration(std::shared_ptr <Declaration> decl)
+bool Validator::checkUniqueDeclaration(std::shared_ptr<Declaration> decl)
 {
-	auto current = std::static_pointer_cast <Node> (decl);
+    auto current = std::static_pointer_cast<Node>(decl);
 
-	// Traverse the declaration storage hierarchy and check if something with
-	// the same name as the given declaration exists.
-	while(current)
-	{
-		// TODO: If we go beyond a named declaration, can there be any name shadowing?
-		// Note that this would require the ability to reference the global scope or parent scopes.
-		if(current->getDeclarationStorage().checkEquivalent(decl, *this))
-		{
-			return false;
-		}
+    // Traverse the declaration storage hierarchy and check if something with
+    // the same name as the given declaration exists.
+    while (current)
+    {
+        // TODO: If we go beyond a named declaration, can there be any name shadowing?
+        // Note that this would require the ability to reference the global scope or parent scopes.
+        if (current->getDeclarationStorage().checkEquivalent(decl, *this))
+        {
+            return false;
+        }
 
-		// TODO: If current is a class type, check base classes here.
-		// Note that checkUniqueDeclaration cannot be directly called without
-		// fine tuning as then we'd implicitly check the parents of a base class
-		// which might be totally irrelevant
+        // TODO: If current is a class type, check base classes here.
+        // Note that checkUniqueDeclaration cannot be directly called without
+        // fine tuning as then we'd implicitly check the parents of a base class
+        // which might be totally irrelevant
 
-		current = current->getParentWithDeclarationStorage();
-	}
+        current = current->getParentWithDeclarationStorage();
+    }
 
-	return true;
+    return true;
 }
 
-bool Validator::checkTypeNameUsage(std::shared_ptr <Expression> decl)
+bool Validator::checkTypeNameUsage(std::shared_ptr<Expression> decl)
 {
-	assert(decl->getResultType().has_value());
-	if(decl->getResultType()->m_isTypeName)
-	{
-		if(decl->getType() == Expression::Type::TypeReference)
-		{
-			return true;
-		}
+    assert(decl->getResultType().has_value());
+    if (decl->getResultType()->m_isTypeName)
+    {
+        if (decl->getType() == Expression::Type::TypeReference)
+        {
+            return true;
+        }
 
-		SourceLocation location(m_ctx.m_source, decl->getToken());
-		m_ctx.m_client.sourceError(location, "Type names must be preceded by 'type'");
-		return false;
-	}
+        SourceLocation location(m_ctx.m_source, decl->getToken());
+        m_ctx.m_client.sourceError(location, "Type names must be preceded by 'type'");
+        return false;
+    }
 
-	return true;
+    return true;
 }
 
-Traverser::Result Validator::validateIdentifier(std::shared_ptr <Identifier> node, ResolverContext& resolve)
+Traverser::Result Validator::validateIdentifier(std::shared_ptr<Identifier> node, ResolverContext& resolve)
 {
-	Result result = Result::NotHandled;
+    Result result = Result::NotHandled;
 
-	if(resolve.m_accessedFrom)
-	{
-		switch(resolve.m_accessedFrom->m_referenced.getType())
-		{
-			case cap::TypeDefinition::Type::Class:
-			{
-                auto& classDecl = static_cast <ClassType&> (resolve.m_accessedFrom->m_referenced);
+    if (resolve.m_accessedFrom)
+    {
+        switch (resolve.m_accessedFrom->m_referenced.getType())
+        {
+            case cap::TypeDefinition::Type::Class:
+            {
+                auto& classDecl = static_cast<ClassType&>(resolve.m_accessedFrom->m_referenced);
 
-				for(auto decl : classDecl.getBody()->declarations)
-				{
-					result = connectDeclaration(node, decl, resolve);
-					if(result != Result::Continue)
-					{
-						break;
-					}
-				}
+                for (auto decl : classDecl.getBody()->declarations)
+                {
+                    result = connectDeclaration(node, decl, resolve);
+                    if (result != Result::Continue)
+                    {
+                        break;
+                    }
+                }
 
-				// TODO: Iterate base classes. Modify the resolver context so that
-				// accessedFrom references a base class.
+                // TODO: Iterate base classes. Modify the resolver context so that
+                // accessedFrom references a base class.
 
-				break;
-			}
+                break;
+            }
 
-			case cap::TypeDefinition::Type::Callable:
-			{
-				SourceLocation location(m_ctx.m_source, node->getToken());
-				m_ctx.m_client.sourceError(location, "Cannot access contents of a callable");
-				return Result::Stop;
-			}
+            case cap::TypeDefinition::Type::Callable:
+            {
+                SourceLocation location(m_ctx.m_source, node->getToken());
+                m_ctx.m_client.sourceError(location, "Cannot access contents of a callable");
+                return Result::Stop;
+            }
 
-			case cap::TypeDefinition::Type::TypeReference:
-			{
-				// Recursively use the underlying type as the resolving context.
-                auto& typeRef = static_cast <TypeReference&> (resolve.m_accessedFrom->m_referenced);
-				resolve.m_accessedFrom.emplace(*typeRef.getReferred());
-				return validateIdentifier(node, resolve);
-			}
-		}
-	}
+            case cap::TypeDefinition::Type::TypeReference:
+            {
+                // Recursively use the underlying type as the resolving context.
+                auto& typeRef = static_cast<TypeReference&>(resolve.m_accessedFrom->m_referenced);
+                resolve.m_accessedFrom.emplace(*typeRef.getReferred());
+                return validateIdentifier(node, resolve);
+            }
+        }
+    }
 
-	else
-	{
-		auto declContainer = node->getParentWithDeclarationStorage();
+    else
+    {
+        auto declContainer = node->getParentWithDeclarationStorage();
 
-		// Check if the initial scope or any of its parents contain the desired declaration.
-		while(declContainer)
-		{
-			auto& decls = declContainer->getDeclarationStorage();
-			for(auto decl : decls)
-			{
-				result = connectDeclaration(node, decl, resolve);
-				if(result != Result::Continue)
-				{
-					break;
-				}
-			}
+        // Check if the initial scope or any of its parents contain the desired declaration.
+        while (declContainer)
+        {
+            auto& decls = declContainer->getDeclarationStorage();
+            for (auto decl : decls)
+            {
+                result = connectDeclaration(node, decl, resolve);
+                if (result != Result::Continue)
+                {
+                    break;
+                }
+            }
 
-			declContainer = declContainer->getParentWithDeclarationStorage();
-		}
-	}
+            declContainer = declContainer->getParentWithDeclarationStorage();
+        }
+    }
 
-	if(result == Result::Stop)
-	{
-		return result;
-	}
+    if (result == Result::Stop)
+    {
+        return result;
+    }
 
-	if(!node->getReferred())
-	{
-		// TODO: node->getValue() should also be something else in the
-		// case of type constructors or type conversions.
+    if (!node->getReferred())
+    {
+        // TODO: node->getValue() should also be something else in the
+        // case of type constructors or type conversions.
 
-		// TODO: Show a different message for generics? The param type can be
-		// stored in ResolverContext.
+        // TODO: Show a different message for generics? The param type can be
+        // stored in ResolverContext.
 
-		// If pararameters are supplied, we're looking for something more specific.
-		const char* msg = resolve.m_parameters ?
-			"No matching overload found for" :
-			"Undeclared identifier";
+        // If pararameters are supplied, we're looking for something more specific.
+        const char* msg = resolve.m_parameters ? "No matching overload found for" : "Undeclared identifier";
 
-		SourceLocation location(m_ctx.m_source, node->getToken());
-		m_ctx.m_client.sourceError(location, msg, " '", node->getValue(), '\'');
-		return Result::Stop;
-	}
+        SourceLocation location(m_ctx.m_source, node->getToken());
+        m_ctx.m_client.sourceError(location, msg, " '", node->getValue(), '\'');
+        return Result::Stop;
+    }
 
-	return Result::Exit;
+    return Result::Exit;
 }
 
-Traverser::Result Validator::connectDeclaration(std::shared_ptr <Identifier> node,
-		std::shared_ptr <Declaration> decl, ResolverContext& resolve)
+Traverser::Result Validator::connectDeclaration(std::shared_ptr<Identifier> node, std::shared_ptr<Declaration> decl,
+                                                ResolverContext& resolve)
 {
-	if(decl->getName() != node->getValue())
-	{
-		return Result::Continue;
-	}
+    if (decl->getName() != node->getValue())
+    {
+        return Result::Continue;
+    }
 
-	// Make sure that whatever is being matched against is validated.
-	if(!decl->validate(*this))
-	{
-		return Result::Stop;
-	}
+    // Make sure that whatever is being matched against is validated.
+    if (!decl->validate(*this))
+    {
+        return Result::Stop;
+    }
 
-	// Should parameters be matched as well?
-	if(resolve.m_parameters)
-	{
+    // Should parameters be matched as well?
+    if (resolve.m_parameters)
+    {
         CallableType* callable = nullptr;
 
-		switch(decl->getType())
-		{
-			// Normal function calls.
-			case Declaration::Type::Function:
-			{
-				callable = std::static_pointer_cast <Function> (decl).get();
-				break;
-			}
+        switch (decl->getType())
+        {
+            // Normal function calls.
+            case Declaration::Type::Function:
+            {
+                callable = std::static_pointer_cast<Function>(decl).get();
+                break;
+            }
 
-			// Constructor calls and type conversions.
-			case Declaration::Type::Class:
-			{
-				assert(false && "TODO: Find a constructor or a type conversion");
-				break;
-			}
+            // Constructor calls and type conversions.
+            case Declaration::Type::Class:
+            {
+                assert(false && "TODO: Find a constructor or a type conversion");
+                break;
+            }
 
-			// Operator overload call from an object.
-			case Declaration::Type::Variable:
-			{
-				assert(false && "TODO: Find a callable in the context of an object");
-				break;
-			}
-		}
+            // Operator overload call from an object.
+            case Declaration::Type::Variable:
+            {
+                assert(false && "TODO: Find a callable in the context of an object");
+                break;
+            }
+        }
 
-		assert(callable);
+        assert(callable);
 
-		// TODO: Store the currently most fitting candidate based on unidentical
-		// parameters select the most fitting one. This way more fitting function overloads
-		// can be prioritized over those where parameters are implicitly casted.
+        // TODO: Store the currently most fitting candidate based on unidentical
+        // parameters select the most fitting one. This way more fitting function overloads
+        // can be prioritized over those where parameters are implicitly casted.
 
-		auto [compatible, unidentical] = callable->matchParameters(resolve.m_parameters);
-		if(compatible)
-		{
-			node->setReferred(decl);
+        auto [compatible, unidentical] = callable->matchParameters(resolve.m_parameters);
+        if (compatible)
+        {
+            node->setReferred(decl);
             node->updateResultType();
-			return Result::Exit;
-		}
-	}
+            return Result::Exit;
+        }
+    }
 
-	else
-	{
-		node->setReferred(decl);
+    else
+    {
+        node->setReferred(decl);
         node->updateResultType();
-		return Result::Exit;
-	}
+        return Result::Exit;
+    }
 
-	return Result::Continue;
+    return Result::Continue;
 }
 
 Validator::ResolverContext::ResolverContext(ResolverContext&& rhs)
 {
-	this->operator=(std::move(rhs));
+    this->operator=(std::move(rhs));
 }
 
 Validator::ResolverContext& Validator::ResolverContext::operator=(ResolverContext&& rhs)
 {
-	m_parameters = std::move(rhs.m_parameters);
+    m_parameters = std::move(rhs.m_parameters);
 
-	// TODO: Is this really necessary. std::move would be nice but
-	// accessedFrom seems to report a valid value afterwards.
-	if(rhs.m_accessedFrom)
-	{
-		m_accessedFrom.emplace(*rhs.m_accessedFrom);
-		rhs.m_accessedFrom.reset();
-	}
+    // TODO: Is this really necessary. std::move would be nice but
+    // accessedFrom seems to report a valid value afterwards.
+    if (rhs.m_accessedFrom)
+    {
+        m_accessedFrom.emplace(*rhs.m_accessedFrom);
+        rhs.m_accessedFrom.reset();
+    }
 
-	return *this;
+    return *this;
 }
 
 void Validator::ResolverContext::reset()
 {
-	m_accessedFrom.reset();
-	m_parameters.reset();
+    m_accessedFrom.reset();
+    m_parameters.reset();
 }
 
-}
+} // namespace cap
