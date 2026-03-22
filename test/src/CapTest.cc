@@ -48,4 +48,14 @@ void PreValidationTest::matches(std::wstring&& str, std::vector<ExpectedNode>&& 
     matcher.traverseNode(source.getGlobal());
 }
 
+void PreValidationTest::enclosedMatches(std::wstring&& str, std::vector<ExpectedNode>&& expected)
+{
+    static const auto expectedEnclosure = {Function(L"capTestEnclosure"), Scope()};
+
+    str = L"func capTestEnclosure()\n{\n" + std::move(str) + L"\n}\n";
+    expected.insert(expected.begin(), expectedEnclosure.begin(), expectedEnclosure.end());
+
+    matches(std::move(str), std::move(expected));
+}
+
 } // namespace cap::test

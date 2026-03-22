@@ -1,5 +1,7 @@
 #include <cap/test/CapTest.hh>
 
+using namespace cap::test;
+
 CAP_TEST(Error, Name)
 {
     test.reportsError(L"(@foo)", L"Expression must not end in an attribute here");
@@ -104,3 +106,66 @@ CAP_TEST(Error, AttributeAppliedToLetTODO)
 // - @foo[]
 
 // TODO: Make an error test for when a scope ends with an attribute
+
+// clang-format off
+
+CAP_TEST(PreValidation, AttributeDisconnected1)
+{
+    test.matches(L"@debug something",
+    {
+        Expression(),
+            Identifier(L"something")
+    });
+}
+
+CAP_TEST(PreValidation, AttributeDisconnected2)
+{
+    test.matches(L"@debug @otherAttr(1 + 2) something",
+    {
+        Expression(),
+            Identifier(L"something")
+    });
+}
+
+CAP_TEST(PreValidation, AttributeDisconnected3)
+{
+    test.matches(L"@*dynamicAttr something\n@debug print(\"test\")",
+    {
+        Expression(),
+            Identifier(L"something"),
+
+        Expression(),
+            cap::BracketOperator::Type::Call,
+                Identifier(L"print"),
+                Expression(),
+                    String(L"test")
+    });
+}
+
+// TODO: Enable this once the expression is no longer interpreted as @foo(...) + ...
+//test.test(L"@foo (@bar x) + @baz y", {
+//	Expression(),
+//		cap::BinaryOperator::Type::Add,
+//		Expression(),
+//			Identifier(L"x"),
+//		Identifier(L"y")
+//});
+
+
+// TODO: Once e.g. "@foo() ()" can be differentiated from "@foo()()" this test can be
+// replaced with a real test.
+CAP_TEST(PreValidation, SeparatedParenthesesAttachedToAttributeTODO)
+{
+    test.matches(L"@foo () baz",
+    {
+        Expression(),
+            Identifier(L"baz")
+    });
+}
+
+// TODO: Make a similar error test testing that something like "@foo()()" isn't allowed.
+// Calling an attribute doesn't make much sense.
+
+// TODO: @attr (1 + 2)
+// TODO: @attr [1 + 2]
+// TODO: @foo(1 + 2) (@bar)

@@ -31,6 +31,7 @@ class PreValidationTest : public TestBase
 {
 public:
     void matches(std::wstring&& str, std::vector<ExpectedNode>&& expected);
+    void enclosedMatches(std::wstring&& str, std::vector<ExpectedNode>&& expected);
 };
 
 class PostValidationTest : public TestBase

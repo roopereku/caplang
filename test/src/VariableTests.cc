@@ -1,5 +1,7 @@
 #include <cap/test/CapTest.hh>
 
+using namespace cap::test;
+
 CAP_TEST(Error, VariableAssignmentInGlobalScope)
 {
     test.reportsError(L"a = 10", L"Only declarations are allowed here", true);
@@ -51,3 +53,17 @@ CAP_TEST(Error, LocalVariableNameOnDifferentLine)
     // the name has to be on the same line as the declarator.
     test.reportsError(L"let\na = 10", L"Expected a variable");
 }
+
+// clang-format off
+
+CAP_TEST(PreValidation, Name)
+{
+    test.enclosedMatches(L"let a = 1 + 2",
+    {
+        LocalVariable(L"a"),
+            cap::BinaryOperator::Type::Add,
+                Integer(1),
+                Integer(2)
+    });
+}
+
