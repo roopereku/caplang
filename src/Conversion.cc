@@ -17,12 +17,12 @@ std::weak_ptr <Node> Conversion::handleToken(ParserContext& ctx, Token& token)
 		return context->handleToken(ctx, token);
 	}
 
-	return startParsingBody(ctx, token);
+	return Scope::startParsing(ctx, token, false);
 }
 
 std::weak_ptr <Node> Conversion::invokedNodeExited(ParserContext& ctx, Token& token)
 {
-	if(ctx.exitedFrom == context)
+	if(ctx.m_exitedFrom == context)
 	{
 		assert(context->getFirst());
 
@@ -72,8 +72,8 @@ std::weak_ptr <Node> Conversion::invokedNodeExited(ParserContext& ctx, Token& to
 			default:
 			{
 				// TODO: Give more context on why the conversion is invalid.
-				SourceLocation location(ctx.source, token);
-				ctx.client.sourceError(location, "Invalid conversion");
+				SourceLocation location(ctx.m_source, token);
+				ctx.m_client.sourceError(location, "Invalid conversion");
 				return {};
 			}
 		}

@@ -20,7 +20,7 @@ enable_testing()
 
 add_subdirectory(.. caplang)
 
-file(GLOB Sources *.cc)
+file(GLOB Sources src/*.cc)
 add_executable(captests ${Sources})
 target_link_libraries(captests caplang GTest::gtest_main)
 target_include_directories(captests PRIVATE include)

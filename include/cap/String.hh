@@ -9,22 +9,22 @@ namespace cap
 class String : public Value
 {
 public:
-	String(std::wstring&& value);
+    String(std::wstring&& value);
 
-	// TODO: Support string interpolation.
+    // TODO: Support string interpolation.
 
-	/// Gets the string value.
-	///
-	/// \return String value.
-	const std::wstring& getValue() const;
+    /// Gets the string value.
+    ///
+    /// \return String value.
+    const std::wstring& getValue() const;
 
-	const char* getTypeString() const override;
+    const char* getTypeString() const override;
 
 private:
-	/// The string vallue with the outer quotes removed.
-	std::wstring value;
+    /// The string vallue with the outer quotes removed.
+    std::wstring m_value;
 };
 
-}
+} // namespace cap
 
 #endif

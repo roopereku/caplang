@@ -22,21 +22,21 @@ public:
 class CommaAccessor : public ArgumentAccessor
 {
 public:
-	CommaAccessor(std::shared_ptr <Expression::Root> root);
-	CommaAccessor(std::shared_ptr <Variable::Root> root);
+    CommaAccessor(std::shared_ptr <Expression::Root> root);
+    CommaAccessor(std::shared_ptr <Variable::Root> root);
 
-	/// Gets the next argument delimited by a comma.
-	///
-	/// \return The next argument expression or null.
-	std::shared_ptr <Expression> getNext() override;
+    /// Gets the next argument delimited by a comma.
+    ///
+    /// \return The next argument expression or null.
+    std::shared_ptr<Expression> getNext();
 
 private:
-	void locateFirst();
+    void locateFirst();
 
-	std::shared_ptr <Expression> origin;
-	std::shared_ptr <Expression> current;
+    std::shared_ptr<Expression> m_origin;
+    std::shared_ptr<Expression> m_current;
 };
 
-}
+} // namespace cap
 
 #endif

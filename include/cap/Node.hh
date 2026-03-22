@@ -1,6 +1,7 @@
 #ifndef CAP_NODE_HH
 #define CAP_NODE_HH
 
+#include <cap/Builtin.hh>
 #include <cap/Token.hh>
 
 #include <memory>
@@ -12,104 +13,131 @@ class Scope;
 class Function;
 class ParserContext;
 class DeclarationStorage;
+class Client;
+class Validator;
+class Attribute;
 
-class Node : public std::enable_shared_from_this <Node>
+class Node : public std::enable_shared_from_this<Node>
 {
 public:
-	enum class Type
-	{
-		Scope,
-		Expression,
-		Declaration,
-		Statement,
-		Custom
-	};
+    enum class Type
+    {
+        Scope,
+        Expression,
+        Declaration,
+        Statement,
+        Custom
+    };
 
-	class ParserContext;
+    class ParserContext;
 
-	/// Implementation defined behavior for handling a token.
-	///
-	/// \param ctx The parser context.
-	/// \param token The token to handle.
-	/// \return The new "current node".
-	virtual std::weak_ptr <Node> handleToken(Node::ParserContext& ctx, Token& token);
+    /// Implementation defined behavior for handling a token.
+    ///
+    /// \param ctx The parser context.
+    /// \param token The token to handle.
+    /// \return The new "current node".
+    virtual std::weak_ptr<Node> handleToken(Node::ParserContext& ctx, Token& token);
 
-	/// Implementation defined behavior for determining a new "current node" when
-	/// the parsing of a node invoked by this node is finished.
-	///
-	/// \param ctx The parser context containing the exiting node.
-	/// \param token The token that caused the exit.
-	/// \return The new "current node".
-	virtual std::weak_ptr <Node> invokedNodeExited(Node::ParserContext& ctx, Token& token);
+    /// Implementation defined behavior for determining a new "current node" when
+    /// the parsing of a node invoked by this node is finished.
+    ///
+    /// \param ctx The parser context containing the exiting node.
+    /// \param token The token that caused the exit.
+    /// \return The new "current node".
+    virtual std::weak_ptr<Node> invokedNodeExited(Node::ParserContext& ctx, Token& token);
 
-	/// Gets the parent node.
-	///
-	/// \return The parent node.
-	std::weak_ptr <Node> getParent() const;
+    /// Gets the parent node.
+    ///
+    /// \return The parent node.
+    std::weak_ptr<Node> getParent() const;
 
-	/// Adopts the given node. This only sets the
-	/// parent of given node.
-	///
-	/// \param node The node to adopt.
-	void adopt(std::shared_ptr <Node> node);
+    /// Adopts the given node. This only sets the
+    /// parent of given node.
+    ///
+    /// \param node The node to adopt.
+    void adopt(std::shared_ptr<Node> node);
 
-	/// Gets the the type of this node.
-	///
-	/// \return The type of this node.
-	Type getType();
+    /// Gets the the type of this node.
+    ///
+    /// \return The type of this node.
+    Type getType();
 
-	/// Sets the token associated with this node.
-	///
-	/// \param token The token to associate with this node.
-	void setToken(Token token);
+    /// Sets the token associated with this node.
+    ///
+    /// \param token The token to associate with this node.
+    void setToken(Token token);
 
-	/// Gets the token associated with this node.
-	///
-	/// \return The token associated with this node.
-	Token getToken();
+    /// Gets the token associated with this node.
+    ///
+    /// \return The token associated with this node.
+    Token getToken();
 
-	/// Find the nearest parent scope relative to this node.
-	///
-	/// \return The nearest parent scope up until the global scope or null.
-	std::shared_ptr <Scope> getParentScope() const;
+    /// Find the nearest parent scope relative to this node.
+    ///
+    /// \return The nearest parent scope up until the global scope or null.
+    std::shared_ptr<Scope> getParentScope() const;
 
-	/// Find the nearest parent function relative to this node.
-	///
-	/// \return The nearest parent function or null if not inside a function.
-	std::shared_ptr <Function> getParentFunction() const;
+    /// Find the nearest parent function relative to this node.
+    ///
+    /// \return The nearest parent function or null if not inside a function.
+    std::shared_ptr<Function> getParentFunction() const;
 
-	/// Find the nearest parent node with a valid declaration storage.
-	///
-	/// \return The nearest node with a valid declaration storage or null.
-	std::shared_ptr <Node> getParentWithDeclarationStorage() const;
+    /// Find the nearest parent node with a valid declaration storage.
+    ///
+    /// \return The nearest node with a valid declaration storage or null.
+    std::shared_ptr<Node> getParentWithDeclarationStorage() const;
 
-	/// Find the nearest declaration storage contained by a parent node.
-	///
-	/// \return The nearest declaration storage.
-	DeclarationStorage& getParentDeclarationStorage();
+    /// Find the nearest declaration storage contained by a parent node.
+    ///
+    /// \return The nearest declaration storage.
+    DeclarationStorage& getParentDeclarationStorage();
 
-	/// Gets the declaration storage associated with this node.
-	///
-	/// \return The declaration storage associated with this node.
-	DeclarationStorage& getDeclarationStorage();
+    /// Gets the declaration storage associated with this node.
+    ///
+    /// \return The declaration storage associated with this node.
+    DeclarationStorage& getDeclarationStorage();
 
-	// TODO: DeclarationStorage should probably be a pointer or an optional.
+    /// Gets the range of attributes to use.
+    ///
+    /// \return Pair of indices, position and count.
+    std::pair<size_t, size_t> getAttributeRange() const;
 
-	virtual const char* getTypeString() const = 0;
+    /// Gets whether this node has attributes.
+    ///
+    /// \return True if this node has attributes.
+    bool hasAttributes() const;
+
+    /// Sets the range of attributes to use.
+    ///
+    /// \param range The start and count of attributes to use.
+    void setAttributeRange(std::pair<size_t, size_t> range);
+
+    virtual const char* getTypeString() const = 0;
 
 protected:
-	Node(Type type);
-	Node(Type type, DeclarationStorage& declStorage);
+    Node(Type type);
+    Node(Type type, DeclarationStorage& declStorage);
+
+    // TODO: Should this be "validate"?
+    bool validateAttributes(Validator& validator);
+
+    /// Called upon a builtin attribute being found in the associated attributes.
+    ///
+    /// \param type The type of the builtin attribute.
+    /// \param node The actual usage of the attribute from which additional context can be retrieved.
+    virtual bool handleBuiltinAttribute(Validator& validator, Builtin::AttributeType type,
+                                        std::shared_ptr<Attribute> node);
 
 private:
-	std::shared_ptr <Node> findParentNode(bool (*filter)(std::shared_ptr <Node>)) const;
+    std::shared_ptr<Node> findParentNode(bool (*filter)(std::shared_ptr<Node>)) const;
 
-	Type type;
-	DeclarationStorage& declStorage;
-	std::weak_ptr <Node> parent;
-	Token at;
+    Type m_type;
+    DeclarationStorage& m_declStorage;
+    std::pair<size_t, size_t> m_attributeRange;
+    std::weak_ptr<Node> m_parent;
+    Token m_at;
 };
 
-}
+} // namespace cap
 
 #endif

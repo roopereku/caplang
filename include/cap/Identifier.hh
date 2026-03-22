@@ -11,30 +11,30 @@ class Declaration;
 class Identifier : public Value
 {
 public:
-	Identifier(std::wstring&& value);
+    Identifier(std::wstring&& value);
 
-	const std::wstring& getValue();
+    const std::wstring& getValue();
 
-	/// Returns the declaration that this value refers to if any.
-	///
-	/// \return The referred declaration or null.
-	std::shared_ptr <Declaration> getReferred();
+    /// Returns the declaration that this value refers to if any.
+    ///
+    /// \return The referred declaration or null.
+    std::shared_ptr<Declaration> getReferred();
 
-	/// Sets the declaration that this value refers to.
-	///
-	/// \param node The declaration to refer to.
-	void setReferred(std::shared_ptr <Declaration> node);
+    /// Sets the declaration that this value refers to.
+    ///
+    /// \param node The declaration to refer to.
+    void setReferred(std::shared_ptr<Declaration> node);
 
     /// Updates the result type to that of the referred declaration.
     void updateResultType();
 
-	const char* getTypeString() const override;
+    const char* getTypeString() const override;
 
 private:
-	std::wstring value;
-	std::weak_ptr <Declaration> referred;
+    std::wstring m_value;
+    std::weak_ptr<Declaration> m_referred;
 };
 
-}
+} // namespace cap
 
 #endif

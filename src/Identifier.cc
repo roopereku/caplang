@@ -1,40 +1,41 @@
-#include <cap/Identifier.hh>
 #include <cap/Declaration.hh>
+#include <cap/Identifier.hh>
 
 #include <cassert>
 
 namespace cap
 {
 
-Identifier::Identifier(std::wstring&& value)
-	: Value(Type::Identifier), value(std::move(value))
+Identifier::Identifier(std::wstring&& value) :
+    Value(Type::Identifier),
+    m_value(std::move(value))
 {
 }
 
 const std::wstring& Identifier::getValue()
 {
-	return value;
+    return m_value;
 }
 
-std::shared_ptr <Declaration> Identifier::getReferred()
+std::shared_ptr<Declaration> Identifier::getReferred()
 {
-	if(!referred.expired())
-	{
-		return referred.lock();
-	}
+    if (!m_referred.expired())
+    {
+        return m_referred.lock();
+    }
 
-	return nullptr;
+    return nullptr;
 }
 
-void Identifier::setReferred(std::shared_ptr <Declaration> node)
+void Identifier::setReferred(std::shared_ptr<Declaration> node)
 {
-	referred = node;
+    m_referred = node;
 }
 
 void Identifier::updateResultType()
 {
-    assert(!referred.expired());
-    auto referredDecl = referred.lock();
+    assert(!m_referred.expired());
+    auto referredDecl = m_referred.lock();
 
     assert(referredDecl->getReferredType());
     setResultType(*referredDecl->getReferredType());
@@ -42,7 +43,7 @@ void Identifier::updateResultType()
 
 const char* Identifier::getTypeString() const
 {
-	return "Identifier";
+    return "Identifier";
 }
 
-}
+} // namespace cap

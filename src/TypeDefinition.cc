@@ -3,14 +3,14 @@
 namespace cap
 {
 
-TypeDefinition::TypeDefinition(Type type)
-	: type(type)
+TypeDefinition::TypeDefinition(Type type) :
+    m_type(type)
 {
 }
 
 TypeDefinition::Type TypeDefinition::getType()
 {
-	return type;
+    return m_type;
 }
 
-}
+} // namespace cap
