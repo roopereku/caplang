@@ -163,28 +163,29 @@ std::shared_ptr<Expression> BinaryOperator::stealLatestValue()
     return nullptr;
 }
 
-BinaryOperator::ArgumentAccessor::ArgumentAccessor(std::shared_ptr <BinaryOperator> root)
-	: op(root), current(op->getLeft())
+BinaryOperator::ArgumentAccessor::ArgumentAccessor(std::shared_ptr<BinaryOperator> root) :
+    op(root),
+    current(op->getLeft())
 {
 }
 
-std::shared_ptr <Expression> BinaryOperator::ArgumentAccessor::getNext()
+std::shared_ptr<Expression> BinaryOperator::ArgumentAccessor::getNext()
 {
-	auto result = current;
+    auto result = current;
 
-	// Move to right and return left.
-	if(current == op->getLeft())
-	{
-		current = op->getRight();
-	}
+    // Move to right and return left.
+    if (current == op->getLeft())
+    {
+        current = op->getRight();
+    }
 
-	// Stop iteration after returning right.
-	else if(current == op->getRight())
-	{
-		current = nullptr;
-	}
+    // Stop iteration after returning right.
+    else if (current == op->getRight())
+    {
+        current = nullptr;
+    }
 
-	return result;
+    return result;
 }
 
 } // namespace cap

@@ -41,16 +41,17 @@ bool DeclarationStorage::checkEquivalent(std::shared_ptr<Declaration> node, Vali
                 return false;
             }
 
-			CommaAccessor nodeParams(funcNode->getParameterRoot());
-			auto [compatible, unidentical] = funcDecl->matchParameters(nodeParams);
-			if(compatible && unidentical == 0)
-			{
-				// TODO: Give more context for the existing function?
-				SourceLocation location(validator.getParserContext().m_source, node->getToken());
-				validator.getParserContext().m_client.sourceError(location, "Function with the same parameters already exists");
-				return true;
-			}
-		}
+            CommaAccessor nodeParams(funcNode->getParameterRoot());
+            auto [compatible, unidentical] = funcDecl->matchParameters(nodeParams);
+            if (compatible && unidentical == 0)
+            {
+                // TODO: Give more context for the existing function?
+                SourceLocation location(validator.getParserContext().m_source, node->getToken());
+                validator.getParserContext().m_client.sourceError(location,
+                                                                  "Function with the same parameters already exists");
+                return true;
+            }
+        }
 
         else
         {

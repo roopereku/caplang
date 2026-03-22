@@ -178,12 +178,11 @@ std::weak_ptr<Node> Variable::Root::invokedNodeExited(Node::ParserContext& ctx, 
         return {};
     }
 
-
     // TODO: Initializer instead?
     auto variableRoot = std::static_pointer_cast<Variable::Root>(shared_from_this());
 
-	CommaAccessor declarations(variableRoot);
-	auto declContainer = getParentWithDeclarationStorage();
+    CommaAccessor declarations(variableRoot);
+    auto declContainer = getParentWithDeclarationStorage();
 
     while (auto node = declarations.getNext())
     {

@@ -1,8 +1,8 @@
 #ifndef CAP_BINARY_OPERATOR_HH
 #define CAP_BINARY_OPERATOR_HH
 
-#include <cap/Expression.hh>
 #include <cap/ArgumentAccessor.hh>
+#include <cap/Expression.hh>
 
 namespace cap
 {
@@ -79,7 +79,7 @@ public:
     static const char* getTypeString(Type type);
     const char* getTypeString() const override;
 
-	class ArgumentAccessor;
+    class ArgumentAccessor;
 
 protected:
     std::shared_ptr<Expression> stealLatestValue() override;
@@ -95,16 +95,16 @@ private:
 class BinaryOperator::ArgumentAccessor : public cap::ArgumentAccessor
 {
 public:
-	ArgumentAccessor(std::shared_ptr <BinaryOperator> root);
+    ArgumentAccessor(std::shared_ptr<BinaryOperator> root);
 
-	/// Gets the left and right hand side expressions sequentially.
-	///
-	/// \return The binary operator operands sequentially.
-	std::shared_ptr <Expression> getNext() override;
+    /// Gets the left and right hand side expressions sequentially.
+    ///
+    /// \return The binary operator operands sequentially.
+    std::shared_ptr<Expression> getNext() override;
 
 private:
-	std::shared_ptr <BinaryOperator> op;
-	std::shared_ptr <Expression> current;
+    std::shared_ptr<BinaryOperator> op;
+    std::shared_ptr<Expression> current;
 };
 
 } // namespace cap

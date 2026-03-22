@@ -12,18 +12,18 @@ namespace cap
 class ArgumentAccessor
 {
 public:
-	/// Gets the next argument.
-	///
-	/// \return The next argument expression or null.
-	virtual std::shared_ptr <Expression> getNext() = 0;
+    /// Gets the next argument.
+    ///
+    /// \return The next argument expression or null.
+    virtual std::shared_ptr<Expression> getNext() = 0;
 };
 
 /// CommaAccessor is used to retrieve expressions delimited by commas.
 class CommaAccessor : public ArgumentAccessor
 {
 public:
-    CommaAccessor(std::shared_ptr <Expression::Root> root);
-    CommaAccessor(std::shared_ptr <Variable::Root> root);
+    CommaAccessor(std::shared_ptr<Expression::Root> root);
+    CommaAccessor(std::shared_ptr<Variable::Root> root);
 
     /// Gets the next argument delimited by a comma.
     ///

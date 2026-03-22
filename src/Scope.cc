@@ -34,7 +34,7 @@ std::weak_ptr<Node> Scope::handleToken(ParserContext& ctx, Token& token)
 
     else if (ctx.m_source.match(token, L"conversion"))
     {
-        return consumeAttributes(appendNested(std::make_shared <Conversion> (), token), ctx);
+        return consumeAttributes(appendNested(std::make_shared<Conversion>(), token), ctx);
     }
 
     else if (ctx.m_source.match(token, L"type"))
@@ -141,8 +141,8 @@ const char* Scope::getTypeString() const
 
 std::shared_ptr<Node> Scope::appendNested(std::shared_ptr<Node> node, Token& token)
 {
-	// TODO: Make sure that the token isn't the last on the line.
-	// Might not make sense in the case of opening/closing brackets.
+    // TODO: Make sure that the token isn't the last on the line.
+    // Might not make sense in the case of opening/closing brackets.
 
     adopt(node);
     node->setToken(token);

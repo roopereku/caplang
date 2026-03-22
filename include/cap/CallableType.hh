@@ -33,11 +33,11 @@ public:
     /// Initializes the return type root.
     void initializeReturnType();
 
-	/// Matches the parameters within this callable type against others.
-	///
-	/// \param arguments The arguments to match against.
-	/// \return Whether the parameters are compatible and how many are unidentical.
-	std::pair <bool, size_t> matchParameters(ArgumentAccessor& arguments) const;
+    /// Matches the parameters within this callable type against others.
+    ///
+    /// \param arguments The arguments to match against.
+    /// \return Whether the parameters are compatible and how many are unidentical.
+    std::pair<bool, size_t> matchParameters(ArgumentAccessor& arguments) const;
 
     /// Gets the string representation of this callable type.
     ///

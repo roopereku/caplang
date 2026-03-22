@@ -50,7 +50,7 @@ public:
     DeclarationStorage m_parameters;
 
 protected:
-	bool conversion = false;
+    bool conversion = false;
 
 private:
     std::shared_ptr<Scope> m_body;
