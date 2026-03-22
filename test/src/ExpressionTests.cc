@@ -1,7 +1,6 @@
-#include <gtest/gtest.h>
-
 #include <cap/Client.hh>
 #include <cap/Scope.hh>
+#include <cap/test/CapTest.hh>
 #include <cap/test/DynamicSource.hh>
 #include <cap/test/NodeMatcher.hh>
 
@@ -34,6 +33,62 @@ public:
 
     std::vector<ExpectedNode> base;
 };
+
+CAP_TEST(Error, IntegerTooLarge64Hexadecimal)
+{
+    test.reportsError(L"0xFFFFFFFFFFFFFFFF1", L"Integer too large to fit inside 64 bits");
+}
+
+CAP_TEST(Error, IntegerTooLarge64Binary)
+{
+    test.reportsError(L"0b11111111111111111111111111111111111111111111111111111111111111111",
+                      L"Integer too large to fit inside 64 bits");
+}
+
+CAP_TEST(Error, IntegerTooLarge64Decimal)
+{
+    test.reportsError(L"18446744073709551616", L"Integer too large to fit inside 64 bits");
+}
+
+CAP_TEST(Error, ConsecutiveValuesFail1)
+{
+    test.reportsError(L"10 20", L"Consecutive values are not allowed");
+}
+
+CAP_TEST(Error, ConsecutiveValuesFail2)
+{
+    test.reportsError(L"a b", L"Consecutive values are not allowed");
+}
+
+CAP_TEST(Error, ConsecutiveValuesFail3)
+{
+    test.reportsError(L"10 b", L"Consecutive values are not allowed");
+}
+
+CAP_TEST(Error, ConsecutiveValuesFail4)
+{
+    test.reportsError(L"a 20", L"Consecutive values are not allowed");
+}
+
+CAP_TEST(Error, ConsecutiveValuesFail5)
+{
+    test.reportsError(L"a foo()", L"Consecutive values are not allowed");
+}
+
+CAP_TEST(Error, ConsecutiveValuesFail6)
+{
+    test.reportsError(L"bar(1 * 2 + 3) foo()", L"Consecutive values are not allowed");
+}
+
+CAP_TEST(Error, ConsecutiveValuesFail7)
+{
+    test.reportsError(L"bar(1 * 2 + 3) 20", L"Consecutive values are not allowed");
+}
+
+CAP_TEST(Error, ConsecutiveValuesFail8)
+{
+    test.reportsError(L"(1 * 2 + 3) foo", L"Consecutive values are not allowed");
+}
 
 // clang-format off
 
