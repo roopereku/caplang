@@ -101,3 +101,72 @@ CAP_TEST(PreValidation, ReturnIntegerResultOfExpression)
                         Integer(2)
     });
 }
+
+std::wstring_view setupWithDifferentReturnTypes = LR"SRC(
+    func returnInt()
+    {
+        return 10
+    }
+
+    func returnString()
+    {
+        return "test"
+    }
+
+    func returnVoid()
+    {
+        return
+    }
+
+    func returnDefault()
+    {
+    }
+)SRC";
+
+CAP_TEST(PostValidation, FunctionReturningIntResultsInInt)
+{
+    test.setup(setupWithDifferentReturnTypes);
+    test.enclosedMatches(L"let a = returnInt()",
+    {
+        LocalVariable(L"a"),
+            cap::BracketOperator::Type::Call > L"int64",
+                Identifier(L"returnInt") > L"func() -> int64",
+                Expression()
+    });
+}
+
+CAP_TEST(PostValidation, FunctionReturningStringResultsInString)
+{
+    test.setup(setupWithDifferentReturnTypes);
+    test.enclosedMatches(L"let b = returnString()",
+    {
+        LocalVariable(L"b"),
+            cap::BracketOperator::Type::Call > L"string",
+                Identifier(L"returnString") > L"func() -> string",
+                Expression()
+    });
+}
+
+CAP_TEST(PostValidation, FunctionExplicitlyReturningVoidResultsInVoid)
+{
+    test.setup(setupWithDifferentReturnTypes);
+    test.enclosedMatches(L"returnVoid()",
+    {
+        Expression(),
+            cap::BracketOperator::Type::Call > L"void",
+                Identifier(L"returnVoid") > L"func() -> void",
+                Expression()
+    });
+}
+
+CAP_TEST(PostValidation, FunctionImplicitlyReturningVoidResultsInVoid)
+{
+    test.setup(setupWithDifferentReturnTypes);
+    test.enclosedMatches(L"returnDefault()",
+    {
+        Expression(),
+            cap::BracketOperator::Type::Call > L"void",
+                Identifier(L"returnDefault") > L"func() -> void",
+                Expression()
+    });
+}

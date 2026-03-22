@@ -1,3 +1,4 @@
+#include <cap/Function.hh>
 #include <cap/Scope.hh>
 #include <cap/test/CapTest.hh>
 #include <cap/test/DynamicSource.hh>
@@ -56,6 +57,33 @@ void PreValidationTest::enclosedMatches(std::wstring&& str, std::vector<Expected
     expected.insert(expected.begin(), expectedEnclosure.begin(), expectedEnclosure.end());
 
     matches(std::move(str), std::move(expected));
+}
+
+void PostValidationTest::enclosedMatches(std::wstring&& str, std::vector<ExpectedNode>&& expected)
+{
+    cap::test::DynamicSource source;
+    source += setupSrc;
+    source += L"\nfunc capTestEnclosure()\n{\n";
+    source += std::move(str);
+    source += L"\n}\n";
+
+    ASSERT_TRUE(source.parse(*this, true));
+
+    expected.insert(expected.begin(), Scope());
+    NodeMatcher matcher(std::move(expected));
+
+    std::shared_ptr<cap::Scope> root;
+    for (auto decl : source.getGlobal()->declarations)
+    {
+        if (decl->getName() == L"capTestEnclosure")
+        {
+            ASSERT_TRUE(decl->getType() == cap::Declaration::Type::Function);
+            auto func = std::static_pointer_cast<cap::Function>(decl);
+            root = func->getBody();
+        }
+    }
+
+    matcher.traverseWithContext(root, this);
 }
 
 } // namespace cap::test

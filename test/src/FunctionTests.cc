@@ -124,3 +124,56 @@ CAP_TEST(PreValidation, FunctionWithReturnType)
             Scope()
     });
 }
+
+std::wstring_view setupWithFunctionsAndVariables = LR"SRC(
+    func foo(a = string, b = int64, c = int64)
+    {
+    }
+
+    type Foo
+    {
+        func foo(a = string, b = int64)
+        {
+        }
+    }
+
+    let x = 10
+    let y = 200
+    let str = "some string"
+)SRC";
+
+CAP_TEST(PostValidation, FunctionIsMatchedBasedOnVariableTypes1)
+{
+    test.setup(setupWithFunctionsAndVariables);
+    test.enclosedMatches(L"foo(str, x, y)",
+    {
+        Expression() > L"void",
+            cap::BracketOperator::Type::Call > L"void",
+                Identifier(L"foo") > L"func(string, int64, int64) -> void",
+                Expression(),
+                    cap::BinaryOperator::Type::Comma,
+                        cap::BinaryOperator::Type::Comma,
+                            Identifier(L"str") > L"string",
+                            Identifier(L"x") > L"int64",
+                        Identifier(L"y") > L"int64"
+    });
+}
+
+CAP_TEST(PostValidation, FunctionIsMatchedBasedOnVariableTypes2)
+{
+    test.setup(setupWithFunctionsAndVariables);
+    test.enclosedMatches(L"Foo.foo(str, x)",
+    {
+        Expression() > L"void",
+            cap::BinaryOperator::Type::Access > L"void",
+                Identifier(L"Foo") > L"Foo",
+                cap::BracketOperator::Type::Call > L"void",
+                    Identifier(L"foo") > L"func(string, int64) -> void",
+                    Expression(),
+                        cap::BinaryOperator::Type::Comma,
+                            Identifier(L"str") > L"string",
+                            Identifier(L"x") > L"int64",
+    });
+}
+
+// TODO: Add a test where function parameters are passed onwards?

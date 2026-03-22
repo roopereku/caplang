@@ -103,3 +103,55 @@ CAP_TEST(PreValidation, TypeReferenceAcceptsValue6)
                         Integer(0)
     });
 }
+
+CAP_TEST(PostValidation, TypeReferenceInitialization)
+{
+    test.enclosedMatches(L"let a = type int64",
+    {
+        LocalVariable(L"a") > L"type int64",
+            TypeReference() > L"type int64",
+                Identifier(L"int64") > L"int64"
+    });
+}
+
+std::wstring_view setupWithAliases = LR"SRC(
+    type Outer1
+    {
+        type Inner1
+        {
+            type Inner2
+            {
+                let a = "value"
+            }
+        }
+    }
+
+    let Alias1 = type Outer1
+    let Alias2 = type Alias1.Inner1.Inner2
+)SRC";
+
+CAP_TEST(PostValidation, TypeReferenceInitializationOfNestedType)
+{
+    test.setup(setupWithAliases);
+    test.enclosedMatches(L"let accessedType = type Alias1.Inner1",
+    {
+        LocalVariable(L"accessedType") > L"type Outer1.Inner1",
+            TypeReference() > L"type Outer1.Inner1",
+                cap::BinaryOperator::Type::Access > L"Outer1.Inner1",
+                    Identifier(L"Alias1") > L"type Outer1",
+                    Identifier(L"Inner1") > L"Outer1.Inner1"
+    });
+}
+
+CAP_TEST(PostValidation, MemberVariableAccessibleThroughTypeReference)
+{
+    test.setup(setupWithAliases);
+    test.enclosedMatches(L"let value = Alias2.a",
+    {
+        LocalVariable(L"value") > L"string",
+            cap::BinaryOperator::Type::Access > L"string",
+                Identifier(L"Alias2") > L"type Outer1.Inner1.Inner2",
+                Identifier(L"a") > L"string"
+    });
+}
+

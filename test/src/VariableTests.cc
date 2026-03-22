@@ -67,3 +67,31 @@ CAP_TEST(PreValidation, Name)
     });
 }
 
+CAP_TEST(PostValidation, ParameterTypeResultsInCorrectType1)
+{
+    test.enclosedMatches(L"func foo(a = int64)\n{\n}",
+    {
+        Function(L"foo") > L"func(int64) -> void",
+            Parameter(L"a") > L"int64",
+                Identifier(L"int64") > L"int64",
+            Expression() > L"void",
+            Scope()
+    });
+}
+
+CAP_TEST(PostValidation, ParameterTypeResultsInCorrectType2)
+{
+    test.enclosedMatches(L"func foo(a = int64, b = string)\n{\n}",
+    {
+        Function(L"foo") > L"func(int64, string) -> void",
+            Parameter(L"a") > L"int64",
+                Identifier(L"int64") > L"int64",
+            Parameter(L"b") > L"string",
+                Identifier(L"string") > L"string",
+            Expression() > L"void",
+            Scope()
+    });
+}
+
+// TODO: Tests for generic parameter types with constraints and interfaces.
+// TODO: Tests for type references to generic parameter types with constraints and interfaces.

@@ -438,3 +438,69 @@ CAP_TEST(PreValidation, ComplicatedMultilineExpression)
     });
 }
 
+std::wstring_view setupWithNestedTypes = LR"SRC(
+    type Foo
+    {
+        type Baz
+        {
+            let a = Bar.a * 10
+        }
+
+        type Bar
+        {
+            let a = 10
+
+            func nested(x = int64, y = string)
+            {
+                return "test"
+            }
+        }
+    }
+)SRC";
+
+CAP_TEST(PostValidation, AccessesResultInCorrectResultType1)
+{
+    test.setup(setupWithNestedTypes);
+    test.enclosedMatches(L"let a = Foo.Bar.a",
+    {
+        LocalVariable(L"a") > L"int64",
+        cap::BinaryOperator::Type::Access > L"int64",
+            cap::BinaryOperator::Type::Access > L"Foo.Bar",
+                Identifier(L"Foo") > L"Foo",
+                Identifier(L"Bar") > L"Foo.Bar",
+            Identifier(L"a", L"Foo.Bar.a") > L"int64"
+    });
+}
+
+CAP_TEST(PostValidation, AccessesResultInCorrectResultType2)
+{
+    test.setup(setupWithNestedTypes);
+    test.enclosedMatches(L"let b = Foo.Bar.nested",
+    {
+        LocalVariable(L"b") > L"func(int64, int64) -> string",
+        cap::BinaryOperator::Type::Access > L"func(int64, string) -> string",
+            cap::BinaryOperator::Type::Access > L"Foo.Bar",
+                Identifier(L"Foo") > L"Foo",
+                Identifier(L"Bar") > L"Foo.Bar",
+            Identifier(L"nested", L"Foo.Bar.nested") > L"func(int64, string) -> string"
+    });
+}
+
+CAP_TEST(PostValidation, AccessesResultInCorrectResultType3)
+{
+    test.setup(setupWithNestedTypes);
+    test.enclosedMatches(L"let b = Foo.Bar.nested(1, \"test\")",
+    {
+        LocalVariable(L"b") > L"string",
+            cap::BinaryOperator::Type::Access > L"string",
+                cap::BinaryOperator::Type::Access > L"Foo.Bar",
+                    Identifier(L"Foo") > L"Foo",
+                    Identifier(L"Bar") > L"Foo.Bar",
+            cap::BracketOperator::Type::Call > L"string",
+                Identifier(L"nested", L"Foo.Bar.nested") > L"func(int64, string) -> string",
+                Expression(),
+                    cap::BinaryOperator::Type::Comma,
+                        Integer(1) > L"int64",
+                        String(L"test") > L"string"
+    });
+}

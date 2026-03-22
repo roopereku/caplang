@@ -169,3 +169,74 @@ CAP_TEST(PreValidation, SeparatedParenthesesAttachedToAttributeTODO)
 // TODO: @attr (1 + 2)
 // TODO: @attr [1 + 2]
 // TODO: @foo(1 + 2) (@bar)
+
+std::wstring_view setupWithAttributes = L"let @attribute foo, @attribute bar";
+
+CAP_TEST(PostValidation, SingleAttributeAppliedToVariable)
+{
+    test.setup(setupWithAttributes);
+    test.enclosedMatches(L"let @foo a = 10",
+    {
+        LocalVariable(L"a") > L"int64",
+            AttributeUsage(),
+                Identifier(L"foo"),
+            Integer(10) > L"int64"
+    });
+}
+
+CAP_TEST(PostValidation, MultipleAttributesAppliedToVariable)
+{
+    test.setup(setupWithAttributes);
+    test.enclosedMatches(L"let @foo @bar a = 10",
+    {
+        LocalVariable(L"a") > L"int64",
+            AttributeUsage(),
+                Identifier(L"foo"),
+            AttributeUsage(),
+                Identifier(L"bar"),
+            Integer(10) > L"int64"
+    });
+}
+
+CAP_TEST(PostValidation, AttributesAppliedToParameters)
+{
+    test.setup(setupWithAttributes);
+    test.enclosedMatches(LR"SRC(
+        func a(@foo param1 = int64, @bar param2 = string)
+        {
+        }
+    )SRC",
+    {
+        Function(L"a"),
+            Parameter(L"param1") > L"int64",
+                AttributeUsage(),
+                    Identifier(L"foo"),
+                Identifier(L"int64") > L"int64",
+            Parameter(L"param2") > L"string",
+                AttributeUsage(),
+                    Identifier(L"bar"),
+                Identifier(L"string") > L"string",
+            Expression() > L"void",
+            Scope()
+    });
+}
+
+CAP_TEST(PostValidation, AttributeAppliedToFunction)
+{
+    test.setup(setupWithAttributes);
+    test.enclosedMatches(LR"SRC(
+        @foo
+        func a(param1 = int64)
+        {
+        }
+    )SRC",
+    {
+        Function(L"a"),
+            AttributeUsage(),
+                Identifier(L"foo"),
+            Parameter(L"param1") > L"int64",
+                Identifier(L"int64") > L"int64",
+            Expression() > L"void",
+            Scope()
+    });
+}

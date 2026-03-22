@@ -37,7 +37,12 @@ public:
 class PostValidationTest : public TestBase
 {
 public:
-    void matches(std::wstring&& str, std::vector<ExpectedNode>&& expected);
+    void enclosedMatches(std::wstring&& str, std::vector<ExpectedNode>&& expected);
+
+    void setup(std::wstring_view str) { setupSrc = std::wstring(str); }
+
+private:
+    std::wstring setupSrc;
 };
 
 } // namespace cap::test
