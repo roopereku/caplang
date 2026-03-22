@@ -1,5 +1,7 @@
 #include <cap/test/CapTest.hh>
 
+using namespace cap::test;
+
 CAP_TEST(Error, UndeclaredTypeAsFunctionReturnType)
 {
     test.reportsError(L"func foo() -> abc\n{\n}\n", L"Undeclared identifier 'abc'");
@@ -75,4 +77,50 @@ CAP_TEST(Error, NoMatchingOverload4)
 CAP_TEST(Error, FunctionParametersMustBeInitializedWithTypes)
 {
     test.reportsError(L"func foo(a = int64, b = \"test\")\n{\n}", L"Parameters must be initialized with types");
+}
+
+// clang-format off
+
+CAP_TEST(PreValidation, FunctionWithoutParametersAndNothingNested)
+{
+    test.matches(L"func foo()\n{\n}",
+    {
+        Function(L"foo"),
+            Scope()
+    });
+}
+
+CAP_TEST(PreValidation, FunctionWithParametersAndNothingNested)
+{
+    test.matches(L"func foo(a = int64, b = uint32)\n{\n}",
+    {
+        Function(L"foo"),
+            Parameter(L"a"),
+                Identifier(L"int64"),
+            Parameter(L"b"),
+                Identifier(L"uint32"),
+            Scope()
+    });
+}
+
+CAP_TEST(PreValidation, NestedFunctionsWithoutParameters)
+{
+    test.matches(L"func foo()\n{\nfunc bar()\n{\n}\n}\n",
+    {
+        Function(L"foo"),
+            Scope(),
+                Function(L"bar"),
+                    Scope()
+    });
+}
+
+CAP_TEST(PreValidation, FunctionWithReturnType)
+{
+    test.matches(L"func foo() -> SomeType\n{\n}\n",
+    {
+        Function(L"foo"),
+            Expression(),
+                Identifier(L"SomeType"),
+            Scope()
+    });
 }

@@ -2,6 +2,7 @@
 #define CAP_TEST_CAP_TEST_HH
 
 #include <cap/Client.hh>
+#include <cap/test/NodeMatcher.hh>
 
 #include <gtest/gtest.h>
 
@@ -28,10 +29,14 @@ private:
 
 class PreValidationTest : public TestBase
 {
+public:
+    void matches(std::wstring&& str, std::vector<ExpectedNode>&& expected);
 };
 
 class PostValidationTest : public TestBase
 {
+public:
+    void matches(std::wstring&& str, std::vector<ExpectedNode>&& expected);
 };
 
 } // namespace cap::test

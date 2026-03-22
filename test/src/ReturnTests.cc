@@ -1,5 +1,7 @@
 #include <cap/test/CapTest.hh>
 
+using namespace cap::test;
+
 CAP_TEST(Error, ReturnInGlobalScope)
 {
     test.reportsError(
@@ -69,4 +71,33 @@ CAP_TEST(Error, ReturnIntInFunctionReturningVoid)
     }
     )SRC",
         L"Incompatible return type", true);
+}
+
+// clang-format off
+
+CAP_TEST(PreValidation, ReturnInteger)
+{
+    test.matches(L"func x()\n{\nreturn 0\n}\n",
+    {
+        Function(L"x"),
+            Scope(),
+                Return(),
+                    Expression(),
+                        Integer(0)
+    });
+}
+
+CAP_TEST(PreValidation, ReturnIntegerResultOfExpression)
+{
+    test.matches(L"func x()\n{\nreturn\n1 + 2\n}\n",
+    {
+        Function(L"x"),
+            Scope(),
+                Return(),
+                    Expression(),
+                Expression(),
+                    cap::BinaryOperator::Type::Add,
+                        Integer(1),
+                        Integer(2)
+    });
 }

@@ -1,3 +1,4 @@
+#include <cap/Scope.hh>
 #include <cap/test/CapTest.hh>
 #include <cap/test/DynamicSource.hh>
 
@@ -33,6 +34,18 @@ void ErrorTest::reportsError(std::wstring&& src, const std::wstring& error, bool
     ASSERT_FALSE(errors.empty());
     ASSERT_STREQ(error.c_str(), errors.front().c_str());
     errors.pop();
+}
+
+void PreValidationTest::matches(std::wstring&& str, std::vector<ExpectedNode>&& expected)
+{
+    cap::test::DynamicSource source;
+    source += std::move(str);
+
+    ASSERT_TRUE(source.parse(*this, false));
+
+    expected.insert(expected.begin(), Scope());
+    NodeMatcher matcher(std::move(expected));
+    matcher.traverseNode(source.getGlobal());
 }
 
 } // namespace cap::test
