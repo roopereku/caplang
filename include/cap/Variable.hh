@@ -69,6 +69,12 @@ public:
     /// \return The expression root representing the initializer.
     std::shared_ptr<Expression::Root> getInitializer() const;
 
+    /// Adopts an expression as the variable initializer.
+    ///
+    /// \param node The expression defining the variables.
+    /// \return False if the adoption fails.
+    bool adoptExpression(std::shared_ptr<Expression::Root> node, ParserContext& ctx);
+
     /// Gets the type of this declaration root.
     ///
     /// \return The type of this declaration root.
@@ -92,6 +98,8 @@ protected:
     bool requiresDeclaration(cap::ParserContext& ctx);
 
 private:
+    bool instantiateDeclarations(ParserContext& ctx);
+
     std::vector<std::shared_ptr<Declaration>> m_declared;
     std::shared_ptr<Expression::Root> m_initializer;
     Variable::Type m_type;

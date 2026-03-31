@@ -72,18 +72,20 @@ void PostValidationTest::enclosedMatches(std::wstring&& str, std::vector<Expecte
     expected.insert(expected.begin(), Scope());
     NodeMatcher matcher(std::move(expected));
 
-    std::shared_ptr<cap::Scope> root;
+    std::shared_ptr<cap::Function> enclosure;
     for (auto decl : source.getGlobal()->declarations)
     {
         if (decl->getName() == L"capTestEnclosure")
         {
             ASSERT_TRUE(decl->getType() == cap::Declaration::Type::Function);
-            auto func = std::static_pointer_cast<cap::Function>(decl);
-            root = func->getBody();
+            enclosure = std::static_pointer_cast<cap::Function>(decl);
         }
     }
 
-    matcher.traverseWithContext(root, this);
+    ASSERT_TRUE(enclosure);
+    ASSERT_STREQ(enclosure->getName().c_str(), L"capTestEnclosure");
+    ASSERT_TRUE(enclosure->getBody());
+    matcher.traverseWithContext(enclosure->getBody(), this);
 }
 
 } // namespace cap::test

@@ -51,6 +51,7 @@ public:
 
 private:
     std::shared_ptr<Scope> m_body;
+    std::shared_ptr<Expression::Root> m_description;
 };
 
 } // namespace cap

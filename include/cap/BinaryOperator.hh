@@ -14,6 +14,7 @@ public:
         Assign,
         Access,
         Comma,
+        Arrow,
 
         Add,
         Subtract,

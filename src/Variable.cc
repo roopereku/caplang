@@ -157,7 +157,68 @@ std::weak_ptr<Node> Variable::Root::handleToken(Node::ParserContext& ctx, Token&
 std::weak_ptr<Node> Variable::Root::invokedNodeExited(Node::ParserContext& ctx, Token&)
 {
     assert(ctx.m_exitedFrom == m_initializer);
+    if (!instantiateDeclarations(ctx))
+    {
+        return {};
+    }
 
+    return getParent();
+}
+
+std::shared_ptr<Expression::Root> Variable::Root::getInitializer() const
+{
+    return m_initializer;
+}
+
+bool Variable::Root::adoptExpression(std::shared_ptr<Expression::Root> node, ParserContext& ctx)
+{
+    assert(!m_initializer);
+    m_initializer = node;
+    adopt(m_initializer);
+
+    return instantiateDeclarations(ctx);
+}
+
+Variable::Type Variable::Root::getType() const
+{
+    return m_type;
+}
+
+const char* Variable::Root::getTypeString() const
+{
+    return "Variable root";
+}
+
+bool Variable::Root::onInitialize(cap::ParserContext& ctx, bool expectsToken)
+{
+    // The variable root is valid if a token will follow or a declaration is not required.
+    return expectsToken || !requiresDeclaration(ctx);
+}
+
+bool Variable::Root::requiresDeclaration(cap::ParserContext& ctx)
+{
+    std::string_view error;
+    switch (m_type)
+    {
+        case cap::Variable::Type::Generic: error = "Expected a generic"; break;
+        case cap::Variable::Type::Local: error = "Expected a variable"; break;
+
+        // Allow parameters without an initializer to support empty parentheses.
+        case cap::Variable::Type::Parameter: break;
+    }
+
+    if (!error.empty())
+    {
+        SourceLocation location(ctx.m_source, getToken());
+        ctx.m_client.sourceError(location, error.data());
+        return true;
+    }
+
+    return false;
+}
+
+bool Variable::Root::instantiateDeclarations(ParserContext& ctx)
+{
     if (hasAttributes())
     {
         // TODO:
@@ -197,7 +258,7 @@ std::weak_ptr<Node> Variable::Root::invokedNodeExited(Node::ParserContext& ctx, 
                 // If a binary operator exists for initialization, syntactically it has to be an assignment.
                 SourceLocation location(ctx.m_source, node->getToken());
                 ctx.m_client.sourceError(location, "Initialization must be done with '='");
-                return {};
+                return false;
             }
 
             nameAt = initialization->getLeft();
@@ -213,7 +274,7 @@ std::weak_ptr<Node> Variable::Root::invokedNodeExited(Node::ParserContext& ctx, 
         {
             SourceLocation location(ctx.m_source, node->getToken());
             ctx.m_client.sourceError(location, "Expected an assignment or an attribute declaration");
-            return {};
+            return false;
         }
 
         assert(nameAt);
@@ -229,6 +290,7 @@ std::weak_ptr<Node> Variable::Root::invokedNodeExited(Node::ParserContext& ctx, 
         auto name = std::static_pointer_cast<Identifier>(nameAt);
         auto decl = std::make_shared<Variable>(variableRoot->getType(), name, initialization);
 
+        assert(declContainer);
         declContainer->adopt(decl);
         name->setReferred(decl);
 
@@ -240,50 +302,7 @@ std::weak_ptr<Node> Variable::Root::invokedNodeExited(Node::ParserContext& ctx, 
         declContainer->getDeclarationStorage().add(std::move(decl));
     }
 
-    return getParent();
-}
-
-std::shared_ptr<Expression::Root> Variable::Root::getInitializer() const
-{
-    return m_initializer;
-}
-
-Variable::Type Variable::Root::getType() const
-{
-    return m_type;
-}
-
-const char* Variable::Root::getTypeString() const
-{
-    return "Variable root";
-}
-
-bool Variable::Root::onInitialize(cap::ParserContext& ctx, bool expectsToken)
-{
-    // The variable root is valid if a token will follow or a declaration is not required.
-    return expectsToken || !requiresDeclaration(ctx);
-}
-
-bool Variable::Root::requiresDeclaration(cap::ParserContext& ctx)
-{
-    std::string_view error;
-    switch (m_type)
-    {
-        case cap::Variable::Type::Generic: error = "Expected a generic"; break;
-        case cap::Variable::Type::Local: error = "Expected a variable"; break;
-
-        // Allow parameters without an initializer to support empty parentheses.
-        case cap::Variable::Type::Parameter: break;
-    }
-
-    if (!error.empty())
-    {
-        SourceLocation location(ctx.m_source, getToken());
-        ctx.m_client.sourceError(location, error.data());
-        return true;
-    }
-
-    return false;
+    return true;
 }
 
 } // namespace cap

@@ -214,31 +214,9 @@ int main()
     cap::Source entry(
         LR"SRC(
 
-		let @attribute a
-		let b = 10
-
-		@attribute
-		func moi()
-		{
-		}
-
-		@a
-		type Foo
-		{
-		}
-
-		//// TODO: This should result in an error since a is not marked as an attribute.
-		//@a
-		//func main()
-		//{
-		//}
-
-		// TODO: Negative test this scenario.
-		//@b
-		//func main()
-		//{
-		//	let b = 10
-		//}
+        func 10()
+        {
+        }
 
 	)SRC");
 

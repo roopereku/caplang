@@ -1,5 +1,8 @@
+#include <cap/BinaryOperator.hh>
+#include <cap/BracketOperator.hh>
 #include <cap/Client.hh>
 #include <cap/Function.hh>
+#include <cap/Identifier.hh>
 #include <cap/ParserContext.hh>
 #include <cap/Source.hh>
 #include <cap/Validator.hh>
@@ -16,53 +19,12 @@ Function::Function() :
 
 std::weak_ptr<Node> Function::handleToken(ParserContext& ctx, Token& token)
 {
-    // Parse the function name.
-    if (m_name.empty())
+    if (!m_description)
     {
-        // TODO: Check if there is no name but the token is an
-        // opening parenthesis, go straight to signature parsing.
+        m_description = std::make_shared<Expression::Root>();
+        adopt(m_description);
 
-        if (token.getType() != Token::Type::Identifier)
-        {
-            SourceLocation location(ctx.m_source, token);
-            ctx.m_client.sourceError(location, "Expected an identifier after 'func'");
-            return {};
-        }
-
-        setToken(token);
-        m_name = ctx.m_source.getString(token);
-
-        assert(getParentScope());
-        getParentScope()->declarations.add(std::static_pointer_cast<Function>(shared_from_this()));
-        return weak_from_this();
-    }
-
-    // Parse the function parameters.
-    else if (!getParameterRoot())
-    {
-        if (!token.isOpeningBracket(ctx, '('))
-        {
-            // TODO: How about anonymous functions?
-            SourceLocation location(ctx.m_source, token);
-            ctx.m_client.sourceError(location, "Expected '(' after function name");
-            return {};
-        }
-
-        initializeParameters();
-        adopt(getParameterRoot());
-
-        ctx.m_declarationLocation = shared_from_this();
-        return getParameterRoot();
-    }
-
-    // Parse the function return type.
-    else if (token.getType() == Token::Type::Operator && ctx.m_source.match(token, L"->"))
-    {
-        assert(!getReturnTypeRoot());
-        initializeReturnType();
-
-        adopt(getReturnTypeRoot());
-        return getReturnTypeRoot();
+        return m_description->handleToken(ctx, token);
     }
 
     else if (!m_body)
@@ -83,14 +45,90 @@ std::weak_ptr<Node> Function::handleToken(ParserContext& ctx, Token& token)
 
 std::weak_ptr<Node> Function::invokedNodeExited(ParserContext& ctx, Token&)
 {
-    if (ctx.m_exitedFrom == getParameterRoot())
+    // Extract the function signature and the function name.
+    if (ctx.m_exitedFrom == m_description)
     {
-        ctx.m_declarationLocation = nullptr;
-        return weak_from_this();
-    }
+        std::shared_ptr<Expression> checked = m_description->getFirst();
+        if (!checked)
+        {
+            SourceLocation location(ctx.m_source, m_description->getToken());
+            ctx.m_client.sourceError(location, "Expected an identifier after 'func'");
+            return {};
+        }
 
-    else if (ctx.m_exitedFrom == getReturnTypeRoot())
-    {
+        // Return type and the rest of the function signature can be delimited by a binary operator.
+        // Extract the different sides if the binary operator is an arrow.
+        if (checked->getType() == Expression::Type::BinaryOperator)
+        {
+            auto op = std::static_pointer_cast<BinaryOperator>(m_description->getFirst());
+            if (op->getType() == BinaryOperator::Type::Arrow)
+            {
+                // The rest of the function signature is on the left of the arrow.
+                checked = op->getLeft();
+
+                // The return value is on the right of the arrow.
+                initializeReturnType();
+                adopt(getReturnTypeRoot());
+                getReturnTypeRoot()->handleValue(op->getRight());
+            }
+
+            else
+            {
+                SourceLocation location(ctx.m_source, op->getToken());
+                ctx.m_client.sourceError(location, "Expected binary operator in function signature to be '->'");
+                return {};
+            }
+        }
+
+        // Extract the function name and the parameters.
+        std::shared_ptr<BracketOperator> callOp;
+        if (checked->getType() == Expression::Type::BracketOperator)
+        {
+            // TODO: What about generics?
+            auto op = std::static_pointer_cast<BracketOperator>(checked);
+            if (op->getType() == BracketOperator::Type::Call)
+            {
+                callOp = op;
+            }
+        }
+
+        if (!callOp)
+        {
+            // TODO: How about anonymous functions?
+            SourceLocation location(ctx.m_source, checked->getToken());
+            ctx.m_client.sourceError(location, "Expected a function name followed by '('");
+            return {};
+        }
+
+        // Extract the function name.
+        std::shared_ptr<Identifier> name;
+        if (callOp->getContext()->getType() == Expression::Type::Value)
+        {
+            // TODO: What about dynamically injected names?
+            auto value = std::static_pointer_cast<Value>(callOp->getContext());
+            if (value->getType() == Value::Type::Identifier)
+            {
+                name = std::static_pointer_cast<Identifier>(value);
+            }
+        }
+
+        if (!name)
+        {
+            SourceLocation location(ctx.m_source, callOp->getContext()->getToken());
+            ctx.m_client.sourceError(location, "Expected an identifier after 'func'");
+            return {};
+        }
+
+        // Inject the contents of the parentheses into a variable root and create declarations.
+        initializeParameters();
+        adopt(getParameterRoot());
+        getParameterRoot()->adoptExpression(callOp->getInnerRoot(), ctx);
+
+        // Expose this function declaration.
+        assert(getParentScope());
+        m_name = name->getValue();
+        getParentScope()->declarations.add(std::static_pointer_cast<Function>(shared_from_this()));
+
         return weak_from_this();
     }
 

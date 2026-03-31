@@ -41,6 +41,7 @@ std::weak_ptr<Node> Node::getParent() const
 void Node::adopt(std::shared_ptr<Node> node)
 {
     assert(node);
+    assert(node != shared_from_this());
     node->m_parent = shared_from_this();
 }
 

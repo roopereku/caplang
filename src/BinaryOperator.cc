@@ -15,9 +15,9 @@ std::shared_ptr<BinaryOperator> BinaryOperator::create(cap::ParserContext& ctx, 
 
     // TODO: Implement compound operators for operators that don't already
     // have an override. This is not implemented for ==, !=, <= and >=.
-    std::array<std::wstring_view, 22> ops{
-        L"=", L".", L",",  L"+",  L"-",  L"*",  L"/",  L"%",  L"**", L"||", L"&&",
-        L"<", L">", L"<=", L">=", L"==", L"!=", L"<<", L">>", L"&",  L"|",  L"^",
+    std::array<std::wstring_view, 23> ops{
+        L"=", L".", L",",  L"->", L"+",  L"-",  L"*",  L"/",  L"%", L"**", L"||", L"&&",
+        L"<", L">", L"<=", L">=", L"==", L"!=", L"<<", L">>", L"&", L"|",  L"^",
     };
 
     for (size_t i = 0; i < ops.size(); i++)
@@ -59,6 +59,7 @@ unsigned BinaryOperator::getPrecedence()
     switch (m_type)
     {
         case Type::Comma: return commaPrecedence;
+        case Type::Arrow: return commaPrecedence;
         case Type::Assign: return compoundPrecedence;
         case Type::Or: return binaryPrecedenceStart + 0;
         case Type::And: return binaryPrecedenceStart + 1;
@@ -118,6 +119,7 @@ const char* BinaryOperator::getTypeString(Type type)
         case Type::Assign: return "Assign";
         case Type::Access: return "Access";
         case Type::Comma: return "Comma";
+        case Type::Arrow: return "Arrow";
         case Type::Add: return "Add";
         case Type::Subtract: return "Subtract";
         case Type::Multiply: return "Multiply";

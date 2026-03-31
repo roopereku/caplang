@@ -45,9 +45,6 @@ public:
     /// expression node is made during handleToken.
     bool m_canOpenSubexpression = true;
 
-    /// The declaration storage node to use for new declarations.
-    std::shared_ptr<Node> m_declarationLocation;
-
     /// The node that is exited from as indicated by invokedNodeExited.
     std::shared_ptr<Node> m_exitedFrom;
 

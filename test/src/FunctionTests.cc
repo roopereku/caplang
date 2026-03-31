@@ -7,14 +7,59 @@ CAP_TEST(Error, UndeclaredTypeAsFunctionReturnType)
     test.reportsError(L"func foo() -> abc\n{\n}\n", L"Undeclared identifier 'abc'");
 }
 
+CAP_TEST(Error, ReturnValueIndicatedWithNonArrow1)
+{
+    test.reportsError(L"func foo() + abc\n{\n}\n", L"Expected binary operator in function signature to be '->'");
+}
+
+CAP_TEST(Error, ReturnValueIndicatedWithNonArrow2)
+{
+    test.reportsError(L"func foo() * abc\n{\n}\n", L"Expected binary operator in function signature to be '->'");
+}
+
+CAP_TEST(Error, ReturnValueIndicatedWithNonArrow3)
+{
+    test.reportsError(L"func foo() , abc\n{\n}\n", L"Expected binary operator in function signature to be '->'");
+}
+
+CAP_TEST(Error, ReturnValueIndicatedWithNonArrow4)
+{
+    test.reportsError(L"func foo() % abc\n{\n}\n", L"Expected binary operator in function signature to be '->'");
+}
+
+CAP_TEST(Error, ReturnValueIndicatedWithNonArrow5)
+{
+    test.reportsError(L"func foo() ^ abc\n{\n}\n", L"Expected binary operator in function signature to be '->'");
+}
+
 CAP_TEST(Error, FunctionDeclarationWithoutName)
 {
     test.reportsError(L"func", L"Expected an identifier after 'func'");
 }
 
+CAP_TEST(Error, FunctionDeclarationWithNonIdentifierName1)
+{
+    test.reportsError(L"func 10()\n{\n}\n", L"Expected an identifier after 'func'");
+}
+
+CAP_TEST(Error, FunctionDeclarationWithNonIdentifierName2)
+{
+    test.reportsError(L"func (500)()\n{\n}\n", L"Expected an identifier after 'func'");
+}
+
+CAP_TEST(Error, FunctionDeclarationWithNonIdentifierName3)
+{
+    test.reportsError(L"func 0x12345()\n{\n}\n", L"Expected an identifier after 'func'");
+}
+
+CAP_TEST(Error, FunctionDeclarationWithNonIdentifierName4)
+{
+    test.reportsError(L"func \"someName\"()\n{\n}\n", L"Expected an identifier after 'func'");
+}
+
 CAP_TEST(Error, FunctionDeclarationWithoutParenthesis)
 {
-    test.reportsError(L"func foo", L"Expected '(' after function name");
+    test.reportsError(L"func foo", L"Expected a function name followed by '('");
 }
 
 CAP_TEST(Error, FunctionDeclarationWithoutBody)

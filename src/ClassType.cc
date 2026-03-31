@@ -74,7 +74,6 @@ std::weak_ptr<Node> ClassType::invokedNodeExited(ParserContext& ctx, Token&)
 {
     if (ctx.m_exitedFrom == m_generic)
     {
-        ctx.m_declarationLocation = nullptr;
         return weak_from_this();
     }
 

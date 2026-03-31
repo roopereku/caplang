@@ -68,7 +68,8 @@ public:
     void setResultType(const TypeContext& ctx);
 
     static constexpr unsigned commaPrecedence = 1;
-    static constexpr unsigned compoundPrecedence = commaPrecedence + 1;
+    static constexpr unsigned arrowPrecedence = commaPrecedence + 1;
+    static constexpr unsigned compoundPrecedence = arrowPrecedence + 1;
     static constexpr unsigned binaryPrecedenceStart = compoundPrecedence + 1;
     static constexpr unsigned binaryPrecedenceEnd = binaryPrecedenceStart + 10;
     static constexpr unsigned modifierPrecedence = binaryPrecedenceEnd + 1;

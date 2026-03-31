@@ -228,6 +228,8 @@ Traverser::Result NodeMatcher::onReturn(std::shared_ptr<cap::Return> node)
 
 void NodeMatcher::traverseWithContext(std::shared_ptr<cap::Scope> root, cap::Client* client)
 {
+    ASSERT_TRUE(root);
+
     ctx = client;
     traverseNode(root);
 }
