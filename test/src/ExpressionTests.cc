@@ -438,6 +438,32 @@ CAP_TEST(PreValidation, ComplicatedMultilineExpression)
     });
 }
 
+CAP_TEST(PreValidation, ArrowPrecedence1)
+{
+    test.enclosedMatches(L"1 -> 2",
+    {
+        Expression(),
+            cap::BinaryOperator::Type::Arrow,
+                Integer(1),
+                Integer(2)
+    });
+}
+
+CAP_TEST(PreValidation, ArrowPrecedence2)
+{
+    test.enclosedMatches(L"1 -> 2, 3 -> 4",
+    {
+        Expression(),
+            cap::BinaryOperator::Type::Comma,
+                cap::BinaryOperator::Type::Arrow,
+                    Integer(1),
+                    Integer(2),
+                cap::BinaryOperator::Type::Arrow,
+                    Integer(3),
+                    Integer(4)
+    });
+}
+
 std::wstring_view setupWithNestedTypes = LR"SRC(
     type Foo
     {
@@ -504,3 +530,4 @@ CAP_TEST(PostValidation, AccessesResultInCorrectResultType3)
                         String(L"test") > L"string"
     });
 }
+

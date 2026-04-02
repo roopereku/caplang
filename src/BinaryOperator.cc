@@ -59,7 +59,7 @@ unsigned BinaryOperator::getPrecedence()
     switch (m_type)
     {
         case Type::Comma: return commaPrecedence;
-        case Type::Arrow: return commaPrecedence;
+        case Type::Arrow: return arrowPrecedence;
         case Type::Assign: return compoundPrecedence;
         case Type::Or: return binaryPrecedenceStart + 0;
         case Type::And: return binaryPrecedenceStart + 1;

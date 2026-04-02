@@ -59,9 +59,11 @@ public:
     const char* getTypeString() const override;
 
     /// The declaration storage for generic declarations.
-    DeclarationStorage m_generics;
+    DeclarationStorage generics;
 
 private:
+    std::shared_ptr<Expression::Root> m_description;
+
     std::shared_ptr<Expression::Root> m_baseTypes;
     std::shared_ptr<Variable::Root> m_generic;
     std::shared_ptr<Scope> m_body;

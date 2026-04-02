@@ -14,7 +14,8 @@ CAP_TEST(Error, TypeWithoutBody)
 
 CAP_TEST(Error, GenericTypeWithoutGenericName)
 {
-    test.reportsError(L"type foo <> {\n}\n", L"Expected a generic");
+    // TODO: Add the same test but without a newline before the opening brace.
+    test.reportsError(L"type foo <>\n{\n}\n", L"Expected a generic");
 }
 
 // clang-format off
@@ -51,4 +52,6 @@ CAP_TEST(PreValidation, TypeWithPreTypedGenerics)
             Scope()
     });
 }
+
+// TODO: Add base class tests.
 

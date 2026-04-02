@@ -101,18 +101,17 @@ std::weak_ptr<Node> Function::invokedNodeExited(ParserContext& ctx, Token&)
         }
 
         // Extract the function name.
-        std::shared_ptr<Identifier> name;
         if (callOp->getContext()->getType() == Expression::Type::Value)
         {
             // TODO: What about dynamically injected names?
             auto value = std::static_pointer_cast<Value>(callOp->getContext());
             if (value->getType() == Value::Type::Identifier)
             {
-                name = std::static_pointer_cast<Identifier>(value);
+                m_name = std::static_pointer_cast<Identifier>(value)->getValue();
             }
         }
 
-        if (!name)
+        if (m_name.empty())
         {
             SourceLocation location(ctx.m_source, callOp->getContext()->getToken());
             ctx.m_client.sourceError(location, "Expected an identifier after 'func'");
@@ -122,11 +121,14 @@ std::weak_ptr<Node> Function::invokedNodeExited(ParserContext& ctx, Token&)
         // Inject the contents of the parentheses into a variable root and create declarations.
         initializeParameters();
         adopt(getParameterRoot());
-        getParameterRoot()->adoptExpression(callOp->getInnerRoot(), ctx);
+
+        if (!getParameterRoot()->adoptExpression(callOp->getInnerRoot(), ctx))
+        {
+            return {};
+        }
 
         // Expose this function declaration.
         assert(getParentScope());
-        m_name = name->getValue();
         getParentScope()->declarations.add(std::static_pointer_cast<Function>(shared_from_this()));
 
         return weak_from_this();
