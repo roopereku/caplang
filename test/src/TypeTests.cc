@@ -20,6 +20,35 @@ CAP_TEST(Error, GenericTypeWithoutGenericName)
 
 // clang-format off
 
+CAP_TEST(PreValidation, TypeBodyOnSameLineAsDeclaration1)
+{
+    test.matches(L"type Foo{\n}",
+    {
+        ClassType(L"Foo"),
+            Scope()
+    });
+}
+
+CAP_TEST(PreValidation, TypeBodyOnSameLineAsDeclaration2)
+{
+    test.matches(L"type Foo {}",
+    {
+        ClassType(L"Foo"),
+            Scope()
+    });
+}
+
+CAP_TEST(PreValidation, TypeBodyOnSameLineAsDeclaration3)
+{
+    test.matches(L"type Foo <SomeGeneric = Something> {}",
+    {
+        ClassType(L"Foo"),
+            Generic(L"SomeGeneric"),
+                Identifier(L"Something"),
+            Scope()
+    });
+}
+
 CAP_TEST(PreValidation, TypeWithoutNested)
 {
     test.matches(L"type foo\n{\n}",

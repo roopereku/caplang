@@ -49,4 +49,11 @@ void Node::ParserContext::setMoreThanAttributes()
     }
 }
 
+bool Node::ParserContext::consumeRecycleToken()
+{
+    const bool result = m_recycleToken;
+    m_recycleToken = false;
+    return result;
+}
+
 } // namespace cap

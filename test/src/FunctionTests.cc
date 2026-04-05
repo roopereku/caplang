@@ -126,6 +126,33 @@ CAP_TEST(Error, FunctionParametersMustBeInitializedWithTypes)
 
 // clang-format off
 
+CAP_TEST(PreValidation, FunctionBodyOnSameLineAsSignature1)
+{
+    test.matches(L"func foo(){\n}",
+    {
+        Function(L"foo"),
+            Scope()
+    });
+}
+
+CAP_TEST(PreValidation, FunctionBodyOnSameLineAsSignature2)
+{
+   test.matches(L"func foo(){}",
+   {
+        Function(L"foo"),
+            Scope()
+    });
+}
+
+CAP_TEST(PreValidation, FunctionBodyOnSameLineAsSignature3)
+{
+   test.matches(L"func foo()     {}",
+   {
+        Function(L"foo"),
+            Scope()
+    });
+}
+
 CAP_TEST(PreValidation, FunctionWithoutParametersAndNothingNested)
 {
     test.matches(L"func foo()\n{\n}",

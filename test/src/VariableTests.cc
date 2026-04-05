@@ -67,6 +67,17 @@ CAP_TEST(PreValidation, Name)
     });
 }
 
+CAP_TEST(PreValidation, VariableCanBeDefinedWithTrailingScopeEnd)
+{
+    test.matches(L"func foo()\n{\nlet a = 10}",
+    {
+        Function(L"foo"),
+            Scope(),
+                LocalVariable(L"a"),
+                    Integer(10)
+    });
+}
+
 CAP_TEST(PostValidation, ParameterTypeResultsInCorrectType1)
 {
     test.enclosedMatches(L"func foo(a = int64)\n{\n}",

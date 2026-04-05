@@ -1,5 +1,7 @@
 #include <cap/test/CapTest.hh>
 
+using namespace cap::test;
+
 CAP_TEST(Error, LocalVariablesWithSameName)
 {
     test.reportsError(L"let a = 10\nlet a = 20", L"'a' already exists");
@@ -63,4 +65,56 @@ CAP_TEST(Error, LocalVariableAndParameterWithSameName)
 CAP_TEST(Error, LocalVariableAndInnerLocalVariableWithSameName)
 {
     test.reportsError(L"let a = 10\nfunc foo()\n{\nlet a = 10\n}", L"'a' already exists");
+}
+
+// clang-format off
+
+CAP_TEST(PreValidation, NestedDeclarationsOnSameLine1)
+{
+    test.matches(L"func foo(){type bar{}}",
+    {
+        Function(L"foo"),
+            Scope(),
+                ClassType(L"bar"),
+                    Scope(),
+    });
+}
+
+CAP_TEST(PreValidation, NestedDeclarationsOnSameLine2)
+{
+    test.matches(L"func foo(){type bar{}}",
+    {
+        Function(L"foo"),
+            Scope(),
+                ClassType(L"bar"),
+                    Scope(),
+    });
+}
+
+CAP_TEST(PreValidation, NestedDeclarationsOnSameLine3)
+{
+    test.matches(L"type foo{func bar(){}}",
+    {
+        ClassType(L"foo"),
+            Scope(),
+                Function(L"bar"),
+                    Scope(),
+    });
+}
+
+CAP_TEST(PreValidation, NestedDeclarationsOnSameLine4)
+{
+    test.matches(L"func foo(){type bar{func nestedFoo(){let local1 = int64, local2 = int32}}}",
+    {
+        Function(L"foo"),
+            Scope(),
+                ClassType(L"bar"),
+                    Scope(),
+                        Function(L"nestedFoo"),
+                            Scope(),
+                                LocalVariable(L"local1"),
+                                    Identifier(L"int64"),
+                                LocalVariable(L"local2"),
+                                    Identifier(L"int32"),
+    });
 }

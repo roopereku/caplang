@@ -214,9 +214,7 @@ int main()
     cap::Source entry(
         LR"SRC(
 
-        func 10()
-        {
-        }
+        func foo() { let a = 10 }
 
 	)SRC");
 

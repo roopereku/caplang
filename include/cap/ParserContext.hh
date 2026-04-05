@@ -65,6 +65,19 @@ public:
 
     void storeAttribute(std::shared_ptr<Attribute> attribute);
     void setMoreThanAttributes();
+
+    /// Recycles the previously parsed token. This can be used when moving to
+    /// a parent node and the parent node needs to know about a token as a scope boundary.
+    void recycleToken() { m_recycleToken = true; }
+
+    /// Returns and resets the flag for recycling the previously parsed token.
+    ///
+    /// \return True if the flag was enabled before calling this function.
+    bool consumeRecycleToken();
+
+private:
+    /// Flag determining whether the current token in Source::parse is to be recycled.
+    bool m_recycleToken = false;
 };
 
 } // namespace cap

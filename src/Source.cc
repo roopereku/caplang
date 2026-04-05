@@ -52,7 +52,11 @@ bool Source::parse(Client& client, bool validate)
             return false;
         }
 
-        currentToken = Token::parseNext(tokenCtx, currentToken);
+        if (!nodeCtx.consumeRecycleToken())
+        {
+            currentToken = Token::parseNext(tokenCtx, currentToken);
+        }
+
         nodeCtx.m_canOpenSubexpression = true;
         nodeCtx.m_exitedFrom = nullptr;
     }

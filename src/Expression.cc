@@ -25,6 +25,12 @@ std::weak_ptr<Node> Expression::handleToken(Node::ParserContext& ctx, Token& tok
 
     DBG_MESSAGE(ctx.m_client, "Expr token '", ctx.m_source.getString(token), "' handled by ", getTypeString());
 
+    // Delegate trailing scope boundaries to a parent node.
+    if (checkTrailingScopeBoundary(ctx, token))
+    {
+        return exitExpression(ctx, token);
+    }
+
     if (token.getType() == Token::Type::ClosingBracket)
     {
         // The state can get messed up if this goes below 0.
@@ -217,6 +223,24 @@ void Expression::finalizeCurrentAttribute(ParserContext& ctx)
 
     assert(attribute->getType() == Expression::Type::Attribute);
     ctx.storeAttribute(std::static_pointer_cast<Attribute>(attribute));
+}
+
+bool Expression::checkTrailingScopeBoundary(ParserContext& ctx, Token& token)
+{
+    // We're only interested in top level boundaries. Those within other brackets should be treated as trailing values.
+    if (ctx.m_subExpressionDepth == 0)
+    {
+        // Curly braces are trailing if the current node already has all components.
+        const bool isInteresting = ctx.m_source.match(token, L"{") || ctx.m_source.match(token, L"}");
+        if (isInteresting && isComplete())
+        {
+            // Recycle the token representing the trailing scope boundary.
+            ctx.recycleToken();
+            return true;
+        }
+    }
+
+    return false;
 }
 
 void Expression::handleValue(std::shared_ptr<Expression>)

@@ -91,6 +91,7 @@ protected:
     virtual std::shared_ptr<Expression> stealLatestValue();
 
 private:
+    bool checkTrailingScopeBoundary(ParserContext& ctx, Token& token);
     void finalizeCurrentAttribute(ParserContext& ctx);
 
     std::weak_ptr<Node> exitExpression(ParserContext& ctx, Token& token);
